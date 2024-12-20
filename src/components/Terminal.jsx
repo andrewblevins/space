@@ -31,6 +31,7 @@ const Terminal = () => {
   const [advisors, setAdvisors] = useState([]);
   const [activeAdvisor, setActiveAdvisor] = useState(null);
   const [boardMode, setBoardMode] = useState(false);
+  const [debugMode, setDebugMode] = useState(false);
 
   const loadSessions = () => {
     const sessions = [];
@@ -98,6 +99,7 @@ const Terminal = () => {
               '/advisor select <name> - Select active advisor\n' +
               '/advisor list - Show all advisors\n' +
               '/advisor board - Enable board mode\n' +
+              '/debug - Toggle debug mode\n' +
               '/help - Show this message'
           }]);
           return true;
@@ -194,6 +196,14 @@ const Terminal = () => {
               return true;
           }
 
+        case '/debug':
+          setDebugMode(prev => !prev);
+          setMessages(prev => [...prev, {
+            type: 'system',
+            content: `Debug mode ${!debugMode ? 'enabled' : 'disabled'}`
+          }]);
+          return true;
+
         default:
           setMessages(prev => [...prev, {
             type: 'system',
@@ -236,7 +246,15 @@ const Terminal = () => {
         requestBody.system = advisorContext;
       }
       
-      console.log('Request body:', JSON.stringify(requestBody, null, 2));
+      // Add debug output for request
+      if (debugMode) {
+        setMessages(prev => [...prev, {
+          type: 'system',
+          content: '🔍 Debug: Request to Claude API:\n```json\n' + 
+            JSON.stringify(requestBody, null, 2) + 
+            '\n```'
+        }]);
+      }
       
       const response = await fetch('/api/v1/messages', {
         method: 'POST',
@@ -249,16 +267,18 @@ const Terminal = () => {
         body: JSON.stringify(requestBody)
       });
 
-      console.log('Response status:', response.status);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Error response:', errorText);
-        throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
+      const data = await response.json();
+
+      // Add debug output for response
+      if (debugMode) {
+        setMessages(prev => [...prev, {
+          type: 'system',
+          content: '🔍 Debug: Response from Claude API:\n```json\n' + 
+            JSON.stringify(data, null, 2) + 
+            '\n```'
+        }]);
       }
 
-      const data = await response.json();
-      console.log('Received data from Claude');
       return data.content[0].text;
     } catch (error) {
       console.error('Detailed error:', error);
