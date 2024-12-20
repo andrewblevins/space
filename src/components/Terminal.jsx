@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 const Module = ({ title, items = [] }) => (
   <div className="bg-gray-900 p-4">
@@ -32,6 +32,7 @@ const Terminal = () => {
   const [activeAdvisor, setActiveAdvisor] = useState(null);
   const [boardMode, setBoardMode] = useState(false);
   const [debugMode, setDebugMode] = useState(false);
+  const inputRef = useRef(null);
 
   const loadSessions = () => {
     const sessions = [];
@@ -434,6 +435,7 @@ If you can't generate meaningful questions, respond with an empty array: []`
       console.log('Command handled?', commandHandled);
       if (commandHandled) {
         setInput('');
+        focusInput();
         return;
       }
     }
@@ -456,6 +458,7 @@ If you can't generate meaningful questions, respond with an empty array: []`
     } finally {
       setIsLoading(false);
       setInput('');
+      focusInput();
     }
   };
 
@@ -528,6 +531,16 @@ If you can't generate meaningful questions, respond with an empty array: []`
     }
   };
 
+  const focusInput = () => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  };
+
+  useEffect(() => {
+    focusInput();
+  }, [messages, isLoading]);
+
   return (
     <div className="w-full h-screen bg-black text-green-400 font-mono flex">
       {/* Left Column */}
@@ -560,24 +573,21 @@ If you can't generate meaningful questions, respond with an empty array: []`
         </div>
 
         <div className="mt-4">
-          <div className="flex items-center">
-            <span className="mr-2">&gt;</span>
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSubmit(e);
-                }
-              }}
-              className="flex-1 bg-transparent focus:outline-none"
-              placeholder={isLoading ? "Waiting for response..." : "Type here..."}
-              disabled={isLoading}
-              autoFocus
-            />
-          </div>
+          <form onSubmit={handleSubmit}>
+            <div className="flex items-center">
+              <span className="mr-2">&gt;</span>
+              <input
+                ref={inputRef}
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                className="flex-1 bg-transparent focus:outline-none"
+                placeholder={isLoading ? "Waiting for response..." : "Type here..."}
+                disabled={isLoading}
+                autoFocus
+              />
+            </div>
+          </form>
         </div>
       </div>
 
