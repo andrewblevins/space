@@ -453,8 +453,8 @@ const Terminal = () => {
           switch(args[0]) {
             case 'list':
               // Show available worksheet templates
-              const templateList = Object.values(WORKSHEET_TEMPLATES)
-                .map(t => `${t.id}: ${t.name}\n   ${t.description}`).join('\n\n');
+              const templateList = Object.entries(WORKSHEET_TEMPLATES)
+                .map(([id, t]) => `${id}: ${t.name}\n   ${t.description}`).join('\n\n');
               
               // Show completed worksheets from localStorage
               const completedWorksheets = [];
@@ -848,7 +848,9 @@ If you can't generate meaningful questions, respond with an empty array: []`
         currentWorksheetId,
         template: WORKSHEET_TEMPLATES[currentWorksheetId],
         hasQuestions: !!WORKSHEET_TEMPLATES[currentWorksheetId].questions,
-        hasSections: !!WORKSHEET_TEMPLATES[currentWorksheetId].sections
+        hasSections: !!WORKSHEET_TEMPLATES[currentWorksheetId].sections,
+        currentStep: worksheetStep,
+        input
       });
 
       const template = WORKSHEET_TEMPLATES[currentWorksheetId];
@@ -908,7 +910,7 @@ If you can't generate meaningful questions, respond with an empty array: []`
           setCurrentSection(0);
           setCurrentQuestion(0);
           
-          const worksheetId = Date.now().toString();
+          const worksheetId = generateWorksheetId(template.type === 'detailed' ? 'detailed' : 'basic');
           const markdown = `# ${template.name}
 Generated on: ${new Date().toLocaleString()}
 
@@ -935,7 +937,7 @@ ${section.questions.map(q => {
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
-          a.download = `advisor-worksheet-detailed-${worksheetId}.md`;
+          a.download = `advisor-worksheet-${worksheetId}.md`;
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
@@ -952,7 +954,88 @@ ${section.questions.map(q => {
         setInput('');
         return;
       } else {
-        // ... existing basic worksheet code ...
+        // Handle basic worksheet
+        console.log('Processing basic worksheet:', {
+          currentStep: worksheetStep,
+          totalQuestions: template.questions.length,
+          currentQuestion: template.questions[worksheetStep]
+        });
+
+        // Save the current answer
+        setWorksheetAnswers(prev => ({
+          ...prev,
+          [template.questions[worksheetStep].id]: input
+        }));
+
+        // Move to next question or finish
+        if (worksheetStep < template.questions.length - 1) {
+          setWorksheetStep(prev => prev + 1);
+          setMessages(prev => [...prev, {
+            type: 'user',
+            content: input
+          }, {
+            type: 'system',
+            content: template.questions[worksheetStep + 1].question
+          }]);
+        } else {
+          // Complete the worksheet
+          setWorksheetMode(false);
+          setCurrentWorksheetId(null);
+          
+          const worksheetId = generateWorksheetId('basic');
+          const markdown = `# AI Advisor Board Worksheet
+Generated on: ${new Date().toLocaleString()}
+
+## Areas for Growth
+${worksheetAnswers.life_areas}
+
+## Inspiring People
+${worksheetAnswers.inspiring_people}
+
+## Resonant Characters
+${worksheetAnswers.fictional_characters}
+
+## Influential Books
+${worksheetAnswers.viewquake_books}
+
+## Wisdom Traditions
+${worksheetAnswers.wisdom_traditions}
+
+## Aspirational Words
+${worksheetAnswers.aspirational_words}`;
+
+          // Save to localStorage
+          const worksheetData = {
+            id: worksheetId,
+            timestamp: new Date().toISOString(),
+            type: 'basic',
+            answers: worksheetAnswers,
+            formatted: markdown
+          };
+
+          localStorage.setItem(`space_worksheet_${worksheetId}`, JSON.stringify(worksheetData));
+
+          // Export to file
+          const blob = new Blob([markdown], { type: 'text/markdown' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `advisor-worksheet-${worksheetId}.md`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+
+          setMessages(prev => [...prev, {
+            type: 'user',
+            content: input
+          }, {
+            type: 'system',
+            content: `Worksheet complete! Your answers have been saved as Worksheet ${worksheetId} and exported to a markdown file.`
+          }]);
+        }
+        setInput('');
+        return;
       }
     }
 
@@ -1109,9 +1192,9 @@ Exported on: ${timestamp}\n\n`;
 
   // Define worksheet templates with sections
   const WORKSHEET_TEMPLATES = {
-    'advisor-basic': {
-      id: 'advisor-basic',
-      type: 'built-in',
+    'advisor-board': {  // Keep this ID for backwards compatibility
+      id: 'advisor-board',
+      type: 'basic',    // This is what we'll use for generating new IDs
       name: 'AI Advisor Board Worksheet (Basic)',
       description: 'A simple worksheet to help configure your AI advisory board',
       questions: [
@@ -1143,7 +1226,7 @@ Exported on: ${timestamp}\n\n`;
     },
     'advisor-detailed': {
       id: 'advisor-detailed',
-      type: 'built-in',
+      type: 'detailed',
       name: 'AI Advisor Board Worksheet (Detailed)',
       description: 'An in-depth worksheet to help configure your AI advisory board',
       sections: [
@@ -1292,6 +1375,24 @@ Exported on: ${timestamp}\n\n`;
         }
       ]
     }
+  };
+
+  // Add this helper function at the top level
+  const generateWorksheetId = (type) => {
+    // Get existing worksheets
+    const worksheets = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key.startsWith('space_worksheet_')) {
+        worksheets.push(key.replace('space_worksheet_', ''));
+      }
+    }
+    
+    // Count worksheets of this type
+    const typeCount = worksheets.filter(id => id.startsWith(type)).length + 1;
+    
+    // Generate new ID
+    return `${type}-${typeCount}`;
   };
 
   return (
