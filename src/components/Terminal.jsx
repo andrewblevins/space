@@ -56,6 +56,36 @@ const Terminal = () => {
   const [editText, setEditText] = useState('');
   const [editingAdvisor, setEditingAdvisor] = useState(null);
   const [editAdvisorText, setEditAdvisorText] = useState('');
+  const [worksheetMode, setWorksheetMode] = useState(false);
+  const [worksheetStep, setWorksheetStep] = useState(0);
+  const [worksheetAnswers, setWorksheetAnswers] = useState({});
+
+  const worksheetQuestions = [
+    {
+      id: 'life_areas',
+      question: "Name up to three areas of your life and how you would like to work on them. (Example: Career - I want to start an interior design practice; Physical Health - I'd like to do a handstand; Personal - I'd like to create a warm and inviting home environment)."
+    },
+    {
+      id: 'inspiring_people',
+      question: "Name up to three real people, living or dead, who you find inspiring. What do you admire about each of them?"
+    },
+    {
+      id: 'fictional_characters',
+      question: "Name up to three fictional characters you resonate with, and say what feels notable about each of them."
+    },
+    {
+      id: 'viewquake_books',
+      question: "Name up to three \"viewquake books\" that have helped shape your worldview."
+    },
+    {
+      id: 'wisdom_traditions',
+      question: "Name any philosophical or wisdom traditions that you practice or are interested in."
+    },
+    {
+      id: 'aspirational_words',
+      question: "Say three words about the type of person that you are interested in becoming or find inspiring."
+    }
+  ];
 
   const loadSessions = () => {
     const sessions = [];
@@ -138,7 +168,10 @@ const Terminal = () => {
 
 ## Other Commands
 \`/debug\`     - Toggle debug mode
-\`/help\`      - Show this message`
+\`/help\`      - Show this message
+
+## Worksheet
+\`/worksheet\`           - Start the AI advisor board worksheet`
           }]);
           return true;
 
@@ -399,6 +432,16 @@ const Terminal = () => {
           }
           return true;
 
+        case '/worksheet':
+          setWorksheetMode(true);
+          setWorksheetStep(0);
+          setWorksheetAnswers({});
+          setMessages(prev => [...prev, {
+            type: 'system',
+            content: `Starting AI Advisor Board Worksheet\n\n${worksheetQuestions[0].question}\n\nType your answer or /cancel to exit.`
+          }]);
+          return true;
+
         default:
           setMessages(prev => [...prev, {
             type: 'system',
@@ -612,34 +655,99 @@ If you can't generate meaningful questions, respond with an empty array: []`
   };
 
   const handleSubmit = async (e) => {
-    console.log('handleSubmit called');
     e.preventDefault();
     
-    // Prevent submission while editing
-    if (editingPrompt || editingAdvisor) {
-      return;
-    }
-    
     if (!input.trim() || isLoading) {
-      console.log('Empty input or loading, returning');
       return;
     }
 
-    console.log('Processing input:', input);
-    
-    // Check if it's a command first
+    // Handle worksheet mode first
+    if (worksheetMode) {
+      if (input.toLowerCase() === '/cancel') {
+        setWorksheetMode(false);
+        setMessages(prev => [...prev, {
+          type: 'system',
+          content: 'Worksheet cancelled'
+        }]);
+        setInput('');
+        return;
+      }
+
+      // Save answer
+      setWorksheetAnswers(prev => ({
+        ...prev,
+        [worksheetQuestions[worksheetStep].id]: input
+      }));
+
+      // Move to next question or finish
+      if (worksheetStep < worksheetQuestions.length - 1) {
+        setWorksheetStep(prev => prev + 1);
+        setMessages(prev => [...prev, {
+          type: 'user',
+          content: input
+        }, {
+          type: 'system',
+          content: worksheetQuestions[worksheetStep + 1].question
+        }]);
+      } else {
+        // Worksheet complete
+        setWorksheetMode(false);
+        
+        // Format answers as markdown
+        const markdown = `# AI Advisor Board Worksheet
+Generated on: ${new Date().toLocaleString()}
+
+## Areas for Growth
+${worksheetAnswers.life_areas}
+
+## Inspiring People
+${worksheetAnswers.inspiring_people}
+
+## Resonant Characters
+${worksheetAnswers.fictional_characters}
+
+## Influential Books
+${worksheetAnswers.viewquake_books}
+
+## Wisdom Traditions
+${worksheetAnswers.wisdom_traditions}
+
+## Aspirational Words
+${worksheetAnswers.aspirational_words}`;
+
+        // Save to file
+        const blob = new Blob([markdown], { type: 'text/markdown' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `advisor-worksheet-${Date.now()}.md`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        setMessages(prev => [...prev, {
+          type: 'user',
+          content: input
+        }, {
+          type: 'system',
+          content: 'Worksheet complete! Your answers have been saved to a markdown file.'
+        }]);
+      }
+      setInput('');
+      return;
+    }
+
+    // Only proceed with normal message handling if not in worksheet mode
     if (input.startsWith('/')) {
-      console.log('Input appears to be a command');
       const commandHandled = handleCommand(input);
-      console.log('Command handled?', commandHandled);
       if (commandHandled) {
         setInput('');
-        focusInput();
         return;
       }
     }
 
-    // If not a command, proceed with normal message handling
+    // Regular message handling...
     setMessages(prev => [...prev, { type: 'user', content: input }]);
     setIsLoading(true);
 
