@@ -37,6 +37,8 @@ const Terminal = () => {
     const saved = localStorage.getItem('space_prompts');
     return saved ? JSON.parse(saved) : [];
   });
+  const [editingPrompt, setEditingPrompt] = useState(null);
+  const [editText, setEditText] = useState('');
 
   const loadSessions = () => {
     const sessions = [];
@@ -108,7 +110,8 @@ const Terminal = () => {
               '/help - Show this message\n' +
               '/prompt add <name> <text> - Save a new prompt\n' +
               '/prompt list - Show saved prompts\n' +
-              '/prompt use <name> - Use a saved prompt'
+              '/prompt use <name> - Use a saved prompt\n' +
+              '/prompt edit <name> <text> - Edit an existing prompt'
           }]);
           return true;
 
@@ -280,13 +283,40 @@ const Terminal = () => {
               }
               return true;
 
+            case 'edit':
+              if (!args[1]) {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: 'Usage: /prompt edit <name>'
+                }]);
+                return true;
+              }
+              
+              const promptToEdit = savedPrompts.find(p => p.name === args[1]);
+              if (!promptToEdit) {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: `Prompt "${args[1]}" not found`
+                }]);
+                return true;
+              }
+
+              setEditingPrompt(promptToEdit.name);
+              setEditText(promptToEdit.text);
+              setMessages(prev => [...prev, {
+                type: 'system',
+                content: `Editing prompt "${promptToEdit.name}"\nCtrl+Enter to save • Escape to cancel`
+              }]);
+              return true;
+
             default:
               setMessages(prev => [...prev, {
                 type: 'system',
                 content: 'Available prompt commands:\n' +
                   '/prompt add <name> <text> - Save a new prompt\n' +
                   '/prompt list - Show all saved prompts\n' +
-                  '/prompt use <name> - Use a saved prompt'
+                  '/prompt use <name> - Use a saved prompt\n' +
+                  '/prompt edit <name> <text> - Edit an existing prompt'
               }]);
               return true;
           }
@@ -507,6 +537,11 @@ If you can't generate meaningful questions, respond with an empty array: []`
     console.log('handleSubmit called');
     e.preventDefault();
     
+    // Prevent submission while editing
+    if (editingPrompt) {
+      return;
+    }
+    
     if (!input.trim() || isLoading) {
       console.log('Empty input or loading, returning');
       return;
@@ -618,7 +653,11 @@ If you can't generate meaningful questions, respond with an empty array: []`
   };
 
   const focusInput = () => {
-    if (inputRef.current) {
+    if (editingPrompt) {
+      // Focus the textarea when in edit mode
+      const textarea = document.querySelector('textarea');
+      if (textarea) textarea.focus();
+    } else if (inputRef.current) {
       inputRef.current.focus();
     }
   };
@@ -632,6 +671,29 @@ If you can't generate meaningful questions, respond with an empty array: []`
       localStorage.setItem('space_prompts', JSON.stringify(savedPrompts));
     }
   }, [savedPrompts]);
+
+  const handleEditKeyDown = (e) => {
+    if (e.key === 'Enter' && e.ctrlKey) {
+      // Save changes
+      setSavedPrompts(prev => prev.map(p => 
+        p.name === editingPrompt ? { ...p, text: editText } : p
+      ));
+      setMessages(prev => [...prev, {
+        type: 'system',
+        content: `Updated prompt "${editingPrompt}"`
+      }]);
+      setEditingPrompt(null);
+      setEditText('');
+    } else if (e.key === 'Escape') {
+      // Cancel editing
+      setEditingPrompt(null);
+      setEditText('');
+      setMessages(prev => [...prev, {
+        type: 'system',
+        content: 'Edit cancelled'
+      }]);
+    }
+  };
 
   return (
     <div className="w-full h-screen bg-black text-green-400 font-mono flex">
@@ -667,17 +729,32 @@ If you can't generate meaningful questions, respond with an empty array: []`
         <div className="mt-4">
           <form onSubmit={handleSubmit}>
             <div className="flex items-center">
-              <span className="mr-2">&gt;</span>
-              <input
-                ref={inputRef}
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                className="flex-1 bg-transparent focus:outline-none"
-                placeholder={isLoading ? "Waiting for response..." : "Type here..."}
-                disabled={isLoading}
-                autoFocus
-              />
+              {editingPrompt ? (
+                <div className="flex-1">
+                  <textarea
+                    value={editText}
+                    onChange={(e) => setEditText(e.target.value)}
+                    onKeyDown={handleEditKeyDown}
+                    className="w-full h-40 bg-black text-green-400 font-mono p-2 border border-green-400 focus:outline-none resize-none"
+                    placeholder="Edit your prompt..."
+                    autoFocus
+                  />
+                </div>
+              ) : (
+                <>
+                  <span className="mr-2">&gt;</span>
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    className="flex-1 bg-transparent focus:outline-none"
+                    placeholder={isLoading ? "Waiting for response..." : "Type here..."}
+                    disabled={isLoading}
+                    autoFocus
+                  />
+                </>
+              )}
             </div>
           </form>
         </div>
