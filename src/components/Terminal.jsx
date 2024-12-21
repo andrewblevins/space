@@ -171,7 +171,8 @@ const Terminal = () => {
 \`/help\`      - Show this message
 
 ## Worksheet
-\`/worksheet\`           - Start the AI Advisor Board Worksheet`
+\`/worksheet\`           - Start the AI Advisor Board Worksheet
+\`/worksheet view\`      - View your saved worksheet`
           }]);
           return true;
 
@@ -433,6 +434,23 @@ const Terminal = () => {
           return true;
 
         case '/worksheet':
+          if (args[0] === 'view') {
+            const savedWorksheet = localStorage.getItem('space_worksheet');
+            if (savedWorksheet) {
+              const { formatted } = JSON.parse(savedWorksheet);
+              setMessages(prev => [...prev, {
+                type: 'system',
+                content: formatted
+              }]);
+            } else {
+              setMessages(prev => [...prev, {
+                type: 'system',
+                content: 'No saved worksheet found.'
+              }]);
+            }
+            return true;
+          }
+          
           setWorksheetMode(true);
           setWorksheetStep(0);
           setWorksheetAnswers({});
@@ -724,7 +742,57 @@ If you can't generate meaningful questions, respond with an empty array: []`
           content: worksheetQuestions[worksheetStep + 1].question
         }]);
       } else {
-        // Worksheet complete...
+        // Worksheet complete
+        setWorksheetMode(false);
+        
+        // Format answers as markdown
+        const markdown = `# AI Advisor Board Worksheet
+Generated on: ${new Date().toLocaleString()}
+
+## Areas for Growth
+${worksheetAnswers.life_areas}
+
+## Inspiring People
+${worksheetAnswers.inspiring_people}
+
+## Resonant Characters
+${worksheetAnswers.fictional_characters}
+
+## Influential Books
+${worksheetAnswers.viewquake_books}
+
+## Wisdom Traditions
+${worksheetAnswers.wisdom_traditions}
+
+## Aspirational Words
+${worksheetAnswers.aspirational_words}`;
+
+        // Save to localStorage
+        const worksheetData = {
+          timestamp: new Date().toISOString(),
+          answers: worksheetAnswers,
+          formatted: markdown
+        };
+        localStorage.setItem('space_worksheet', JSON.stringify(worksheetData));
+
+        // Save to file
+        const blob = new Blob([markdown], { type: 'text/markdown' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `advisor-worksheet-${Date.now()}.md`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        setMessages(prev => [...prev, {
+          type: 'user',
+          content: input
+        }, {
+          type: 'system',
+          content: 'Worksheet complete! Your answers have been saved and exported to a markdown file.'
+        }]);
       }
       setInput('');
       return;
