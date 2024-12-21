@@ -910,23 +910,40 @@ If you can't generate meaningful questions, respond with an empty array: []`
           setCurrentSection(0);
           setCurrentQuestion(0);
           
-          const worksheetId = generateWorksheetId(template.type === 'detailed' ? 'detailed' : 'basic');
-          const markdown = `# ${template.name}
+          // Save the final answer before generating markdown
+          const finalAnswers = {
+            ...worksheetAnswers,
+            aspirational_words: input  // Add the final answer
+          };
+          
+          const worksheetId = generateWorksheetId('basic');
+          const markdown = `# AI Advisor Board Worksheet
 Generated on: ${new Date().toLocaleString()}
 
-${template.sections.map(section => `
-## ${section.name}
-${section.questions.map(q => {
-  const answer = worksheetAnswers[section.name]?.[q.id] || '';
-  return `### ${q.question}\n${answer}`;
-}).join('\n\n')}`).join('\n\n')}`;
+## Areas for Growth
+${finalAnswers.life_areas}
 
-          // Save to localStorage
+## Inspiring People
+${finalAnswers.inspiring_people}
+
+## Resonant Characters
+${finalAnswers.fictional_characters}
+
+## Influential Books
+${finalAnswers.viewquake_books}
+
+## Wisdom Traditions
+${finalAnswers.wisdom_traditions}
+
+## Aspirational Words
+${finalAnswers.aspirational_words}`;
+
+          // Save to localStorage with complete answers
           const worksheetData = {
             id: worksheetId,
             timestamp: new Date().toISOString(),
-            type: 'detailed',
-            answers: worksheetAnswers,
+            type: 'basic',
+            answers: finalAnswers,  // Use the complete answers
             formatted: markdown
           };
 
@@ -982,34 +999,40 @@ ${section.questions.map(q => {
           setWorksheetMode(false);
           setCurrentWorksheetId(null);
           
+          // Save the final answer before generating markdown
+          const finalAnswers = {
+            ...worksheetAnswers,
+            aspirational_words: input  // Add the final answer
+          };
+          
           const worksheetId = generateWorksheetId('basic');
           const markdown = `# AI Advisor Board Worksheet
 Generated on: ${new Date().toLocaleString()}
 
 ## Areas for Growth
-${worksheetAnswers.life_areas}
+${finalAnswers.life_areas}
 
 ## Inspiring People
-${worksheetAnswers.inspiring_people}
+${finalAnswers.inspiring_people}
 
 ## Resonant Characters
-${worksheetAnswers.fictional_characters}
+${finalAnswers.fictional_characters}
 
 ## Influential Books
-${worksheetAnswers.viewquake_books}
+${finalAnswers.viewquake_books}
 
 ## Wisdom Traditions
-${worksheetAnswers.wisdom_traditions}
+${finalAnswers.wisdom_traditions}
 
 ## Aspirational Words
-${worksheetAnswers.aspirational_words}`;
+${finalAnswers.aspirational_words}`;
 
-          // Save to localStorage
+          // Save to localStorage with complete answers
           const worksheetData = {
             id: worksheetId,
             timestamp: new Date().toISOString(),
             type: 'basic',
-            answers: worksheetAnswers,
+            answers: finalAnswers,  // Use the complete answers
             formatted: markdown
           };
 
