@@ -121,6 +121,7 @@ const Terminal = () => {
 \`/sessions\`           - List saved sessions
 \`/load <session_id>\`  - Load a previous session
 \`/reset\`              - Clear all saved sessions
+\`/export\`             - Export current session to markdown
 
 ## Advisor Commands
 \`/advisor add <name> <description>\`  - Add new advisor
@@ -372,6 +373,31 @@ const Terminal = () => {
               }]);
               return true;
           }
+
+        case '/export':
+          try {
+            const markdown = formatSessionAsMarkdown(messages);
+            const blob = new Blob([markdown], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `space-session-${currentSessionId}.md`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            setMessages(prev => [...prev, {
+              type: 'system',
+              content: 'Session exported successfully'
+            }]);
+          } catch (error) {
+            setMessages(prev => [...prev, {
+              type: 'system',
+              content: `Error exporting session: ${error.message}`
+            }]);
+          }
+          return true;
 
         default:
           setMessages(prev => [...prev, {
@@ -744,6 +770,38 @@ If you can't generate meaningful questions, respond with an empty array: []`
         content: 'Edit cancelled'
       }]);
     }
+  };
+
+  // Add this helper function to format messages as markdown
+  const formatSessionAsMarkdown = (messages) => {
+    // Add timestamp at the beginning
+    const timestamp = new Date().toLocaleString();
+    let markdown = `# SPACE Terminal Session Export
+Exported on: ${timestamp}\n\n`;
+    
+    messages.forEach((msg) => {
+      // Skip help command outputs
+      if (msg.content.includes('SPACE Terminal v0.1 - Command Reference')) {
+        return;
+      }
+      
+      switch(msg.type) {
+        case 'user':
+          markdown += `**User:** \`${msg.content}\`\n\n`;
+          break;
+        case 'assistant':
+          markdown += `**Claude:** ${msg.content}\n\n`;
+          break;
+        case 'system':
+          // Only include non-help system messages
+          if (!msg.content.includes('/help')) {
+            markdown += `> ${msg.content}\n\n`;
+          }
+          break;
+      }
+    });
+    
+    return markdown;
   };
 
   return (
