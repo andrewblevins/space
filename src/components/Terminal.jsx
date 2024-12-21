@@ -157,6 +157,8 @@ const Terminal = () => {
 \`/export\`             - Export current session to markdown
 
 ## Advisor Commands
+\`/advisor generate <worksheet_id>\` - Start advisor generation process
+\`/advisor finalize\`               - Generate final advisor profiles
 \`/advisor add <name> <description>\`  - Add new advisor
 \`/advisor edit <name>\`               - Edit advisor description
 \`/advisor select <name>\`             - Select active advisor
@@ -229,6 +231,112 @@ const Terminal = () => {
 
         case '/advisor':
           switch(args[0]) {
+            case 'generate':
+              if (!args[1]) {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: `Usage: /advisor generate <worksheet_id>
+
+This starts a guided process to generate your advisor panel:
+1. First, Claude will analyze your worksheet and suggest 10 potential advisors
+2. You can discuss and refine these suggestions with Claude
+3. Once you've identified your preferred three, use "/advisor finalize" to get detailed profiles
+4. Finally, you can add each advisor using the regular "/advisor add" command`
+                }]);
+                return true;
+              }
+
+              const worksheetData = localStorage.getItem(`space_worksheet_${args[1]}`);
+              if (!worksheetData) {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: `Worksheet ${args[1]} not found`
+                }]);
+                return true;
+              }
+
+              const worksheet = JSON.parse(worksheetData);
+              setMessages(prev => [...prev, {
+                type: 'system',
+                content: 'Starting advisor generation process...'
+              }]);
+
+              (async () => {
+                try {
+                  const response = await callClaude(`You are an intelligence gifted in reading a person's patterns and values and identifying what will benefit their growth and understanding. 
+
+Attached is a worksheet filled out with information about myself. Read the worksheet, think carefully about what it reveals, and assemble a list of 10 potential advisors you think I would benefit from having an extended conversation with. 
+
+There are no formal limits on advisor suggestions. 
+* They can be real people or inspired by real people
+* They can be fictional characters 
+* They can be archetypal
+* Or something stranger 
+
+Please generate a mix of the above types. 
+
+We will work together to evaluate these options and narrow them down until we have a panel of three advisors. The overall point is for me to leave this conversation with a set of three advisors I can instantiate as perspectival voices in a separate conversation with you. 
+
+Ideally the set should be well-balanced and afford multiple ways of knowing and being.
+
+For each advisor you suggest, give a brief explanation of why you think they might be a good match. Before naming the advisors, you may write out any patterns you observe in the worksheet that might be helpful for us in this process.
+
+WORKSHEET DATA:
+${JSON.stringify(worksheet.answers, null, 2)}`);
+
+                  setMessages(prev => [...prev, {
+                    type: 'assistant',
+                    content: response
+                  }, {
+                    type: 'system',
+                    content: 'Discuss these suggestions with me to narrow down to your preferred three advisors. Then use "/advisor finalize" to get detailed profiles.'
+                  }]);
+                } catch (error) {
+                  setMessages(prev => [...prev, {
+                    type: 'system',
+                    content: 'Error generating advisors: ' + error.message
+                  }]);
+                }
+              })();
+              return true;
+
+            case 'finalize':
+              (async () => {
+                try {
+                  const recentMessages = messages
+                    .filter(msg => msg.type === 'user' || msg.type === 'assistant')
+                    .slice(-10)
+                    .map(msg => `${msg.type}: ${msg.content}`)
+                    .join('\n\n');
+
+                  const response = await callClaude(`Based on our previous discussion about potential advisors:
+
+${recentMessages}
+
+Now, I'd like to generate the final output. Please include the following aspects for each of our chosen advisors:
+
+* Name
+* Title 
+* Specific intellectual, philosophical or wisdom traditions or concepts they embody 
+* Their unique voice and speaking style 
+* The precise types of situations they are most skilled at addressing`);
+
+                  setMessages(prev => [...prev, {
+                    type: 'assistant',
+                    content: response
+                  }, {
+                    type: 'system',
+                    content: 'You can now add these advisors using:\n/advisor add <name> "<description>"'
+                  }]);
+                } catch (error) {
+                  setMessages(prev => [...prev, {
+                    type: 'system',
+                    content: 'Error finalizing advisors: ' + error.message
+                  }]);
+                }
+              })();
+              return true;
+
             case 'add':
               if (!args[1] || !args[2]) {
                 setMessages(prev => [...prev, {
