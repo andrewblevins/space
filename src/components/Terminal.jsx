@@ -171,7 +171,7 @@ const Terminal = () => {
 \`/help\`      - Show this message
 
 ## Worksheet
-\`/worksheet\`           - Start the AI advisor board worksheet`
+\`/worksheet\`           - Start the AI Advisor Board Worksheet`
           }]);
           return true;
 
@@ -654,6 +654,10 @@ If you can't generate meaningful questions, respond with an empty array: []`
     analyzeForQuestions(messages);
   };
 
+  // Add this array to define commands that shouldn't be run during worksheet mode
+  const blockedCommands = ['/worksheet', '/export', '/help', '/reset', '/new', '/sessions', '/load', '/clear', '/debug'];
+
+  // Modify handleSubmit to check against blocked commands
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -661,19 +665,49 @@ If you can't generate meaningful questions, respond with an empty array: []`
       return;
     }
 
-    // Handle worksheet mode first
-    if (worksheetMode) {
-      if (input.toLowerCase() === '/cancel') {
-        setWorksheetMode(false);
-        setMessages(prev => [...prev, {
-          type: 'system',
-          content: 'Worksheet cancelled'
-        }]);
+    // Handle commands first
+    if (input.startsWith('/')) {
+      // If in worksheet mode, check for blocked commands
+      if (worksheetMode) {
+        // Check if the input is a blocked command
+        if (blockedCommands.includes(input.toLowerCase())) {
+          setMessages(prev => [...prev, {
+            type: 'system',
+            content: `You can't use the command "${input}" while the worksheet is active.`
+          }]);
+          setInput('');
+          return;
+        }
+
+        // Allow help command
+        if (input.toLowerCase() === '/help') {
+          handleCommand(input);
+          setInput('');
+          return;
+        }
+        
+        if (input.toLowerCase() === '/cancel') {
+          setWorksheetMode(false);
+          setMessages(prev => [...prev, {
+            type: 'system',
+            content: 'Worksheet cancelled'
+          }]);
+          setInput('');
+          return;
+        }
+      }
+
+      // Handle regular commands
+      const commandHandled = handleCommand(input);
+      if (commandHandled) {
         setInput('');
         return;
       }
+    }
 
-      // Save answer
+    // Handle worksheet mode
+    if (worksheetMode) {
+      // Continue with worksheet...
       setWorksheetAnswers(prev => ({
         ...prev,
         [worksheetQuestions[worksheetStep].id]: input
@@ -690,61 +724,10 @@ If you can't generate meaningful questions, respond with an empty array: []`
           content: worksheetQuestions[worksheetStep + 1].question
         }]);
       } else {
-        // Worksheet complete
-        setWorksheetMode(false);
-        
-        // Format answers as markdown
-        const markdown = `# AI Advisor Board Worksheet
-Generated on: ${new Date().toLocaleString()}
-
-## Areas for Growth
-${worksheetAnswers.life_areas}
-
-## Inspiring People
-${worksheetAnswers.inspiring_people}
-
-## Resonant Characters
-${worksheetAnswers.fictional_characters}
-
-## Influential Books
-${worksheetAnswers.viewquake_books}
-
-## Wisdom Traditions
-${worksheetAnswers.wisdom_traditions}
-
-## Aspirational Words
-${worksheetAnswers.aspirational_words}`;
-
-        // Save to file
-        const blob = new Blob([markdown], { type: 'text/markdown' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `advisor-worksheet-${Date.now()}.md`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-
-        setMessages(prev => [...prev, {
-          type: 'user',
-          content: input
-        }, {
-          type: 'system',
-          content: 'Worksheet complete! Your answers have been saved to a markdown file.'
-        }]);
+        // Worksheet complete...
       }
       setInput('');
       return;
-    }
-
-    // Only proceed with normal message handling if not in worksheet mode
-    if (input.startsWith('/')) {
-      const commandHandled = handleCommand(input);
-      if (commandHandled) {
-        setInput('');
-        return;
-      }
     }
 
     // Regular message handling...
