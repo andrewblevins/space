@@ -608,7 +608,7 @@ const Terminal = () => {
         }));
 
       const requestBody = {
-        model: 'claude-3-opus-20240229',
+        model: 'claude-3-5-sonnet-20241022',
         messages: [
           ...conversationHistory,
           { role: 'user', content: userMessage }
@@ -677,7 +677,7 @@ const Terminal = () => {
           'anthropic-dangerous-direct-browser-access': 'true'
         },
         body: JSON.stringify({
-          model: 'claude-3-opus-20240229',
+          model: 'claude-3-5-sonnet-20241022',
           messages: [
             {
               role: 'user',
@@ -747,7 +747,7 @@ If you find no metaphors, respond with an empty array: []`
           'anthropic-dangerous-direct-browser-access': 'true'
         },
         body: JSON.stringify({
-          model: 'claude-3-opus-20240229',
+          model: 'claude-3-5-sonnet-20241022',
           messages: [
             {
               role: 'user',
@@ -1066,7 +1066,22 @@ ${finalAnswers.aspirational_words}`;
     if (!worksheetMode) {
       setMessages(prev => [...prev, { type: 'user', content: input }]);
       setIsLoading(true);
-      // ... rest of Claude handling ...
+      try {
+        const response = boardMode ? 
+          await callClaudeWithBoard(input) :
+          await callClaude(input);
+        setMessages(prev => [...prev, { type: 'assistant', content: response }]);
+        analyzeResponse(response);
+      } catch (error) {
+        setMessages(prev => [...prev, { 
+          type: 'system', 
+          content: 'Error: Failed to get response from Claude' 
+        }]);
+      } finally {
+        setIsLoading(false);
+        setInput('');
+        focusInput();
+      }
     }
   };
 
@@ -1106,7 +1121,7 @@ ${finalAnswers.aspirational_words}`;
         }));
 
       const requestBody = {
-        model: 'claude-3-opus-20240229',
+        model: 'claude-3-5-sonnet-20241022',
         system: boardContext,
         messages: [
           ...conversationHistory,
