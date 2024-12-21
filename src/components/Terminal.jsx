@@ -39,6 +39,8 @@ const Terminal = () => {
   });
   const [editingPrompt, setEditingPrompt] = useState(null);
   const [editText, setEditText] = useState('');
+  const [editingAdvisor, setEditingAdvisor] = useState(null);
+  const [editAdvisorText, setEditAdvisorText] = useState('');
 
   const loadSessions = () => {
     const sessions = [];
@@ -96,22 +98,31 @@ const Terminal = () => {
         case '/help':
           setMessages(prev => [...prev, {
             type: 'system',
-            content: 'Available commands:\n' +
-              '/clear - Clear terminal\n' +
-              '/new - Start a new session\n' +
-              '/sessions - List saved sessions\n' +
-              '/load <session_id> - Load a previous session\n' +
-              '/reset - Clear all saved sessions\n' +
-              '/advisor add <name> <description> - Add new advisor\n' +
-              '/advisor select <name> - Select active advisor\n' +
-              '/advisor list - Show all advisors\n' +
-              '/advisor board - Enable board mode\n' +
-              '/debug - Toggle debug mode\n' +
-              '/help - Show this message\n' +
-              '/prompt add <name> <text> - Save a new prompt\n' +
-              '/prompt list - Show saved prompts\n' +
-              '/prompt use <name> - Use a saved prompt\n' +
-              '/prompt edit <name> <text> - Edit an existing prompt'
+            content: `Available commands:
+
+Session Management:
+  /clear     - Clear terminal
+  /new       - Start a new session
+  /sessions  - List saved sessions
+  /load <session_id>  - Load a previous session
+  /reset     - Clear all saved sessions
+
+Advisor Commands:
+  /advisor add <name> <description>  - Add new advisor
+  /advisor edit <name>               - Edit advisor description
+  /advisor select <name>             - Select active advisor
+  /advisor list                      - Show all advisors
+  /advisor board                     - Enable board mode
+
+Prompt Management:
+  /prompt add <name> <text>   - Save a new prompt
+  /prompt edit <name>         - Edit an existing prompt
+  /prompt list               - Show saved prompts
+  /prompt use <name>         - Use a saved prompt
+
+Other Commands:
+  /debug     - Toggle debug mode
+  /help      - Show this message`
           }]);
           return true;
 
@@ -203,6 +214,32 @@ const Terminal = () => {
               setMessages(prev => [...prev, {
                 type: 'system',
                 content: `Board mode ${!boardMode ? 'enabled' : 'disabled'}`
+              }]);
+              return true;
+
+            case 'edit':
+              if (!args[1]) {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: 'Usage: /advisor edit <name>'
+                }]);
+                return true;
+              }
+              
+              const advisorToEdit = advisors.find(a => a.name === args[1]);
+              if (!advisorToEdit) {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: `Advisor "${args[1]}" not found`
+                }]);
+                return true;
+              }
+
+              setEditingAdvisor(advisorToEdit.name);
+              setEditAdvisorText(advisorToEdit.description);
+              setMessages(prev => [...prev, {
+                type: 'system',
+                content: `Editing advisor "${advisorToEdit.name}"\nCtrl+Enter to save • Escape to cancel`
               }]);
               return true;
           }
@@ -538,7 +575,7 @@ If you can't generate meaningful questions, respond with an empty array: []`
     e.preventDefault();
     
     // Prevent submission while editing
-    if (editingPrompt) {
+    if (editingPrompt || editingAdvisor) {
       return;
     }
     
@@ -653,8 +690,7 @@ If you can't generate meaningful questions, respond with an empty array: []`
   };
 
   const focusInput = () => {
-    if (editingPrompt) {
-      // Focus the textarea when in edit mode
+    if (editingPrompt || editingAdvisor) {
       const textarea = document.querySelector('textarea');
       if (textarea) textarea.focus();
     } else if (inputRef.current) {
@@ -737,6 +773,38 @@ If you can't generate meaningful questions, respond with an empty array: []`
                     onKeyDown={handleEditKeyDown}
                     className="w-full h-40 bg-black text-green-400 font-mono p-2 border border-green-400 focus:outline-none resize-none"
                     placeholder="Edit your prompt..."
+                    autoFocus
+                  />
+                </div>
+              ) : editingAdvisor ? (
+                <div className="flex-1">
+                  <textarea
+                    value={editAdvisorText}
+                    onChange={(e) => setEditAdvisorText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && e.ctrlKey) {
+                        // Save changes
+                        setAdvisors(prev => prev.map(a => 
+                          a.name === editingAdvisor ? { ...a, description: editAdvisorText } : a
+                        ));
+                        setMessages(prev => [...prev, {
+                          type: 'system',
+                          content: `Updated advisor "${editingAdvisor}"`
+                        }]);
+                        setEditingAdvisor(null);
+                        setEditAdvisorText('');
+                      } else if (e.key === 'Escape') {
+                        // Cancel editing
+                        setEditingAdvisor(null);
+                        setEditAdvisorText('');
+                        setMessages(prev => [...prev, {
+                          type: 'system',
+                          content: 'Edit cancelled'
+                        }]);
+                      }
+                    }}
+                    className="w-full h-40 bg-black text-green-400 font-mono p-2 border border-green-400 focus:outline-none resize-none"
+                    placeholder="Edit advisor description..."
                     autoFocus
                   />
                 </div>
