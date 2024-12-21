@@ -1215,37 +1215,12 @@ Exported on: ${timestamp}\n\n`;
 
   // Define worksheet templates with sections
   const WORKSHEET_TEMPLATES = {
-    'advisor-board': {  // Keep this ID for backwards compatibility
-      id: 'advisor-board',
-      type: 'basic',    // This is what we'll use for generating new IDs
+    'advisor-basic': {  // Changed from advisor-board
+      id: 'advisor-basic',
+      type: 'basic',
       name: 'AI Advisor Board Worksheet (Basic)',
       description: 'A simple worksheet to help configure your AI advisory board',
-      questions: [
-        {
-          id: 'life_areas',
-          question: "Name up to three areas of your life and how you would like to work on them. (Example: Career - I want to start an interior design practice; Physical Health - I'd like to do a handstand; Personal - I'd like to create a warm and inviting home environment)."
-        },
-        {
-          id: 'inspiring_people',
-          question: "Name up to three real people, living or dead, who you find inspiring. What do you admire about each of them?"
-        },
-        {
-          id: 'fictional_characters',
-          question: "Name up to three fictional characters you resonate with, and say what feels notable about each of them."
-        },
-        {
-          id: 'viewquake_books',
-          question: "Name up to three \"viewquake books\" that have helped shape your worldview."
-        },
-        {
-          id: 'wisdom_traditions',
-          question: "Name any philosophical or wisdom traditions that you practice or are interested in."
-        },
-        {
-          id: 'aspirational_words',
-          question: "Say three words about the type of person that you are interested in becoming or find inspiring."
-        }
-      ]
+      questions: worksheetQuestions  // This references the existing questions array
     },
     'advisor-detailed': {
       id: 'advisor-detailed',
