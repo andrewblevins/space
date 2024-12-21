@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import ReactMarkdown from 'react-markdown';
 
 const Module = ({ title, items = [] }) => (
   <div className="bg-gray-900 p-4">
@@ -9,6 +10,20 @@ const Module = ({ title, items = [] }) => (
       ))}
     </ul>
   </div>
+);
+
+const MarkdownMessage = ({ content }) => (
+  <ReactMarkdown
+    className="text-left font-mono whitespace-pre"
+    components={{
+      h1: ({children}) => <h1 className="text-blue-400 font-bold mb-4">{children}</h1>,
+      h2: ({children}) => <h2 className="text-green-400 font-bold mt-6 mb-2">{children}</h2>,
+      code: ({children}) => <code className="text-green-400">{children}</code>,
+      p: ({children}) => <p className="text-blue-400 mb-2 whitespace-pre-wrap">{children}</p>,
+    }}
+  >
+    {content}
+  </ReactMarkdown>
 );
 
 const Terminal = () => {
@@ -98,31 +113,31 @@ const Terminal = () => {
         case '/help':
           setMessages(prev => [...prev, {
             type: 'system',
-            content: `Available commands:
+            content: `# SPACE Terminal v0.1 - Command Reference
 
-Session Management:
-  /clear     - Clear terminal
-  /new       - Start a new session
-  /sessions  - List saved sessions
-  /load <session_id>  - Load a previous session
-  /reset     - Clear all saved sessions
+## Session Management
+\`/clear\`              - Clear terminal
+\`/new\`                - Start a new session
+\`/sessions\`           - List saved sessions
+\`/load <session_id>\`  - Load a previous session
+\`/reset\`              - Clear all saved sessions
 
-Advisor Commands:
-  /advisor add <name> <description>  - Add new advisor
-  /advisor edit <name>               - Edit advisor description
-  /advisor select <name>             - Select active advisor
-  /advisor list                      - Show all advisors
-  /advisor board                     - Enable board mode
+## Advisor Commands
+\`/advisor add <name> <description>\`  - Add new advisor
+\`/advisor edit <name>\`               - Edit advisor description
+\`/advisor select <name>\`             - Select active advisor
+\`/advisor list\`                      - Show all advisors
+\`/advisor board\`                     - Enable board mode
 
-Prompt Management:
-  /prompt add <name> <text>   - Save a new prompt
-  /prompt edit <name>         - Edit an existing prompt
-  /prompt list               - Show saved prompts
-  /prompt use <name>         - Use a saved prompt
+## Prompt Management
+\`/prompt add <name> <text>\`   - Save a new prompt
+\`/prompt edit <name>\`         - Edit an existing prompt
+\`/prompt list\`               - Show saved prompts
+\`/prompt use <name>\`         - Use a saved prompt
 
-Other Commands:
-  /debug     - Toggle debug mode
-  /help      - Show this message`
+## Other Commands
+\`/debug\`     - Toggle debug mode
+\`/help\`      - Show this message`
           }]);
           return true;
 
@@ -753,10 +768,15 @@ If you can't generate meaningful questions, respond with an empty array: []`
         <div className="flex-1 overflow-auto">
           {messages.map((msg, idx) => (
             <div key={idx} className={
-              msg.type === 'system' ? 'text-blue-400' :
-              msg.type === 'user' ? 'text-green-400' : 'text-white'
+              msg.type === 'user' ? 'text-green-400' : 
+              msg.type === 'assistant' ? 'text-white' : ''
             }>
-              {msg.type === 'user' ? '> ' : ''}{msg.content}
+              {msg.type === 'user' ? '> ' : ''}
+              {msg.type === 'system' ? (
+                <MarkdownMessage content={msg.content} />
+              ) : (
+                msg.content
+              )}
             </div>
           ))}
           {isLoading && <div className="text-yellow-400">Loading...</div>}
