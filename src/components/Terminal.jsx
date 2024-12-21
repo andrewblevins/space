@@ -61,6 +61,7 @@ const Terminal = () => {
   const [worksheetAnswers, setWorksheetAnswers] = useState({});
   const [currentSection, setCurrentSection] = useState(0);
   const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [currentWorksheetId, setCurrentWorksheetId] = useState(null);
 
   const worksheetQuestions = [
     {
@@ -498,13 +499,30 @@ const Terminal = () => {
               return true;
 
             case 'start':
-              setWorksheetMode(true);
-              setWorksheetStep(0);
-              setWorksheetAnswers({});
-              setMessages(prev => [...prev, {
-                type: 'system',
-                content: `Starting AI Advisor Board Worksheet\n\n${worksheetQuestions[0].question}\n\nType your answer or /cancel to exit.`
-              }]);
+              const startId = args[1];
+              if (!startId) {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: 'Usage: /worksheet start <id>'
+                }]);
+                return true;
+              }
+
+              if (WORKSHEET_TEMPLATES[startId]) {
+                setWorksheetMode(true);
+                setWorksheetStep(0);
+                setCurrentWorksheetId(startId);  // Set the current worksheet ID
+                setWorksheetAnswers({});
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: `Starting ${WORKSHEET_TEMPLATES[startId].name}\n\n${WORKSHEET_TEMPLATES[startId].questions[0].question}\n\nType your answer or /cancel to exit.`
+                }]);
+              } else {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: `Worksheet template "${startId}" not found`
+                }]);
+              }
               return true;
 
             default:
@@ -779,48 +797,32 @@ If you can't generate meaningful questions, respond with an empty array: []`
     }
 
     // Handle worksheet mode
-    if (worksheetMode) {
+    if (worksheetMode && currentWorksheetId) {
       const template = WORKSHEET_TEMPLATES[currentWorksheetId];
       
-      if (template.sections) {
-        const section = template.sections[currentSection];
-        const questions = section.questions;
-        
-        setWorksheetAnswers(prev => ({
-          ...prev,
-          [section.name]: {
-            ...prev[section.name],
-            [questions[currentQuestion].id]: input
-          }
-        }));
+      // Handle basic worksheet
+      setWorksheetAnswers(prev => ({
+        ...prev,
+        [template.questions[worksheetStep].id]: input
+      }));
 
-        // Move to next question or section
-        if (currentQuestion < questions.length - 1) {
-          setCurrentQuestion(prev => prev + 1);
-          setMessages(prev => [...prev, {
-            type: 'user',
-            content: input
-          }, {
-            type: 'system',
-            content: questions[currentQuestion + 1].question
-          }]);
-        } else if (currentSection < template.sections.length - 1) {
-          setCurrentSection(prev => prev + 1);
-          setCurrentQuestion(0);
-          const nextSection = template.sections[currentSection + 1];
-          setMessages(prev => [...prev, {
-            type: 'user',
-            content: input
-          }, {
-            type: 'system',
-            content: `Section: ${nextSection.name}\n\n${nextSection.questions[0].question}`
-          }]);
-        } else {
-          // Worksheet complete
-          setWorksheetMode(false);
-          
-          const worksheetId = Date.now().toString();
-          const markdown = `# AI Advisor Board Worksheet
+      // Move to next question or finish
+      if (worksheetStep < template.questions.length - 1) {
+        setWorksheetStep(prev => prev + 1);
+        setMessages(prev => [...prev, {
+          type: 'user',
+          content: input
+        }, {
+          type: 'system',
+          content: template.questions[worksheetStep + 1].question
+        }]);
+      } else {
+        // Worksheet complete
+        setWorksheetMode(false);
+        setCurrentWorksheetId(null);  // Clear the current worksheet ID
+        
+        const worksheetId = Date.now().toString();
+        const markdown = `# AI Advisor Board Worksheet
 Generated on: ${new Date().toLocaleString()}
 
 ## Areas for Growth
@@ -841,36 +843,33 @@ ${worksheetAnswers.wisdom_traditions}
 ## Aspirational Words
 ${worksheetAnswers.aspirational_words}`;
 
-          // Save to localStorage with unique ID
-          const worksheetData = {
-            id: worksheetId,
-            timestamp: new Date().toISOString(),
-            answers: worksheetAnswers,
-            formatted: markdown
-          };
-          localStorage.setItem(`space_worksheet_${worksheetId}`, JSON.stringify(worksheetData));
+        // Save to localStorage with unique ID
+        const worksheetData = {
+          id: worksheetId,
+          timestamp: new Date().toISOString(),
+          answers: worksheetAnswers,
+          formatted: markdown
+        };
+        localStorage.setItem(`space_worksheet_${worksheetId}`, JSON.stringify(worksheetData));
 
-          // Save to file
-          const blob = new Blob([markdown], { type: 'text/markdown' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `advisor-worksheet-${worksheetId}.md`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
+        // Save to file
+        const blob = new Blob([markdown], { type: 'text/markdown' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `advisor-worksheet-${worksheetId}.md`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
 
-          setMessages(prev => [...prev, {
-            type: 'user',
-            content: input
-          }, {
-            type: 'system',
-            content: `Worksheet complete! Your answers have been saved as Worksheet ${worksheetId} and exported to a markdown file.`
-          }]);
-        }
-      } else {
-        // Handle basic worksheet as before...
+        setMessages(prev => [...prev, {
+          type: 'user',
+          content: input
+        }, {
+          type: 'system',
+          content: `Worksheet complete! Your answers have been saved as Worksheet ${worksheetId} and exported to a markdown file.`
+        }]);
       }
       setInput('');
       return;
