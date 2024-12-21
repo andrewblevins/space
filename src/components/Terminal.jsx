@@ -913,37 +913,37 @@ If you can't generate meaningful questions, respond with an empty array: []`
           // Save the final answer before generating markdown
           const finalAnswers = {
             ...worksheetAnswers,
-            aspirational_words: input  // Add the final answer
+            aspirational_words: input
           };
           
           const worksheetId = generateWorksheetId('basic');
-          const markdown = `# AI Advisor Board Worksheet
+          const markdown = `# AI Advisor Board Worksheet (Basic)
 Generated on: ${new Date().toLocaleString()}
 
-## Areas for Growth
+### ${template.questions[0].question}
 ${finalAnswers.life_areas}
 
-## Inspiring People
+### ${template.questions[1].question}
 ${finalAnswers.inspiring_people}
 
-## Resonant Characters
+### ${template.questions[2].question}
 ${finalAnswers.fictional_characters}
 
-## Influential Books
+### ${template.questions[3].question}
 ${finalAnswers.viewquake_books}
 
-## Wisdom Traditions
+### ${template.questions[4].question}
 ${finalAnswers.wisdom_traditions}
 
-## Aspirational Words
+### ${template.questions[5].question}
 ${finalAnswers.aspirational_words}`;
 
-          // Save to localStorage with complete answers
+          // Save to localStorage
           const worksheetData = {
             id: worksheetId,
             timestamp: new Date().toISOString(),
             type: 'basic',
-            answers: finalAnswers,  // Use the complete answers
+            answers: finalAnswers,
             formatted: markdown
           };
 
@@ -1002,37 +1002,37 @@ ${finalAnswers.aspirational_words}`;
           // Save the final answer before generating markdown
           const finalAnswers = {
             ...worksheetAnswers,
-            aspirational_words: input  // Add the final answer
+            aspirational_words: input
           };
           
           const worksheetId = generateWorksheetId('basic');
-          const markdown = `# AI Advisor Board Worksheet
+          const markdown = `# AI Advisor Board Worksheet (Basic)
 Generated on: ${new Date().toLocaleString()}
 
-## Areas for Growth
+### ${template.questions[0].question}
 ${finalAnswers.life_areas}
 
-## Inspiring People
+### ${template.questions[1].question}
 ${finalAnswers.inspiring_people}
 
-## Resonant Characters
+### ${template.questions[2].question}
 ${finalAnswers.fictional_characters}
 
-## Influential Books
+### ${template.questions[3].question}
 ${finalAnswers.viewquake_books}
 
-## Wisdom Traditions
+### ${template.questions[4].question}
 ${finalAnswers.wisdom_traditions}
 
-## Aspirational Words
+### ${template.questions[5].question}
 ${finalAnswers.aspirational_words}`;
 
-          // Save to localStorage with complete answers
+          // Save to localStorage
           const worksheetData = {
             id: worksheetId,
             timestamp: new Date().toISOString(),
             type: 'basic',
-            answers: finalAnswers,  // Use the complete answers
+            answers: finalAnswers,
             formatted: markdown
           };
 
