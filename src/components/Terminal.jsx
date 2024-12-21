@@ -171,8 +171,10 @@ const Terminal = () => {
 \`/help\`      - Show this message
 
 ## Worksheet
-\`/worksheet\`           - Start the AI Advisor Board Worksheet
-\`/worksheet view\`      - View your saved worksheet`
+\`/worksheet\`           - Start a new worksheet
+\`/worksheet list\`      - List all saved worksheets
+\`/worksheet view <id>\` - View a specific worksheet
+\`/worksheet start <id>\` - Start filling out a specific worksheet`
           }]);
           return true;
 
@@ -434,31 +436,110 @@ const Terminal = () => {
           return true;
 
         case '/worksheet':
-          if (args[0] === 'view') {
-            const savedWorksheet = localStorage.getItem('space_worksheet');
-            if (savedWorksheet) {
-              const { formatted } = JSON.parse(savedWorksheet);
-              setMessages(prev => [...prev, {
-                type: 'system',
-                content: formatted
-              }]);
-            } else {
-              setMessages(prev => [...prev, {
-                type: 'system',
-                content: 'No saved worksheet found.'
-              }]);
-            }
+          if (!args[0]) {
+            setMessages(prev => [...prev, {
+              type: 'system',
+              content: 'Available worksheet commands:\n' +
+                '/worksheet list - Show available worksheets\n' +
+                '/worksheet view <id> - View a specific worksheet\n' +
+                '/worksheet start <id> - Start filling out a specific worksheet'
+            }]);
             return true;
           }
-          
-          setWorksheetMode(true);
-          setWorksheetStep(0);
-          setWorksheetAnswers({});
-          setMessages(prev => [...prev, {
-            type: 'system',
-            content: `Starting AI Advisor Board Worksheet\n\n${worksheetQuestions[0].question}\n\nType your answer or /cancel to exit.`
-          }]);
-          return true;
+
+          switch(args[0]) {
+            case 'list':
+              // First show available worksheet templates
+              const worksheetTemplates = [
+                { id: 'advisor-board', name: 'AI Advisor Board Worksheet' }
+                // Add more worksheet types here as needed
+              ];
+              
+              // Then show completed worksheets from localStorage
+              const completedWorksheets = [];
+              for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith('space_worksheet_')) {
+                  const worksheet = JSON.parse(localStorage.getItem(key));
+                  completedWorksheets.push({
+                    id: key.replace('space_worksheet_', ''),
+                    timestamp: worksheet.timestamp
+                  });
+                }
+              }
+              
+              setMessages(prev => [...prev, {
+                type: 'system',
+                content: 'Available worksheets:\n' + 
+                  worksheetTemplates.map(w => `${w.id}: ${w.name}`).join('\n') +
+                  '\n\nCompleted worksheets:\n' + 
+                  (completedWorksheets.length ? 
+                    completedWorksheets.map(w => 
+                      `${w.id} (completed ${new Date(w.timestamp).toLocaleString()})`
+                    ).join('\n') :
+                    'None')
+              }]);
+              return true;
+
+            case 'view':
+              const viewId = args[1];
+              if (!viewId) {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: 'Usage: /worksheet view <id>'
+                }]);
+                return true;
+              }
+              
+              // Only look for completed worksheets in localStorage
+              const viewData = localStorage.getItem(`space_worksheet_${viewId}`);
+              if (viewData) {
+                const { formatted } = JSON.parse(viewData);
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: formatted
+                }]);
+              } else {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: `No completed worksheet found with ID: ${viewId}\nUse /worksheet start ${viewId} to begin a new worksheet.`
+                }]);
+              }
+              return true;
+
+            case 'start':
+              const startId = args[1];
+              if (!startId) {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: 'Usage: /worksheet start <id>'
+                }]);
+                return true;
+              }
+
+              if (startId === 'advisor-board') {
+                setWorksheetMode(true);
+                setWorksheetStep(0);
+                setWorksheetAnswers({});
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: `Starting AI Advisor Board Worksheet\n\n${worksheetQuestions[0].question}\n\nType your answer or /cancel to exit.`
+                }]);
+              } else {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: `Worksheet template "${startId}" not found`
+                }]);
+              }
+              return true;
+
+            default:
+              setMessages(prev => [...prev, {
+                type: 'system',
+                content: 'Unknown worksheet command. Type /worksheet for usage.'
+              }]);
+              return true;
+          }
 
         default:
           setMessages(prev => [...prev, {
@@ -745,7 +826,7 @@ If you can't generate meaningful questions, respond with an empty array: []`
         // Worksheet complete
         setWorksheetMode(false);
         
-        // Format answers as markdown
+        const worksheetId = Date.now().toString();
         const markdown = `# AI Advisor Board Worksheet
 Generated on: ${new Date().toLocaleString()}
 
@@ -767,20 +848,21 @@ ${worksheetAnswers.wisdom_traditions}
 ## Aspirational Words
 ${worksheetAnswers.aspirational_words}`;
 
-        // Save to localStorage
+        // Save to localStorage with unique ID
         const worksheetData = {
+          id: worksheetId,
           timestamp: new Date().toISOString(),
           answers: worksheetAnswers,
           formatted: markdown
         };
-        localStorage.setItem('space_worksheet', JSON.stringify(worksheetData));
+        localStorage.setItem(`space_worksheet_${worksheetId}`, JSON.stringify(worksheetData));
 
         // Save to file
         const blob = new Blob([markdown], { type: 'text/markdown' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `advisor-worksheet-${Date.now()}.md`;
+        a.download = `advisor-worksheet-${worksheetId}.md`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -791,7 +873,7 @@ ${worksheetAnswers.aspirational_words}`;
           content: input
         }, {
           type: 'system',
-          content: 'Worksheet complete! Your answers have been saved and exported to a markdown file.'
+          content: `Worksheet complete! Your answers have been saved as Worksheet ${worksheetId} and exported to a markdown file.`
         }]);
       }
       setInput('');
