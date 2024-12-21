@@ -16,10 +16,10 @@ const MarkdownMessage = ({ content }) => (
   <ReactMarkdown
     className="text-left font-mono whitespace-pre"
     components={{
-      h1: ({children}) => <h1 className="text-blue-400 font-bold mb-4">{children}</h1>,
-      h2: ({children}) => <h2 className="text-green-400 font-bold mt-6 mb-2">{children}</h2>,
+      h1: ({children}) => <h1 className="text-blue-400 font-bold">{children}</h1>,
+      h2: ({children}) => <h2 className="text-green-400 font-bold">{children}</h2>,
       code: ({children}) => <code className="text-green-400">{children}</code>,
-      p: ({children}) => <p className="text-blue-400 mb-2 whitespace-pre-wrap">{children}</p>,
+      p: ({children}) => <p className="text-blue-400 whitespace-pre-wrap">{children}</p>,
     }}
   >
     {content}
@@ -113,7 +113,7 @@ const Terminal = () => {
         case '/help':
           setMessages(prev => [...prev, {
             type: 'system',
-            content: `# SPACE Terminal v0.1 - Command Reference
+            content: `# SPACE Terminal v0.1 - Commands
 
 ## Session Management
 \`/clear\`              - Clear terminal
