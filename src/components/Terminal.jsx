@@ -483,17 +483,41 @@ const Terminal = () => {
               return true;
 
             case 'view':
-              const savedWorksheet = localStorage.getItem('space_worksheet');
-              if (savedWorksheet) {
-                const { formatted } = JSON.parse(savedWorksheet);
+              const viewId = args[1];
+              if (!viewId) {
                 setMessages(prev => [...prev, {
                   type: 'system',
-                  content: formatted
+                  content: 'Usage: /worksheet view <id>'
                 }]);
+                return true;
+              }
+              
+              const viewData = localStorage.getItem(`space_worksheet_${viewId}`);
+              console.log('Viewing worksheet data:', {
+                viewId,
+                rawData: viewData,
+                parsedData: viewData ? JSON.parse(viewData) : null
+              });
+
+              if (viewData) {
+                const worksheetData = JSON.parse(viewData);
+                
+                // Just use the formatted markdown that was saved
+                if (worksheetData.formatted) {
+                  setMessages(prev => [...prev, {
+                    type: 'system',
+                    content: worksheetData.formatted
+                  }]);
+                } else {
+                  setMessages(prev => [...prev, {
+                    type: 'system',
+                    content: 'Error: Worksheet format not found'
+                  }]);
+                }
               } else {
                 setMessages(prev => [...prev, {
                   type: 'system',
-                  content: 'No saved worksheet found.'
+                  content: `Worksheet ${viewId} not found`
                 }]);
               }
               return true;
