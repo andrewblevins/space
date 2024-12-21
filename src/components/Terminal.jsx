@@ -33,6 +33,10 @@ const Terminal = () => {
   const [boardMode, setBoardMode] = useState(false);
   const [debugMode, setDebugMode] = useState(false);
   const inputRef = useRef(null);
+  const [savedPrompts, setSavedPrompts] = useState(() => {
+    const saved = localStorage.getItem('space_prompts');
+    return saved ? JSON.parse(saved) : [];
+  });
 
   const loadSessions = () => {
     const sessions = [];
@@ -101,7 +105,10 @@ const Terminal = () => {
               '/advisor list - Show all advisors\n' +
               '/advisor board - Enable board mode\n' +
               '/debug - Toggle debug mode\n' +
-              '/help - Show this message'
+              '/help - Show this message\n' +
+              '/prompt add <name> <text> - Save a new prompt\n' +
+              '/prompt list - Show saved prompts\n' +
+              '/prompt use <name> - Use a saved prompt'
           }]);
           return true;
 
@@ -204,6 +211,85 @@ const Terminal = () => {
             content: `Debug mode ${!debugMode ? 'enabled' : 'disabled'}`
           }]);
           return true;
+
+        case '/prompt':
+          switch(args[0]) {
+            case 'add':
+              if (args.length < 3) {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: 'Usage: /prompt add <name> <prompt_text>'
+                }]);
+                return true;
+              }
+              const promptName = args[1];
+              const promptText = args.slice(2).join(' ');
+              setSavedPrompts(prev => [...prev, { name: promptName, text: promptText }]);
+              setMessages(prev => [...prev, {
+                type: 'system',
+                content: `Saved prompt: ${promptName}`
+              }]);
+              return true;
+
+            case 'list':
+              setMessages(prev => [...prev, {
+                type: 'system',
+                content: savedPrompts.length ?
+                  'Saved prompts:\n' + savedPrompts.map(p => 
+                    `${p.name}: ${p.text}`
+                  ).join('\n') :
+                  'No saved prompts'
+              }]);
+              return true;
+
+            case 'use':
+              if (!args[1]) {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: 'Usage: /prompt use <name>'
+                }]);
+                return true;
+              }
+              const prompt = savedPrompts.find(p => p.name === args[1]);
+              if (prompt) {
+                (async () => {
+                  setMessages(prev => [...prev, { type: 'user', content: prompt.text }]);
+                  setIsLoading(true);
+                  try {
+                    const response = boardMode ? 
+                      await callClaudeWithBoard(prompt.text) :
+                      await callClaude(prompt.text);
+                    setMessages(prev => [...prev, { type: 'assistant', content: response }]);
+                    analyzeResponse(response);
+                  } catch (error) {
+                    setMessages(prev => [...prev, { 
+                      type: 'system', 
+                      content: 'Error: Failed to get response from Claude' 
+                    }]);
+                  } finally {
+                    setIsLoading(false);
+                    setInput('');
+                    focusInput();
+                  }
+                })();
+              } else {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: `Prompt "${args[1]}" not found`
+                }]);
+              }
+              return true;
+
+            default:
+              setMessages(prev => [...prev, {
+                type: 'system',
+                content: 'Available prompt commands:\n' +
+                  '/prompt add <name> <text> - Save a new prompt\n' +
+                  '/prompt list - Show all saved prompts\n' +
+                  '/prompt use <name> - Use a saved prompt'
+              }]);
+              return true;
+          }
 
         default:
           setMessages(prev => [...prev, {
@@ -540,6 +626,12 @@ If you can't generate meaningful questions, respond with an empty array: []`
   useEffect(() => {
     focusInput();
   }, [messages, isLoading]);
+
+  useEffect(() => {
+    if (savedPrompts.length > 0) {
+      localStorage.setItem('space_prompts', JSON.stringify(savedPrompts));
+    }
+  }, [savedPrompts]);
 
   return (
     <div className="w-full h-screen bg-black text-green-400 font-mono flex">
