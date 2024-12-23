@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
-import MemorySystem from '../lib/memory';
+import { MemorySystem } from '../lib/memory';
 
 const Module = ({ title, items = [] }) => (
   <div className="bg-gray-900 p-4">
@@ -688,6 +688,46 @@ Now, I'd like to generate the final output. Please include the following aspects
               setMessages(prev => [...prev, {
                 type: 'system',
                 content: `Unknown command: ${command}`
+              }]);
+              return true;
+          }
+
+        case '/memory':
+          switch(args[0]) {
+            case 'status':
+              const sessions = memory.getAllSessions();
+              setMessages(prev => [...prev, {
+                type: 'system',
+                content: `Memory Status:
+Sessions: ${sessions.length}
+Total Messages: ${sessions.reduce((acc, s) => acc + s.messages.length, 0)}
+Latest Session: ${sessions[0]?.timestamp || 'none'}`
+              }]);
+              return true;
+
+            case 'search':
+              if (!args[1]) {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: 'Usage: /memory search <query>'
+                }]);
+                return true;
+              }
+              const query = args.slice(1).join(' ');
+              const relevant = memory.retrieveRelevantContext(query);
+              setMessages(prev => [...prev, {
+                type: 'system',
+                content: `Found ${relevant.length} relevant messages:
+${relevant.map(msg => `[${msg.type}] ${msg.content.slice(0, 100)}...`).join('\n')}`
+              }]);
+              return true;
+
+            default:
+              setMessages(prev => [...prev, {
+                type: 'system',
+                content: 'Available memory commands:\n' +
+                  '/memory status - Show memory statistics\n' +
+                  '/memory search <query> - Test memory retrieval'
               }]);
               return true;
           }
