@@ -718,7 +718,15 @@ Latest Session: ${sessions[0]?.timestamp || 'none'}`
               setMessages(prev => [...prev, {
                 type: 'system',
                 content: `Found ${relevant.length} relevant messages:
-${relevant.map(msg => `[${msg.type}] ${msg.content.slice(0, 100)}...`).join('\n')}`
+${relevant.map(msg => {
+  // Split into paragraphs
+  const paragraphs = msg.content.split(/\n\n+/);
+  // Find paragraph(s) containing the search term
+  const matchingParagraphs = paragraphs.filter(p => 
+    p.toLowerCase().includes(query.toLowerCase())
+  );
+  return `[${msg.type}] ${matchingParagraphs.join('\n\n')}`
+}).join('\n\n---\n\n')}`
               }]);
               return true;
 
