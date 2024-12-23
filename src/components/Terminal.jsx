@@ -43,7 +43,10 @@ const Terminal = () => {
   const [metaphors, setMetaphors] = useState([]);
   const [questions, setQuestions] = useState([]);
   const [currentSessionId, setCurrentSessionId] = useState(getNextSessionId());
-  const [advisors, setAdvisors] = useState([]);
+  const [advisors, setAdvisors] = useState(() => {
+    const saved = localStorage.getItem('space_advisors');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [activeAdvisor, setActiveAdvisor] = useState(null);
   const [boardMode, setBoardMode] = useState(false);
   const [debugMode, setDebugMode] = useState(false);
@@ -1515,6 +1518,12 @@ Exported on: ${timestamp}\n\n`;
     // Generate new ID
     return `${type}-${typeCount}`;
   };
+
+  useEffect(() => {
+    if (advisors.length > 0) {
+      localStorage.setItem('space_advisors', JSON.stringify(advisors));
+    }
+  }, [advisors]);
 
   return (
     <div className="w-full h-screen bg-black text-green-400 font-mono flex">
