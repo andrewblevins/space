@@ -1528,7 +1528,7 @@ Exported on: ${timestamp}\n\n`;
   return (
     <div className="w-full h-screen bg-black text-green-400 font-mono flex">
       {/* Left Column */}
-      <div className="w-1/4 p-4 border-r border-gray-800">
+      <div className="w-1/4 p-4 border-r border-gray-800 overflow-y-auto">
         <Module title="Active Metaphors" items={metaphors} />
         <div className="mt-4">
           <Module 
@@ -1544,7 +1544,7 @@ Exported on: ${timestamp}\n\n`;
 
       {/* Middle Column */}
       <div className="w-2/4 p-4 flex flex-col">
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-auto mb-4">
           {messages.map((msg, idx) => (
             <div key={idx} className={
               msg.type === 'user' ? 'text-green-400' : 
@@ -1561,7 +1561,7 @@ Exported on: ${timestamp}\n\n`;
           {isLoading && <div className="text-yellow-400">Loading...</div>}
         </div>
 
-        <div className="mt-4">
+        <div className="mt-auto">
           <form onSubmit={handleSubmit}>
             <div className="flex items-center">
               {editingPrompt ? (
@@ -1628,7 +1628,7 @@ Exported on: ${timestamp}\n\n`;
       </div>
 
       {/* Right Column */}
-      <div className="w-1/4 p-4 border-l border-gray-800">
+      <div className="w-1/4 p-4 border-l border-gray-800 overflow-y-auto">
         <Module title="Questions to Explore" items={questions} />
       </div>
     </div>
