@@ -12,6 +12,11 @@ interface Session {
   questions: string[];
 }
 
+interface ScoredMessage {
+  message: Message;
+  score: number;
+}
+
 export class MemorySystem {
   // Get all available sessions
   getAllSessions(): Session[] {
@@ -31,21 +36,46 @@ export class MemorySystem {
   // Basic retrieval strategy - get relevant messages across sessions
   retrieveRelevantContext(query: string): Message[] {
     const sessions = this.getAllSessions();
-    const relevantMessages: Message[] = [];
+    const scoredMessages: ScoredMessage[] = [];
 
     sessions.forEach(session => {
       session.messages.forEach(message => {
-        if (this.isRelevant(message, query)) {
-          relevantMessages.push(message);
+        const score = this.calculateRelevance(message, query);
+        if (score > 0) {
+          scoredMessages.push({ message, score });
         }
       });
     });
 
-    return relevantMessages;
+    // Sort by score and return just the messages
+    return scoredMessages
+      .sort((a, b) => b.score - a.score)
+      .map(scored => scored.message)
+      .slice(0, 5);  // Start with top 5 most relevant
   }
 
-  private isRelevant(message: Message, query: string): boolean {
-    if (message.type === 'system') return false;
-    return message.content.toLowerCase().includes(query.toLowerCase());
+  private calculateRelevance(message: Message, query: string): number {
+    if (message.type === 'system') return 0;
+    
+    let score = 0;
+    const content = message.content.toLowerCase();
+    const queryLower = query.toLowerCase();
+
+    // Basic text matching
+    if (content.includes(queryLower)) {
+      score += 1;
+      
+      // Bonus points for exact matches
+      if (content === queryLower) {
+        score += 2;
+      }
+      
+      // Bonus points for matches at start of message
+      if (content.startsWith(queryLower)) {
+        score += 1;
+      }
+    }
+
+    return score;
   }
 } 

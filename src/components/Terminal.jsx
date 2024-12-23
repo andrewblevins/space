@@ -718,14 +718,16 @@ Latest Session: ${sessions[0]?.timestamp || 'none'}`
               setMessages(prev => [...prev, {
                 type: 'system',
                 content: `Found ${relevant.length} relevant messages:
-${relevant.map(msg => {
+${relevant.map((msg, i) => {
   // Split into paragraphs
   const paragraphs = msg.content.split(/\n\n+/);
   // Find paragraph(s) containing the search term
   const matchingParagraphs = paragraphs.filter(p => 
     p.toLowerCase().includes(query.toLowerCase())
   );
-  return `[${msg.type}] ${matchingParagraphs.join('\n\n')}`
+  // Calculate score for debugging
+  const score = memory.calculateRelevance(msg, query);
+  return `[${i + 1}] Score: ${score}\n[${msg.type}] ${matchingParagraphs.join('\n\n')}`
 }).join('\n\n---\n\n')}`
               }]);
               return true;
