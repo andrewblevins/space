@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
+import MemorySystem from '../lib/memory';
 
 const Module = ({ title, items = [] }) => (
   <div className="bg-gray-900 p-4">
@@ -65,6 +66,7 @@ const Terminal = () => {
   const [currentSection, setCurrentSection] = useState(0);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [currentWorksheetId, setCurrentWorksheetId] = useState(null);
+  const memory = new MemorySystem();
 
   const worksheetQuestions = [
     {
@@ -704,22 +706,40 @@ Now, I'd like to generate the final output. Please include the following aspects
 
   const callClaude = async (userMessage) => {
     try {
+      // Get relevant context from memory
+      const relevantContext = memory.retrieveRelevantContext(userMessage);
+      
+      // Add debug output if enabled
+      if (debugMode) {
+        setMessages(prev => [...prev, {
+          type: 'system',
+          content: `🔍 Debug: Found ${relevantContext.length} relevant messages from memory`
+        }]);
+      }
+
+      // Include relevant context in the conversation history
+      const conversationHistory = [
+        ...relevantContext.map(msg => ({
+          role: msg.type === 'user' ? 'user' : 'assistant',
+          content: msg.content
+        })),
+        ...messages
+          .filter(msg => msg.type === 'user' || msg.type === 'assistant')
+          .map(msg => ({
+            role: msg.type === 'user' ? 'user' : 'assistant',
+            content: msg.content
+          }))
+      ];
+
       // Get active advisor's context
       const advisorContext = activeAdvisor ? 
         `You are acting as ${activeAdvisor.name}, ${activeAdvisor.description}. 
          Respond in character while maintaining your expertise and perspective.` : 
         null;
 
-      // Create conversation history
-      const conversationHistory = messages
-        .filter(msg => msg.type === 'user' || msg.type === 'assistant')
-        .map(msg => ({
-          role: msg.type === 'user' ? 'user' : 'assistant',
-          content: msg.content
-        }));
-
       const requestBody = {
         model: 'claude-3-5-sonnet-20241022',
+        system: advisorContext,
         messages: [
           ...conversationHistory,
           { role: 'user', content: userMessage }
@@ -767,8 +787,8 @@ Now, I'd like to generate the final output. Please include the following aspects
 
       return data.content[0].text;
     } catch (error) {
-      console.error('Detailed error:', error);
-      return `Error: Could not connect to Claude (${error.message})`;
+      console.error('Error:', error);
+      return `Error: ${error.message}`;
     }
   };
 
