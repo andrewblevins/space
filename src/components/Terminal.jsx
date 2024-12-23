@@ -364,7 +364,7 @@ Now, I'd like to generate the final output. Please include the following aspects
                 type: 'system',
                 content: advisors.length ? 
                   'Available advisors:\n' + advisors.map(a => 
-                    `${a.name}: ${a.description}`
+                    `**${a.name}**: ${a.description}`
                   ).join('\n') :
                   'No advisors configured'
               }]);
