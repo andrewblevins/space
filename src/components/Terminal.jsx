@@ -1547,11 +1547,12 @@ Exported on: ${timestamp}\n\n`;
         <div className="flex-1 overflow-auto mb-4">
           {messages.map((msg, idx) => (
             <div key={idx} className={
-              msg.type === 'user' ? 'text-green-400' : 
-              msg.type === 'assistant' ? 'text-white' : ''
+              msg.type === 'user' ? 'text-green-400 mb-4' : 
+              msg.type === 'assistant' ? 'text-white mb-4' : 
+              'mb-4'
             }>
               {msg.type === 'user' ? '> ' : ''}
-              {msg.type === 'system' ? (
+              {msg.type === 'system' || msg.type === 'assistant' ? (
                 <MarkdownMessage content={msg.content} />
               ) : (
                 msg.content
