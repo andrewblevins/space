@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { MemorySystem } from '../lib/memory';
+import { OpenAI } from 'openai';
 
 const Module = ({ title, items = [] }) => (
   <div className="bg-gray-900 p-4">
@@ -28,6 +29,11 @@ const MarkdownMessage = ({ content }) => (
 );
 
 const Terminal = () => {
+  const openai = new OpenAI({
+    apiKey: import.meta.env.VITE_OPENAI_API_KEY,
+    dangerouslyAllowBrowser: true
+  });
+
   const getNextSessionId = () => {
     const keys = Object.keys(localStorage).filter(key => key.startsWith('space_session_'));
     if (keys.length === 0) return 1;
@@ -885,91 +891,48 @@ ${userMessage}`
       .map(msg => msg.content)
       .join("\n");
 
-    // Add debug output for input
     if (debugMode) {
       setMessages(prev => [...prev, {
         type: 'system',
-        content: `📤 Metaphor Analysis Request:
-Input messages:
-${userMessages}`
+        content: `📤 Metaphor Analysis Request:\nInput messages:\n${userMessages}`
       }]);
     }
 
     try {
-      const response = await fetch('/api/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': import.meta.env.VITE_ANTHROPIC_API_KEY,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true'
-        },
-        body: JSON.stringify({
-          model: 'claude-3-5-sonnet-20241022',
-          messages: [
-            {
-              role: 'user',
-              content: `Analyze how the user is structuring their understanding through conceptual metaphors (in the sense of Lakoff's "Metaphors We Live By").
-
-Look for underlying mental models and conceptual frameworks they're using to make sense of things, such as:
-- Understanding as "seeing" or "looking at" things
-- Time structured spatially
-- Abstract concepts understood through concrete physical experiences
-- Container metaphors for states or categories
-- Source/path/goal schemas for processes
-
-Their messages:
-${userMessages}
-
-Respond with ONLY a JSON array of strings describing the active conceptual metaphors, like this:
-["Understanding is seeing", "Progress is forward motion"]
-
-If you find no metaphors, respond with an empty array: []`
-            }
-          ],
-          max_tokens: 1024
-        })
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [{
+          role: "system",
+          content: "You are a helpful assistant that responds only in valid JSON format. Your response should be an array of strings."
+        }, {
+          role: "user",
+          content: `Analyze the following messages for conceptual metaphors:\n\n${userMessages}\n\nRespond with a JSON array of metaphors.`
+        }],
+        max_tokens: 150,
+        response_format: { type: "json_object" }
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to analyze metaphors');
-      }
-
-      const data = await response.json();
-      const responseText = data.content[0].text;
-      
-      // Add debug output for Claude's response
       if (debugMode) {
         setMessages(prev => [...prev, {
           type: 'system',
-          content: `📥 Metaphor Analysis Response:
-${responseText}`
+          content: `📥 Metaphor Analysis Response:\n${response.choices[0].message.content}`
         }]);
       }
 
-      const match = responseText.match(/\[.*\]/s);
-      if (!match) {
-        console.error('No JSON array found in response:', responseText);
-        return;
-      }
-
-      const metaphors = JSON.parse(match[0]);
-      setMetaphors(metaphors);
+      const metaphors = JSON.parse(response.choices[0].message.content);
+      setMetaphors(metaphors.metaphors || []);
     } catch (error) {
       console.error('Error analyzing metaphors:', error);
-      // Add debug output for errors
       if (debugMode) {
         setMessages(prev => [...prev, {
           type: 'system',
-          content: `❌ Metaphor Analysis Error:
-${error.message}`
+          content: `❌ Metaphor Analysis Error:\n${error.message}`
         }]);
       }
     }
   };
 
   const analyzeForQuestions = async (messages) => {
-    // Get the most recent exchange
     const recentMessages = [];
     for (let i = messages.length - 1; i >= 0; i--) {
       if (messages[i].type === 'assistant' || messages[i].type === 'user') {
@@ -982,77 +945,42 @@ ${error.message}`
       .map(msg => `${msg.type === 'user' ? 'User' : 'Assistant'}: ${msg.content}`)
       .join("\n\n");
 
-    // Add debug output for input
     if (debugMode) {
       setMessages(prev => [...prev, {
         type: 'system',
-        content: `📤 Question Analysis Request:
-Recent exchange:
-${conversationText}`
+        content: `📤 Question Analysis Request:\nRecent exchange:\n${conversationText}`
       }]);
     }
 
     try {
-      const response = await fetch('/api/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': import.meta.env.VITE_ANTHROPIC_API_KEY,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true'
-        },
-        body: JSON.stringify({
-          model: 'claude-3-5-sonnet-20241022',
-          messages: [
-            {
-              role: 'user',
-              content: `Based on this recent exchange, suggest 2-3 questions that might help the user deepen their exploration. Consider both what the user said and how the assistant responded.
-
-Recent exchange:
-${conversationText}
-
-Respond with ONLY a JSON array of question strings, like this:
-["What would happen if...?", "How might this connect to...?"]
-
-If you can't generate meaningful questions, respond with an empty array: []`
-            }
-          ],
-          max_tokens: 1024
-        })
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [{
+          role: "system",
+          content: "You are a helpful assistant that responds only in valid JSON format. Your response should be an array of strings."
+        }, {
+          role: "user",
+          content: `Based on this recent exchange, suggest 2-3 questions that might help the user deepen their exploration:\n\n${conversationText}\n\nRespond with a JSON array of questions.`
+        }],
+        max_tokens: 150,
+        response_format: { type: "json_object" }
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to analyze for questions');
-      }
-
-      const data = await response.json();
-      const responseText = data.content[0].text;
-      
-      // Add debug output for Claude's response
       if (debugMode) {
         setMessages(prev => [...prev, {
           type: 'system',
-          content: `📥 Question Analysis Response:
-${responseText}`
+          content: `📥 Question Analysis Response:\n${response.choices[0].message.content}`
         }]);
       }
 
-      const match = responseText.match(/\[.*\]/s);
-      if (!match) {
-        console.error('No JSON array found in response:', responseText);
-        return;
-      }
-
-      const questions = JSON.parse(match[0]);
-      setQuestions(questions);
+      const questions = JSON.parse(response.choices[0].message.content);
+      setQuestions(questions.questions || []);
     } catch (error) {
       console.error('Error analyzing for questions:', error);
-      // Add debug output for errors
       if (debugMode) {
         setMessages(prev => [...prev, {
           type: 'system',
-          content: `❌ Question Analysis Error:
-${error.message}`
+          content: `❌ Question Analysis Error:\n${error.message}`
         }]);
       }
     }
