@@ -34,24 +34,17 @@ export class MemorySystem {
   }
 
   // Basic retrieval strategy - get relevant messages across sessions
-  retrieveRelevantContext(query: string): Message[] {
-    const sessions = this.getAllSessions();
-    const scoredMessages: ScoredMessage[] = [];
-
-    sessions.forEach(session => {
-      session.messages.forEach(message => {
-        const score = this.calculateRelevance(message, query);
-        if (score > 0) {
-          scoredMessages.push({ message, score });
-        }
-      });
-    });
-
-    // Sort by score and return just the messages
-    return scoredMessages
+  retrieveRelevantContext(query: string, currentMessages: Message[]): Message[] {
+    return currentMessages
+      .filter(msg => msg.type === 'user' || msg.type === 'assistant')
+      .map(msg => ({ 
+        message: msg, 
+        score: this.calculateRelevance(msg, query) 
+      }))
+      .filter(item => item.score > 0)
       .sort((a, b) => b.score - a.score)
-      .map(scored => scored.message)
-      .slice(0, 5);  // Start with top 5 most relevant
+      .slice(0, 3)  // Get top 3 most relevant messages
+      .map(item => item.message);
   }
 
   private calculateRelevance(message: Message, query: string): number {
