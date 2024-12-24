@@ -469,7 +469,6 @@ Now, I'd like to generate the final output. Please include the following aspects
                   try {
                     const response = await callClaude(prompt.text);
                     setMessages(prev => [...prev, { type: 'assistant', content: response }]);
-                    analyzeResponse(response);
                   } catch (error) {
                     setMessages(prev => [...prev, { 
                       type: 'system', 
@@ -757,67 +756,50 @@ ${relevant.map((msg, i) => {
 
   const callClaude = async (userMessage) => {
     try {
-      // Get relevant context from current conversation only
-      const relevantContext = memory.retrieveRelevantContext(userMessage, messages);
+      // Get conversation history
+      const contextMessages = buildConversationContext(userMessage, messages, memory);
       
-      // Build recent conversation history first
-      const recentHistory = messages
-        .slice(-5)
-        .filter(msg => msg.type === 'user' || msg.type === 'assistant')
-        .map(msg => ({
-          role: msg.type === 'user' ? 'user' : 'assistant',
-          content: msg.content
-        }));
-
-      // Build system prompt with memory context section
-      let systemPrompt = '';
+      // Add the current message
+      contextMessages.push({
+        role: 'user',
+        content: userMessage
+      });
       
-      // First, add memory context if we have any
-      if (relevantContext.length) {
-        systemPrompt = `Earlier in this conversation, these messages may be relevant:
-${relevantContext.map(msg => `${msg.type}: ${msg.content}`).join('\n')}
+      // Construct system prompt from advisors - emphasize collective perspective
+      const systemPromptText = advisors.length
+        ? `You are a set of advisors embodying multiple perspectives:
 
-Remember these are from earlier in the conversation - use them for context but focus on responding to the current message.
+${advisors.map(a => `${a.name}: ${a.description}`).join('\n\n')}
 
-`;  // Note the extra newline before advisor content
-      }
-
-      // Then add advisor context if we have any
-      if (advisors.length === 1) {
-        systemPrompt += `You are acting as ${advisors[0].name}, ${advisors[0].description}. 
-          Respond in character while maintaining your expertise and perspective.`;
-      } else if (advisors.length > 1) {
-        systemPrompt += `You are facilitating a conversation between these advisors:
-          ${advisors.map(a => `- ${a.name}: ${a.description}`).join('\n')}
-          
-          Generate responses from 2-3 relevant advisors, formatting each response as:
-          [Advisor Name]: Their response...`;
-      }
-
-      // Add debug output for the complete payload
+Respond as each of these perspectives as appropriate, adopting their unique voices directly.`
+        : 'You are Claude, an AI assistant. You are direct, honest, and aim to be helpful.';
+      
       if (debugMode) {
-        console.log('Debug - Before sending debug message:', {
-          systemPrompt,
-          recentHistoryLength: recentHistory.length
-        });
-
+        const estimateTokens = (text) => Math.ceil(text.length / 4);
+        const systemTokens = estimateTokens(systemPromptText);
+        const contextTokens = contextMessages.reduce((sum, msg) => 
+          sum + estimateTokens(msg.content), 0
+        );
+        const totalTokens = systemTokens + contextTokens;
+        
+        const inputCost = ((totalTokens / 1000) * 0.003).toFixed(4);
+        
         setMessages(prev => [...prev, {
           type: 'system',
-          content: `📤 Sending to Claude:
+          content: `🔍 Claude API Call:
+Estimated tokens: ${totalTokens} (System: ${systemTokens}, Context: ${contextTokens})
+Estimated cost: $${inputCost}
+
 System Prompt:
-${systemPrompt || '(none)'}
+${systemPromptText}
 
-Conversation History (Last 5 messages):
-${recentHistory.map((msg, i) => 
+Context Messages:
+${contextMessages.map((msg, i) => 
   `[${i + 1}] ${msg.role}: ${msg.content}`
-).join('\n\n')}
-
-Current Message:
-${userMessage}`
+).join('\n')}`
         }]);
       }
 
-      // Make request to Claude
       const response = await fetch('/api/v1/messages', {
         method: 'POST',
         headers: {
@@ -828,23 +810,22 @@ ${userMessage}`
         },
         body: JSON.stringify({
           model: 'claude-3-5-sonnet-20241022',
-          system: systemPrompt,
-          messages: [
-            ...recentHistory,
-            { role: 'user', content: userMessage }
-          ],
-          max_tokens: 1024
+          messages: contextMessages,
+          system: systemPromptText,
+          max_tokens: 1024,
+          temperature: 0.7
         })
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(`API Error: ${errorData.error?.message || response.statusText}`);
       }
 
       const data = await response.json();
       return data.content[0].text;
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Claude API Error:', error);
       throw error;
     }
   };
@@ -884,134 +865,6 @@ ${userMessage}`
       focusInput();
     }
   };
-
-  const analyzeMetaphors = async (messages) => {
-    const userMessages = messages
-      .filter(msg => msg.type === 'user')
-      .map(msg => msg.content)
-      .join("\n");
-
-    if (debugMode) {
-      setMessages(prev => [...prev, {
-        type: 'system',
-        content: `📤 Metaphor Analysis Request:\nInput messages:\n${userMessages}`
-      }]);
-    }
-
-    try {
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [{
-          role: "system",
-          content: "You are a helpful assistant that responds only in valid JSON format. Your response should be an array of strings."
-        }, {
-          role: "user",
-          content: `Analyze the following messages for conceptual metaphors:\n\n${userMessages}\n\nRespond with a JSON array of metaphors.`
-        }],
-        max_tokens: 150,
-        response_format: { type: "json_object" }
-      });
-
-      if (debugMode) {
-        setMessages(prev => [...prev, {
-          type: 'system',
-          content: `📥 Metaphor Analysis Response:\n${response.choices[0].message.content}`
-        }]);
-      }
-
-      const metaphors = JSON.parse(response.choices[0].message.content);
-      setMetaphors(metaphors.metaphors || []);
-    } catch (error) {
-      console.error('Error analyzing metaphors:', error);
-      if (debugMode) {
-        setMessages(prev => [...prev, {
-          type: 'system',
-          content: `❌ Metaphor Analysis Error:\n${error.message}`
-        }]);
-      }
-    }
-  };
-
-  const analyzeForQuestions = async (messages) => {
-    const recentMessages = [];
-    for (let i = messages.length - 1; i >= 0; i--) {
-      if (messages[i].type === 'assistant' || messages[i].type === 'user') {
-        recentMessages.unshift(messages[i]);
-        if (recentMessages.length >= 2) break;
-      }
-    }
-    
-    const conversationText = recentMessages
-      .map(msg => `${msg.type === 'user' ? 'User' : 'Assistant'}: ${msg.content}`)
-      .join("\n\n");
-
-    if (debugMode) {
-      setMessages(prev => [...prev, {
-        type: 'system',
-        content: `📤 Question Analysis Request:\nRecent exchange:\n${conversationText}`
-      }]);
-    }
-
-    try {
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [{
-          role: "system",
-          content: "You are a helpful assistant that responds only in valid JSON format. Your response should be an array of strings."
-        }, {
-          role: "user",
-          content: `Based on this recent exchange, suggest 2-3 questions that might help the user deepen their exploration:\n\n${conversationText}\n\nRespond with a JSON array of questions.`
-        }],
-        max_tokens: 150,
-        response_format: { type: "json_object" }
-      });
-
-      if (debugMode) {
-        setMessages(prev => [...prev, {
-          type: 'system',
-          content: `📥 Question Analysis Response:\n${response.choices[0].message.content}`
-        }]);
-      }
-
-      const questions = JSON.parse(response.choices[0].message.content);
-      setQuestions(questions.questions || []);
-    } catch (error) {
-      console.error('Error analyzing for questions:', error);
-      if (debugMode) {
-        setMessages(prev => [...prev, {
-          type: 'system',
-          content: `❌ Question Analysis Error:\n${error.message}`
-        }]);
-      }
-    }
-  };
-
-  const analyzeResponse = (text) => {
-    analyzeMetaphors(messages);
-    analyzeForQuestions(messages);
-  };
-
-  // Add new useEffect for message analysis
-  useEffect(() => {
-    if (messages.length > 1 && messages[messages.length - 1].type === 'assistant') {
-      analyzeMetaphors(messages);
-      analyzeForQuestions(messages);
-    }
-  }, [messages]);
-
-  // Update storage useEffect with dependencies
-  useEffect(() => {
-    if (messages.length > 1) {  // Don't save empty sessions
-      const session = {
-        id: currentSessionId,
-        timestamp: new Date().toISOString(),
-        messages,
-        metaphors,
-        questions
-      };
-      localStorage.setItem(`space_session_${currentSessionId}`, JSON.stringify(session));
-    }
-  }, [messages, currentSessionId, metaphors, questions]);
 
   const focusInput = () => {
     if (editingPrompt || editingAdvisor) {
@@ -1274,6 +1127,31 @@ Exported on: ${timestamp}\n\n`;
       localStorage.removeItem('space_advisors');
     }
   }, [advisors]);
+
+  const buildConversationContext = (userMessage, messages, memory) => {
+    // Filter out system messages and keep only actual conversation
+    const conversationMessages = messages
+      .filter(msg => 
+        // Only keep user messages and assistant responses
+        (msg.type === 'user' || msg.type === 'assistant') &&
+        // Exclude system notifications
+        !msg.content.includes('Terminal v0.1') &&
+        !msg.content.includes('Debug mode') &&
+        !msg.content.includes('Claude API Call')
+      )
+      // Convert to Claude's message format
+      .map(msg => ({
+        role: msg.type === 'user' ? 'user' : 'assistant',
+        content: msg.content
+      }));
+
+    // For debugging
+    if (debugMode) {
+      console.log('Conversation history:', conversationMessages);
+    }
+
+    return conversationMessages;
+  };
 
   return (
     <div className="w-full h-screen bg-black text-green-400 font-mono flex">
