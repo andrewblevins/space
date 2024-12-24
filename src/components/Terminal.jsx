@@ -867,7 +867,6 @@ ${userMessage}`
     try {
       const response = await callClaude(input);
       setMessages(prev => [...prev, { type: 'assistant', content: response }]);
-      analyzeResponse(response);
     } catch (error) {
       setMessages(prev => [...prev, { 
         type: 'system', 
@@ -885,6 +884,16 @@ ${userMessage}`
       .filter(msg => msg.type === 'user')
       .map(msg => msg.content)
       .join("\n");
+
+    // Add debug output for input
+    if (debugMode) {
+      setMessages(prev => [...prev, {
+        type: 'system',
+        content: `📤 Metaphor Analysis Request:
+Input messages:
+${userMessages}`
+      }]);
+    }
 
     try {
       const response = await fetch('/api/v1/messages', {
@@ -929,6 +938,15 @@ If you find no metaphors, respond with an empty array: []`
       const data = await response.json();
       const responseText = data.content[0].text;
       
+      // Add debug output for Claude's response
+      if (debugMode) {
+        setMessages(prev => [...prev, {
+          type: 'system',
+          content: `📥 Metaphor Analysis Response:
+${responseText}`
+        }]);
+      }
+
       const match = responseText.match(/\[.*\]/s);
       if (!match) {
         console.error('No JSON array found in response:', responseText);
@@ -939,6 +957,14 @@ If you find no metaphors, respond with an empty array: []`
       setMetaphors(metaphors);
     } catch (error) {
       console.error('Error analyzing metaphors:', error);
+      // Add debug output for errors
+      if (debugMode) {
+        setMessages(prev => [...prev, {
+          type: 'system',
+          content: `❌ Metaphor Analysis Error:
+${error.message}`
+        }]);
+      }
     }
   };
 
@@ -1010,7 +1036,15 @@ If you can't generate meaningful questions, respond with an empty array: []`
     analyzeForQuestions(messages);
   };
 
-  // Save messages to localStorage whenever they change
+  // Add new useEffect for message analysis
+  useEffect(() => {
+    if (messages.length > 1 && messages[messages.length - 1].type === 'assistant') {
+      analyzeMetaphors(messages);
+      analyzeForQuestions(messages);
+    }
+  }, [messages]);
+
+  // Update storage useEffect with dependencies
   useEffect(() => {
     if (messages.length > 1) {  // Don't save empty sessions
       const session = {
@@ -1022,7 +1056,7 @@ If you can't generate meaningful questions, respond with an empty array: []`
       };
       localStorage.setItem(`space_session_${currentSessionId}`, JSON.stringify(session));
     }
-  }, [messages]);
+  }, [messages, currentSessionId, metaphors, questions]);
 
   const focusInput = () => {
     if (editingPrompt || editingAdvisor) {
