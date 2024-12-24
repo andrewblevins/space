@@ -799,6 +799,24 @@ Content: ${msg.content.slice(0, 150)}...`
           [Advisor Name]: Their response...`;
       }
 
+      // Add debug output for the complete payload
+      if (debugMode) {
+        setMessages(prev => [...prev, {
+          type: 'system',
+          content: `📤 Sending to Claude:
+System Prompt:
+${systemPrompt || '(none)'}
+
+Conversation History:
+${conversationHistory.map((msg, i) => 
+  `[${i + 1}] ${msg.role}: ${msg.content}`
+).join('\n\n')}
+
+Current Message:
+${userMessage}`
+        }]);
+      }
+
       // Make request to Claude
       const response = await fetch('/api/v1/messages', {
         method: 'POST',
@@ -827,7 +845,7 @@ Content: ${msg.content.slice(0, 150)}...`
       return data.content[0].text;
     } catch (error) {
       console.error('Error:', error);
-      throw error; // Re-throw to be handled by handleSubmit
+      throw error;
     }
   };
 
