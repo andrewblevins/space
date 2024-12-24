@@ -982,6 +982,16 @@ ${error.message}`
       .map(msg => `${msg.type === 'user' ? 'User' : 'Assistant'}: ${msg.content}`)
       .join("\n\n");
 
+    // Add debug output for input
+    if (debugMode) {
+      setMessages(prev => [...prev, {
+        type: 'system',
+        content: `📤 Question Analysis Request:
+Recent exchange:
+${conversationText}`
+      }]);
+    }
+
     try {
       const response = await fetch('/api/v1/messages', {
         method: 'POST',
@@ -1018,6 +1028,15 @@ If you can't generate meaningful questions, respond with an empty array: []`
       const data = await response.json();
       const responseText = data.content[0].text;
       
+      // Add debug output for Claude's response
+      if (debugMode) {
+        setMessages(prev => [...prev, {
+          type: 'system',
+          content: `📥 Question Analysis Response:
+${responseText}`
+        }]);
+      }
+
       const match = responseText.match(/\[.*\]/s);
       if (!match) {
         console.error('No JSON array found in response:', responseText);
@@ -1028,6 +1047,14 @@ If you can't generate meaningful questions, respond with an empty array: []`
       setQuestions(questions);
     } catch (error) {
       console.error('Error analyzing for questions:', error);
+      // Add debug output for errors
+      if (debugMode) {
+        setMessages(prev => [...prev, {
+          type: 'system',
+          content: `❌ Question Analysis Error:
+${error.message}`
+        }]);
+      }
     }
   };
 
