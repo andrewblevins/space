@@ -167,7 +167,6 @@ const Terminal = () => {
 \`/advisor edit <name>\`               - Edit advisor description
 \`/advisor select <name>\`             - Select active advisor
 \`/advisor list\`                      - Show all advisors
-\`/advisor board\`                     - Enable board mode
 
 ## Prompt Management
 \`/prompt add <name> <text>\`   - Save a new prompt
@@ -1271,7 +1270,7 @@ Exported on: ${timestamp}\n\n`;
     if (advisors.length > 0) {
       localStorage.setItem('space_advisors', JSON.stringify(advisors));
     } else {
-      localStorage.removeItem('space_advisors');  // Clean up if no advisors
+      localStorage.removeItem('space_advisors');
     }
   }, [advisors]);
 
