@@ -5,9 +5,9 @@ import { MemorySystem } from '../lib/memory';
 const Module = ({ title, items = [] }) => (
   <div className="bg-gray-900 p-4">
     <h2 className="text-purple-400 mb-2">{title}</h2>
-    <ul>
+    <ul className="space-y-4">
       {items.map((item, idx) => (
-        <li key={idx} className="text-gray-300 mb-1">{item}</li>
+        <li key={idx} className="text-gray-300 whitespace-pre-wrap">{item}</li>
       ))}
     </ul>
   </div>
@@ -49,7 +49,6 @@ const Terminal = () => {
     return saved ? JSON.parse(saved) : [];
   });
   const [activeAdvisor, setActiveAdvisor] = useState(null);
-  const [boardMode, setBoardMode] = useState(false);
   const [debugMode, setDebugMode] = useState(false);
   const inputRef = useRef(null);
   const [savedPrompts, setSavedPrompts] = useState(() => {
@@ -377,14 +376,6 @@ Now, I'd like to generate the final output. Please include the following aspects
               setActiveAdvisor(advisor);
               return true;
 
-            case 'board':
-              setBoardMode(prev => !prev);  // Toggle board mode
-              setMessages(prev => [...prev, {
-                type: 'system',
-                content: `Board mode ${!boardMode ? 'enabled' : 'disabled'}`
-              }]);
-              return true;
-
             case 'edit':
               if (!args[1]) {
                 setMessages(prev => [...prev, {
@@ -413,7 +404,14 @@ Now, I'd like to generate the final output. Please include the following aspects
           }
 
         case '/debug':
-          setDebugMode(prev => !prev);
+          console.log('Debug command received');
+          console.log('Current debugMode:', debugMode);
+          setDebugMode(prev => {
+            const newValue = !prev;
+            console.log('Setting debugMode to:', newValue);
+            return newValue;
+          });
+          console.log('After setDebugMode call');
           setMessages(prev => [...prev, {
             type: 'system',
             content: `Debug mode ${!debugMode ? 'enabled' : 'disabled'}`
@@ -464,9 +462,7 @@ Now, I'd like to generate the final output. Please include the following aspects
                   setMessages(prev => [...prev, { type: 'user', content: prompt.text }]);
                   setIsLoading(true);
                   try {
-                    const response = boardMode ? 
-                      await callClaudeWithBoard(prompt.text) :
-                      await callClaude(prompt.text);
+                    const response = await callClaude(prompt.text);
                     setMessages(prev => [...prev, { type: 'assistant', content: response }]);
                     analyzeResponse(response);
                   } catch (error) {
@@ -755,19 +751,27 @@ ${relevant.map((msg, i) => {
   };
 
   const callClaude = async (userMessage) => {
+    console.log('callClaude called, debugMode:', debugMode);
     try {
-      // Get relevant context from memory
       const relevantContext = memory.retrieveRelevantContext(userMessage);
       
-      // Add debug output if enabled
+      // Debug output if enabled
       if (debugMode) {
         setMessages(prev => [...prev, {
           type: 'system',
-          content: `🔍 Debug: Found ${relevantContext.length} relevant messages from memory`
+          content: `🔍 Memory System Debug:
+Query: "${userMessage}"
+Found ${relevantContext.length} relevant messages:
+${relevantContext.map((msg, i) => {
+  const score = memory.calculateRelevance(msg, userMessage);
+  return `[${i + 1}] Score: ${score}
+Type: ${msg.type}
+Content: ${msg.content.slice(0, 150)}...`
+}).join('\n\n')}`
         }]);
       }
 
-      // Include relevant context in the conversation history
+      // Build conversation history
       const conversationHistory = [
         ...relevantContext.map(msg => ({
           role: msg.type === 'user' ? 'user' : 'assistant',
@@ -781,37 +785,22 @@ ${relevant.map((msg, i) => {
           }))
       ];
 
-      // Get active advisor's context
-      const advisorContext = activeAdvisor ? 
-        `You are acting as ${activeAdvisor.name}, ${activeAdvisor.description}. 
-         Respond in character while maintaining your expertise and perspective.` : 
-        null;
-
-      const requestBody = {
-        model: 'claude-3-5-sonnet-20241022',
-        system: advisorContext,
-        messages: [
-          ...conversationHistory,
-          { role: 'user', content: userMessage }
-        ],
-        max_tokens: 1024
-      };
-
-      // Add system message if there's an active advisor
-      if (advisorContext) {
-        requestBody.system = advisorContext;
+      // Build system prompt based on number of advisors
+      let systemPrompt = '';
+      if (advisors.length === 0) {
+        systemPrompt = ''; // Standard conversation
+      } else if (advisors.length === 1) {
+        systemPrompt = `You are acting as ${advisors[0].name}, ${advisors[0].description}. 
+          Respond in character while maintaining your expertise and perspective.`;
+      } else {
+        systemPrompt = `You are facilitating a conversation between these advisors:
+          ${advisors.map(a => `- ${a.name}: ${a.description}`).join('\n')}
+          
+          Generate responses from 2-3 relevant advisors, formatting each response as:
+          [Advisor Name]: Their response...`;
       }
-      
-      // Add debug output for request
-      if (debugMode) {
-        setMessages(prev => [...prev, {
-          type: 'system',
-          content: '🔍 Debug: Request to Claude API:\n```json\n' + 
-            JSON.stringify(requestBody, null, 2) + 
-            '\n```'
-        }]);
-      }
-      
+
+      // Make request to Claude
       const response = await fetch('/api/v1/messages', {
         method: 'POST',
         headers: {
@@ -820,25 +809,63 @@ ${relevant.map((msg, i) => {
           'anthropic-version': '2023-06-01',
           'anthropic-dangerous-direct-browser-access': 'true'
         },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify({
+          model: 'claude-3-5-sonnet-20241022',
+          system: systemPrompt,
+          messages: [
+            ...conversationHistory,
+            { role: 'user', content: userMessage }
+          ],
+          max_tokens: 1024
+        })
       });
 
-      const data = await response.json();
-
-      // Add debug output for response
-      if (debugMode) {
-        setMessages(prev => [...prev, {
-          type: 'system',
-          content: '🔍 Debug: Response from Claude API:\n```json\n' + 
-            JSON.stringify(data, null, 2) + 
-            '\n```'
-        }]);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
+      const data = await response.json();
       return data.content[0].text;
     } catch (error) {
       console.error('Error:', error);
-      return `Error: ${error.message}`;
+      throw error; // Re-throw to be handled by handleSubmit
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    console.log('handleSubmit called');
+    
+    if (!input.trim() || isLoading) {
+      return;
+    }
+
+    // Handle commands first
+    if (input.startsWith('/')) {
+      const commandHandled = handleCommand(input);
+      if (commandHandled) {
+        setInput('');
+        return;
+      }
+    }
+
+    console.log('Sending message to Claude, debugMode:', debugMode);
+    setMessages(prev => [...prev, { type: 'user', content: input }]);
+    setIsLoading(true);
+
+    try {
+      const response = await callClaude(input);
+      setMessages(prev => [...prev, { type: 'assistant', content: response }]);
+      analyzeResponse(response);
+    } catch (error) {
+      setMessages(prev => [...prev, { 
+        type: 'system', 
+        content: 'Error: Failed to get response from Claude' 
+      }]);
+    } finally {
+      setIsLoading(false);
+      setInput('');
+      focusInput();
     }
   };
 
@@ -972,300 +999,6 @@ If you can't generate meaningful questions, respond with an empty array: []`
     analyzeForQuestions(messages);
   };
 
-  // Add this array to define commands that shouldn't be run during worksheet mode
-  const blockedCommands = ['/worksheet', '/export', '/help', '/reset', '/new', '/sessions', '/load', '/clear', '/debug'];
-
-  // Modify handleSubmit to check against blocked commands
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!input.trim() || isLoading) {
-      return;
-    }
-
-    // Handle commands first
-    if (input.startsWith('/')) {
-      // If in worksheet mode, check for blocked commands
-      if (worksheetMode) {
-        // Check if the input is a blocked command
-        if (blockedCommands.includes(input.toLowerCase())) {
-          setMessages(prev => [...prev, {
-            type: 'system',
-            content: `You can't use the command "${input}" while the worksheet is active.`
-          }]);
-          setInput('');
-          return;
-        }
-
-        // Allow help command
-        if (input.toLowerCase() === '/help') {
-          handleCommand(input);
-          setInput('');
-          return;
-        }
-        
-        if (input.toLowerCase() === '/cancel') {
-          setWorksheetMode(false);
-          setMessages(prev => [...prev, {
-            type: 'system',
-            content: 'Worksheet cancelled'
-          }]);
-          setInput('');
-          return;
-        }
-      }
-
-      // Handle regular commands
-      const commandHandled = handleCommand(input);
-      if (commandHandled) {
-        setInput('');
-        return;
-      }
-    }
-
-    // Handle worksheet mode
-    if (worksheetMode && currentWorksheetId) {
-      console.log('Worksheet mode active:', {
-        currentWorksheetId,
-        template: WORKSHEET_TEMPLATES[currentWorksheetId],
-        hasQuestions: !!WORKSHEET_TEMPLATES[currentWorksheetId].questions,
-        hasSections: !!WORKSHEET_TEMPLATES[currentWorksheetId].sections,
-        currentStep: worksheetStep,
-        input
-      });
-
-      const template = WORKSHEET_TEMPLATES[currentWorksheetId];
-      
-      if (template.sections) {
-        // Handle sectioned worksheet
-        const currentSectionData = template.sections[currentSection];
-        const currentQuestionData = currentSectionData.questions[currentQuestion];
-        
-        console.log('Processing sectioned worksheet:', {
-          currentSection,
-          currentQuestion,
-          sectionData: currentSectionData,
-          questionData: currentQuestionData,
-          isLastQuestion: currentQuestion === currentSectionData.questions.length - 1,
-          isLastSection: currentSection === template.sections.length - 1
-        });
-        
-        // Save answer
-        setWorksheetAnswers(prev => ({
-          ...prev,
-          [currentSectionData.name]: {
-            ...prev[currentSectionData.name],
-            [currentQuestionData.id]: input
-          }
-        }));
-
-        // Move to next question in section
-        if (currentQuestion < currentSectionData.questions.length - 1) {
-          setCurrentQuestion(prev => prev + 1);
-          setMessages(prev => [...prev, {
-            type: 'user',
-            content: input
-          }, {
-            type: 'system',
-            content: currentSectionData.questions[currentQuestion + 1].question
-          }]);
-        } 
-        // Or move to next section
-        else if (currentSection < template.sections.length - 1) {
-          setCurrentSection(prev => prev + 1);
-          setCurrentQuestion(0);
-          const nextSection = template.sections[currentSection + 1];
-          setMessages(prev => [...prev, {
-            type: 'user',
-            content: input
-          }, {
-            type: 'system',
-            content: `Section: ${nextSection.name}\n\n${nextSection.questions[0].question}`
-          }]);
-        } 
-        // Or complete worksheet
-        else {
-          // Complete the worksheet
-          setWorksheetMode(false);
-          setCurrentWorksheetId(null);
-          setCurrentSection(0);
-          setCurrentQuestion(0);
-          
-          // Save the final answer before generating markdown
-          const finalAnswers = {
-            ...worksheetAnswers,
-            aspirational_words: input
-          };
-          
-          const worksheetId = generateWorksheetId('basic');
-          const markdown = `# AI Advisor Board Worksheet (Basic)
-Generated on: ${new Date().toLocaleString()}
-
-### ${template.questions[0].question}
-${finalAnswers.life_areas}
-
-### ${template.questions[1].question}
-${finalAnswers.inspiring_people}
-
-### ${template.questions[2].question}
-${finalAnswers.fictional_characters}
-
-### ${template.questions[3].question}
-${finalAnswers.viewquake_books}
-
-### ${template.questions[4].question}
-${finalAnswers.wisdom_traditions}
-
-### ${template.questions[5].question}
-${finalAnswers.aspirational_words}`;
-
-          // Save to localStorage
-          const worksheetData = {
-            id: worksheetId,
-            timestamp: new Date().toISOString(),
-            type: 'basic',
-            answers: finalAnswers,
-            formatted: markdown
-          };
-
-          localStorage.setItem(`space_worksheet_${worksheetId}`, JSON.stringify(worksheetData));
-
-          // Export to file
-          const blob = new Blob([markdown], { type: 'text/markdown' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `advisor-worksheet-${worksheetId}.md`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-
-          setMessages(prev => [...prev, {
-            type: 'user',
-            content: input
-          }, {
-            type: 'system',
-            content: `Worksheet complete! Your answers have been saved as Worksheet ${worksheetId} and exported to a markdown file.`
-          }]);
-        }
-        setInput('');
-        return;
-      } else {
-        // Handle basic worksheet
-        console.log('Processing basic worksheet:', {
-          currentStep: worksheetStep,
-          totalQuestions: template.questions.length,
-          currentQuestion: template.questions[worksheetStep]
-        });
-
-        // Save the current answer
-        setWorksheetAnswers(prev => ({
-          ...prev,
-          [template.questions[worksheetStep].id]: input
-        }));
-
-        // Move to next question or finish
-        if (worksheetStep < template.questions.length - 1) {
-          setWorksheetStep(prev => prev + 1);
-          setMessages(prev => [...prev, {
-            type: 'user',
-            content: input
-          }, {
-            type: 'system',
-            content: template.questions[worksheetStep + 1].question
-          }]);
-        } else {
-          // Complete the worksheet
-          setWorksheetMode(false);
-          setCurrentWorksheetId(null);
-          
-          // Save the final answer before generating markdown
-          const finalAnswers = {
-            ...worksheetAnswers,
-            aspirational_words: input
-          };
-          
-          const worksheetId = generateWorksheetId('basic');
-          const markdown = `# AI Advisor Board Worksheet (Basic)
-Generated on: ${new Date().toLocaleString()}
-
-### ${template.questions[0].question}
-${finalAnswers.life_areas}
-
-### ${template.questions[1].question}
-${finalAnswers.inspiring_people}
-
-### ${template.questions[2].question}
-${finalAnswers.fictional_characters}
-
-### ${template.questions[3].question}
-${finalAnswers.viewquake_books}
-
-### ${template.questions[4].question}
-${finalAnswers.wisdom_traditions}
-
-### ${template.questions[5].question}
-${finalAnswers.aspirational_words}`;
-
-          // Save to localStorage
-          const worksheetData = {
-            id: worksheetId,
-            timestamp: new Date().toISOString(),
-            type: 'basic',
-            answers: finalAnswers,
-            formatted: markdown
-          };
-
-          localStorage.setItem(`space_worksheet_${worksheetId}`, JSON.stringify(worksheetData));
-
-          // Export to file
-          const blob = new Blob([markdown], { type: 'text/markdown' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `advisor-worksheet-${worksheetId}.md`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-
-          setMessages(prev => [...prev, {
-            type: 'user',
-            content: input
-          }, {
-            type: 'system',
-            content: `Worksheet complete! Your answers have been saved as Worksheet ${worksheetId} and exported to a markdown file.`
-          }]);
-        }
-        setInput('');
-        return;
-      }
-    }
-
-    // Regular message handling should only happen if we're not in worksheet mode
-    if (!worksheetMode) {
-      setMessages(prev => [...prev, { type: 'user', content: input }]);
-      setIsLoading(true);
-      try {
-        const response = boardMode ? 
-          await callClaudeWithBoard(input) :
-          await callClaude(input);
-        setMessages(prev => [...prev, { type: 'assistant', content: response }]);
-        analyzeResponse(response);
-      } catch (error) {
-        setMessages(prev => [...prev, { 
-          type: 'system', 
-          content: 'Error: Failed to get response from Claude' 
-        }]);
-      } finally {
-        setIsLoading(false);
-        setInput('');
-        focusInput();
-      }
-    }
-  };
-
   // Save messages to localStorage whenever they change
   useEffect(() => {
     if (messages.length > 1) {  // Don't save empty sessions
@@ -1279,61 +1012,6 @@ ${finalAnswers.aspirational_words}`;
       localStorage.setItem(`space_session_${currentSessionId}`, JSON.stringify(session));
     }
   }, [messages]);
-
-  const callClaudeWithBoard = async (userMessage) => {
-    try {
-      // Only proceed if we have advisors
-      if (advisors.length === 0) {
-        return "No advisors configured. Use /advisor add to create some advisors first.";
-      }
-
-      const boardContext = `You are facilitating a conversation between these advisors:
-        ${advisors.map(a => `- ${a.name}: ${a.description}`).join('\n')}
-        
-        Generate responses from 2-3 relevant advisors, formatting each response as:
-        [Advisor Name]: Their response...`;
-
-      // Create conversation history
-      const conversationHistory = messages
-        .filter(msg => msg.type === 'user' || msg.type === 'assistant')
-        .map(msg => ({
-          role: msg.type === 'user' ? 'user' : 'assistant',
-          content: msg.content
-        }));
-
-      const requestBody = {
-        model: 'claude-3-5-sonnet-20241022',
-        system: boardContext,
-        messages: [
-          ...conversationHistory,
-          { role: 'user', content: userMessage }
-        ],
-        max_tokens: 1024
-      };
-
-      const response = await fetch('/api/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': import.meta.env.VITE_ANTHROPIC_API_KEY,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true'
-        },
-        body: JSON.stringify(requestBody)
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
-      }
-
-      const data = await response.json();
-      return data.content[0].text;
-    } catch (error) {
-      console.error('Error calling Claude with board:', error);
-      return `Error: Could not connect to Claude (${error.message})`;
-    }
-  };
 
   const focusInput = () => {
     if (editingPrompt || editingAdvisor) {
@@ -1592,6 +1270,8 @@ Exported on: ${timestamp}\n\n`;
   useEffect(() => {
     if (advisors.length > 0) {
       localStorage.setItem('space_advisors', JSON.stringify(advisors));
+    } else {
+      localStorage.removeItem('space_advisors');  // Clean up if no advisors
     }
   }, [advisors]);
 
@@ -1602,11 +1282,10 @@ Exported on: ${timestamp}\n\n`;
         <Module title="Active Metaphors" items={metaphors} />
         <div className="mt-4">
           <Module 
-            title={boardMode ? "Active Board" : "Active Advisor"}
-            items={
-              boardMode ? 
-                advisors.map(a => `${a.name}: ${a.description}`) :
-                (activeAdvisor ? [`${activeAdvisor.name}: ${activeAdvisor.description}`] : [])
+            title="Active Advisors"
+            items={advisors.length > 0 ? 
+              advisors.map(a => `${a.name}: ${a.description}`) :
+              []
             } 
           />
         </div>
