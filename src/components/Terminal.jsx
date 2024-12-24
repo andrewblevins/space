@@ -750,49 +750,38 @@ ${relevant.map((msg, i) => {
   };
 
   const callClaude = async (userMessage) => {
-    console.log('callClaude called, debugMode:', debugMode);
     try {
-      const relevantContext = memory.retrieveRelevantContext(userMessage);
+      // Get relevant context from current conversation only
+      const relevantContext = memory.retrieveRelevantContext(userMessage, messages);
       
-      // Debug output if enabled
-      if (debugMode) {
-        setMessages(prev => [...prev, {
-          type: 'system',
-          content: `🔍 Memory System Debug:
-Query: "${userMessage}"
-Found ${relevantContext.length} relevant messages:
-${relevantContext.map((msg, i) => {
-  const score = memory.calculateRelevance(msg, userMessage);
-  return `[${i + 1}] Score: ${score}
-Type: ${msg.type}
-Content: ${msg.content.slice(0, 150)}...`
-}).join('\n\n')}`
-        }]);
-      }
-
-      // Build conversation history
-      const conversationHistory = [
-        ...relevantContext.map(msg => ({
+      // Build recent conversation history first
+      const recentHistory = messages
+        .slice(-5)
+        .filter(msg => msg.type === 'user' || msg.type === 'assistant')
+        .map(msg => ({
           role: msg.type === 'user' ? 'user' : 'assistant',
           content: msg.content
-        })),
-        ...messages
-          .filter(msg => msg.type === 'user' || msg.type === 'assistant')
-          .map(msg => ({
-            role: msg.type === 'user' ? 'user' : 'assistant',
-            content: msg.content
-          }))
-      ];
+        }));
 
-      // Build system prompt based on number of advisors
+      // Build system prompt with memory context section
       let systemPrompt = '';
-      if (advisors.length === 0) {
-        systemPrompt = ''; // Standard conversation
-      } else if (advisors.length === 1) {
-        systemPrompt = `You are acting as ${advisors[0].name}, ${advisors[0].description}. 
+      
+      // First, add memory context if we have any
+      if (relevantContext.length) {
+        systemPrompt = `Earlier in this conversation, these messages may be relevant:
+${relevantContext.map(msg => `${msg.type}: ${msg.content}`).join('\n')}
+
+Remember these are from earlier in the conversation - use them for context but focus on responding to the current message.
+
+`;  // Note the extra newline before advisor content
+      }
+
+      // Then add advisor context if we have any
+      if (advisors.length === 1) {
+        systemPrompt += `You are acting as ${advisors[0].name}, ${advisors[0].description}. 
           Respond in character while maintaining your expertise and perspective.`;
-      } else {
-        systemPrompt = `You are facilitating a conversation between these advisors:
+      } else if (advisors.length > 1) {
+        systemPrompt += `You are facilitating a conversation between these advisors:
           ${advisors.map(a => `- ${a.name}: ${a.description}`).join('\n')}
           
           Generate responses from 2-3 relevant advisors, formatting each response as:
@@ -801,14 +790,19 @@ Content: ${msg.content.slice(0, 150)}...`
 
       // Add debug output for the complete payload
       if (debugMode) {
+        console.log('Debug - Before sending debug message:', {
+          systemPrompt,
+          recentHistoryLength: recentHistory.length
+        });
+
         setMessages(prev => [...prev, {
           type: 'system',
           content: `📤 Sending to Claude:
 System Prompt:
 ${systemPrompt || '(none)'}
 
-Conversation History:
-${conversationHistory.map((msg, i) => 
+Conversation History (Last 5 messages):
+${recentHistory.map((msg, i) => 
   `[${i + 1}] ${msg.role}: ${msg.content}`
 ).join('\n\n')}
 
@@ -830,7 +824,7 @@ ${userMessage}`
           model: 'claude-3-5-sonnet-20241022',
           system: systemPrompt,
           messages: [
-            ...conversationHistory,
+            ...recentHistory,
             { role: 'user', content: userMessage }
           ],
           max_tokens: 1024
