@@ -1513,14 +1513,14 @@ When responding, you should adopt the distinct voice(s) of the active advisor(s)
 
       {/* Middle Column */}
       <div className="w-2/4 p-4 flex flex-col">
-        <div ref={messagesContainerRef} className="flex-1 overflow-auto mb-4">
+        <div ref={messagesContainerRef} className="flex-1 overflow-auto mb-4 break-words">
           {messages.map((msg, idx) => (
             <div key={idx} className={(() => {
-              const className = msg.type === 'debug' ? 'text-yellow-400 mb-4 whitespace-pre-wrap' :
-                msg.type === 'user' ? 'text-green-400 mb-4' : 
-                msg.type === 'assistant' ? 'text-white mb-4' : 
-                msg.type === 'system' ? 'text-green-400 mb-4' :
-                'text-green-400 mb-4';
+              const className = msg.type === 'debug' ? 'text-yellow-400 mb-4 whitespace-pre-wrap break-words' :
+                msg.type === 'user' ? 'text-green-400 mb-4 break-words' : 
+                msg.type === 'assistant' ? 'text-white mb-4 break-words' : 
+                msg.type === 'system' ? 'text-green-400 mb-4 break-words' :
+                'text-green-400 mb-4 break-words';
               return className;
             })()}>
               {(msg.type === 'system' || msg.type === 'assistant') ? (
