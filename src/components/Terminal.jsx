@@ -1361,10 +1361,10 @@ Exported on: ${timestamp}\n\n`;
 
     return `${DEFAULT_SYSTEM_PROMPT}
 
-You are currently channeling the following advisors:
+You are currently embodying the following advisors:
 ${activeAdvisors.map(a => `\n${a.name}: ${a.description}`).join('\n')}
 
-When responding, you should embody these perspectives and voices as appropriate to the context and question.`;
+When responding, you should adopt the distinct voice(s) of the active advisor(s) as appropriate to the context and question.`;
   };
 
   return (
