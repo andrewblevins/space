@@ -603,7 +603,7 @@ Now, I'd like to generate the final output. Please include the following aspects
               setEditText(promptToEdit.text);
               setMessages(prev => [...prev, {
                 type: 'system',
-                content: `Editing prompt "${promptToEdit.name}"\nCtrl+Enter to save �� Escape to cancel`
+                content: `Editing prompt "${promptToEdit.name}"\nCtrl+Enter to save • Escape to cancel`
               }]);
               return true;
 
@@ -1375,10 +1375,7 @@ When responding, you should adopt the distinct voice(s) of the active advisor(s)
         <div className="mt-4">
           <Module 
             title="Active Advisors"
-            items={advisors.length > 0 ? 
-              advisors.map(a => `${a.name}: ${a.description}`) :
-              []
-            } 
+            items={advisors.filter(a => a.active).map(a => `${a.name}: ${a.description}`)} 
           />
         </div>
       </div>
