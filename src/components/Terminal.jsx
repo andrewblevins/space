@@ -226,6 +226,13 @@ const Terminal = () => {
           return true;
 
         case '/reset':
+          setMessages(prev => [...prev, {
+            type: 'system',
+            content: 'Are you sure you want to delete all saved sessions? This cannot be undone.\n\nType "/reset confirm" to proceed, otherwise do anything else to cancel.'
+          }]);
+          return true;
+
+        case '/reset confirm':
           // Clear all sessions from localStorage
           Object.keys(localStorage).forEach(key => {
             if (key.startsWith('space_session_')) {
