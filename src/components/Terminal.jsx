@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import { MemorySystem } from '../lib/memory';
 import { OpenAI } from 'openai';
 import AdvisorForm from './AdvisorForm';
+import EditAdvisorForm from './EditAdvisorForm';
 
 const Module = ({ title, items = [] }) => (
   <div className="bg-gray-900 p-4">
@@ -501,12 +502,7 @@ Now, I'd like to generate the final output. Please include the following aspects
                 return true;
               }
 
-              setEditingAdvisor(advisorToEdit.name);
-              setEditAdvisorText(advisorToEdit.description);
-              setMessages(prev => [...prev, {
-                type: 'system',
-                content: `Editing advisor "${advisorToEdit.name}"\nCtrl+Enter to save • Escape to cancel`
-              }]);
+              setEditingAdvisor(advisorToEdit);
               return true;
 
             case 'delete':
@@ -1545,6 +1541,31 @@ When responding, you should adopt the distinct voice(s) of the active advisor(s)
             setMessages(prev => [...prev, {
               type: 'system',
               content: 'Cancelled adding advisor'
+            }]);
+          }}
+        />
+      )}
+
+      {editingAdvisor && (
+        <EditAdvisorForm
+          advisor={editingAdvisor}
+          onSubmit={({ name, description }) => {
+            setAdvisors(prev => prev.map(a => 
+              a.name === editingAdvisor.name 
+                ? { ...a, name, description }
+                : a
+            ));
+            setMessages(prev => [...prev, {
+              type: 'system',
+              content: `Updated advisor: ${name}`
+            }]);
+            setEditingAdvisor(null);
+          }}
+          onCancel={() => {
+            setEditingAdvisor(null);
+            setMessages(prev => [...prev, {
+              type: 'system',
+              content: 'Edit cancelled'
             }]);
           }}
         />
