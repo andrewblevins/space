@@ -1364,7 +1364,7 @@ Exported on: ${timestamp}\n\n`;
 You are currently channeling the following advisors:
 ${activeAdvisors.map(a => `\n${a.name}: ${a.description}`).join('\n')}
 
-When responding, you should embody these perspectives and voices as appropriate to the context and question. You may respond as yourself, or explicitly adopt the voice of one of these advisors when their perspective would be particularly relevant.`;
+When responding, you should embody these perspectives and voices as appropriate to the context and question.`;
   };
 
   return (
