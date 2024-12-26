@@ -160,7 +160,7 @@ const Terminal = () => {
         case '/help':
           setMessages(prev => [...prev, {
             type: 'system',
-            content: `# SPACE Terminal v0.1 - Command Reference
+            content: `# Command Reference
 
 ## Session Management
 \`/clear\`              - Clear terminal
