@@ -21,7 +21,7 @@ const MarkdownMessage = ({ content }) => (
       h1: ({children}) => <h1 className="text-blue-400 font-bold">{children}</h1>,
       h2: ({children}) => <h2 className="text-green-400 font-bold">{children}</h2>,
       code: ({children}) => <code className="text-green-400">{children}</code>,
-      p: ({children}) => <p className="text-blue-400 whitespace-pre-wrap">{children}</p>,
+      p: ({children}) => <p className="text-white whitespace-pre-wrap">{children}</p>,
     }}
   >
     {content}
