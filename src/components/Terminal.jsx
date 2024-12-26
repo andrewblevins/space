@@ -997,10 +997,12 @@ ${contextMessages.map((msg, i) =>
 
       while (true) {
         const { done, value } = await reader.read();
-        console.log('Stream read:', { done, hasValue: !!value });
         
         if (done) {
           console.log('Stream complete');
+          // Trigger analysis only once after stream is complete
+          analyzeMetaphors(messages);
+          analyzeForQuestions(messages);
           break;
         }
 
@@ -1413,6 +1415,73 @@ You are currently embodying the following advisors:
 ${activeAdvisors.map(a => `\n${a.name}: ${a.description}`).join('\n')}
 
 When responding, you should adopt the distinct voice(s) of the active advisor(s) as appropriate to the context and question.`;
+  };
+
+  const analyzeMetaphors = async (messages) => {
+    const userMessages = messages
+      .filter(msg => msg.type === 'user')
+      .map(msg => msg.content)
+      .join("\n");
+
+    try {
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [{
+          role: "system",
+          content: "You are a helpful assistant that responds only in valid JSON format. Your response should be an array of strings."
+        }, {
+          role: "user",
+          content: `Analyze the following messages for conceptual metaphors:\n\n${userMessages}\n\nRespond with a JSON array of metaphors.`
+        }],
+        max_tokens: 150,
+        response_format: { type: "json_object" }
+      });
+
+      const metaphors = JSON.parse(response.choices[0].message.content);
+      setMetaphors(metaphors.metaphors || []);
+    } catch (error) {
+      console.error('Error analyzing metaphors:', error);
+      if (debugMode) {
+        setMessages(prev => [...prev, {
+          type: 'system',
+          content: `❌ Metaphor Analysis Error:\n${error.message}`
+        }]);
+      }
+    }
+  };
+
+  const analyzeForQuestions = async (messages) => {
+    const recentMessages = messages
+      .slice(-2)
+      .filter(msg => msg.type === 'assistant' || msg.type === 'user')
+      .map(msg => `${msg.type === 'user' ? 'User' : 'Assistant'}: ${msg.content}`)
+      .join("\n\n");
+
+    try {
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [{
+          role: "system",
+          content: "You are a helpful assistant that responds only in valid JSON format. Your response should be an array of strings."
+        }, {
+          role: "user",
+          content: `Based on this recent exchange, suggest 2-3 questions that might help the user deepen their exploration:\n\n${recentMessages}\n\nRespond with a JSON array of questions.`
+        }],
+        max_tokens: 150,
+        response_format: { type: "json_object" }
+      });
+
+      const questions = JSON.parse(response.choices[0].message.content);
+      setQuestions(questions.questions || []);
+    } catch (error) {
+      console.error('Error analyzing for questions:', error);
+      if (debugMode) {
+        setMessages(prev => [...prev, {
+          type: 'system',
+          content: `❌ Question Analysis Error:\n${error.message}`
+        }]);
+      }
+    }
   };
 
   return (
