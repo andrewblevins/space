@@ -511,7 +511,7 @@ Now, I'd like to generate the final output. Please include the following aspects
           });
           console.log('After setDebugMode call');
           setMessages(prev => [...prev, {
-            type: 'system',
+            type: 'debug',
             content: `Debug mode ${!debugMode ? 'enabled' : 'disabled'}`
           }]);
           return true;
@@ -892,7 +892,7 @@ ${relevant.map((msg, i) => {
         const inputCost = ((totalTokens / 1000) * 0.003).toFixed(4);
         
         setMessages(prev => [...prev, {
-          type: 'system',
+          type: 'debug',
           content: `🔍 Claude API Call:
 Estimated tokens: ${totalTokens} (System: ${systemTokens}, Context: ${contextTokens})
 Estimated cost: $${inputCost}
@@ -1388,17 +1388,17 @@ When responding, you should embody these perspectives and voices as appropriate 
       <div className="w-2/4 p-4 flex flex-col">
         <div ref={messagesContainerRef} className="flex-1 overflow-auto mb-4">
           {messages.map((msg, idx) => (
-            <div key={idx} className={
-              msg.type === 'user' ? 'text-green-400 mb-4' : 
-              msg.type === 'assistant' ? 'text-white mb-4' : 
-              'mb-4'
-            }>
-              {msg.type === 'user' ? '> ' : ''}
-              {msg.type === 'system' || msg.type === 'assistant' ? (
-                <MarkdownMessage content={msg.content} />
-              ) : (
-                msg.content
-              )}
+            <div key={idx} className={(() => {
+              console.log('Message type:', msg.type);
+              const className = msg.type === 'debug' ? 'text-yellow-400 mb-4 whitespace-pre-wrap' :
+                msg.type === 'user' ? 'text-green-400 mb-4' : 
+                msg.type === 'assistant' ? 'text-white mb-4' : 
+                msg.type === 'system' ? 'text-green-400 mb-4' :
+                'text-green-400 mb-4';
+              console.log('Assigned className:', className);
+              return className;
+            })()}>
+              {msg.content}
             </div>
           ))}
           {isLoading && <div className="text-yellow-400">Loading...</div>}
