@@ -46,7 +46,7 @@ const Terminal = () => {
   };
 
   const [messages, setMessages] = useState([
-    { type: 'system', content: 'SPACE Terminal v0.1 - Connected to Claude' }
+    { type: 'system', content: 'SPACE Terminal - v0.1' }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -1489,7 +1489,7 @@ When responding, you should adopt the distinct voice(s) of the active advisor(s)
     <div className="w-full h-screen bg-black text-green-400 font-serif flex">
       {/* Left Column */}
       <div className="w-1/4 p-4 border-r border-gray-800 overflow-y-auto">
-        <Module title="Active Metaphors" items={metaphors} />
+        <Module title="Metaphors" items={metaphors} />
         <div className="mt-4">
           <Module 
             title="Active Advisors"
@@ -1588,7 +1588,7 @@ When responding, you should adopt the distinct voice(s) of the active advisor(s)
 
       {/* Right Column */}
       <div className="w-1/4 p-4 border-l border-gray-800 overflow-y-auto">
-        <Module title="Questions to Explore" items={questions} />
+        <Module title="Questions" items={questions} />
       </div>
 
       {showAdvisorForm && (
