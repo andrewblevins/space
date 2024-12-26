@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { MemorySystem } from '../lib/memory';
 import { OpenAI } from 'openai';
+import AdvisorForm from './AdvisorForm';
 
 const Module = ({ title, items = [] }) => (
   <div className="bg-gray-900 p-4">
@@ -72,6 +73,7 @@ const Terminal = () => {
   const [currentWorksheetId, setCurrentWorksheetId] = useState(null);
   const memory = new MemorySystem();
   const messagesContainerRef = useRef(null);
+  const [showAdvisorForm, setShowAdvisorForm] = useState(false);
 
   const worksheetQuestions = [
     {
@@ -169,12 +171,12 @@ const Terminal = () => {
 ## Advisor Commands
 \`/advisor generate <worksheet_id>\` - Start advisor generation process
 \`/advisor finalize\`               - Generate final advisor profiles
-\`/advisor add <name> <description>\`  - Add new advisor
-\`/advisor edit <name>\`               - Edit advisor description
-\`/advisor delete <name>\`             - Delete an advisor
-\`/advisor activate <name>\`            - Activate an advisor for the panel
-\`/advisor deactivate <name>\`          - Remove advisor from active panel
-\`/advisor list\`                      - Show all advisors
+\`/advisor add\`                    - Add new advisor (opens form)
+\`/advisor edit "name"\`           - Edit advisor description
+\`/advisor delete "name"\`         - Delete an advisor
+\`/advisor activate "name"\`       - Activate an advisor for the panel
+\`/advisor deactivate "name"\`     - Remove advisor from active panel
+\`/advisor list\`                  - Show all advisors
 
 ## Prompt Management
 \`/prompt add <name> <text>\`   - Save a new prompt
@@ -357,49 +359,49 @@ Now, I'd like to generate the final output. Please include the following aspects
               return true;
 
             case 'add':
-              if (!args[1] || !args[2]) {
-                setMessages(prev => [...prev, {
-                  type: 'system',
-                  content: 'Usage: /advisor add <name> <description>'
-                }]);
-                return true;
-              }
-              const newAdvisor = {
-                name: args[1],
-                description: args.slice(2).join(' '),
-                active: true
-              };
-              setAdvisors(prev => [...prev, newAdvisor]);
-              setMessages(prev => [...prev, {
-                type: 'system',
-                content: `Added advisor: ${newAdvisor.name}`
-              }]);
+              setShowAdvisorForm(true);
               return true;
 
             case 'activate':
               if (!args[1]) {
                 setMessages(prev => [...prev, {
                   type: 'system',
-                  content: 'Usage: /advisor activate <name>'
+                  content: 'Usage: /advisor activate "name"'
                 }]);
                 return true;
               }
               
-              const advisorToActivate = advisors.find(a => a.name === args[1]);
+              const fullTextActivate = args.join(' ');
+              const firstQuoteActivate = fullTextActivate.indexOf('"');
+              const lastQuoteActivate = fullTextActivate.indexOf('"', firstQuoteActivate + 1);
+              
+              if (firstQuoteActivate === -1 || lastQuoteActivate === -1) {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: 'Error: Advisor name must be enclosed in quotes'
+                }]);
+                return true;
+              }
+
+              const nameToActivate = fullTextActivate.slice(firstQuoteActivate + 1, lastQuoteActivate);
+              const advisorToActivate = advisors.find(a => 
+                a.name.toLowerCase() === nameToActivate.toLowerCase()
+              );
+              
               if (!advisorToActivate) {
                 setMessages(prev => [...prev, {
                   type: 'system',
-                  content: `Advisor "${args[1]}" not found`
+                  content: `Advisor "${nameToActivate}" not found`
                 }]);
                 return true;
               }
 
               setAdvisors(prev => prev.map(a => 
-                a.name === args[1] ? { ...a, active: true } : a
+                a.name.toLowerCase() === nameToActivate.toLowerCase() ? { ...a, active: true } : a
               ));
               setMessages(prev => [...prev, {
                 type: 'system',
-                content: `Activated advisor: ${args[1]}`
+                content: `Activated advisor: ${advisorToActivate.name}`
               }]);
               return true;
 
@@ -407,16 +409,32 @@ Now, I'd like to generate the final output. Please include the following aspects
               if (!args[1]) {
                 setMessages(prev => [...prev, {
                   type: 'system',
-                  content: 'Usage: /advisor deactivate <name>'
+                  content: 'Usage: /advisor deactivate "name"'
                 }]);
                 return true;
               }
               
-              const advisorToDeactivate = advisors.find(a => a.name === args[1]);
+              const fullTextDeactivate = args.join(' ');
+              const firstQuoteDeactivate = fullTextDeactivate.indexOf('"');
+              const lastQuoteDeactivate = fullTextDeactivate.indexOf('"', firstQuoteDeactivate + 1);
+              
+              if (firstQuoteDeactivate === -1 || lastQuoteDeactivate === -1) {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: 'Error: Advisor name must be enclosed in quotes'
+                }]);
+                return true;
+              }
+
+              const nameToDeactivate = fullTextDeactivate.slice(firstQuoteDeactivate + 1, lastQuoteDeactivate);
+              const advisorToDeactivate = advisors.find(a => 
+                a.name.toLowerCase() === nameToDeactivate.toLowerCase()
+              );
+              
               if (!advisorToDeactivate) {
                 setMessages(prev => [...prev, {
                   type: 'system',
-                  content: `Advisor "${args[1]}" not found`
+                  content: `Advisor "${nameToDeactivate}" not found`
                 }]);
                 return true;
               }
@@ -424,17 +442,17 @@ Now, I'd like to generate the final output. Please include the following aspects
               if (!advisorToDeactivate.active) {
                 setMessages(prev => [...prev, {
                   type: 'system',
-                  content: `Advisor "${args[1]}" is not currently active`
+                  content: `Advisor "${advisorToDeactivate.name}" is not currently active`
                 }]);
                 return true;
               }
 
               setAdvisors(prev => prev.map(a => 
-                a.name === args[1] ? { ...a, active: false } : a
+                a.name.toLowerCase() === nameToDeactivate.toLowerCase() ? { ...a, active: false } : a
               ));
               setMessages(prev => [...prev, {
                 type: 'system',
-                content: `Deactivated advisor: ${args[1]}`
+                content: `Deactivated advisor: ${advisorToDeactivate.name}`
               }]);
               return true;
 
@@ -453,16 +471,32 @@ Now, I'd like to generate the final output. Please include the following aspects
               if (!args[1]) {
                 setMessages(prev => [...prev, {
                   type: 'system',
-                  content: 'Usage: /advisor edit <name>'
+                  content: 'Usage: /advisor edit "name"'
                 }]);
                 return true;
               }
               
-              const advisorToEdit = advisors.find(a => a.name === args[1]);
+              const fullTextEdit = args.join(' ');
+              const firstQuoteEdit = fullTextEdit.indexOf('"');
+              const lastQuoteEdit = fullTextEdit.indexOf('"', firstQuoteEdit + 1);
+              
+              if (firstQuoteEdit === -1 || lastQuoteEdit === -1) {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: 'Error: Advisor name must be enclosed in quotes'
+                }]);
+                return true;
+              }
+
+              const nameToEdit = fullTextEdit.slice(firstQuoteEdit + 1, lastQuoteEdit);
+              const advisorToEdit = advisors.find(a => 
+                a.name.toLowerCase() === nameToEdit.toLowerCase()
+              );
+              
               if (!advisorToEdit) {
                 setMessages(prev => [...prev, {
                   type: 'system',
-                  content: `Advisor "${args[1]}" not found`
+                  content: `Advisor "${nameToEdit}" not found`
                 }]);
                 return true;
               }
@@ -479,24 +513,42 @@ Now, I'd like to generate the final output. Please include the following aspects
               if (!args[1]) {
                 setMessages(prev => [...prev, {
                   type: 'system',
-                  content: 'Usage: /advisor delete <name>'
+                  content: 'Usage: /advisor delete "name"'
                 }]);
                 return true;
               }
               
-              const advisorToDelete = advisors.find(a => a.name === args[1]);
-              if (!advisorToDelete) {
+              const fullTextDelete = args.join(' ');
+              const firstQuoteDelete = fullTextDelete.indexOf('"');
+              const lastQuoteDelete = fullTextDelete.indexOf('"', firstQuoteDelete + 1);
+              
+              if (firstQuoteDelete === -1 || lastQuoteDelete === -1) {
                 setMessages(prev => [...prev, {
                   type: 'system',
-                  content: `Advisor "${args[1]}" not found`
+                  content: 'Error: Advisor name must be enclosed in quotes'
                 }]);
                 return true;
               }
 
-              setAdvisors(prev => prev.filter(a => a.name !== args[1]));
+              const nameToDelete = fullTextDelete.slice(firstQuoteDelete + 1, lastQuoteDelete);
+              const advisorToDelete = advisors.find(a => 
+                a.name.toLowerCase() === nameToDelete.toLowerCase()
+              );
+              
+              if (!advisorToDelete) {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: `Advisor "${nameToDelete}" not found`
+                }]);
+                return true;
+              }
+
+              setAdvisors(prev => prev.filter(a => 
+                a.name.toLowerCase() !== nameToDelete.toLowerCase()
+              ));
               setMessages(prev => [...prev, {
                 type: 'system',
-                content: `Deleted advisor: ${args[1]}`
+                content: `Deleted advisor: ${advisorToDelete.name}`
               }]);
               return true;
           }
@@ -1472,6 +1524,31 @@ When responding, you should adopt the distinct voice(s) of the active advisor(s)
       <div className="w-1/4 p-4 border-l border-gray-800 overflow-y-auto">
         <Module title="Questions to Explore" items={questions} />
       </div>
+
+      {showAdvisorForm && (
+        <AdvisorForm
+          onSubmit={({ name, description }) => {
+            const newAdvisor = {
+              name,
+              description,
+              active: true
+            };
+            setAdvisors(prev => [...prev, newAdvisor]);
+            setMessages(prev => [...prev, {
+              type: 'system',
+              content: `Added advisor: ${newAdvisor.name}`
+            }]);
+            setShowAdvisorForm(false);
+          }}
+          onCancel={() => {
+            setShowAdvisorForm(false);
+            setMessages(prev => [...prev, {
+              type: 'system',
+              content: 'Cancelled adding advisor'
+            }]);
+          }}
+        />
+      )}
     </div>
   );
 };
