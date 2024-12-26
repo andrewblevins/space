@@ -172,6 +172,7 @@ const Terminal = () => {
 \`/advisor finalize\`               - Generate final advisor profiles
 \`/advisor add <name> <description>\`  - Add new advisor
 \`/advisor edit <name>\`               - Edit advisor description
+\`/advisor delete <name>\`             - Delete an advisor
 \`/advisor select <name>\`             - Select active advisor
 \`/advisor list\`                      - Show all advisors
 
@@ -413,6 +414,36 @@ Now, I'd like to generate the final output. Please include the following aspects
               setMessages(prev => [...prev, {
                 type: 'system',
                 content: `Editing advisor "${advisorToEdit.name}"\nCtrl+Enter to save • Escape to cancel`
+              }]);
+              return true;
+
+            case 'delete':
+              if (!args[1]) {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: 'Usage: /advisor delete <name>'
+                }]);
+                return true;
+              }
+              
+              const advisorToDelete = advisors.find(a => a.name === args[1]);
+              if (!advisorToDelete) {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: `Advisor "${args[1]}" not found`
+                }]);
+                return true;
+              }
+
+              // If we're deleting the active advisor, clear it
+              if (activeAdvisor && activeAdvisor.name === args[1]) {
+                setActiveAdvisor(null);
+              }
+
+              setAdvisors(prev => prev.filter(a => a.name !== args[1]));
+              setMessages(prev => [...prev, {
+                type: 'system',
+                content: `Deleted advisor: ${args[1]}`
               }]);
               return true;
           }
