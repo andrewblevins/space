@@ -1036,7 +1036,6 @@ ${contextMessages.map((msg, i) =>
 
     try {
       const response = await callClaude(input);
-      setMessages(prev => [...prev, { type: 'assistant', content: response }]);
     } catch (error) {
       setMessages(prev => [...prev, { 
         type: 'system', 
