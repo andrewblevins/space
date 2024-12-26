@@ -1506,7 +1506,7 @@ When responding, you should adopt the distinct voice(s) of the active advisor(s)
         <div className="mt-4">
           <Module 
             title="Active Advisors"
-            items={advisors.filter(a => a.active).map(a => `${a.name}: ${a.description}`)} 
+            items={advisors.filter(a => a.active).map(a => a.name)} 
           />
         </div>
       </div>
