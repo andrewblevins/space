@@ -8,7 +8,7 @@ import '@fontsource/vollkorn';
 
 const Module = ({ title, items = [] }) => (
   <div className="bg-gray-900 p-4">
-    <h2 className="text-purple-400 mb-2">{title}</h2>
+    <h2 className="text-white mb-2">{title}</h2>
     <ul className="space-y-4">
       {items.map((item, idx) => (
         <li key={idx} className="text-gray-300 whitespace-pre-wrap">{item}</li>
