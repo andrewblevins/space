@@ -54,7 +54,6 @@ const Terminal = () => {
     const saved = localStorage.getItem('space_advisors');
     return saved ? JSON.parse(saved) : [];
   });
-  const [activeAdvisor, setActiveAdvisor] = useState(null);
   const [debugMode, setDebugMode] = useState(false);
   const inputRef = useRef(null);
   const [savedPrompts, setSavedPrompts] = useState(() => {
@@ -173,7 +172,8 @@ const Terminal = () => {
 \`/advisor add <name> <description>\`  - Add new advisor
 \`/advisor edit <name>\`               - Edit advisor description
 \`/advisor delete <name>\`             - Delete an advisor
-\`/advisor select <name>\`             - Select active advisor
+\`/advisor activate <name>\`            - Activate an advisor for the panel
+\`/advisor deactivate <name>\`          - Remove advisor from active panel
 \`/advisor list\`                      - Show all advisors
 
 ## Prompt Management
@@ -366,7 +366,8 @@ Now, I'd like to generate the final output. Please include the following aspects
               }
               const newAdvisor = {
                 name: args[1],
-                description: args.slice(2).join(' ')
+                description: args.slice(2).join(' '),
+                active: true
               };
               setAdvisors(prev => [...prev, newAdvisor]);
               setMessages(prev => [...prev, {
@@ -375,20 +376,77 @@ Now, I'd like to generate the final output. Please include the following aspects
               }]);
               return true;
 
+            case 'activate':
+              if (!args[1]) {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: 'Usage: /advisor activate <name>'
+                }]);
+                return true;
+              }
+              
+              const advisorToActivate = advisors.find(a => a.name === args[1]);
+              if (!advisorToActivate) {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: `Advisor "${args[1]}" not found`
+                }]);
+                return true;
+              }
+
+              setAdvisors(prev => prev.map(a => 
+                a.name === args[1] ? { ...a, active: true } : a
+              ));
+              setMessages(prev => [...prev, {
+                type: 'system',
+                content: `Activated advisor: ${args[1]}`
+              }]);
+              return true;
+
+            case 'deactivate':
+              if (!args[1]) {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: 'Usage: /advisor deactivate <name>'
+                }]);
+                return true;
+              }
+              
+              const advisorToDeactivate = advisors.find(a => a.name === args[1]);
+              if (!advisorToDeactivate) {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: `Advisor "${args[1]}" not found`
+                }]);
+                return true;
+              }
+
+              if (!advisorToDeactivate.active) {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: `Advisor "${args[1]}" is not currently active`
+                }]);
+                return true;
+              }
+
+              setAdvisors(prev => prev.map(a => 
+                a.name === args[1] ? { ...a, active: false } : a
+              ));
+              setMessages(prev => [...prev, {
+                type: 'system',
+                content: `Deactivated advisor: ${args[1]}`
+              }]);
+              return true;
+
             case 'list':
               setMessages(prev => [...prev, {
                 type: 'system',
                 content: advisors.length ? 
-                  'Available advisors:\n' + advisors.map(a => 
-                    `**${a.name}**: ${a.description}`
+                  'Advisors:\n' + advisors.map(a => 
+                    `${a.name}${a.active ? ' (active)' : ''}: ${a.description}`
                   ).join('\n') :
                   'No advisors configured'
               }]);
-              return true;
-
-            case 'select':
-              const advisor = advisors.find(a => a.name === args[1]);
-              setActiveAdvisor(advisor);
               return true;
 
             case 'edit':
@@ -433,11 +491,6 @@ Now, I'd like to generate the final output. Please include the following aspects
                   content: `Advisor "${args[1]}" not found`
                 }]);
                 return true;
-              }
-
-              // If we're deleting the active advisor, clear it
-              if (activeAdvisor && activeAdvisor.name === args[1]) {
-                setActiveAdvisor(null);
               }
 
               setAdvisors(prev => prev.filter(a => a.name !== args[1]));
@@ -826,13 +879,7 @@ ${relevant.map((msg, i) => {
       
       console.log('Messages being sent to Claude:', JSON.stringify(contextMessages, null, 2));
 
-      const systemPromptText = advisors.length
-        ? `You are a set of advisors embodying multiple perspectives:
-
-${advisors.map(a => `${a.name}: ${a.description}`).join('\n\n')}
-
-Respond as each of these perspectives as appropriate, adopting their unique voices directly.`
-        : 'You are Claude, an AI assistant. You are direct, honest, and aim to be helpful.';
+      const systemPromptText = getSystemPrompt();
 
       if (debugMode) {
         const estimateTokens = (text) => Math.ceil(text.length / 4);
@@ -1303,6 +1350,23 @@ Exported on: ${timestamp}\n\n`;
       messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
     }
   }, [messages, isLoading]);
+
+  const getSystemPrompt = () => {
+    const activeAdvisors = advisors.filter(a => a.active);
+    
+    const DEFAULT_SYSTEM_PROMPT = "You are Claude, an AI assistant created by Anthropic..."; // Your default prompt here
+    
+    if (activeAdvisors.length === 0) {
+      return DEFAULT_SYSTEM_PROMPT;
+    }
+
+    return `${DEFAULT_SYSTEM_PROMPT}
+
+You are currently channeling the following advisors:
+${activeAdvisors.map(a => `\n${a.name}: ${a.description}`).join('\n')}
+
+When responding, you should embody these perspectives and voices as appropriate to the context and question. You may respond as yourself, or explicitly adopt the voice of one of these advisors when their perspective would be particularly relevant.`;
+  };
 
   return (
     <div className="w-full h-screen bg-black text-green-400 font-mono flex">
