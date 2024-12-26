@@ -72,6 +72,7 @@ const Terminal = () => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [currentWorksheetId, setCurrentWorksheetId] = useState(null);
   const memory = new MemorySystem();
+  const messagesContainerRef = useRef(null);
 
   const worksheetQuestions = [
     {
@@ -1153,6 +1154,12 @@ Exported on: ${timestamp}\n\n`;
     return conversationMessages;
   };
 
+  useEffect(() => {
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
+  }, [messages, isLoading]);
+
   return (
     <div className="w-full h-screen bg-black text-green-400 font-mono flex">
       {/* Left Column */}
@@ -1171,7 +1178,7 @@ Exported on: ${timestamp}\n\n`;
 
       {/* Middle Column */}
       <div className="w-2/4 p-4 flex flex-col">
-        <div className="flex-1 overflow-auto mb-4">
+        <div ref={messagesContainerRef} className="flex-1 overflow-auto mb-4">
           {messages.map((msg, idx) => (
             <div key={idx} className={
               msg.type === 'user' ? 'text-green-400 mb-4' : 
