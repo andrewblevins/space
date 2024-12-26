@@ -603,7 +603,7 @@ Now, I'd like to generate the final output. Please include the following aspects
               setEditText(promptToEdit.text);
               setMessages(prev => [...prev, {
                 type: 'system',
-                content: `Editing prompt "${promptToEdit.name}"\nCtrl+Enter to save • Escape to cancel`
+                content: `Editing prompt "${promptToEdit.name}"\nCtrl+Enter to save �� Escape to cancel`
               }]);
               return true;
 
@@ -1388,16 +1388,14 @@ When responding, you should adopt the distinct voice(s) of the active advisor(s)
         <div ref={messagesContainerRef} className="flex-1 overflow-auto mb-4">
           {messages.map((msg, idx) => (
             <div key={idx} className={(() => {
-              console.log('Message type:', msg.type);
               const className = msg.type === 'debug' ? 'text-yellow-400 mb-4 whitespace-pre-wrap' :
                 msg.type === 'user' ? 'text-green-400 mb-4' : 
                 msg.type === 'assistant' ? 'text-white mb-4' : 
                 msg.type === 'system' ? 'text-green-400 mb-4' :
                 'text-green-400 mb-4';
-              console.log('Assigned className:', className);
               return className;
             })()}>
-              {msg.type === 'system' ? (
+              {(msg.type === 'system' || msg.type === 'assistant') ? (
                 <MarkdownMessage content={msg.content} />
               ) : (
                 msg.content
