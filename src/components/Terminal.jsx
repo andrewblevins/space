@@ -442,9 +442,9 @@ Now, I'd like to generate the final output. Please include the following aspects
               setMessages(prev => [...prev, {
                 type: 'system',
                 content: advisors.length ? 
-                  'Advisors:\n' + advisors.map(a => 
-                    `${a.name}${a.active ? ' (active)' : ''}: ${a.description}`
-                  ).join('\n') :
+                  '# Advisors\n\n' + advisors.map(a => 
+                    `## ${a.name}${a.active ? ' (active)' : ''}\n${a.description}`
+                  ).join('\n\n') :
                   'No advisors configured'
               }]);
               return true;
@@ -1397,7 +1397,11 @@ When responding, you should embody these perspectives and voices as appropriate 
               console.log('Assigned className:', className);
               return className;
             })()}>
-              {msg.content}
+              {msg.type === 'system' ? (
+                <MarkdownMessage content={msg.content} />
+              ) : (
+                msg.content
+              )}
             </div>
           ))}
           {isLoading && <div className="text-yellow-400">Loading...</div>}
