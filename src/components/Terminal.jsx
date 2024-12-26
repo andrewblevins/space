@@ -178,6 +178,7 @@ const Terminal = () => {
 ## Prompt Management
 \`/prompt add <name> <text>\`   - Save a new prompt
 \`/prompt edit <name>\`         - Edit an existing prompt
+\`/prompt delete <name>\`       - Delete a saved prompt
 \`/prompt list\`               - Show saved prompts
 \`/prompt use <name>\`         - Use a saved prompt
 
@@ -522,6 +523,31 @@ Now, I'd like to generate the final output. Please include the following aspects
               }]);
               return true;
 
+            case 'delete':
+              if (!args[1]) {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: 'Usage: /prompt delete <name>'
+                }]);
+                return true;
+              }
+              
+              const promptToDelete = savedPrompts.find(p => p.name === args[1]);
+              if (!promptToDelete) {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: `Prompt "${args[1]}" not found`
+                }]);
+                return true;
+              }
+
+              setSavedPrompts(prev => prev.filter(p => p.name !== args[1]));
+              setMessages(prev => [...prev, {
+                type: 'system',
+                content: `Deleted prompt: ${args[1]}`
+              }]);
+              return true;
+
             default:
               setMessages(prev => [...prev, {
                 type: 'system',
@@ -529,7 +555,8 @@ Now, I'd like to generate the final output. Please include the following aspects
                   '/prompt add <name> <text> - Save a new prompt\n' +
                   '/prompt list - Show all saved prompts\n' +
                   '/prompt use <name> - Use a saved prompt\n' +
-                  '/prompt edit <name> <text> - Edit an existing prompt'
+                  '/prompt edit <name> - Edit an existing prompt\n' +
+                  '/prompt delete <name> - Delete a saved prompt'
               }]);
               return true;
           }
