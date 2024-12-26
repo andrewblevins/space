@@ -4,6 +4,7 @@ import { MemorySystem } from '../lib/memory';
 import { OpenAI } from 'openai';
 import AdvisorForm from './AdvisorForm';
 import EditAdvisorForm from './EditAdvisorForm';
+import EditPromptForm from './EditPromptForm';
 import '@fontsource/vollkorn';
 
 const Module = ({ title, items = [] }) => (
@@ -634,26 +635,38 @@ Now, I'd like to generate the final output. Please include the following aspects
               if (!args[1]) {
                 setMessages(prev => [...prev, {
                   type: 'system',
-                  content: 'Usage: /prompt edit <name>'
+                  content: 'Usage: /prompt edit "name"'
                 }]);
                 return true;
               }
               
-              const promptToEdit = savedPrompts.find(p => p.name === args[1]);
-              if (!promptToEdit) {
+              const fullTextEdit = args.join(' ');
+              const firstQuoteEdit = fullTextEdit.indexOf('"');
+              const lastQuoteEdit = fullTextEdit.indexOf('"', firstQuoteEdit + 1);
+              
+              if (firstQuoteEdit === -1 || lastQuoteEdit === -1) {
                 setMessages(prev => [...prev, {
                   type: 'system',
-                  content: `Prompt "${args[1]}" not found`
+                  content: 'Error: Prompt name must be enclosed in quotes'
                 }]);
                 return true;
               }
 
-              setEditingPrompt(promptToEdit.name);
+              const nameToEdit = fullTextEdit.slice(firstQuoteEdit + 1, lastQuoteEdit);
+              const promptToEdit = savedPrompts.find(p => 
+                p.name.toLowerCase() === nameToEdit.toLowerCase()
+              );
+              
+              if (!promptToEdit) {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: `Prompt "${nameToEdit}" not found`
+                }]);
+                return true;
+              }
+
+              setEditingPrompt(promptToEdit);
               setEditText(promptToEdit.text);
-              setMessages(prev => [...prev, {
-                type: 'system',
-                content: `Editing prompt "${promptToEdit.name}"\nCtrl+Enter to save • Escape to cancel`
-              }]);
               return true;
 
             case 'delete':
@@ -1122,11 +1135,11 @@ ${contextMessages.map((msg, i) =>
     if (e.key === 'Enter' && e.ctrlKey) {
       // Save changes
       setSavedPrompts(prev => prev.map(p => 
-        p.name === editingPrompt ? { ...p, text: editText } : p
+        p.name === editingPrompt.name ? { ...p, text: editText } : p
       ));
       setMessages(prev => [...prev, {
         type: 'system',
-        content: `Updated prompt "${editingPrompt}"`
+        content: `Updated prompt "${editingPrompt.name}"`
       }]);
       setEditingPrompt(null);
       setEditText('');
@@ -1543,7 +1556,7 @@ When responding, you should adopt the distinct voice(s) of the active advisor(s)
                       if (e.key === 'Enter' && e.ctrlKey) {
                         // Save changes
                         setAdvisors(prev => prev.map(a => 
-                          a.name === editingAdvisor ? { ...a, description: editAdvisorText } : a
+                          a.name === editingAdvisor.name ? { ...a, description: editAdvisorText } : a
                         ));
                         setMessages(prev => [...prev, {
                           type: 'system',
@@ -1633,6 +1646,33 @@ When responding, you should adopt the distinct voice(s) of the active advisor(s)
           }}
           onCancel={() => {
             setEditingAdvisor(null);
+            setMessages(prev => [...prev, {
+              type: 'system',
+              content: 'Edit cancelled'
+            }]);
+          }}
+        />
+      )}
+
+      {editingPrompt && (
+        <EditPromptForm
+          prompt={editingPrompt}
+          onSubmit={({ name, text }) => {
+            setSavedPrompts(prev => prev.map(p => 
+              p.name === editingPrompt.name 
+                ? { ...p, name, text }
+                : p
+            ));
+            setMessages(prev => [...prev, {
+              type: 'system',
+              content: `Updated prompt: ${name}`
+            }]);
+            setEditingPrompt(null);
+            setEditText('');
+          }}
+          onCancel={() => {
+            setEditingPrompt(null);
+            setEditText('');
             setMessages(prev => [...prev, {
               type: 'system',
               content: 'Edit cancelled'
