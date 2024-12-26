@@ -4,6 +4,7 @@ import { MemorySystem } from '../lib/memory';
 import { OpenAI } from 'openai';
 import AdvisorForm from './AdvisorForm';
 import EditAdvisorForm from './EditAdvisorForm';
+import '@fontsource/vollkorn';
 
 const Module = ({ title, items = [] }) => (
   <div className="bg-gray-900 p-4">
@@ -18,12 +19,12 @@ const Module = ({ title, items = [] }) => (
 
 const MarkdownMessage = ({ content }) => (
   <ReactMarkdown
-    className="text-left font-mono whitespace-pre"
+    className="text-left whitespace-pre font-serif"
     components={{
-      h1: ({children}) => <h1 className="text-blue-400 font-bold">{children}</h1>,
-      h2: ({children}) => <h2 className="text-green-400 font-bold">{children}</h2>,
-      code: ({children}) => <code className="text-green-400">{children}</code>,
-      p: ({children}) => <p className="text-white whitespace-pre-wrap">{children}</p>,
+      h1: ({children}) => <h1 className="text-blue-400 font-bold font-serif">{children}</h1>,
+      h2: ({children}) => <h2 className="text-green-400 font-bold font-serif">{children}</h2>,
+      code: ({children}) => <code className="text-green-400 font-mono">{children}</code>,
+      p: ({children}) => <p className="text-white whitespace-pre-wrap font-serif">{children}</p>,
     }}
   >
     {content}
@@ -1485,7 +1486,7 @@ When responding, you should adopt the distinct voice(s) of the active advisor(s)
   };
 
   return (
-    <div className="w-full h-screen bg-black text-green-400 font-mono flex">
+    <div className="w-full h-screen bg-black text-green-400 font-serif flex">
       {/* Left Column */}
       <div className="w-1/4 p-4 border-r border-gray-800 overflow-y-auto">
         <Module title="Active Metaphors" items={metaphors} />
@@ -1528,7 +1529,7 @@ When responding, you should adopt the distinct voice(s) of the active advisor(s)
                     value={editText}
                     onChange={(e) => setEditText(e.target.value)}
                     onKeyDown={handleEditKeyDown}
-                    className="w-full h-40 bg-black text-green-400 font-mono p-2 border border-green-400 focus:outline-none resize-none"
+                    className="w-full h-40 bg-black text-green-400 font-serif p-2 border border-green-400 focus:outline-none resize-none"
                     placeholder="Edit your prompt..."
                     autoFocus
                   />
@@ -1560,7 +1561,7 @@ When responding, you should adopt the distinct voice(s) of the active advisor(s)
                         }]);
                       }
                     }}
-                    className="w-full h-40 bg-black text-green-400 font-mono p-2 border border-green-400 focus:outline-none resize-none"
+                    className="w-full h-40 bg-black text-green-400 font-serif p-2 border border-green-400 focus:outline-none resize-none"
                     placeholder="Edit advisor description..."
                     autoFocus
                   />
@@ -1573,7 +1574,7 @@ When responding, you should adopt the distinct voice(s) of the active advisor(s)
                     type="text"
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    className="flex-1 bg-transparent focus:outline-none"
+                    className="flex-1 bg-transparent focus:outline-none font-serif"
                     placeholder={isLoading ? "Waiting for response..." : "Type here..."}
                     disabled={isLoading}
                     autoFocus
