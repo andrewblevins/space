@@ -757,16 +757,10 @@ ${relevant.map((msg, i) => {
 
   const callClaude = async (userMessage) => {
     try {
-      // Get conversation history
       const contextMessages = buildConversationContext(userMessage, messages, memory);
       
-      // Add the current message
-      contextMessages.push({
-        role: 'user',
-        content: userMessage
-      });
-      
-      // Construct system prompt from advisors - emphasize collective perspective
+      console.log('Messages being sent to Claude:', JSON.stringify(contextMessages, null, 2));
+
       const systemPromptText = advisors.length
         ? `You are a set of advisors embodying multiple perspectives:
 
@@ -774,7 +768,7 @@ ${advisors.map(a => `${a.name}: ${a.description}`).join('\n\n')}
 
 Respond as each of these perspectives as appropriate, adopting their unique voices directly.`
         : 'You are Claude, an AI assistant. You are direct, honest, and aim to be helpful.';
-      
+
       if (debugMode) {
         const estimateTokens = (text) => Math.ceil(text.length / 4);
         const systemTokens = estimateTokens(systemPromptText);
@@ -814,17 +808,93 @@ ${contextMessages.map((msg, i) =>
           messages: contextMessages,
           system: systemPromptText,
           max_tokens: 1024,
-          temperature: 0.7
+          temperature: 0.7,
+          stream: true
         })
       });
 
+      console.log('Response status:', response.status);
+      
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`API Error: ${errorData.error?.message || response.statusText}`);
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
+        throw new Error(`API Error: ${errorText}`);
       }
 
-      const data = await response.json();
-      return data.content[0].text;
+      // Set up streaming response handling
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let currentMessageContent = '';
+
+      console.log('Starting stream handling...');
+
+      // Add a temporary message that we'll update as we stream
+      setMessages(prev => {
+        console.log('Adding initial empty message');
+        return [...prev, { type: 'assistant', content: '' }];
+      });
+
+      while (true) {
+        const { done, value } = await reader.read();
+        console.log('Stream read:', { done, hasValue: !!value });
+        
+        if (done) {
+          console.log('Stream complete');
+          break;
+        }
+
+        // Add new chunk to buffer and split into complete events
+        buffer += decoder.decode(value, { stream: true });
+        const events = buffer.split('\n\n');
+        buffer = events.pop() || ''; // Keep incomplete event in buffer
+
+        console.log(`Processing ${events.length} events`);
+
+        for (const event of events) {
+          console.log('Processing event:', event);
+          
+          // Extract the data portion of the event
+          const dataMatch = event.match(/^data: (.+)$/m);
+          if (!dataMatch) {
+            console.log('No data found in event');
+            continue;
+          }
+          
+          try {
+            const data = JSON.parse(dataMatch[1]);
+            console.log('Parsed event data:', data);
+            
+            if (data.type === 'content_block_delta' && data.delta.type === 'text_delta') {
+              console.log('Found text delta:', data.delta.text);
+              currentMessageContent += data.delta.text;
+              console.log('Current message content:', currentMessageContent);
+              
+              // Update the last message with new content
+              setMessages(prev => {
+                console.log('Updating messages, previous state:', prev);
+                const newMessages = [...prev];
+                if (newMessages.length > 0) {
+                  newMessages[newMessages.length - 1] = {
+                    type: 'assistant',
+                    content: currentMessageContent
+                  };
+                  console.log('New messages state:', newMessages);
+                }
+                return newMessages;
+              });
+            } else {
+              console.log('Event type not handled:', data.type);
+            }
+          } catch (e) {
+            console.error('Error parsing event:', e);
+            console.log('Problem event:', event);
+          }
+        }
+      }
+
+      console.log('Final message content:', currentMessageContent);
+      return currentMessageContent;
     } catch (error) {
       console.error('Claude API Error:', error);
       throw error;
@@ -1130,7 +1200,7 @@ Exported on: ${timestamp}\n\n`;
   }, [advisors]);
 
   const buildConversationContext = (userMessage, messages, memory) => {
-    // Filter out system messages and keep only actual conversation
+    // Filter out system messages, empty messages, and the current message
     const conversationMessages = messages
       .filter(msg => 
         // Only keep user messages and assistant responses
@@ -1138,7 +1208,11 @@ Exported on: ${timestamp}\n\n`;
         // Exclude system notifications
         !msg.content.includes('Terminal v0.1') &&
         !msg.content.includes('Debug mode') &&
-        !msg.content.includes('Claude API Call')
+        !msg.content.includes('Claude API Call') &&
+        // Exclude empty messages
+        msg.content.trim() !== '' &&
+        // Exclude the current message
+        msg.content !== userMessage
       )
       // Convert to Claude's message format
       .map(msg => ({
@@ -1146,7 +1220,12 @@ Exported on: ${timestamp}\n\n`;
         content: msg.content
       }));
 
-    // For debugging
+    // Add the current message at the end
+    conversationMessages.push({
+      role: 'user',
+      content: userMessage
+    });
+
     if (debugMode) {
       console.log('Conversation history:', conversationMessages);
     }
