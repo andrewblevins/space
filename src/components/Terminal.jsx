@@ -285,6 +285,26 @@ const Terminal = () => {
           return true;
 
         case '/load':
+          if (args[0] === 'previous') {
+            const sessions = loadSessions();
+            if (sessions.length > 0) {
+              const mostRecent = sessions[0];  // First session is most recent due to sort
+              setCurrentSessionId(mostRecent.id);
+              setMessages(mostRecent.messages);
+              setMetaphors(mostRecent.metaphors || []);
+              setQuestions(mostRecent.questions || []);
+              setMessages(prev => [...prev, {
+                type: 'system',
+                content: `Loaded previous session ${mostRecent.id} from ${new Date(mostRecent.timestamp).toLocaleString()}`
+              }]);
+            } else {
+              setMessages(prev => [...prev, {
+                type: 'system',
+                content: 'No previous sessions found'
+              }]);
+            }
+            return true;
+          }
           const sessionId = args[0];
           if (!sessionId) {
             setMessages(prev => [...prev, {
