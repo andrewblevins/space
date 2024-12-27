@@ -11,19 +11,31 @@ export default class TagAnalyzer {
   }
 
   async analyzeTags(content: string): Promise<string[]> {
-    const response = await this.openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [{
-        role: "system",
-        content: "Extract 1-3 main topic tags from this message. Respond with only a JSON array of lowercase, single-word tags. Example: ['meditation', 'consciousness', 'growth']"
-      }, {
-        role: "user",
-        content
-      }],
-      response_format: { type: "json_object" }
-    });
+    try {
+      console.log('Analyzing content for tags:', content);
+      
+      const response = await this.openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [{
+          role: "system",
+          content: "Extract 1-3 main topic tags from this message. Respond with only a JSON array of lowercase, single-word tags. Example: ['meditation', 'consciousness', 'growth']"
+        }, {
+          role: "user",
+          content
+        }],
+        temperature: 0.7,
+        response_format: { type: "json_object" }
+      });
 
-    const result = JSON.parse(response.choices[0].message.content);
-    return result.tags || [];
+      console.log('OpenAI response:', response.choices[0].message.content);
+      
+      const result = JSON.parse(response.choices[0].message.content || '{}');
+      console.log('Parsed tags:', result.tags);
+      
+      return result.tags || [];
+    } catch (error) {
+      console.error('Tag analysis error:', error);
+      throw error;
+    }
   }
 } 
