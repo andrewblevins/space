@@ -218,6 +218,27 @@ const ExpandingInput = ({ value, onChange, onSubmit, isLoading }) => {
   );
 };
 
+const CollapsibleModule = ({ title, items = [], expanded, onToggle }) => (
+  <div className="bg-gray-900 p-4">
+    <div 
+      className="flex justify-between items-center cursor-pointer hover:text-green-300 mb-2"
+      onClick={onToggle}
+    >
+      <h2 className="text-white">{title}</h2>
+      <span className="text-green-400">{expanded ? '▼' : '▶'}</span>
+    </div>
+    {expanded && (
+      <ul className="space-y-4">
+        {items.map((item, idx) => (
+          <li key={idx} className="text-gray-300 whitespace-pre-wrap">
+            {item}
+          </li>
+        ))}
+      </ul>
+    )}
+  </div>
+);
+
 const Terminal = () => {
   const openai = new OpenAI({
     apiKey: import.meta.env.VITE_OPENAI_API_KEY,
@@ -272,6 +293,8 @@ const Terminal = () => {
   const terminalRef = useRef(null);
   const [maxTokens, setMaxTokens] = useState(4096);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+  const [metaphorsExpanded, setMetaphorsExpanded] = useState(false);
+  const [questionsExpanded, setQuestionsExpanded] = useState(false);
 
   const worksheetQuestions = [
     {
@@ -2005,6 +2028,8 @@ When responding, you should adopt the distinct voice(s) of the active advisor(s)
   };
 
   const analyzeMetaphors = async (messages) => {
+    if (!metaphorsExpanded) return; // Skip if collapsed
+    
     const userMessages = messages
       .filter(msg => msg.type === 'user')
       .map(msg => msg.content)
@@ -2038,6 +2063,8 @@ When responding, you should adopt the distinct voice(s) of the active advisor(s)
   };
 
   const analyzeForQuestions = async (messages) => {
+    if (!questionsExpanded) return; // Skip if collapsed
+    
     const recentMessages = messages
       .slice(-2)
       .filter(msg => msg.type === 'assistant' || msg.type === 'user')
@@ -2278,7 +2305,12 @@ ${selectedText}
 
       {/* Left Column */}
       <div className="w-1/4 p-4 border-r border-gray-800 overflow-y-auto">
-        <Module title="Metaphors" items={metaphors} />
+        <CollapsibleModule 
+          title="Metaphors" 
+          items={metaphors}
+          expanded={metaphorsExpanded}
+          onToggle={() => setMetaphorsExpanded(!metaphorsExpanded)}
+        />
         <div className="mt-4">
           <GroupableModule
             title="Advisors"
@@ -2386,7 +2418,12 @@ ${selectedText}
 
       {/* Right Column */}
       <div className="w-1/4 p-4 border-l border-gray-800 overflow-y-auto">
-        <Module title="Questions" items={questions} />
+        <CollapsibleModule 
+          title="Questions" 
+          items={questions}
+          expanded={questionsExpanded}
+          onToggle={() => setQuestionsExpanded(!questionsExpanded)}
+        />
       </div>
 
       {showAdvisorForm && (
