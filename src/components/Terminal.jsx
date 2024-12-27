@@ -241,7 +241,8 @@ const Terminal = () => {
 \`/clear\`              - Clear terminal
 \`/new\`                - Start a new session
 \`/sessions\`           - List saved sessions
-\`/load <session_id>\`  - Load a previous session
+\`/load <session_id>\`  - Load a specific session
+\`/load previous\`      - Load the most recent session
 \`/reset\`              - Clear all saved sessions
 \`/export\`             - Export current session to markdown
 
