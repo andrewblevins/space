@@ -31,12 +31,14 @@ const Module = ({ title, items = [], onItemClick, activeItems = [] }) => (
 
 const MarkdownMessage = ({ content }) => (
   <ReactMarkdown
-    className="text-left whitespace-pre font-serif"
+    className="text-left font-serif"
     components={{
       h1: ({children}) => <h1 className="text-blue-400 font-bold font-serif">{children}</h1>,
       h2: ({children}) => <h2 className="text-green-400 font-bold font-serif">{children}</h2>,
       code: ({children}) => <code className="text-green-400 font-mono">{children}</code>,
-      p: ({children}) => <p className="text-white whitespace-pre-wrap font-serif">{children}</p>,
+      p: ({children}) => <p className="text-white whitespace-pre-wrap font-serif mb-2">{children}</p>,
+      ul: ({children}) => <ul className="text-white list-disc pl-4 space-y-1 mb-2">{children}</ul>,
+      li: ({children}) => <li className="text-white">{children}</li>,
     }}
   >
     {content}
