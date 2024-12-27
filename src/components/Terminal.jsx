@@ -2285,7 +2285,7 @@ ${selectedText}
   return (
     <div 
       ref={terminalRef} 
-      className="w-full h-screen bg-black text-green-400 font-serif flex relative"
+      className="w-full h-screen bg-gradient-to-b from-gray-900 to-black text-green-400 font-serif flex relative"
       onContextMenu={handleContextMenu}
     >
       <button 
