@@ -355,35 +355,35 @@ const Terminal = () => {
         case '/help':
           setMessages(prev => [...prev, {
             type: 'system',
-            content: `Available commands:
+            content: `# Available commands
 
 ## Session Management
-\`/new\`              - Start a new session
-\`/sessions\`         - List all sessions
-\`/load <id>\`        - Load a specific session
-\`/load previous\`    - Load the most recent session
+/new              - Start a new session
+/sessions         - List all sessions
+/load <id>        - Load a specific session
+/load previous    - Load the most recent session
 
 ## Advisor Management
-\`/advisor\`          - Show available advisor commands
-\`/advisor add\`      - Add a new advisor
-\`/advisor edit\`     - Edit an advisor
-\`/advisor remove\`   - Remove an advisor
-\`/advisor list\`     - List all advisors
+/advisor          - Show available advisor commands
+/advisor add      - Add a new advisor
+/advisor edit     - Edit an advisor
+/advisor remove   - Remove an advisor
+/advisor list     - List all advisors
 
 ## Group Management
-\`/group create <group_name>\`         - Create a new advisor group (e.g. "/group create Psychologists")
-\`/group add <group_name> <advisor>\`  - Add an advisor to a group (e.g. "/group add Psychologists Carl Jung")
-\`/group remove <group_name> <advisor>\` - Remove an advisor from a group
-\`/group list\`                        - List all advisor groups and their members
+/group create <group_name>         - Create a new advisor group (e.g. "/group create Psychologists")
+/group add <group_name> <advisor>  - Add an advisor to a group (e.g. "/group add Psychologists Carl Jung")
+/group remove <group_name> <advisor> - Remove an advisor from a group
+/group list                        - List all advisor groups and their members
 
 ## Worksheet
-\`/worksheet\`        - Show available worksheet commands
-\`/worksheet list\`   - List available worksheet templates and completed worksheets
-\`/worksheet start\`  - Start a specific worksheet
-\`/worksheet view\`   - View a completed worksheet
+/worksheet        - Show available worksheet commands
+/worksheet list   - List available worksheet templates and completed worksheets
+/worksheet start  - Start a specific worksheet
+/worksheet view   - View a completed worksheet
 
 ## Settings
-\`/tokens <1-8192>\` - Set maximum response length`
+/tokens <1-8192> - Set maximum response length`
           }]);
           return true;
 
