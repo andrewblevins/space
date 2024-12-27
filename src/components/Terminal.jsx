@@ -1547,6 +1547,17 @@ ${contextMessages.map((msg, i) =>
         return [...prev, { type: 'assistant', content: '' }];
       });
 
+      const STREAM_BASE_DELAY = 25; // Slightly faster base delay
+      const STREAM_VARIANCE = 20; // More variance for natural feel
+      const PUNCTUATION_PAUSE = 250; // Slightly longer pause for more emphasis
+
+      const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+      // Helper to determine if we should pause longer after this character
+      const isPunctuation = (char) => {
+        return ['.', '!', '?', '\n'].includes(char);
+      };
+
       while (true) {
         const { done, value } = await reader.read();
         
@@ -1566,43 +1577,46 @@ ${contextMessages.map((msg, i) =>
         console.log(`Processing ${events.length} events`);
 
         for (const event of events) {
-          console.log('Processing event:', event);
-          
-          // Extract the data portion of the event
           const dataMatch = event.match(/^data: (.+)$/m);
-          if (!dataMatch) {
-            console.log('No data found in event');
-            continue;
-          }
+          if (!dataMatch) continue;
           
           try {
             const data = JSON.parse(dataMatch[1]);
-            console.log('Parsed event data:', data);
             
             if (data.type === 'content_block_delta' && data.delta.type === 'text_delta') {
-              console.log('Found text delta:', data.delta.text);
-              currentMessageContent += data.delta.text;
-              console.log('Current message content:', currentMessageContent);
+              const text = data.delta.text;
               
-              // Update the last message with new content
-              setMessages(prev => {
-                console.log('Updating messages, previous state:', prev);
-                const newMessages = [...prev];
-                if (newMessages.length > 0) {
-                  newMessages[newMessages.length - 1] = {
-                    type: 'assistant',
-                    content: currentMessageContent
-                  };
-                  console.log('New messages state:', newMessages);
+              // Stream each character with controlled timing
+              for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                
+                // Calculate delay for this character
+                const baseDelay = STREAM_BASE_DELAY;
+                const variance = Math.random() * STREAM_VARIANCE;
+                let delay = baseDelay + variance;
+                
+                // Add extra pause after punctuation
+                if (i > 0 && isPunctuation(text[i-1])) {
+                  delay += PUNCTUATION_PAUSE;
                 }
-                return newMessages;
-              });
-            } else {
-              console.log('Event type not handled:', data.type);
+                
+                await sleep(delay);
+                
+                currentMessageContent += char;
+                setMessages(prev => {
+                  const newMessages = [...prev];
+                  if (newMessages.length > 0) {
+                    newMessages[newMessages.length - 1] = {
+                      type: 'assistant',
+                      content: currentMessageContent
+                    };
+                  }
+                  return newMessages;
+                });
+              }
             }
           } catch (e) {
             console.error('Error parsing event:', e);
-            console.log('Problem event:', event);
           }
         }
       }
