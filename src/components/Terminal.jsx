@@ -761,17 +761,28 @@ Now, I'd like to generate the final output. Please include the following aspects
 
         case '/debug':
           console.log('Debug command received');
-          console.log('Current debugMode:', debugMode);
-          setDebugMode(prev => {
-            const newValue = !prev;
-            console.log('Setting debugMode to:', newValue);
-            return newValue;
-          });
-          console.log('After setDebugMode call');
-          setMessages(prev => [...prev, {
-            type: 'debug',
-            content: `Debug mode ${!debugMode ? 'enabled' : 'disabled'}`
-          }]);
+          const newDebugMode = !debugMode;
+          setDebugMode(newDebugMode);
+          
+          if (newDebugMode) {
+            // Show last 5 messages with their tags when debug mode is enabled
+            const lastMessages = messages.slice(-5);
+            const debugInfo = lastMessages.map(msg => ({
+              type: msg.type,
+              content: msg.content.slice(0, 50) + (msg.content.length > 50 ? '...' : ''),
+              tags: msg.tags || []
+            }));
+            
+            setMessages(prev => [...prev, {
+              type: 'system',
+              content: `Debug mode enabled\n\nLast 5 messages with tags:\n${JSON.stringify(debugInfo, null, 2)}`
+            }]);
+          } else {
+            setMessages(prev => [...prev, {
+              type: 'system',
+              content: 'Debug mode disabled'
+            }]);
+          }
           return true;
 
         case '/prompt':
@@ -1581,23 +1592,45 @@ ${contextMessages.map((msg, i) =>
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!input.trim() || isLoading) return;
+    console.log('handleSubmit called with input:', input);
+    
+    if (!input.trim() || isLoading) {
+      console.log('Empty input or loading, returning');
+      return;
+    }
 
     // Handle commands first
     if (input.startsWith('/')) {
+      console.log('Command detected:', input);
       const commandHandled = handleCommand(input);
+      console.log('Command handled:', commandHandled);
       if (commandHandled) {
         setInput('');
         return;
       }
     }
 
+    console.log('No command handled, proceeding to Claude response');
     try {
       setIsLoading(true);
       
       // Analyze tags for user message
       const analyzer = new TagAnalyzer();
-      const tags = await analyzer.analyzeTags(input);
+      let tags = [];
+      try {
+        tags = await analyzer.analyzeTags(input);
+        if (debugMode) {
+          console.log('Generated tags:', tags);
+        }
+      } catch (error) {
+        console.error('Tag analysis error:', error);
+        if (debugMode) {
+          setMessages(prev => [...prev, {
+            type: 'system',
+            content: `❌ Tag Analysis Error:\n${error.message}`
+          }]);
+        }
+      }
       
       // Add message with tags
       setMessages(prev => [...prev, { 
@@ -1610,7 +1643,16 @@ ${contextMessages.map((msg, i) =>
       // Get Claude response
       const response = await callClaude(input);
       
+      if (response) {
+        setMessages(prev => [...prev, {
+          type: 'assistant',
+          content: response,
+          timestamp: new Date().toISOString()
+        }]);
+      }
+
     } catch (error) {
+      console.error('Error in handleSubmit:', error);
       setMessages(prev => [...prev, { 
         type: 'system', 
         content: 'Error: Failed to get response from Claude' 

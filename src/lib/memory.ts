@@ -70,6 +70,16 @@ export class MemorySystem {
       }
     }
 
+    // Tag matching
+    if (message.tags) {
+      // Bonus points if query matches any tags
+      message.tags.forEach(tag => {
+        if (tag.toLowerCase().includes(queryLower)) {
+          score += 1;
+        }
+      });
+    }
+
     return score;
   }
 } 
