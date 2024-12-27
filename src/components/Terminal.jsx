@@ -1927,34 +1927,47 @@ Exported on: ${timestamp}\n\n`;
   }, [advisorGroups]);
 
   const buildConversationContext = (userMessage, messages, memory) => {
-    // Filter out system messages, empty messages, and the current message
-    const conversationMessages = messages
+    // Get the most recent messages (last 3 turns of conversation)
+    const recentMessages = messages
+      .slice(-6)  // Last 3 exchanges (3 user + 3 assistant messages)
       .filter(msg => 
-        // Only keep user messages and assistant responses
         (msg.type === 'user' || msg.type === 'assistant') &&
-        // Exclude system notifications
         !msg.content.includes('Terminal v0.1') &&
         !msg.content.includes('Debug mode') &&
         !msg.content.includes('Claude API Call') &&
-        // Exclude empty messages
         msg.content.trim() !== '' &&
-        // Exclude the current message
         msg.content !== userMessage
-      )
-      // Convert to Claude's message format
-      .map(msg => ({
-        role: msg.type === 'user' ? 'user' : 'assistant',
-        content: msg.content
-      }));
+      );
 
-    // Add the current message at the end
-    conversationMessages.push({
-      role: 'user',
-      content: userMessage
-    });
+    // Get relevant messages from earlier in the conversation
+    const relevantMessages = memory.retrieveRelevantContext(userMessage, messages.slice(0, -6));
 
     if (debugMode) {
-      console.log('Conversation history:', conversationMessages);
+      console.log('Recent messages:', recentMessages);
+      console.log('Relevant earlier messages:', relevantMessages);
+    }
+
+    // Combine and format messages for Claude
+    const conversationMessages = [
+      // Start with relevant historical messages
+      ...relevantMessages.map(msg => ({
+        role: msg.type === 'user' ? 'user' : 'assistant',
+        content: msg.content
+      })),
+      // Then add recent conversation context
+      ...recentMessages.map(msg => ({
+        role: msg.type === 'user' ? 'user' : 'assistant',
+        content: msg.content
+      })),
+      // Finally add the current message
+      {
+        role: 'user',
+        content: userMessage
+      }
+    ];
+
+    if (debugMode) {
+      console.log('Final conversation context:', conversationMessages);
     }
 
     return conversationMessages;
