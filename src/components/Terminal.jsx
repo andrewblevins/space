@@ -1751,7 +1751,7 @@ When responding, you should adopt the distinct voice(s) of the active advisor(s)
 
   const formatCaptureAsMarkdown = (selectedText, timestamp, messageIndex) => {
     const formattedDate = new Date(timestamp).toLocaleString();
-    const deepLink = `space://session/${currentSessionId}/message/${messageIndex}`;
+    const deepLink = `${window.location.origin}${window.location.pathname}?session=${currentSessionId}&message=${messageIndex}`;
     
     return `# SPACE Terminal Capture
 Captured on: ${formattedDate}
@@ -1851,6 +1851,35 @@ ${selectedText}
       document.addEventListener('click', removeMenu);
     }
   };
+
+  useEffect(() => {
+    // Check URL parameters on load
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get('session');
+    const messageId = params.get('message');
+    
+    if (sessionId && messageId) {
+      const sessionKey = `space_session_${sessionId}`;
+      const sessionData = localStorage.getItem(sessionKey);
+      
+      if (sessionData) {
+        const session = JSON.parse(sessionData);
+        setMessages(session.messages);
+        setCurrentSessionId(parseInt(sessionId));
+        
+        // Scroll to the specified message after render
+        setTimeout(() => {
+          const element = document.getElementById(`msg-${messageId}`);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Add highlight effect
+            element.classList.add('bg-green-900/20');
+            setTimeout(() => element.classList.remove('bg-green-900/20'), 2000);
+          }
+        }, 100);
+      }
+    }
+  }, []);
 
   return (
     <div 
