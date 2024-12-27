@@ -766,16 +766,18 @@ Now, I'd like to generate the final output. Please include the following aspects
           
           if (newDebugMode) {
             // Show last 5 messages with their tags when debug mode is enabled
-            const lastMessages = messages.slice(-5);
-            const debugInfo = lastMessages.map(msg => ({
-              type: msg.type,
-              content: msg.content.slice(0, 50) + (msg.content.length > 50 ? '...' : ''),
-              tags: msg.tags || []
-            }));
+            const lastUserMessages = messages
+              .filter(msg => msg.type === 'user')
+              .slice(-5)
+              .map(msg => ({
+                type: msg.type,
+                content: msg.content.slice(0, 50) + (msg.content.length > 50 ? '...' : ''),
+                tags: msg.tags || []
+              }));
             
             setMessages(prev => [...prev, {
               type: 'system',
-              content: `Debug mode enabled\n\nLast 5 messages with tags:\n${JSON.stringify(debugInfo, null, 2)}`
+              content: `Debug mode enabled\n\nLast 5 messages with tags:\n${JSON.stringify(lastUserMessages, null, 2)}`
             }]);
           } else {
             setMessages(prev => [...prev, {
