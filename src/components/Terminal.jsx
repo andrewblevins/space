@@ -136,7 +136,7 @@ const MarkdownMessage = ({ content }) => (
       code: ({node, inline, className, children, ...props}) => {
         const match = /language-(\w+)/.exec(className || '');
         return !inline ? (
-          <pre className="bg-gray-900/50 p-4 rounded-md my-2 overflow-x-auto">
+          <pre className="bg-gray-900 p-4 rounded-md my-2 overflow-x-auto">
             <code
               className={`${match ? `language-${match[1]}` : ''} text-white font-mono block`}
               {...props}
@@ -145,7 +145,7 @@ const MarkdownMessage = ({ content }) => (
             </code>
           </pre>
         ) : (
-          <code className="text-green-400 font-mono bg-gray-900/50 px-1 rounded" {...props}>
+          <code className="text-green-400 font-mono bg-gray-900 px-1 rounded" {...props}>
             {children}
           </code>
         );
@@ -2282,256 +2282,227 @@ ${selectedText}
     }
   };
 
-  // Add this to your existing styles
-  const messageAnimation = `
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-  `;
-
-  const fadeInAnimation = `
-    @keyframes messageSlideIn {
-      from {
-        opacity: 0;
-        transform: translateY(8px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-  `;
-
   return (
-    <>
-      <style>{fadeInAnimation}</style>
-      <div 
-        ref={terminalRef} 
-        className="w-full h-screen bg-gradient-to-b from-gray-900 to-black text-green-400 font-serif flex relative"
-        onContextMenu={handleContextMenu}
+    <div 
+      ref={terminalRef} 
+      className="w-full h-screen bg-gradient-to-b from-gray-900 to-black text-green-400 font-serif flex relative"
+      onContextMenu={handleContextMenu}
+    >
+      <button 
+        onClick={toggleFullscreen}
+        className="absolute top-2 right-2 text-green-400 hover:text-green-300 z-50"
       >
-        <button 
-          onClick={toggleFullscreen}
-          className="absolute top-2 right-2 text-green-400 hover:text-green-300 z-50"
-        >
-          {isFullscreen ? (
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          ) : (
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
-            </svg>
-          )}
-        </button>
+        {isFullscreen ? (
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        ) : (
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
+          </svg>
+        )}
+      </button>
 
-        {/* Left Column */}
-        <div className="w-1/4 p-4 border-r border-gray-800 overflow-y-auto">
-          <CollapsibleModule 
-            title="Metaphors" 
-            items={metaphors}
-            expanded={metaphorsExpanded}
-            onToggle={() => setMetaphorsExpanded(!metaphorsExpanded)}
-          />
-          <div className="mt-4">
-            <GroupableModule
-              title="Advisors"
-              groups={advisorGroups}
-              items={advisors}
-              onItemClick={handleAdvisorClick}
-              onGroupClick={handleGroupClick}
-              activeItems={advisors.filter(a => a.active)}
-              activeGroups={activeGroups}
-            />
-          </div>
-        </div>
-
-        {/* Middle Column */}
-        <div className="w-2/4 p-4 flex flex-col">
-          <div 
-            ref={messagesContainerRef} 
-            className="flex-1 overflow-auto mb-4 break-words"
-            onScroll={handleScroll}
-          >
-            {messages.map((msg, idx) => (
-              <div 
-                key={idx}
-                id={`msg-${idx}`}
-                className={`
-  ${msg.type === 'debug' ? 'text-yellow-400' :
-    msg.type === 'user' ? 'text-green-400' : 
-    msg.type === 'assistant' ? 'text-white' : 
-    msg.type === 'system' ? 'text-green-400' :
-    'text-green-400'
-  }
-  mb-4 
-  whitespace-pre-wrap 
-  break-words
-  animate-slide-in
-`}
-style={{animation: 'messageSlideIn 0.3s ease-out forwards'}}
-                >
-                  {(msg.type === 'system' || msg.type === 'assistant') ? (
-                    <MarkdownMessage content={msg.content} />
-                  ) : (
-                    msg.content
-                  )}
-                </div>
-            ))}
-            {isLoading && <div className="text-yellow-400">Loading...</div>}
-          </div>
-
-          <div className="mt-auto">
-            <form onSubmit={handleSubmit}>
-              <div className="flex items-center">
-                {editingPrompt ? (
-                  <div className="flex-1">
-                    <textarea
-                      value={editText}
-                      onChange={(e) => setEditText(e.target.value)}
-                      onKeyDown={handleEditKeyDown}
-                      className="w-full h-40 bg-black text-green-400 font-serif p-2 border border-green-400 focus:outline-none resize-none"
-                      placeholder="Edit your prompt..."
-                      autoFocus
-                    />
-                  </div>
-                ) : editingAdvisor ? (
-                  <div className="flex-1">
-                    <textarea
-                      value={editAdvisorText}
-                      onChange={(e) => setEditAdvisorText(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && e.ctrlKey) {
-                          // Save changes
-                          setAdvisors(prev => prev.map(a => 
-                            a.name === editingAdvisor.name ? { ...a, description: editAdvisorText } : a
-                          ));
-                          setMessages(prev => [...prev, {
-                            type: 'system',
-                            content: `Updated advisor "${editingAdvisor}"`
-                          }]);
-                          setEditingAdvisor(null);
-                          setEditAdvisorText('');
-                        } else if (e.key === 'Escape') {
-                          // Cancel editing
-                          setEditingAdvisor(null);
-                          setEditAdvisorText('');
-                          setMessages(prev => [...prev, {
-                            type: 'system',
-                            content: 'Edit cancelled'
-                          }]);
-                        }
-                      }}
-                      className="w-full h-40 bg-black text-green-400 font-serif p-2 border border-green-400 focus:outline-none resize-none"
-                      placeholder="Edit advisor description..."
-                      autoFocus
-                    />
-                  </div>
-                ) : (
-                  <>
-                    <span className="mr-2">&gt;</span>
-                    <ExpandingInput
-                      value={input}
-                      onChange={(e) => setInput(e.target.value)}
-                      onSubmit={handleSubmit}
-                      isLoading={isLoading}
-                    />
-                  </>
-                )}
-              </div>
-            </form>
-          </div>
-        </div>
-
-        {/* Right Column */}
-        <div className="w-1/4 p-4 border-l border-gray-800 overflow-y-auto">
-          <CollapsibleModule 
-            title="Questions" 
-            items={questions}
-            expanded={questionsExpanded}
-            onToggle={() => setQuestionsExpanded(!questionsExpanded)}
+      {/* Left Column */}
+      <div className="w-1/4 p-4 border-r border-gray-800 overflow-y-auto">
+        <CollapsibleModule 
+          title="Metaphors" 
+          items={metaphors}
+          expanded={metaphorsExpanded}
+          onToggle={() => setMetaphorsExpanded(!metaphorsExpanded)}
+        />
+        <div className="mt-4">
+          <GroupableModule
+            title="Advisors"
+            groups={advisorGroups}
+            items={advisors}
+            onItemClick={handleAdvisorClick}
+            onGroupClick={handleGroupClick}
+            activeItems={advisors.filter(a => a.active)}
+            activeGroups={activeGroups}
           />
         </div>
-
-        {showAdvisorForm && (
-          <AdvisorForm
-            onSubmit={({ name, description }) => {
-              const newAdvisor = {
-                name,
-                description,
-                active: true
-              };
-              setAdvisors(prev => [...prev, newAdvisor]);
-              setMessages(prev => [...prev, {
-                type: 'system',
-                content: `Added advisor: ${newAdvisor.name}`
-              }]);
-              setShowAdvisorForm(false);
-            }}
-            onCancel={() => {
-              setShowAdvisorForm(false);
-              setMessages(prev => [...prev, {
-                type: 'system',
-                content: 'Cancelled adding advisor'
-              }]);
-            }}
-          />
-        )}
-
-        {editingAdvisor && (
-          <EditAdvisorForm
-            advisor={editingAdvisor}
-            onSubmit={({ name, description }) => {
-              setAdvisors(prev => prev.map(a => 
-                a.name === editingAdvisor.name 
-                  ? { ...a, name, description }
-                  : a
-              ));
-              setMessages(prev => [...prev, {
-                type: 'system',
-                content: `Updated advisor: ${name}`
-              }]);
-              setEditingAdvisor(null);
-            }}
-            onCancel={() => {
-              setEditingAdvisor(null);
-              setMessages(prev => [...prev, {
-                type: 'system',
-                content: 'Edit cancelled'
-              }]);
-            }}
-          />
-        )}
-
-        {editingPrompt && (
-          <EditPromptForm
-            prompt={editingPrompt}
-            onSubmit={({ name, text }) => {
-              setSavedPrompts(prev => prev.map(p => 
-                p.name === editingPrompt.name 
-                  ? { ...p, name, text }
-                  : p
-              ));
-              setMessages(prev => [...prev, {
-                type: 'system',
-                content: `Updated prompt: ${name}`
-              }]);
-              setEditingPrompt(null);
-              setEditText('');
-            }}
-            onCancel={() => {
-              setEditingPrompt(null);
-              setEditText('');
-              setMessages(prev => [...prev, {
-                type: 'system',
-                content: 'Edit cancelled'
-              }]);
-            }}
-          />
-        )}
       </div>
-    </>
+
+      {/* Middle Column */}
+      <div className="w-2/4 p-4 flex flex-col">
+        <div 
+          ref={messagesContainerRef} 
+          className="flex-1 overflow-auto mb-4 break-words"
+          onScroll={handleScroll}
+        >
+          {messages.map((msg, idx) => (
+            <div 
+              key={idx}
+              id={`msg-${idx}`}
+              className={(() => {
+                const className = msg.type === 'debug' ? 'text-yellow-400 mb-4 whitespace-pre-wrap break-words' :
+                  msg.type === 'user' ? 'text-green-400 mb-4 break-words' : 
+                  msg.type === 'assistant' ? 'text-white mb-4 break-words' : 
+                  msg.type === 'system' ? 'text-green-400 mb-4 break-words' :
+                  'text-green-400 mb-4 break-words';
+                return className;
+              })()}
+            >
+              {(msg.type === 'system' || msg.type === 'assistant') ? (
+                <MarkdownMessage content={msg.content} />
+              ) : (
+                msg.content
+              )}
+            </div>
+          ))}
+          {isLoading && <div className="text-yellow-400">Loading...</div>}
+        </div>
+
+        <div className="mt-auto">
+          <form onSubmit={handleSubmit}>
+            <div className="flex items-center">
+              {editingPrompt ? (
+                <div className="flex-1">
+                  <textarea
+                    value={editText}
+                    onChange={(e) => setEditText(e.target.value)}
+                    onKeyDown={handleEditKeyDown}
+                    className="w-full h-40 bg-black text-green-400 font-serif p-2 border border-green-400 focus:outline-none resize-none"
+                    placeholder="Edit your prompt..."
+                    autoFocus
+                  />
+                </div>
+              ) : editingAdvisor ? (
+                <div className="flex-1">
+                  <textarea
+                    value={editAdvisorText}
+                    onChange={(e) => setEditAdvisorText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && e.ctrlKey) {
+                        // Save changes
+                        setAdvisors(prev => prev.map(a => 
+                          a.name === editingAdvisor.name ? { ...a, description: editAdvisorText } : a
+                        ));
+                        setMessages(prev => [...prev, {
+                          type: 'system',
+                          content: `Updated advisor "${editingAdvisor}"`
+                        }]);
+                        setEditingAdvisor(null);
+                        setEditAdvisorText('');
+                      } else if (e.key === 'Escape') {
+                        // Cancel editing
+                        setEditingAdvisor(null);
+                        setEditAdvisorText('');
+                        setMessages(prev => [...prev, {
+                          type: 'system',
+                          content: 'Edit cancelled'
+                        }]);
+                      }
+                    }}
+                    className="w-full h-40 bg-black text-green-400 font-serif p-2 border border-green-400 focus:outline-none resize-none"
+                    placeholder="Edit advisor description..."
+                    autoFocus
+                  />
+                </div>
+              ) : (
+                <>
+                  <span className="mr-2">&gt;</span>
+                  <ExpandingInput
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onSubmit={handleSubmit}
+                    isLoading={isLoading}
+                  />
+                </>
+              )}
+            </div>
+          </form>
+        </div>
+      </div>
+
+      {/* Right Column */}
+      <div className="w-1/4 p-4 border-l border-gray-800 overflow-y-auto">
+        <CollapsibleModule 
+          title="Questions" 
+          items={questions}
+          expanded={questionsExpanded}
+          onToggle={() => setQuestionsExpanded(!questionsExpanded)}
+        />
+      </div>
+
+      {showAdvisorForm && (
+        <AdvisorForm
+          onSubmit={({ name, description }) => {
+            const newAdvisor = {
+              name,
+              description,
+              active: true
+            };
+            setAdvisors(prev => [...prev, newAdvisor]);
+            setMessages(prev => [...prev, {
+              type: 'system',
+              content: `Added advisor: ${newAdvisor.name}`
+            }]);
+            setShowAdvisorForm(false);
+          }}
+          onCancel={() => {
+            setShowAdvisorForm(false);
+            setMessages(prev => [...prev, {
+              type: 'system',
+              content: 'Cancelled adding advisor'
+            }]);
+          }}
+        />
+      )}
+
+      {editingAdvisor && (
+        <EditAdvisorForm
+          advisor={editingAdvisor}
+          onSubmit={({ name, description }) => {
+            setAdvisors(prev => prev.map(a => 
+              a.name === editingAdvisor.name 
+                ? { ...a, name, description }
+                : a
+            ));
+            setMessages(prev => [...prev, {
+              type: 'system',
+              content: `Updated advisor: ${name}`
+            }]);
+            setEditingAdvisor(null);
+          }}
+          onCancel={() => {
+            setEditingAdvisor(null);
+            setMessages(prev => [...prev, {
+              type: 'system',
+              content: 'Edit cancelled'
+            }]);
+          }}
+        />
+      )}
+
+      {editingPrompt && (
+        <EditPromptForm
+          prompt={editingPrompt}
+          onSubmit={({ name, text }) => {
+            setSavedPrompts(prev => prev.map(p => 
+              p.name === editingPrompt.name 
+                ? { ...p, name, text }
+                : p
+            ));
+            setMessages(prev => [...prev, {
+              type: 'system',
+              content: `Updated prompt: ${name}`
+            }]);
+            setEditingPrompt(null);
+            setEditText('');
+          }}
+          onCancel={() => {
+            setEditingPrompt(null);
+            setEditText('');
+            setMessages(prev => [...prev, {
+              type: 'system',
+              content: 'Edit cancelled'
+            }]);
+          }}
+        />
+      )}
+    </div>
   );
 };
 
