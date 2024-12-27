@@ -1498,6 +1498,19 @@ When responding, you should adopt the distinct voice(s) of the active advisor(s)
     }
   };
 
+  useEffect(() => {
+    if (messages.length > 1) { // Don't save empty sessions
+      const sessionData = {
+        id: currentSessionId,
+        timestamp: new Date().toISOString(),
+        messages,
+        metaphors,
+        questions
+      };
+      localStorage.setItem(`space_session_${currentSessionId}`, JSON.stringify(sessionData));
+    }
+  }, [messages, metaphors, questions, currentSessionId]);
+
   return (
     <div className="w-full h-screen bg-black text-green-400 font-serif flex">
       {/* Left Column */}
