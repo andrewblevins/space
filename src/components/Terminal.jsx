@@ -6,6 +6,7 @@ import AdvisorForm from './AdvisorForm';
 import EditAdvisorForm from './EditAdvisorForm';
 import EditPromptForm from './EditPromptForm';
 import '@fontsource/vollkorn';
+import TagAnalyzer from '../lib/tagAnalyzer';
 
 const Module = ({ title, items = [], onItemClick, activeItems = [] }) => (
   <div className="bg-gray-900 p-4">
@@ -1580,11 +1581,7 @@ ${contextMessages.map((msg, i) =>
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('handleSubmit called');
-    
-    if (!input.trim() || isLoading) {
-      return;
-    }
+    if (!input.trim() || isLoading) return;
 
     // Handle commands first
     if (input.startsWith('/')) {
@@ -1595,12 +1592,24 @@ ${contextMessages.map((msg, i) =>
       }
     }
 
-    console.log('Sending message to Claude, debugMode:', debugMode);
-    setMessages(prev => [...prev, { type: 'user', content: input }]);
-    setIsLoading(true);
-
     try {
+      setIsLoading(true);
+      
+      // Analyze tags for user message
+      const analyzer = new TagAnalyzer();
+      const tags = await analyzer.analyzeTags(input);
+      
+      // Add message with tags
+      setMessages(prev => [...prev, { 
+        type: 'user', 
+        content: input,
+        tags,
+        timestamp: new Date().toISOString()
+      }]);
+
+      // Get Claude response
       const response = await callClaude(input);
+      
     } catch (error) {
       setMessages(prev => [...prev, { 
         type: 'system', 

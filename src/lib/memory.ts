@@ -2,6 +2,7 @@ interface Message {
   type: 'system' | 'user' | 'assistant';
   content: string;
   timestamp?: string;
+  tags?: string[];  // Simple array of string tags
 }
 
 interface Session {
