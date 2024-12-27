@@ -1082,8 +1082,10 @@ Note: Higher values allow for longer responses
           return true;
 
         case '/capture':
-          const selection = window.getSelection()?.toString().trim();
-          if (!selection) {
+          const selection = window.getSelection();
+          const selectedText = selection?.toString().trim();
+          
+          if (!selection || !selectedText) {
             setMessages(prev => [...prev, {
               type: 'system',
               content: 'No text selected. Please highlight some text before using /capture'
@@ -1091,9 +1093,29 @@ Note: Higher values allow for longer responses
             return true;
           }
 
+          // Find which message contains the selection
+          const range = selection.getRangeAt(0);
+          let element = range.commonAncestorContainer;
+          
+          // Walk up the DOM tree until we find an element with an ID starting with 'msg-'
+          while (element && (!element.id || !element.id.startsWith('msg-'))) {
+            element = element.parentElement;
+          }
+          
+          const messageId = element?.id;
+          const messageIndex = messageId ? parseInt(messageId.replace('msg-', '')) : null;
+
+          if (!messageIndex && messageIndex !== 0) {  // Check for both null and undefined
+            setMessages(prev => [...prev, {
+              type: 'system',
+              content: 'Could not determine message position for link'
+            }]);
+            return true;
+          }
+
           try {
             const timestamp = new Date().toISOString();
-            const markdown = formatCaptureAsMarkdown(selection, timestamp);
+            const markdown = formatCaptureAsMarkdown(selectedText, timestamp, messageIndex);
             const blob = new Blob([markdown], { type: 'text/markdown' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -1104,14 +1126,20 @@ Note: Higher values allow for longer responses
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
             
+            // Check if menu is still in document before trying to remove it
+            if (menu.parentNode === document.body) {
+              document.body.removeChild(menu);
+            }
+            
             setMessages(prev => [...prev, {
               type: 'system',
               content: 'Capture saved successfully'
             }]);
           } catch (error) {
+            console.error('Error during capture:', error);
             setMessages(prev => [...prev, {
               type: 'system',
-              content: `Error saving capture: ${error.message}`
+              content: 'Error saving capture'
             }]);
           }
           return true;
@@ -1721,18 +1749,44 @@ When responding, you should adopt the distinct voice(s) of the active advisor(s)
     }
   };
 
-  const formatCaptureAsMarkdown = (selectedText, timestamp) => {
+  const formatCaptureAsMarkdown = (selectedText, timestamp, messageIndex) => {
     const formattedDate = new Date(timestamp).toLocaleString();
+    const deepLink = `space://session/${currentSessionId}/message/${messageIndex}`;
+    
     return `# SPACE Terminal Capture
 Captured on: ${formattedDate}
 
-${selectedText}`;
+${selectedText}
+
+[View in context](${deepLink})`;
   };
 
   const handleContextMenu = (e) => {
-    const selection = window.getSelection()?.toString().trim();
-    if (selection) {
+    const selection = window.getSelection();
+    const selectedText = selection?.toString().trim();
+    
+    if (selectedText) {
       e.preventDefault();
+      
+      // Find which message contains the selection
+      const range = selection.getRangeAt(0);
+      let element = range.commonAncestorContainer;
+      
+      // Walk up the DOM tree until we find an element with an ID starting with 'msg-'
+      while (element && (!element.id || !element.id.startsWith('msg-'))) {
+        element = element.parentElement;
+      }
+      
+      const messageId = element?.id;
+      const messageIndex = messageId ? parseInt(messageId.replace('msg-', '')) : null;
+
+      if (!messageIndex && messageIndex !== 0) {  // Check for both null and undefined
+        setMessages(prev => [...prev, {
+          type: 'system',
+          content: 'Could not determine message position for link'
+        }]);
+        return;
+      }
       
       const menu = document.createElement('div');
       menu.className = `
@@ -1753,23 +1807,35 @@ ${selectedText}`;
       captureButton.textContent = 'Capture Selection';
       
       captureButton.onclick = () => {
-        const timestamp = new Date().toISOString();
-        const markdown = formatCaptureAsMarkdown(selection, timestamp);
-        const blob = new Blob([markdown], { type: 'text/markdown' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `space-capture-${timestamp.split('T')[0]}.md`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        document.body.removeChild(menu);
-        
-        setMessages(prev => [...prev, {
-          type: 'system',
-          content: 'Capture saved successfully'
-        }]);
+        try {
+          const timestamp = new Date().toISOString();
+          const markdown = formatCaptureAsMarkdown(selectedText, timestamp, messageIndex);
+          const blob = new Blob([markdown], { type: 'text/markdown' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `space-capture-${timestamp.split('T')[0]}.md`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          
+          // Check if menu is still in document before trying to remove it
+          if (menu.parentNode === document.body) {
+            document.body.removeChild(menu);
+          }
+          
+          setMessages(prev => [...prev, {
+            type: 'system',
+            content: 'Capture saved successfully'
+          }]);
+        } catch (error) {
+          console.error('Error during capture:', error);
+          setMessages(prev => [...prev, {
+            type: 'system',
+            content: 'Error saving capture'
+          }]);
+        }
       };
       
       menu.appendChild(captureButton);
@@ -1839,14 +1905,18 @@ ${selectedText}`;
           onScroll={handleScroll}
         >
           {messages.map((msg, idx) => (
-            <div key={idx} className={(() => {
-              const className = msg.type === 'debug' ? 'text-yellow-400 mb-4 whitespace-pre-wrap break-words' :
-                msg.type === 'user' ? 'text-green-400 mb-4 break-words' : 
-                msg.type === 'assistant' ? 'text-white mb-4 break-words' : 
-                msg.type === 'system' ? 'text-green-400 mb-4 break-words' :
-                'text-green-400 mb-4 break-words';
-              return className;
-            })()}>
+            <div 
+              key={idx}
+              id={`msg-${idx}`}
+              className={(() => {
+                const className = msg.type === 'debug' ? 'text-yellow-400 mb-4 whitespace-pre-wrap break-words' :
+                  msg.type === 'user' ? 'text-green-400 mb-4 break-words' : 
+                  msg.type === 'assistant' ? 'text-white mb-4 break-words' : 
+                  msg.type === 'system' ? 'text-green-400 mb-4 break-words' :
+                  'text-green-400 mb-4 break-words';
+                return className;
+              })()}
+            >
               {(msg.type === 'system' || msg.type === 'assistant') ? (
                 <MarkdownMessage content={msg.content} />
               ) : (
