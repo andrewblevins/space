@@ -1081,6 +1081,41 @@ Note: Higher values allow for longer responses
           }]);
           return true;
 
+        case '/capture':
+          const selection = window.getSelection()?.toString().trim();
+          if (!selection) {
+            setMessages(prev => [...prev, {
+              type: 'system',
+              content: 'No text selected. Please highlight some text before using /capture'
+            }]);
+            return true;
+          }
+
+          try {
+            const timestamp = new Date().toISOString();
+            const markdown = formatCaptureAsMarkdown(selection, timestamp);
+            const blob = new Blob([markdown], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `space-capture-${timestamp.split('T')[0]}.md`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            setMessages(prev => [...prev, {
+              type: 'system',
+              content: 'Capture saved successfully'
+            }]);
+          } catch (error) {
+            setMessages(prev => [...prev, {
+              type: 'system',
+              content: `Error saving capture: ${error.message}`
+            }]);
+          }
+          return true;
+
         default:
           setMessages(prev => [...prev, {
             type: 'system',
@@ -1686,8 +1721,77 @@ When responding, you should adopt the distinct voice(s) of the active advisor(s)
     }
   };
 
+  const formatCaptureAsMarkdown = (selectedText, timestamp) => {
+    const formattedDate = new Date(timestamp).toLocaleString();
+    return `# SPACE Terminal Capture
+Captured on: ${formattedDate}
+
+${selectedText}`;
+  };
+
+  const handleContextMenu = (e) => {
+    const selection = window.getSelection()?.toString().trim();
+    if (selection) {
+      e.preventDefault();
+      
+      const menu = document.createElement('div');
+      menu.className = `
+        absolute bg-gray-900 
+        border border-green-400 
+        rounded-md shadow-lg 
+        py-1
+      `;
+      menu.style.left = `${e.pageX}px`;
+      menu.style.top = `${e.pageY}px`;
+      
+      const captureButton = document.createElement('button');
+      captureButton.className = `
+        w-full px-4 py-2 
+        text-left text-green-400 
+        hover:bg-gray-800
+      `;
+      captureButton.textContent = 'Capture Selection';
+      
+      captureButton.onclick = () => {
+        const timestamp = new Date().toISOString();
+        const markdown = formatCaptureAsMarkdown(selection, timestamp);
+        const blob = new Blob([markdown], { type: 'text/markdown' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `space-capture-${timestamp.split('T')[0]}.md`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        document.body.removeChild(menu);
+        
+        setMessages(prev => [...prev, {
+          type: 'system',
+          content: 'Capture saved successfully'
+        }]);
+      };
+      
+      menu.appendChild(captureButton);
+      document.body.appendChild(menu);
+      
+      // Remove menu when clicking outside
+      const removeMenu = (e) => {
+        if (!menu.contains(e.target)) {
+          document.body.removeChild(menu);
+          document.removeEventListener('click', removeMenu);
+        }
+      };
+      document.addEventListener('click', removeMenu);
+    }
+  };
+
   return (
-    <div ref={terminalRef} className="w-full h-screen bg-black text-green-400 font-serif flex relative">
+    <div 
+      ref={terminalRef} 
+      className="w-full h-screen bg-black text-green-400 font-serif flex relative"
+      onContextMenu={handleContextMenu}
+    >
       <button 
         onClick={toggleFullscreen}
         className="absolute top-2 right-2 text-green-400 hover:text-green-300 z-50"
