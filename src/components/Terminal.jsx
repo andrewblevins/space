@@ -150,6 +150,7 @@ const Terminal = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const terminalRef = useRef(null);
   const [maxTokens, setMaxTokens] = useState(4096);
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
 
   const worksheetQuestions = [
     {
@@ -1564,11 +1565,19 @@ Exported on: ${timestamp}\n\n`;
     return conversationMessages;
   };
 
+  const handleScroll = (e) => {
+    const element = e.target;
+    const isScrolledToBottom = 
+      Math.abs(element.scrollHeight - element.scrollTop - element.clientHeight) < 10;
+    
+    setShouldAutoScroll(isScrolledToBottom);
+  };
+
   useEffect(() => {
-    if (messagesContainerRef.current) {
+    if (messagesContainerRef.current && shouldAutoScroll) {
       messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
     }
-  }, [messages, isLoading]);
+  }, [messages, isLoading, shouldAutoScroll]);
 
   const getSystemPrompt = () => {
     const activeAdvisors = advisors.filter(a => a.active);
@@ -1720,7 +1729,11 @@ When responding, you should adopt the distinct voice(s) of the active advisor(s)
 
       {/* Middle Column */}
       <div className="w-2/4 p-4 flex flex-col">
-        <div ref={messagesContainerRef} className="flex-1 overflow-auto mb-4 break-words">
+        <div 
+          ref={messagesContainerRef} 
+          className="flex-1 overflow-auto mb-4 break-words"
+          onScroll={handleScroll}
+        >
           {messages.map((msg, idx) => (
             <div key={idx} className={(() => {
               const className = msg.type === 'debug' ? 'text-yellow-400 mb-4 whitespace-pre-wrap break-words' :
