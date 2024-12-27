@@ -149,6 +149,7 @@ const Terminal = () => {
   const [showAdvisorForm, setShowAdvisorForm] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const terminalRef = useRef(null);
+  const [maxTokens, setMaxTokens] = useState(4096);
 
   const worksheetQuestions = [
     {
@@ -268,7 +269,10 @@ const Terminal = () => {
 \`/worksheet\`           - Show available worksheet commands
 \`/worksheet list\`      - List available worksheet templates and completed worksheets
 \`/worksheet start <id>\` - Start a specific worksheet
-\`/worksheet view <id>\`  - View a completed worksheet`
+\`/worksheet view <id>\`  - View a completed worksheet
+
+## Settings
+\`/tokens <1-8192>\` - Set maximum response length`
           }]);
           return true;
 
@@ -1053,6 +1057,29 @@ ${relevant.map((msg, i) => {
               return true;
           }
 
+        case '/tokens':
+          if (!args[0] || isNaN(args[0]) || args[0] < 1 || args[0] > 8192) {
+            setMessages(prev => [...prev, {
+              type: 'system',
+              content: `Usage: /tokens <1-8192>
+Current max tokens: ${maxTokens}
+
+Note: Higher values allow for longer responses
+- Default is 4096
+- Maximum is 8192
+- Minimum is 1`
+            }]);
+            return true;
+          }
+          
+          const newMaxTokens = parseInt(args[0]);
+          setMaxTokens(newMaxTokens);
+          setMessages(prev => [...prev, {
+            type: 'system',
+            content: `Max tokens set to ${newMaxTokens}`
+          }]);
+          return true;
+
         default:
           setMessages(prev => [...prev, {
             type: 'system',
@@ -1111,8 +1138,7 @@ ${contextMessages.map((msg, i) =>
           model: 'claude-3-5-sonnet-20241022',
           messages: contextMessages,
           system: systemPromptText,
-          max_tokens: 1024,
-          temperature: 0.7,
+          max_tokens: maxTokens,
           stream: true
         })
       });
