@@ -1632,7 +1632,7 @@ ${contextMessages.map((msg, i) =>
         }
       }
       
-      // Add message with tags
+      // Add user message with tags
       setMessages(prev => [...prev, { 
         type: 'user', 
         content: input,
@@ -1640,16 +1640,8 @@ ${contextMessages.map((msg, i) =>
         timestamp: new Date().toISOString()
       }]);
 
-      // Get Claude response
-      const response = await callClaude(input);
-      
-      if (response) {
-        setMessages(prev => [...prev, {
-          type: 'assistant',
-          content: response,
-          timestamp: new Date().toISOString()
-        }]);
-      }
+      // Get Claude response (streaming handled inside callClaude)
+      await callClaude(input);
 
     } catch (error) {
       console.error('Error in handleSubmit:', error);
