@@ -7,12 +7,23 @@ import EditAdvisorForm from './EditAdvisorForm';
 import EditPromptForm from './EditPromptForm';
 import '@fontsource/vollkorn';
 
-const Module = ({ title, items = [] }) => (
+const Module = ({ title, items = [], onItemClick, activeItems = [] }) => (
   <div className="bg-gray-900 p-4">
     <h2 className="text-white mb-2">{title}</h2>
     <ul className="space-y-4">
       {items.map((item, idx) => (
-        <li key={idx} className="text-gray-300 whitespace-pre-wrap">{item}</li>
+        <li 
+          key={idx} 
+          className={`
+            text-gray-300 
+            whitespace-pre-wrap 
+            ${onItemClick ? 'cursor-pointer hover:text-green-400 transition-colors' : ''}
+            ${activeItems.includes(item) ? 'text-green-400' : ''}
+          `}
+          onClick={() => onItemClick && onItemClick(item)}
+        >
+          {item}
+        </li>
       ))}
     </ul>
   </div>
@@ -136,6 +147,8 @@ const Terminal = () => {
   const memory = new MemorySystem();
   const messagesContainerRef = useRef(null);
   const [showAdvisorForm, setShowAdvisorForm] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const terminalRef = useRef(null);
 
   const worksheetQuestions = [
     {
@@ -241,11 +254,11 @@ const Terminal = () => {
 \`/advisor list\`                  - Show all advisors
 
 ## Prompt Management
-\`/prompt add <name> <text>\`   - Save a new prompt
-\`/prompt edit <name>\`         - Edit an existing prompt
-\`/prompt delete <name>\`       - Delete a saved prompt
+\`/prompt add "name" <text>\`   - Save a new prompt
+\`/prompt edit "name"\`         - Edit an existing prompt
+\`/prompt delete "name"\`       - Delete a saved prompt
 \`/prompt list\`               - Show saved prompts
-\`/prompt use <name>\`         - Use a saved prompt
+\`/prompt use "name"\`         - Use a saved prompt
 
 ## Other Commands
 \`/debug\`     - Toggle debug mode
@@ -628,30 +641,84 @@ Now, I'd like to generate the final output. Please include the following aspects
         case '/prompt':
           switch(args[0]) {
             case 'add':
-              if (args.length < 3) {
+              if (!args[1]) {
                 setMessages(prev => [...prev, {
                   type: 'system',
-                  content: 'Usage: /prompt add <name> <prompt_text>'
+                  content: 'Usage: /prompt add "name" <prompt_text>'
                 }]);
                 return true;
               }
-              const promptName = args[1];
-              const promptText = args.slice(2).join(' ');
-              setSavedPrompts(prev => [...prev, { name: promptName, text: promptText }]);
+              
+              const fullTextAdd = args.join(' ');
+              const firstQuoteAdd = fullTextAdd.indexOf('"');
+              const lastQuoteAdd = fullTextAdd.indexOf('"', firstQuoteAdd + 1);
+              
+              if (firstQuoteAdd === -1 || lastQuoteAdd === -1) {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: 'Error: Prompt name must be enclosed in quotes'
+                }]);
+                return true;
+              }
+
+              const nameToAdd = fullTextAdd.slice(firstQuoteAdd + 1, lastQuoteAdd);
+              const promptText = fullTextAdd.slice(lastQuoteAdd + 1).trim();
+              
+              if (!promptText) {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: 'Error: Prompt text is required'
+                }]);
+                return true;
+              }
+
+              setSavedPrompts(prev => [...prev, { name: nameToAdd, text: promptText }]);
               setMessages(prev => [...prev, {
                 type: 'system',
-                content: `Saved prompt: ${promptName}`
+                content: `Saved prompt: ${nameToAdd}`
               }]);
               return true;
 
-            case 'list':
+            case 'delete':
+              if (!args[1]) {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: 'Usage: /prompt delete "name"'
+                }]);
+                return true;
+              }
+              
+              const fullTextDelete = args.join(' ');
+              const firstQuoteDelete = fullTextDelete.indexOf('"');
+              const lastQuoteDelete = fullTextDelete.indexOf('"', firstQuoteDelete + 1);
+              
+              if (firstQuoteDelete === -1 || lastQuoteDelete === -1) {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: 'Error: Prompt name must be enclosed in quotes'
+                }]);
+                return true;
+              }
+
+              const nameToDelete = fullTextDelete.slice(firstQuoteDelete + 1, lastQuoteDelete);
+              const promptToDelete = savedPrompts.find(p => 
+                p.name.toLowerCase() === nameToDelete.toLowerCase()
+              );
+              
+              if (!promptToDelete) {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: `Prompt "${nameToDelete}" not found`
+                }]);
+                return true;
+              }
+
+              setSavedPrompts(prev => prev.filter(p => 
+                p.name.toLowerCase() !== nameToDelete.toLowerCase()
+              ));
               setMessages(prev => [...prev, {
                 type: 'system',
-                content: savedPrompts.length ?
-                  'Saved prompts:\n' + savedPrompts.map(p => 
-                    `${p.name}: ${p.text}`
-                  ).join('\n') :
-                  'No saved prompts'
+                content: `Deleted prompt: ${nameToDelete}`
               }]);
               return true;
 
@@ -659,35 +726,53 @@ Now, I'd like to generate the final output. Please include the following aspects
               if (!args[1]) {
                 setMessages(prev => [...prev, {
                   type: 'system',
-                  content: 'Usage: /prompt use <name>'
+                  content: 'Usage: /prompt use "name"'
                 }]);
                 return true;
               }
-              const prompt = savedPrompts.find(p => p.name === args[1]);
-              if (prompt) {
-                (async () => {
-                  setMessages(prev => [...prev, { type: 'user', content: prompt.text }]);
-                  setIsLoading(true);
-                  try {
-                    const response = await callClaude(prompt.text);
-                    setMessages(prev => [...prev, { type: 'assistant', content: response }]);
-                  } catch (error) {
-                    setMessages(prev => [...prev, { 
-                      type: 'system', 
-                      content: 'Error: Failed to get response from Claude' 
-                    }]);
-                  } finally {
-                    setIsLoading(false);
-                    setInput('');
-                    focusInput();
-                  }
-                })();
-              } else {
+              
+              const fullTextUse = args.join(' ');
+              const firstQuoteUse = fullTextUse.indexOf('"');
+              const lastQuoteUse = fullTextUse.indexOf('"', firstQuoteUse + 1);
+              
+              if (firstQuoteUse === -1 || lastQuoteUse === -1) {
                 setMessages(prev => [...prev, {
                   type: 'system',
-                  content: `Prompt "${args[1]}" not found`
+                  content: 'Error: Prompt name must be enclosed in quotes'
                 }]);
+                return true;
               }
+
+              const nameToUse = fullTextUse.slice(firstQuoteUse + 1, lastQuoteUse);
+              const promptToUse = savedPrompts.find(p => 
+                p.name.toLowerCase() === nameToUse.toLowerCase()
+              );
+              
+              if (!promptToUse) {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: `Prompt "${nameToUse}" not found`
+                }]);
+                return true;
+              }
+
+              (async () => {
+                setMessages(prev => [...prev, { type: 'user', content: promptToUse.text }]);
+                setIsLoading(true);
+                try {
+                  const response = await callClaude(promptToUse.text);
+                  setMessages(prev => [...prev, { type: 'assistant', content: response }]);
+                } catch (error) {
+                  setMessages(prev => [...prev, { 
+                    type: 'system', 
+                    content: 'Error: Failed to get response from Claude' 
+                  }]);
+                } finally {
+                  setIsLoading(false);
+                  setInput('');
+                  focusInput();
+                }
+              })();
               return true;
 
             case 'edit':
@@ -728,28 +813,14 @@ Now, I'd like to generate the final output. Please include the following aspects
               setEditText(promptToEdit.text);
               return true;
 
-            case 'delete':
-              if (!args[1]) {
-                setMessages(prev => [...prev, {
-                  type: 'system',
-                  content: 'Usage: /prompt delete <name>'
-                }]);
-                return true;
-              }
-              
-              const promptToDelete = savedPrompts.find(p => p.name === args[1]);
-              if (!promptToDelete) {
-                setMessages(prev => [...prev, {
-                  type: 'system',
-                  content: `Prompt "${args[1]}" not found`
-                }]);
-                return true;
-              }
-
-              setSavedPrompts(prev => prev.filter(p => p.name !== args[1]));
+            case 'list':
               setMessages(prev => [...prev, {
                 type: 'system',
-                content: `Deleted prompt: ${args[1]}`
+                content: savedPrompts.length ?
+                  'Saved prompts:\n' + savedPrompts.map(p => 
+                    `${p.name}: ${p.text}`
+                  ).join('\n') :
+                  'No saved prompts'
               }]);
               return true;
 
@@ -757,11 +828,11 @@ Now, I'd like to generate the final output. Please include the following aspects
               setMessages(prev => [...prev, {
                 type: 'system',
                 content: 'Available prompt commands:\n' +
-                  '/prompt add <name> <text> - Save a new prompt\n' +
+                  '/prompt add "name" <text> - Save a new prompt\n' +
                   '/prompt list - Show all saved prompts\n' +
-                  '/prompt use <name> - Use a saved prompt\n' +
-                  '/prompt edit <name> - Edit an existing prompt\n' +
-                  '/prompt delete <name> - Delete a saved prompt'
+                  '/prompt use "name" - Use a saved prompt\n' +
+                  '/prompt edit "name" - Edit an existing prompt\n' +
+                  '/prompt delete "name" - Delete a saved prompt'
               }]);
               return true;
           }
@@ -1014,7 +1085,7 @@ ${relevant.map((msg, i) => {
         
         setMessages(prev => [...prev, {
           type: 'debug',
-          content: `🔍 Claude API Call:
+          content: `Claude API Call:
 Estimated tokens: ${totalTokens} (System: ${systemTokens}, Context: ${contextTokens})
 Estimated cost: $${inputCost}
 
@@ -1570,15 +1641,53 @@ When responding, you should adopt the distinct voice(s) of the active advisor(s)
     }
   }, [messages, metaphors, questions, currentSessionId]);
 
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      terminalRef.current.requestFullscreen();
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullscreen(false);
+    }
+  };
+
   return (
-    <div className="w-full h-screen bg-black text-green-400 font-serif flex">
+    <div ref={terminalRef} className="w-full h-screen bg-black text-green-400 font-serif flex relative">
+      <button 
+        onClick={toggleFullscreen}
+        className="absolute top-2 right-2 text-green-400 hover:text-green-300 z-50"
+      >
+        {isFullscreen ? (
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        ) : (
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
+          </svg>
+        )}
+      </button>
+
       {/* Left Column */}
       <div className="w-1/4 p-4 border-r border-gray-800 overflow-y-auto">
         <Module title="Metaphors" items={metaphors} />
         <div className="mt-4">
           <Module 
-            title="Active Advisors"
-            items={advisors.filter(a => a.active).map(a => a.name)} 
+            title="Advisors"
+            items={advisors.map(a => a.name)}
+            onItemClick={(name) => {
+              const advisor = advisors.find(a => a.name === name);
+              if (advisor) {
+                setAdvisors(prev => prev.map(a => 
+                  a.name === name ? { ...a, active: !a.active } : a
+                ));
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: `${advisor.active ? 'Deactivated' : 'Activated'} advisor: ${name}`
+                }]);
+              }
+            }}
+            activeItems={advisors.filter(a => a.active).map(a => a.name)}
           />
         </div>
       </div>
