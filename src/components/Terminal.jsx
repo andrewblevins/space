@@ -29,6 +29,103 @@ const Module = ({ title, items = [], onItemClick, activeItems = [] }) => (
   </div>
 );
 
+const GroupableModule = ({ 
+  title, 
+  groups = [], 
+  items = [], 
+  onItemClick, 
+  onGroupClick,
+  activeItems = [],
+  activeGroups = []
+}) => {
+  const [expandedGroups, setExpandedGroups] = useState(new Set());
+
+  const toggleGroup = (groupName) => {
+    setExpandedGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(groupName)) {
+        next.delete(groupName);
+      } else {
+        next.add(groupName);
+      }
+      return next;
+    });
+  };
+
+  return (
+    <div className="bg-gray-900 p-4">
+      <h2 className="text-white mb-2">{title}</h2>
+      <ul className="space-y-4">
+        {groups.map((group, idx) => (
+          <li key={`group-${idx}`} className="mb-2">
+            <div 
+              className={`
+                flex items-center justify-between
+                text-gray-300 cursor-pointer 
+                hover:text-green-400 transition-colors
+                ${activeGroups.includes(group.name) ? 'text-green-400' : ''}
+              `}
+              onClick={() => onGroupClick && onGroupClick(group)}
+            >
+              <span>{group.name}</span>
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleGroup(group.name);
+                }}
+                className="ml-2 text-gray-400 hover:text-green-400"
+              >
+                {expandedGroups.has(group.name) ? '▼' : '▶'}
+              </button>
+            </div>
+            {expandedGroups.has(group.name) && (
+              <ul className="ml-4 mt-2 space-y-2">
+                {group.advisors.map(advisorName => {
+                  const advisor = items.find(item => item.name === advisorName);
+                  if (!advisor) return null;
+                  return (
+                    <li 
+                      key={advisorName}
+                      className={`
+                        text-gray-300 
+                        cursor-pointer
+                        hover:text-green-400 
+                        transition-colors
+                        ${activeItems.includes(advisor) ? 'text-green-400' : ''}
+                      `}
+                      onClick={() => onItemClick && onItemClick(advisor)}
+                    >
+                      {advisor.name}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </li>
+        ))}
+        {/* Ungrouped items */}
+        {items
+          .filter(item => !groups.some(g => g.advisors.includes(item.name)))
+          .map((item, idx) => (
+            <li 
+              key={`item-${idx}`}
+              className={`
+                text-gray-300 
+                cursor-pointer
+                hover:text-green-400 
+                transition-colors
+                ${activeItems.includes(item) ? 'text-green-400' : ''}
+              `}
+              onClick={() => onItemClick && onItemClick(item)}
+            >
+              {item.name}
+            </li>
+          ))}
+      </ul>
+    </div>
+  );
+};
+
 const MarkdownMessage = ({ content }) => (
   <ReactMarkdown
     className="text-left font-serif"
@@ -146,6 +243,11 @@ const Terminal = () => {
     const saved = localStorage.getItem('space_advisors');
     return saved ? JSON.parse(saved) : [];
   });
+  const [advisorGroups, setAdvisorGroups] = useState(() => {
+    const saved = localStorage.getItem('space_advisor_groups');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [activeGroups, setActiveGroups] = useState([]);
   const [debugMode, setDebugMode] = useState(false);
   const inputRef = useRef(null);
   const [savedPrompts, setSavedPrompts] = useState(() => {
@@ -253,43 +355,32 @@ const Terminal = () => {
         case '/help':
           setMessages(prev => [...prev, {
             type: 'system',
-            content: `# Command Reference
+            content: `Available commands:
 
 ## Session Management
-\`/clear\`              - Clear terminal
-\`/new\`                - Start a new session
-\`/sessions\`           - List saved sessions
-\`/load <session_id>\`  - Load a specific session
-\`/load previous\`      - Load the most recent session
-\`/reset\`              - Clear all saved sessions
-\`/export\`             - Export current session to markdown
+\`/new\`              - Start a new session
+\`/sessions\`         - List all sessions
+\`/load <id>\`        - Load a specific session
+\`/load previous\`    - Load the most recent session
 
-## Advisor Commands
-\`/advisor generate <worksheet_id>\` - Start advisor generation process
-\`/advisor finalize\`               - Generate final advisor profiles
-\`/advisor add\`                    - Add new advisor (opens form)
-\`/advisor edit "name"\`           - Edit advisor description
-\`/advisor delete "name"\`         - Delete an advisor
-\`/advisor activate "name"\`       - Activate an advisor for the panel
-\`/advisor deactivate "name"\`     - Remove advisor from active panel
-\`/advisor list\`                  - Show all advisors
+## Advisor Management
+\`/advisor\`          - Show available advisor commands
+\`/advisor add\`      - Add a new advisor
+\`/advisor edit\`     - Edit an advisor
+\`/advisor remove\`   - Remove an advisor
+\`/advisor list\`     - List all advisors
 
-## Prompt Management
-\`/prompt add "name" <text>\`   - Save a new prompt
-\`/prompt edit "name"\`         - Edit an existing prompt
-\`/prompt delete "name"\`       - Delete a saved prompt
-\`/prompt list\`               - Show saved prompts
-\`/prompt use "name"\`         - Use a saved prompt
-
-## Other Commands
-\`/debug\`     - Toggle debug mode
-\`/help\`      - Show this message
+## Group Management
+\`/group create <group_name>\`         - Create a new advisor group (e.g. "/group create Psychologists")
+\`/group add <group_name> <advisor>\`  - Add an advisor to a group (e.g. "/group add Psychologists Carl Jung")
+\`/group remove <group_name> <advisor>\` - Remove an advisor from a group
+\`/group list\`                        - List all advisor groups and their members
 
 ## Worksheet
-\`/worksheet\`           - Show available worksheet commands
-\`/worksheet list\`      - List available worksheet templates and completed worksheets
-\`/worksheet start <id>\` - Start a specific worksheet
-\`/worksheet view <id>\`  - View a completed worksheet
+\`/worksheet\`        - Show available worksheet commands
+\`/worksheet list\`   - List available worksheet templates and completed worksheets
+\`/worksheet start\`  - Start a specific worksheet
+\`/worksheet view\`   - View a completed worksheet
 
 ## Settings
 \`/tokens <1-8192>\` - Set maximum response length`
@@ -1183,6 +1274,157 @@ Note: Higher values allow for longer responses
           }
           return true;
 
+        case '/group':
+          if (!args[0]) {
+            setMessages(prev => [...prev, {
+              type: 'system',
+              content: `Group Management Commands:
+
+/group create <group_name>         - Create a new advisor group
+/group add <group_name> <advisor>  - Add an advisor to a group
+/group remove <group_name> <advisor> - Remove an advisor from a group
+/group list                        - List all advisor groups
+
+Examples:
+/group create Psychologists
+/group add Psychologists Carl Jung
+/group remove Psychologists Carl Jung
+/group list`
+            }]);
+            return true;
+          }
+          
+          switch (args[0]) {
+            case 'create':
+              const groupName = args.slice(1).join(' ');
+              if (!groupName) {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: 'Please provide a group name (e.g. "/group create Psychologists")'
+                }]);
+                return true;
+              }
+              if (advisorGroups.some(g => g.name === groupName)) {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: `Group "${groupName}" already exists`
+                }]);
+                return true;
+              }
+              setAdvisorGroups(prev => [...prev, {
+                name: groupName,
+                description: '',
+                advisors: [],
+                active: false
+              }]);
+              setMessages(prev => [...prev, {
+                type: 'system',
+                content: `Created advisor group: ${groupName}`
+              }]);
+              return true;
+
+            case 'add':
+              if (args.length < 3) {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: 'Please provide both group name and advisor name (e.g. "/group add Psychologists Carl Jung")'
+                }]);
+                return true;
+              }
+              const [_, targetGroup, ...advisorName] = args;
+              const advisor = advisors.find(a => a.name.toLowerCase() === advisorName.join(' ').toLowerCase());
+              const group = advisorGroups.find(g => g.name.toLowerCase() === targetGroup.toLowerCase());
+              
+              if (!advisor) {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: `Advisor "${advisorName.join(' ')}" not found`
+                }]);
+                return true;
+              }
+              if (!group) {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: `Group "${targetGroup}" not found`
+                }]);
+                return true;
+              }
+              if (group.advisors.includes(advisor.name)) {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: `${advisor.name} is already in group ${targetGroup}`
+                }]);
+                return true;
+              }
+              
+              setAdvisorGroups(prev => prev.map(g => 
+                g.name === targetGroup
+                  ? { ...g, advisors: [...g.advisors, advisor.name] }
+                  : g
+              ));
+              setMessages(prev => [...prev, {
+                type: 'system',
+                content: `Added ${advisor.name} to group ${targetGroup}`
+              }]);
+              return true;
+
+            case 'remove':
+              if (args.length < 3) {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: 'Please provide both group name and advisor name (e.g. "/group remove Psychologists Carl Jung")'
+                }]);
+                return true;
+              }
+              const [__, rmGroup, ...rmAdvisorName] = args;
+              const rmAdvisor = advisors.find(a => a.name.toLowerCase() === rmAdvisorName.join(' ').toLowerCase());
+              const rmTargetGroup = advisorGroups.find(g => g.name.toLowerCase() === rmGroup.toLowerCase());
+              
+              if (!rmAdvisor || !rmTargetGroup) {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: 'Advisor or group not found'
+                }]);
+                return true;
+              }
+              
+              if (!rmTargetGroup.advisors.includes(rmAdvisor.name)) {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: `${rmAdvisor.name} is not in group ${rmGroup}`
+                }]);
+                return true;
+              }
+              
+              setAdvisorGroups(prev => prev.map(g => 
+                g.name === rmGroup
+                  ? { ...g, advisors: g.advisors.filter(a => a !== rmAdvisor.name) }
+                  : g
+              ));
+              setMessages(prev => [...prev, {
+                type: 'system',
+                content: `Removed ${rmAdvisor.name} from group ${rmGroup}`
+              }]);
+              return true;
+
+            case 'list':
+              if (advisorGroups.length === 0) {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: 'No advisor groups created yet'
+                }]);
+                return true;
+              }
+              const groupList = advisorGroups.map(g => 
+                `${g.name}:\n${g.advisors.length ? g.advisors.map(a => `  - ${a}`).join('\n') : '  (empty)'}`
+              ).join('\n\n');
+              setMessages(prev => [...prev, {
+                type: 'system',
+                content: groupList
+              }]);
+              return true;
+          }
+
         default:
           setMessages(prev => [...prev, {
             type: 'system',
@@ -1633,6 +1875,12 @@ Exported on: ${timestamp}\n\n`;
     }
   }, [advisors]);
 
+  useEffect(() => {
+    if (advisorGroups.length > 0) {
+      localStorage.setItem('space_advisor_groups', JSON.stringify(advisorGroups));
+    }
+  }, [advisorGroups]);
+
   const buildConversationContext = (userMessage, messages, memory) => {
     // Filter out system messages, empty messages, and the current message
     const conversationMessages = messages
@@ -1920,6 +2168,35 @@ ${selectedText}
     }
   }, []);
 
+  const handleAdvisorClick = (advisor) => {
+    setAdvisors(prev => prev.map(a => 
+      a.name === advisor.name 
+        ? { ...a, active: !a.active }
+        : a
+    ));
+  };
+
+  const handleGroupClick = (group) => {
+    const isActive = activeGroups.includes(group.name);
+    if (isActive) {
+      // Deactivate group and all its advisors
+      setActiveGroups(prev => prev.filter(g => g !== group.name));
+      setAdvisors(prev => prev.map(advisor => 
+        group.advisors.includes(advisor.name) 
+          ? { ...advisor, active: false }
+          : advisor
+      ));
+    } else {
+      // Activate group and all its advisors
+      setActiveGroups(prev => [...prev, group.name]);
+      setAdvisors(prev => prev.map(advisor => 
+        group.advisors.includes(advisor.name) 
+          ? { ...advisor, active: true }
+          : advisor
+      ));
+    }
+  };
+
   return (
     <div 
       ref={terminalRef} 
@@ -1945,22 +2222,14 @@ ${selectedText}
       <div className="w-1/4 p-4 border-r border-gray-800 overflow-y-auto">
         <Module title="Metaphors" items={metaphors} />
         <div className="mt-4">
-          <Module 
+          <GroupableModule
             title="Advisors"
-            items={advisors.map(a => a.name)}
-            onItemClick={(name) => {
-              const advisor = advisors.find(a => a.name === name);
-              if (advisor) {
-                setAdvisors(prev => prev.map(a => 
-                  a.name === name ? { ...a, active: !a.active } : a
-                ));
-                setMessages(prev => [...prev, {
-                  type: 'system',
-                  content: `${advisor.active ? 'Deactivated' : 'Activated'} advisor: ${name}`
-                }]);
-              }
-            }}
-            activeItems={advisors.filter(a => a.active).map(a => a.name)}
+            groups={advisorGroups}
+            items={advisors}
+            onItemClick={handleAdvisorClick}
+            onGroupClick={handleGroupClick}
+            activeItems={advisors.filter(a => a.active)}
+            activeGroups={activeGroups}
           />
         </div>
       </div>
