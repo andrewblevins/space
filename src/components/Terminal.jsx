@@ -2342,7 +2342,18 @@ ${selectedText}
       <div className="w-2/4 p-4 flex flex-col">
         <div 
           ref={messagesContainerRef} 
-          className="flex-1 overflow-auto mb-4 break-words"
+          className="
+            flex-1 
+            overflow-auto 
+            mb-4 
+            break-words
+            px-6         // Even horizontal padding
+            py-4         // Vertical padding for balance
+            mx-auto      // Center the content
+            max-w-[90ch] // Limit line length for optimal readability
+            leading-relaxed     // Increased line height for better readability
+            tracking-wide       // Slightly increased letter spacing
+          "
           onScroll={handleScroll}
         >
           {messages.map((msg, idx) => (
