@@ -1547,8 +1547,8 @@ ${contextMessages.map((msg, i) =>
         return [...prev, { type: 'assistant', content: '' }];
       });
 
-      const STREAM_BASE_DELAY = 25; // Slightly faster base delay
-      const STREAM_VARIANCE = 20; // More variance for natural feel
+      const STREAM_BASE_DELAY = 1; // Slightly faster base delay
+      const STREAM_VARIANCE = 25; // More variance for natural feel
       const PUNCTUATION_PAUSE = 250; // Slightly longer pause for more emphasis
 
       const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
