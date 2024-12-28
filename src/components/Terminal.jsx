@@ -38,7 +38,10 @@ const GroupableModule = ({
   onGroupClick,
   activeItems = [],
   activeGroups = [],
-  onAddClick  // New prop for handling add button click
+  onAddClick,  // New prop for handling add button click
+  setEditingAdvisor,
+  setAdvisors,
+  setMessages
 }) => {
   const [expandedGroups, setExpandedGroups] = useState(new Set());
 
@@ -117,6 +120,70 @@ const GroupableModule = ({
                         ${activeItems.includes(advisor) ? 'text-green-400' : ''}
                       `}
                       onClick={() => onItemClick && onItemClick(advisor)}
+                      onContextMenu={(e) => {
+                        console.log('Context menu triggered for advisor:', advisor.name);
+                        e.preventDefault();
+                        
+                        try {
+                          const menu = document.createElement('div');
+                          console.log('Creating menu element');
+                          menu.className = `
+                            absolute 
+                            bg-gray-900 
+                            border border-green-400 
+                            rounded-md 
+                            shadow-lg 
+                            py-1
+                            z-50
+                          `;
+                          menu.style.left = `${e.pageX}px`;
+                          menu.style.top = `${e.pageY}px`;
+
+                          console.log('Creating menu buttons');
+                          const editButton = document.createElement('button');
+                          editButton.className = 'w-full px-4 py-2 text-left text-green-400 hover:bg-gray-800';
+                          editButton.textContent = 'Edit Advisor';
+                          editButton.onclick = () => {
+                            console.log('Edit button clicked for advisor:', advisor.name);
+                            setEditingAdvisor && setEditingAdvisor(advisor);
+                            document.body.removeChild(menu);
+                          };
+
+                          const deleteButton = document.createElement('button');
+                          deleteButton.className = 'w-full px-4 py-2 text-left text-green-400 hover:bg-gray-800';
+                          deleteButton.textContent = 'Delete Advisor';
+                          deleteButton.onclick = () => {
+                            console.log('Delete button clicked for advisor:', advisor.name);
+                            setAdvisors && setAdvisors(prev => prev.filter(a => a.name !== advisor.name));
+                            setMessages && setMessages(prev => [...prev, {
+                              type: 'system',
+                              content: `Deleted advisor: ${advisor.name}`
+                            }]);
+                            document.body.removeChild(menu);
+                          };
+
+                          menu.appendChild(editButton);
+                          menu.appendChild(deleteButton);
+                          console.log('Appending menu to document body');
+                          document.body.appendChild(menu);
+
+                          // Remove menu when clicking outside
+                          const removeMenu = (e) => {
+                            if (!menu.contains(e.target)) {
+                              console.log('Removing menu due to outside click');
+                              if (menu.parentNode) {  // Check if menu still exists in the DOM
+                                document.body.removeChild(menu);
+                              }
+                              document.removeEventListener('click', removeMenu);
+                            }
+                          };
+                          document.addEventListener('click', removeMenu);
+                          
+                          console.log('Context menu setup complete');
+                        } catch (error) {
+                          console.error('Error creating context menu:', error);
+                        }
+                      }}
                     >
                       {advisor.name}
                     </li>
@@ -140,6 +207,70 @@ const GroupableModule = ({
                 ${activeItems.includes(item) ? 'text-green-400' : ''}
               `}
               onClick={() => onItemClick && onItemClick(item)}
+              onContextMenu={(e) => {
+                console.log('Context menu triggered for advisor:', item.name);
+                e.preventDefault();
+                
+                try {
+                  const menu = document.createElement('div');
+                  console.log('Creating menu element');
+                  menu.className = `
+                    absolute 
+                    bg-gray-900 
+                    border border-green-400 
+                    rounded-md 
+                    shadow-lg 
+                    py-1
+                    z-50
+                  `;
+                  menu.style.left = `${e.pageX}px`;
+                  menu.style.top = `${e.pageY}px`;
+
+                  console.log('Creating menu buttons');
+                  const editButton = document.createElement('button');
+                  editButton.className = 'w-full px-4 py-2 text-left text-green-400 hover:bg-gray-800';
+                  editButton.textContent = 'Edit Advisor';
+                  editButton.onclick = () => {
+                    console.log('Edit button clicked for advisor:', item.name);
+                    setEditingAdvisor && setEditingAdvisor(item);
+                    document.body.removeChild(menu);
+                  };
+
+                  const deleteButton = document.createElement('button');
+                  deleteButton.className = 'w-full px-4 py-2 text-left text-green-400 hover:bg-gray-800';
+                  deleteButton.textContent = 'Delete Advisor';
+                  deleteButton.onclick = () => {
+                    console.log('Delete button clicked for advisor:', item.name);
+                    setAdvisors && setAdvisors(prev => prev.filter(a => a.name !== item.name));
+                    setMessages && setMessages(prev => [...prev, {
+                      type: 'system',
+                      content: `Deleted advisor: ${item.name}`
+                    }]);
+                    document.body.removeChild(menu);
+                  };
+
+                  menu.appendChild(editButton);
+                  menu.appendChild(deleteButton);
+                  console.log('Appending menu to document body');
+                  document.body.appendChild(menu);
+
+                  // Remove menu when clicking outside
+                  const removeMenu = (e) => {
+                    if (!menu.contains(e.target)) {
+                      console.log('Removing menu due to outside click');
+                      if (menu.parentNode) {  // Check if menu still exists in the DOM
+                        document.body.removeChild(menu);
+                      }
+                      document.removeEventListener('click', removeMenu);
+                    }
+                  };
+                  document.addEventListener('click', removeMenu);
+                  
+                  console.log('Context menu setup complete');
+                } catch (error) {
+                  console.error('Error creating context menu:', error);
+                }
+              }}
             >
               {item.name}
             </li>
@@ -2357,6 +2488,9 @@ ${selectedText}
             activeItems={advisors.filter(a => a.active)}
             activeGroups={activeGroups}
             onAddClick={() => setShowAdvisorForm(true)}
+            setEditingAdvisor={setEditingAdvisor}
+            setAdvisors={setAdvisors}
+            setMessages={setMessages}
           />
         </div>
       </div>
