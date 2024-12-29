@@ -445,7 +445,6 @@ const Terminal = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const terminalRef = useRef(null);
   const [maxTokens, setMaxTokens] = useState(4096);
-  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const [metaphorsExpanded, setMetaphorsExpanded] = useState(false);
   const [questionsExpanded, setQuestionsExpanded] = useState(false);
 
@@ -2163,20 +2162,6 @@ Exported on: ${timestamp}\n\n`;
     return conversationMessages;
   };
 
-  const handleScroll = (e) => {
-    const element = e.target;
-    const isScrolledToBottom = 
-      Math.abs(element.scrollHeight - element.scrollTop - element.clientHeight) < 10;
-    
-    setShouldAutoScroll(isScrolledToBottom);
-  };
-
-  useEffect(() => {
-    if (messagesContainerRef.current && shouldAutoScroll) {
-      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
-    }
-  }, [messages, isLoading, shouldAutoScroll]);
-
   const getSystemPrompt = () => {
     const activeAdvisors = advisors.filter(a => a.active);
     
@@ -2511,7 +2496,6 @@ ${selectedText}
             leading-relaxed     // Increased line height for better readability
             tracking-wide       // Slightly increased letter spacing
           "
-          onScroll={handleScroll}
         >
           {messages.map((msg, idx) => (
             <div 
