@@ -2113,10 +2113,17 @@ Exported on: ${timestamp}\n\n`;
         msg.content !== userMessage
       );
 
+    console.log('Messages length:', messages.length);
+    console.log('Recent messages:', recentMessages);
+    
     // Get relevant messages from earlier in the conversation
     const relevantMessages = messages.length > 6 ? 
       memory.retrieveRelevantContext(userMessage, messages.slice(0, -6)) :
       [];
+    
+    console.log('Relevant messages:', relevantMessages);
+    console.log('Memory search query:', userMessage);
+    console.log('Historical messages being searched:', messages.slice(0, -6));
 
     // Combine and format messages for Claude
     const conversationMessages = [

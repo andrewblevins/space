@@ -36,16 +36,47 @@ export class MemorySystem {
 
   // Basic retrieval strategy - get relevant messages across sessions
   retrieveRelevantContext(query: string, currentMessages: Message[]): Message[] {
-    return currentMessages
-      .filter(msg => msg.type === 'user' || msg.type === 'assistant')
-      .map(msg => ({ 
-        message: msg, 
-        score: this.calculateRelevance(msg, query) 
+    const queryWords = query.toLowerCase().split(/\s+/);
+    
+    console.log('Memory Debug:', {
+      query,
+      queryWords,
+      messageCount: currentMessages.length,
+      messageSample: currentMessages.slice(0, 3).map(msg => ({
+        content: msg.content.substring(0, 50) + '...',
+        tags: msg.tags
       }))
-      .filter(item => item.score > 0)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 3)  // Get top 3 most relevant messages
-      .map(item => item.message);
+    });
+    
+    const relevantMessages = currentMessages
+      .filter(msg => {
+        if (!msg.tags || msg.type === 'system') return false;
+        
+        const matches = msg.tags.filter(tag => 
+          queryWords.some(word => {
+            const isMatch = tag.toLowerCase() === word.replace(/[.,?!]/g, '');
+            if (isMatch) {
+              console.log(`Match found: tag "${tag}" matches query word "${word}"`);
+            }
+            return isMatch;
+          })
+        );
+
+        if (matches.length > 0) {
+          console.log('Found relevant message:', {
+            content: msg.content.substring(0, 50) + '...',
+            tags: msg.tags,
+            matchingWords: matches,
+            queryWords
+          });
+        }
+        
+        return matches.length > 0;
+      });
+
+    console.log('Relevant messages found:', relevantMessages.length);
+    
+    return relevantMessages;
   }
 
   private calculateRelevance(message: Message, query: string): number {
