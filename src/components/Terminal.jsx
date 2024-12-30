@@ -939,27 +939,12 @@ Now, I'd like to generate the final output. Please include the following aspects
           const newDebugMode = !debugMode;
           setDebugMode(newDebugMode);
           
-          if (newDebugMode) {
-            // Show last 5 messages with their tags when debug mode is enabled
-            const lastUserMessages = messages
-              .filter(msg => msg.type === 'user')
-              .slice(-5)
-              .map(msg => ({
-                type: msg.type,
-                content: msg.content.slice(0, 50) + (msg.content.length > 50 ? '...' : ''),
-                tags: msg.tags || []
-              }));
-            
-            setMessages(prev => [...prev, {
-              type: 'system',
-              content: `Debug mode enabled\n\nLast 5 messages with tags:\n${JSON.stringify(lastUserMessages, null, 2)}`
-            }]);
-          } else {
-            setMessages(prev => [...prev, {
-              type: 'system',
-              content: 'Debug mode disabled'
-            }]);
-          }
+          setMessages(prev => [...prev, {
+            type: 'system',
+            content: newDebugMode ? 
+              'Debug mode enabled. You will now see detailed information about Claude API calls.' :
+              'Debug mode disabled'
+          }]);
           return true;
 
         case '/prompt':
@@ -2129,7 +2114,9 @@ Exported on: ${timestamp}\n\n`;
       );
 
     // Get relevant messages from earlier in the conversation
-    const relevantMessages = memory.retrieveRelevantContext(userMessage, messages.slice(0, -6));
+    const relevantMessages = messages.length > 6 ? 
+      memory.retrieveRelevantContext(userMessage, messages.slice(0, -6)) :
+      [];
 
     // Combine and format messages for Claude
     const conversationMessages = [
