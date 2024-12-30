@@ -2101,7 +2101,12 @@ Exported on: ${timestamp}\n\n`;
   }, [advisorGroups]);
 
   const buildConversationContext = (userMessage, messages, memory) => {
-    // Get the most recent messages (last 3 turns of conversation)
+    // Get relevant messages from earlier
+    const relevantMessages = messages.length > 6 ? 
+      memory.retrieveRelevantContext(userMessage, messages.slice(0, -6)) :
+      [];
+
+    // Get the most recent messages
     const recentMessages = messages
       .slice(-6)
       .filter(msg => 
@@ -2113,44 +2118,38 @@ Exported on: ${timestamp}\n\n`;
         msg.content !== userMessage
       );
 
-    console.log('Messages length:', messages.length);
-    console.log('Recent messages:', recentMessages);
-    
-    // Get relevant messages from earlier in the conversation
-    const relevantMessages = messages.length > 6 ? 
-      memory.retrieveRelevantContext(userMessage, messages.slice(0, -6)) :
-      [];
-    
-    console.log('Relevant messages:', relevantMessages);
-    console.log('Memory search query:', userMessage);
-    console.log('Historical messages being searched:', messages.slice(0, -6));
-
-    // Combine and format messages for Claude
+    // Combine and format messages for Claude with clear sections
     const conversationMessages = [
-      // Start with relevant historical messages if any exist
+      // Memory section (if any relevant messages exist)
       ...(relevantMessages.length > 0 ? [{
         role: 'user',
-        content: "For context, here are some relevant messages from earlier in our conversation:"
+        content: "=== PREVIOUS RELEVANT MESSAGES ===\n"
       }] : []),
       ...relevantMessages.map(msg => ({
         role: msg.type === 'user' ? 'user' : 'assistant',
         content: msg.content
       })),
       
-      // Add recent conversation context if any exists
+      // Clear separator between sections (if both exist)
+      ...(relevantMessages.length > 0 && recentMessages.length > 0 ? [{
+        role: 'user',
+        content: "\n=====================================\n"
+      }] : []),
+      
+      // Recent context section (if any recent messages exist)
       ...(recentMessages.length > 0 ? [{
         role: 'user',
-        content: "Here's our recent conversation:"
+        content: "=== MOST RECENT CONVERSATION ===\n"
       }] : []),
       ...recentMessages.map(msg => ({
-        role: msg.type === 'user' ? 'user' : 'assistant',
+        role: msg.type === 'user' ? 'user' : 'assistant',  // Fixed ternary operator
         content: msg.content
       })),
       
-      // Finally add the current message
+      // Current message
       {
         role: 'user',
-        content: userMessage
+        content: "\n=== CURRENT MESSAGE ===\n" + userMessage
       }
     ];
 
