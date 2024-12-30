@@ -2133,13 +2133,21 @@ Exported on: ${timestamp}\n\n`;
 
     // Combine and format messages for Claude
     const conversationMessages = [
-      // Start with relevant historical messages
+      // Start with relevant historical messages if any exist
+      ...(relevantMessages.length > 0 ? [{
+        role: 'user',
+        content: "For context, here are some relevant messages from earlier in our conversation:"
+      }] : []),
       ...relevantMessages.map(msg => ({
         role: msg.type === 'user' ? 'user' : 'assistant',
         content: msg.content
       })),
       
-      // Add recent conversation context
+      // Add recent conversation context if any exists
+      ...(recentMessages.length > 0 ? [{
+        role: 'user',
+        content: "Here's our recent conversation:"
+      }] : []),
       ...recentMessages.map(msg => ({
         role: msg.type === 'user' ? 'user' : 'assistant',
         content: msg.content
@@ -2151,10 +2159,6 @@ Exported on: ${timestamp}\n\n`;
         content: userMessage
       }
     ];
-
-    if (debugMode) {
-      console.log('Final conversation context:', conversationMessages);
-    }
 
     return conversationMessages;
   };
