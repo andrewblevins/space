@@ -2165,15 +2165,11 @@ Exported on: ${timestamp}\n\n`;
   const getSystemPrompt = () => {
     const activeAdvisors = advisors.filter(a => a.active);
     
-    const DEFAULT_SYSTEM_PROMPT = "You are Claude, an AI assistant created by Anthropic..."; // Your default prompt here
-    
     if (activeAdvisors.length === 0) {
-      return DEFAULT_SYSTEM_PROMPT;
+      return ""; // No system prompt needed when no advisors are active
     }
 
-    return `${DEFAULT_SYSTEM_PROMPT}
-
-You are currently embodying the following advisors:
+    return `You are currently embodying the following advisors:
 ${activeAdvisors.map(a => `\n${a.name}: ${a.description}`).join('\n')}
 
 When responding, you should adopt the distinct voice(s) of the active advisor(s) as appropriate to the context and question.`;
