@@ -18,7 +18,7 @@ export default class TagAnalyzer {
         model: "gpt-4o-mini",
         messages: [{
           role: "system",
-          content: "Extract 1-3 main topic tags from this message. Respond with only a JSON array of lowercase, single-word tags. Example: ['meditation', 'consciousness', 'growth']"
+          content: "Extract as many main topic tags from this message as might be useful for identifying its relevance to future conversations. Include names of people mentioned and other proper nouns. (If a proper noun is more than one word, list it as a single tag.) Respond with only a JSON array of lowercase, single-word tags. Example: ['meditation', 'consciousness', 'John']"
         }, {
           role: "user",
           content
