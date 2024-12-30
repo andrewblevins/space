@@ -2118,7 +2118,7 @@ Exported on: ${timestamp}\n\n`;
   const buildConversationContext = (userMessage, messages, memory) => {
     // Get the most recent messages (last 3 turns of conversation)
     const recentMessages = messages
-      .slice(-6)  // Last 3 exchanges (3 user + 3 assistant messages)
+      .slice(-6)
       .filter(msg => 
         (msg.type === 'user' || msg.type === 'assistant') &&
         !msg.content.includes('Terminal v0.1') &&
@@ -2131,11 +2131,6 @@ Exported on: ${timestamp}\n\n`;
     // Get relevant messages from earlier in the conversation
     const relevantMessages = memory.retrieveRelevantContext(userMessage, messages.slice(0, -6));
 
-    if (debugMode) {
-      console.log('Recent messages:', recentMessages);
-      console.log('Relevant earlier messages:', relevantMessages);
-    }
-
     // Combine and format messages for Claude
     const conversationMessages = [
       // Start with relevant historical messages
@@ -2143,11 +2138,13 @@ Exported on: ${timestamp}\n\n`;
         role: msg.type === 'user' ? 'user' : 'assistant',
         content: msg.content
       })),
-      // Then add recent conversation context
+      
+      // Add recent conversation context
       ...recentMessages.map(msg => ({
         role: msg.type === 'user' ? 'user' : 'assistant',
         content: msg.content
       })),
+      
       // Finally add the current message
       {
         role: 'user',
