@@ -2172,7 +2172,7 @@ Exported on: ${timestamp}\n\n`;
     return `You are currently embodying the following advisors:
 ${activeAdvisors.map(a => `\n${a.name}: ${a.description}`).join('\n')}
 
-When responding, you should adopt the distinct voice(s) of the active advisor(s) as appropriate to the context and question.`;
+When responding, you will adopt the distinct voice(s) of the active advisor(s) as appropriate to the context and question.`;
   };
 
   const analyzeMetaphors = async (messages) => {
