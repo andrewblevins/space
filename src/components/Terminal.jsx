@@ -1629,9 +1629,7 @@ Examples:
         
         const inputCost = ((totalTokens / 1000) * 0.003).toFixed(4);
         
-        setMessages(prev => [...prev, {
-          type: 'debug',
-          content: `Claude API Call:
+        const debugOutput = `Claude API Call:
 Estimated tokens: ${totalTokens} (System: ${systemTokens}, Context: ${contextTokens})
 Estimated cost: $${inputCost}
 
@@ -1639,9 +1637,11 @@ System Prompt:
 ${systemPromptText}
 
 Context Messages:
-${contextMessages.map((msg, i) => 
-  `[${i + 1}] ${msg.role}: ${msg.content}`
-).join('\n')}`
+${JSON.stringify(contextMessages, null, 2)}`;
+
+        setMessages(prev => [...prev, {
+          type: 'debug',
+          content: debugOutput
         }]);
       }
 
@@ -2101,6 +2101,12 @@ Exported on: ${timestamp}\n\n`;
   }, [advisorGroups]);
 
   const buildConversationContext = (userMessage, messages, memory) => {
+    // Helper function to format timestamp
+    const formatTimestamp = (isoString) => {
+      const date = new Date(isoString);
+      return date.toLocaleString();
+    };
+
     // Get relevant messages from earlier
     const relevantMessages = messages.length > 6 ? 
       memory.retrieveRelevantContext(userMessage, messages.slice(0, -6)) :
@@ -2118,42 +2124,46 @@ Exported on: ${timestamp}\n\n`;
         msg.content !== userMessage
       );
 
-    // Combine and format messages for Claude with clear sections
-    const conversationMessages = [
-      // Memory section (if any relevant messages exist)
-      ...(relevantMessages.length > 0 ? [{
-        role: 'user',
-        content: "=== PREVIOUS RELEVANT MESSAGES ===\n"
-      }] : []),
-      ...relevantMessages.map(msg => ({
-        role: msg.type === 'user' ? 'user' : 'assistant',
-        content: msg.content
-      })),
-      
-      // Clear separator between sections (if both exist)
-      ...(relevantMessages.length > 0 && recentMessages.length > 0 ? [{
-        role: 'user',
-        content: "\n=====================================\n"
-      }] : []),
-      
-      // Recent context section (if any recent messages exist)
-      ...(recentMessages.length > 0 ? [{
-        role: 'user',
-        content: "=== MOST RECENT CONVERSATION ===\n"
-      }] : []),
-      ...recentMessages.map(msg => ({
-        role: msg.type === 'user' ? 'user' : 'assistant',  // Fixed ternary operator
-        content: msg.content
-      })),
-      
-      // Current message
-      {
-        role: 'user',
-        content: "\n=== CURRENT MESSAGE ===\n" + userMessage
-      }
-    ];
+    let contextParts = [];
 
-    return conversationMessages;
+    // Add relevant messages with timestamps
+    if (relevantMessages.length > 0) {
+      contextParts.push('=== PREVIOUS RELEVANT USER MESSAGES ===');
+      relevantMessages.forEach(msg => {
+        if (msg.timestamp) {
+          contextParts.push(`[${formatTimestamp(msg.timestamp)}] ${msg.content}`);
+        } else {
+          contextParts.push(msg.content);
+        }
+      });
+    }
+
+    // Add separator if both sections exist
+    if (relevantMessages.length > 0 && recentMessages.length > 0) {
+      contextParts.push('=====================================');
+    }
+
+    // Add recent conversation
+    if (recentMessages.length > 0) {
+      contextParts.push('=== MOST RECENT CONVERSATION ===');
+      recentMessages.forEach(msg => {
+        const lines = msg.content.trim().split('\n');
+        const formattedLines = lines.map((line, i) => 
+          i === 0 ? `> ${line}` : `  ${line.trim()}`
+        );
+        contextParts.push(formattedLines.join('\n'));
+      });
+    }
+
+    // Add current message
+    contextParts.push('=== CURRENT MESSAGE ===');
+    contextParts.push(`> ${userMessage}`);
+
+    // Join all parts with double newlines for clarity
+    return [{
+      role: 'user',
+      content: contextParts.join('\n\n')
+    }];
   };
 
   const getSystemPrompt = () => {
