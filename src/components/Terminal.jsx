@@ -280,7 +280,7 @@ const GroupableModule = ({
   );
 };
 
-const MarkdownMessage = ({ content }) => (
+const MemoizedMarkdownMessage = React.memo(({ content }) => (
   <ReactMarkdown
     className="text-left font-serif"
     components={{
@@ -310,7 +310,7 @@ const MarkdownMessage = ({ content }) => (
   >
     {content}
   </ReactMarkdown>
-);
+));
 
 const ExpandingInput = ({ value, onChange, onSubmit, isLoading }) => {
   const [height, setHeight] = useState('100px');
@@ -2511,7 +2511,7 @@ ${selectedText}
               })()}
             >
               {(msg.type === 'system' || msg.type === 'assistant') ? (
-                <MarkdownMessage content={msg.content} />
+                <MemoizedMarkdownMessage content={msg.content} />
               ) : (
                 msg.content
               )}
