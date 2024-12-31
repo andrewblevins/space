@@ -12,8 +12,9 @@ export default class TagAnalyzer {
 
   async analyzeTags(content: string): Promise<string[]> {
     try {
-      console.log('Tag Analysis Debug - Input:', {
-        content: content.substring(0, 100) + '...'
+      console.log('🔍 TagAnalyzer - Starting analysis:', {
+        contentPreview: content.substring(0, 100) + '...',
+        contentLength: content.length
       });
       
       const response = await this.openai.chat.completions.create({
@@ -29,15 +30,21 @@ export default class TagAnalyzer {
         response_format: { type: "json_object" }
       });
 
+      console.log('🔍 TagAnalyzer - Raw OpenAI response:', response.choices[0].message.content);
+
       const result = JSON.parse(response.choices[0].message.content || '{}');
-      console.log('Tag Analysis Debug - Output:', {
+      console.log('🔍 TagAnalyzer - Parsed result:', {
         content: content.substring(0, 50) + '...',
-        tags: result.tags
+        tags: result.tags,
+        fullResult: result
       });
       
       return result.tags || [];
     } catch (error) {
-      console.error('Tag Analysis Debug - Error:', error);
+      console.error('🔍 TagAnalyzer - Error:', {
+        error,
+        content: content.substring(0, 50) + '...'
+      });
       throw error;
     }
   }

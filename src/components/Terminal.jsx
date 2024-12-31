@@ -1620,6 +1620,19 @@ Examples:
       const systemPromptText = getSystemPrompt();
 
       if (debugMode) {
+        // Get the current user message that was just sent
+        const currentUserMessage = {
+          content: userMessage,
+          tags: messages[messages.length - 1]?.tags || []
+        };
+        
+        console.log('🔄 Debug - Message being processed:', {
+          content: currentUserMessage.content.substring(0, 100) + '...',
+          tags: currentUserMessage.tags,
+          type: 'user'
+        });
+        
+        // Then the existing token estimation code
         const estimateTokens = (text) => Math.ceil(text.length / 4);
         const systemTokens = estimateTokens(systemPromptText);
         const contextTokens = contextMessages.reduce((sum, msg) => 
@@ -1632,6 +1645,8 @@ Examples:
         const debugOutput = `Claude API Call:
 Estimated tokens: ${totalTokens} (System: ${systemTokens}, Context: ${contextTokens})
 Estimated cost: $${inputCost}
+
+Tags for current message: ${JSON.stringify(currentUserMessage.tags, null, 2)}
 
 System Prompt:
 ${systemPromptText}
@@ -1794,12 +1809,14 @@ ${JSON.stringify(contextMessages, null, 2)}`;
       const analyzer = new TagAnalyzer();
       let tags = [];
       try {
+        console.log('🏷️ Starting tag analysis for:', input.substring(0, 100) + '...');
         tags = await analyzer.analyzeTags(input);
+        console.log('🏷️ Tags generated:', tags);
         if (debugMode) {
-          console.log('Generated tags:', tags);
+          console.log('🏷️ Debug mode active, tags:', tags);
         }
       } catch (error) {
-        console.error('Tag analysis error:', error);
+        console.error('🏷️ Tag analysis error:', error);
         if (debugMode) {
           setMessages(prev => [...prev, {
             type: 'system',
@@ -1808,16 +1825,19 @@ ${JSON.stringify(contextMessages, null, 2)}`;
         }
       }
       
-      // Add user message with tags
-      setMessages(prev => [...prev, { 
+      // Create the new message object once
+      const newMessage = { 
         type: 'user', 
         content: input,
         tags,
         timestamp: new Date().toISOString()
-      }]);
+      };
 
-      // Get Claude response (streaming handled inside callClaude)
-      await callClaude(input);
+      // Add it to messages state
+      await setMessages(prev => [...prev, newMessage]);
+
+      // Pass just the content to Claude, since that's what it expects
+      await callClaude(newMessage.content);
 
     } catch (error) {
       console.error('Error in handleSubmit:', error);
