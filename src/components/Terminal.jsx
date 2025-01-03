@@ -407,7 +407,8 @@ const Terminal = () => {
   };
 
   const [messages, setMessages] = useState([
-    { type: 'system', content: 'SPACE Terminal - v0.1' }
+    { type: 'system', content: 'SPACE Terminal - v0.1' },
+    { type: 'system', content: 'Type /help for a list of commands.' }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
