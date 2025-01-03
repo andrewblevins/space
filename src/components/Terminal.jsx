@@ -1645,13 +1645,18 @@ Examples:
 
   const callClaude = async (userMessage) => {
     try {
-      // Simple token estimation
       const estimateTokens = text => Math.ceil(text.length / 4);
       const totalTokens = messages.reduce((sum, msg) => 
         sum + estimateTokens(msg.content), 0
       );
 
-      // Build messages array based on token count
+      // Format timestamp to be compact but meaningful
+      // e.g., "2024-01-15T14:30" instead of "2024-01-15T14:30:00.000Z"
+      const formatTimestamp = (isoString) => {
+        const date = new Date(isoString);
+        return date.toISOString().slice(0, 16);
+      };
+
       const contextMessages = totalTokens < 150000 
         ? messages
             .filter(msg => 
@@ -1661,7 +1666,9 @@ Examples:
             )
             .map(msg => ({
               role: msg.type,
-              content: msg.content
+              content: msg.timestamp 
+                ? `[${formatTimestamp(msg.timestamp)}] ${msg.content}`
+                : msg.content
             }))
         : buildConversationContext(userMessage, messages, memory);
 
