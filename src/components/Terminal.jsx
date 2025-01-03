@@ -569,8 +569,8 @@ const Terminal = () => {
 /worksheet view   - View a completed worksheet
 
 ## Settings
-/tokens <1-8192> - Set maximum response length
-/context limit <number> - Set token limit for context management`
+/context limit <number> - Set token limit for context management
+/response length <number> - Set maximum length for Claude responses`
           }]);
           return true;
 
@@ -1396,20 +1396,20 @@ ${relevant.map((msg, i) => {
               return true;
           }
 
-        case '/tokens':
-          if (!args[0] || isNaN(args[0]) || args[0] < 1 || args[0] > 8192) {
-            setMessages(prev => [...prev, {
-              type: 'system',
-              content: `Usage: /tokens <1-8192>
-Current max tokens: ${maxTokens}
+        // case '/tokens':
+         //  if (!args[0] || isNaN(args[0]) || args[0] < 1 || args[0] > 8192) {
+            // setMessages(prev => [...prev, {
+              // type: 'system',
+              // content: `Usage: /tokens <1-8192>
+              // Current max tokens: ${maxTokens}
 
-Note: Higher values allow for longer responses
-- Default is 4096
-- Maximum is 8192
-- Minimum is 1`
-            }]);
-            return true;
-          }
+              // Note: Higher values allow for longer responses
+              // - Default is 4096
+              // - Maximum is 8192
+              // - Minimum is 1`
+            // }]);
+            // return true;
+          // }
           
           const newMaxTokens = parseInt(args[0]);
           setMaxTokens(newMaxTokens);
@@ -1665,6 +1665,35 @@ Examples:
               }]);
               return true;
           }
+
+        case '/response':
+          if (args[0] === 'length') {
+            if (!args[1] || isNaN(args[1])) {
+              setMessages(prev => [...prev, {
+                type: 'system',
+                content: `Usage: /response length <number>
+Current response length: ${maxTokens.toLocaleString()} tokens
+
+This setting controls the maximum length of Claude's responses.
+Default is 4,096 tokens.`
+              }]);
+              return true;
+            }
+            
+            const newLimit = parseInt(args[1].replace(/,/g, ''));
+            setMaxTokens(newLimit);
+            setMessages(prev => [...prev, {
+              type: 'system',
+              content: `Response length set to ${newLimit.toLocaleString()} tokens`
+            }]);
+            return true;
+          }
+          
+          setMessages(prev => [...prev, {
+            type: 'system',
+            content: 'Available response commands:\n/response length <number> - Set maximum length for Claude responses'
+          }]);
+          return true;
 
         default:
           setMessages(prev => [...prev, {
