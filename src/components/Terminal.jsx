@@ -1611,9 +1611,9 @@ Examples:
     return false;
   };
 
-  const callClaude = async (userMessage) => {
+  const callClaude = async (message) => {
     try {
-      const contextMessages = buildConversationContext(userMessage, messages, memory);
+      const contextMessages = buildConversationContext(message.content, messages, memory);
       
       console.log('Messages being sent to Claude:', JSON.stringify(contextMessages, null, 2));
 
@@ -1622,8 +1622,8 @@ Examples:
       if (debugMode) {
         // Get the current user message that was just sent
         const currentUserMessage = {
-          content: userMessage,
-          tags: messages[messages.length - 1]?.tags || []
+          content: message.content,
+          tags: message.tags || []
         };
         
         console.log('🔄 Debug - Message being processed:', {
@@ -1836,8 +1836,8 @@ ${JSON.stringify(contextMessages, null, 2)}`;
       // Add it to messages state
       await setMessages(prev => [...prev, newMessage]);
 
-      // Pass just the content to Claude, since that's what it expects
-      await callClaude(newMessage.content);
+      // Pass the full message object to Claude
+      await callClaude(newMessage);
 
     } catch (error) {
       console.error('Error in handleSubmit:', error);
