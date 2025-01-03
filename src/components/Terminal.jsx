@@ -1216,44 +1216,67 @@ Now, I'd like to generate the final output. Please include the following aspects
               return true;
 
             case 'view':
-              const viewId = args[1];
-              if (!viewId) {
+              if (!args[1]) {
                 setMessages(prev => [...prev, {
                   type: 'system',
                   content: 'Usage: /worksheet view <id>'
                 }]);
                 return true;
               }
-              
-              const viewData = localStorage.getItem(`space_worksheet_${viewId}`);
-              console.log('Viewing worksheet data:', {
-                viewId,
-                rawData: viewData,
-                parsedData: viewData ? JSON.parse(viewData) : null
-              });
 
-              if (viewData) {
-                const worksheetData = JSON.parse(viewData);
-                
-                // Just use the formatted markdown that was saved
-                if (worksheetData.formatted) {
-                  setMessages(prev => [...prev, {
-                    type: 'system',
-                    content: worksheetData.formatted
-                  }]);
-                } else {
-                  setMessages(prev => [...prev, {
-                    type: 'system',
-                    content: 'Error: Worksheet format not found'
-                  }]);
-                }
-              } else {
+              const worksheetData = localStorage.getItem(`space_worksheet_${args[1]}`);
+              if (!worksheetData) {
                 setMessages(prev => [...prev, {
                   type: 'system',
-                  content: `Worksheet ${viewId} not found`
+                  content: `Worksheet ${args[1]} not found`
                 }]);
+                return true;
               }
-              return true;
+
+              try {
+                const worksheet = JSON.parse(worksheetData);
+                const template = WORKSHEET_TEMPLATES[worksheet.templateId];
+                
+                if (!template) {
+                  setMessages(prev => [...prev, {
+                    type: 'system',
+                    content: `Error: Template ${worksheet.templateId} not found`
+                  }]);
+                  return true;
+                }
+
+                let content = `📝 Worksheet ${args[1]}\n`;
+                content += `Completed: ${new Date(worksheet.timestamp).toLocaleString()}\n\n`;
+
+                if (template.type === 'basic') {
+                  // Handle basic worksheet format
+                  template.questions.forEach(q => {
+                    content += `Q: ${q.question}\n`;
+                    content += `A: ${worksheet.answers[q.id] || 'No answer provided'}\n\n`;
+                  });
+                } else {
+                  // Handle sectioned worksheet format
+                  template.sections.forEach(section => {
+                    content += `## ${section.name}\n\n`;
+                    section.questions.forEach(q => {
+                      content += `Q: ${q.question}\n`;
+                      content += `A: ${worksheet.answers[q.id] || 'No answer provided'}\n\n`;
+                    });
+                  });
+                }
+
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: content
+                }]);
+                return true;
+              } catch (error) {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: `Error viewing worksheet: ${error.message}`
+                }]);
+                return true;
+              }
 
             case 'start':
               const startId = args[1];
