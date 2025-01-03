@@ -445,7 +445,10 @@ const Terminal = () => {
   const [showAdvisorForm, setShowAdvisorForm] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const terminalRef = useRef(null);
-  const [maxTokens, setMaxTokens] = useState(4096);
+  const [maxTokens, setMaxTokens] = useState(() => {
+    const saved = localStorage.getItem('space_max_tokens');
+    return saved ? parseInt(saved) : 4096;
+  });
   const [metaphorsExpanded, setMetaphorsExpanded] = useState(false);
   const [questionsExpanded, setQuestionsExpanded] = useState(false);
   const [contextLimit, setContextLimit] = useState(150000);
@@ -1682,6 +1685,7 @@ Default is 4,096 tokens.`
             
             const newLimit = parseInt(args[1].replace(/,/g, ''));
             setMaxTokens(newLimit);
+            localStorage.setItem('space_max_tokens', newLimit);
             setMessages(prev => [...prev, {
               type: 'system',
               content: `Response length set to ${newLimit.toLocaleString()} tokens`
@@ -1708,32 +1712,51 @@ Default is 4,096 tokens.`
   };
 
   const callClaude = async (userMessage) => {
+    // Format timestamp to be compact but meaningful
+    const formatTimestamp = (isoString) => {
+      const date = new Date(isoString);
+      return date.toISOString().slice(0, 16);
+    };
+
     try {
+      // Validate input
+      if (!userMessage?.trim()) {
+        throw new Error('Empty message');
+      }
+
       const estimateTokens = text => Math.ceil(text.length / 4);
       const totalTokens = messages.reduce((sum, msg) => 
         sum + estimateTokens(msg.content), 0
       );
 
-      // Format timestamp to be compact but meaningful
-      const formatTimestamp = (isoString) => {
-        const date = new Date(isoString);
-        return date.toISOString().slice(0, 16);
-      };
+      // Always start with the current message
+      const contextMessages = [{
+        role: 'user',
+        content: userMessage
+      }];
 
-      const contextMessages = totalTokens < contextLimit 
-        ? messages
-            .filter(msg => 
-              (msg.type === 'user' || msg.type === 'assistant') &&
-              msg.content.trim() !== '' &&
-              msg.content !== userMessage
-            )
-            .map(msg => ({
-              role: msg.type,
-              content: msg.timestamp 
-                ? `[${formatTimestamp(msg.timestamp)}] ${msg.content}`
-                : msg.content
-            }))
-        : buildConversationContext(userMessage, messages.slice(0, -1), memory);
+      // Then add historical context if under the limit
+      if (totalTokens < contextLimit) {
+        const historicalMessages = messages
+          .filter(msg => 
+            (msg.type === 'user' || msg.type === 'assistant') &&
+            msg.content?.trim() !== '' &&
+            msg.content !== userMessage
+          )
+          .map(msg => ({
+            role: msg.type,
+            content: msg.timestamp 
+              ? `[${formatTimestamp(msg.timestamp)}] ${msg.content}`
+              : msg.content
+          }));
+        
+        contextMessages.unshift(...historicalMessages);
+      } else {
+        const managedContext = buildConversationContext(userMessage, messages, memory);
+        if (managedContext?.length) {
+          contextMessages.unshift(...managedContext);
+        }
+      }
 
       console.log('Messages being sent to Claude:', JSON.stringify(contextMessages, null, 2));
 
@@ -2644,6 +2667,14 @@ ${selectedText}
     }
     return template.sections[currentSection].questions[currentQuestion].id;
   };
+
+  useEffect(() => {
+    setMessages([
+      { type: 'system', content: 'SPACE Terminal - v.0.1' },
+      { type: 'system', content: `Type /help for a list of commands.` },
+      { type: 'system', content: `Max response length is set to ${maxTokens.toLocaleString()} tokens.`}
+    ]);
+  }, []);
 
   return (
     <div 
