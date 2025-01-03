@@ -1645,8 +1645,26 @@ Examples:
 
   const callClaude = async (userMessage) => {
     try {
-      const contextMessages = buildConversationContext(userMessage, messages, memory);
-      
+      // Simple token estimation
+      const estimateTokens = text => Math.ceil(text.length / 4);
+      const totalTokens = messages.reduce((sum, msg) => 
+        sum + estimateTokens(msg.content), 0
+      );
+
+      // Build messages array based on token count
+      const contextMessages = totalTokens < 150000 
+        ? messages
+            .filter(msg => 
+              (msg.type === 'user' || msg.type === 'assistant') &&
+              msg.content.trim() !== '' &&
+              msg.content !== userMessage
+            )
+            .map(msg => ({
+              role: msg.type,
+              content: msg.content
+            }))
+        : buildConversationContext(userMessage, messages, memory);
+
       console.log('Messages being sent to Claude:', JSON.stringify(contextMessages, null, 2));
 
       const systemPromptText = getSystemPrompt();
