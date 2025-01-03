@@ -1686,7 +1686,6 @@ Examples:
       );
 
       // Format timestamp to be compact but meaningful
-      // e.g., "2024-01-15T14:30" instead of "2024-01-15T14:30:00.000Z"
       const formatTimestamp = (isoString) => {
         const date = new Date(isoString);
         return date.toISOString().slice(0, 16);
@@ -1705,19 +1704,20 @@ Examples:
                 ? `[${formatTimestamp(msg.timestamp)}] ${msg.content}`
                 : msg.content
             }))
-        : buildConversationContext(userMessage, messages, memory);
+        : buildConversationContext(userMessage, messages.slice(0, -1), memory);
 
       console.log('Messages being sent to Claude:', JSON.stringify(contextMessages, null, 2));
 
       const systemPromptText = getSystemPrompt();
 
       if (debugMode) {
-        // Get the current user message that was just sent
-        const currentUserMessage = {
-          content: userMessage,
-          tags: messages[messages.length - 1]?.tags || []
-        };
-        
+        // Find the most recent user message (the one we're processing)
+        const currentUserMessage = messages
+          .slice()
+          .reverse()
+          .find(msg => msg.type === 'user' && msg.content === userMessage) || 
+          { content: userMessage, tags: [] };
+      
         console.log('🔄 Debug - Message being processed:', {
           content: currentUserMessage.content.substring(0, 100) + '...',
           tags: currentUserMessage.tags,
