@@ -448,6 +448,7 @@ const Terminal = () => {
   const [maxTokens, setMaxTokens] = useState(4096);
   const [metaphorsExpanded, setMetaphorsExpanded] = useState(false);
   const [questionsExpanded, setQuestionsExpanded] = useState(false);
+  const [contextLimit, setContextLimit] = useState(150000);
 
   const worksheetQuestions = [
     {
@@ -568,7 +569,8 @@ const Terminal = () => {
 /worksheet view   - View a completed worksheet
 
 ## Settings
-/tokens <1-8192> - Set maximum response length`
+/tokens <1-8192> - Set maximum response length
+/context limit <number> - Set token limit for context management`
           }]);
           return true;
 
@@ -1417,6 +1419,39 @@ Note: Higher values allow for longer responses
           }]);
           return true;
 
+        case '/context':
+          switch(args[0]) {
+            case 'limit':
+              if (!args[1] || isNaN(args[1])) {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: `Usage: /context limit <number>
+Current context limit: ${contextLimit.toLocaleString()} tokens
+
+This setting controls when SPACE switches to managed context:
+- Higher values send more history to Claude
+- Lower values use less tokens but may lose context
+- Default is 150,000`
+                }]);
+                return true;
+              }
+              
+              const newLimit = parseInt(args[1].replace(/,/g, ''));
+              setContextLimit(newLimit);
+              setMessages(prev => [...prev, {
+                type: 'system',
+                content: `Context limit set to ${newLimit.toLocaleString()} tokens`
+              }]);
+              return true;
+
+            default:
+              setMessages(prev => [...prev, {
+                type: 'system',
+                content: 'Available context commands:\n/context limit <number> - Set token limit for context management'
+              }]);
+              return true;
+          }
+
         case '/capture':
           const selection = window.getSelection();
           const selectedText = selection?.toString().trim();
@@ -1657,7 +1692,7 @@ Examples:
         return date.toISOString().slice(0, 16);
       };
 
-      const contextMessages = totalTokens < 150000 
+      const contextMessages = totalTokens < contextLimit 
         ? messages
             .filter(msg => 
               (msg.type === 'user' || msg.type === 'assistant') &&
