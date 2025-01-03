@@ -555,8 +555,8 @@ const Terminal = () => {
 ## Save and Use Prompts
 
 /prompt add "name" <text> - Save a new prompt
-/prompt list - Show all saved prompts
-/prompt use "name" - Use a saved prompt
+/prompt list  - Show all saved prompts
+/prompt use "name"  - Use a saved prompt
 /prompt edit "name" - Edit an existing prompt
 /prompt delete "name" - Delete a saved prompt
 
