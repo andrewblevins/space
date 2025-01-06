@@ -2671,8 +2671,9 @@ ${selectedText}
   useEffect(() => {
     setMessages([
       { type: 'system', content: 'SPACE Terminal - v.0.1' },
-      { type: 'system', content: `Type /help for a list of commands.` },
-      { type: 'system', content: `Max response length is set to ${maxTokens.toLocaleString()} tokens.`}
+      { type: 'system', content: `Context limit (length up to which full conversation memory is retained) is set to ${contextLimit.toLocaleString()} tokens. Reduce it to save money.`},
+      { type: 'system', content: `Max length for responses is set to ${maxTokens.toLocaleString()} tokens.`},
+      { type: 'system', content: `Type /help for a list of commands.` }
     ]);
   }, []);
 
