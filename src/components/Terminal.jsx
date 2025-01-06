@@ -2501,7 +2501,10 @@ When responding, you will adopt the distinct voice(s) of the active advisor(s) a
       const sessionData = {
         id: currentSessionId,
         timestamp: new Date().toISOString(),
-        messages,
+        messages: messages.map(msg => ({
+          ...msg,
+          tags: msg.tags || [] // Ensure tags are preserved
+        })),
         metaphors,
         questions
       };
