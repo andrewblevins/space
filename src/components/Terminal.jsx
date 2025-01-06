@@ -496,7 +496,7 @@ const Terminal = () => {
     }
     
     return sessions
-      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+      .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))  // Changed from b - a to a - b
       .map(session => ({
         ...session,
         messageCount: session.messages.filter(m => m.type !== 'system').length,
@@ -519,8 +519,14 @@ const Terminal = () => {
             type: 'system',
             content: sessions.length ? 
               'Available sessions:\n' + sessions.map(s => 
-                `Session ${s.id}\n` +
-                `  Created: ${new Date(s.timestamp).toLocaleString()}\n` +
+                `Session #: ${s.id}\n` +
+                `  Created: ${new Date(s.timestamp).toLocaleString([], { 
+                  year: 'numeric',
+                  month: 'numeric',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}\n` +
                 `  Messages: ${s.messageCount}\n`
               ).join('\n') :
               'No saved sessions found'
@@ -540,8 +546,8 @@ const Terminal = () => {
 
 ## Session Management
 /new              - Start a new session
-/sessions         - List all sessions
-/load <id>        - Load a specific session
+/sessions         - List all sessions and their numbers
+/load <id>        - Load a specific session (id = session number)
 /load previous    - Load the most recent session
 
 ## Advisor Management
