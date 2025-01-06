@@ -651,6 +651,20 @@ const Terminal = () => {
           return true;
 
         case '/advisor':
+          if (!args[0]) {  // If no subcommand is provided
+            setMessages(prev => [...prev, {
+              type: 'system',
+              content: `Available advisor commands:
+/advisor add      - Add a new advisor
+/advisor edit     - Edit an advisor
+/advisor remove   - Remove an advisor
+/advisor list     - List all advisors
+/advisor generate - Generate advisor suggestions from worksheet
+/advisor finalize - Get detailed profiles for chosen advisors`
+            }]);
+            return true;  // Add this to prevent fall-through to debug command
+          }
+
           switch(args[0]) {
             case 'generate':
               if (!args[1]) {
