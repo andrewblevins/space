@@ -41,7 +41,12 @@ const AdvisorForm = ({ onSubmit, onCancel }) => {
 
   const handleGenerate = async () => {
     if (!name.trim()) {
-      setError('Please enter an advisor name first');
+      setError('Enter an advisor name first');
+      return;
+    }
+    
+    if (description.trim()) {
+      setError('Clear the description field before generating a new description');
       return;
     }
     
