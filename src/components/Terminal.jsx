@@ -518,17 +518,27 @@ const Terminal = () => {
           setMessages(prev => [...prev, {
             type: 'system',
             content: sessions.length ? 
-              'Available sessions:\n' + sessions.map(s => 
-                `Session #: ${s.id}\n` +
-                `  Created: ${new Date(s.timestamp).toLocaleString([], { 
-                  year: 'numeric',
-                  month: 'numeric',
-                  day: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit'
-                })}\n` +
-                `  Messages: ${s.messageCount}\n`
-              ).join('\n') :
+              'Available sessions:\n' + sessions.map(s => {
+                // Collect unique tags from all messages
+                const tags = new Set();
+                s.messages.forEach(msg => {
+                  if (msg.tags) {
+                    msg.tags.forEach(tag => tags.add(tag));
+                  }
+                });
+                const tagList = Array.from(tags);
+                
+                return `Session #: ${s.id}\n` +
+                  `  Created: ${new Date(s.timestamp).toLocaleString([], { 
+                    year: 'numeric',
+                    month: 'numeric',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}\n` +
+                  `  Messages: ${s.messageCount}\n` +
+                  `  Tags: ${tagList.length ? tagList.join(', ') : 'none'}\n`;
+              }).join('\n') :
               'No saved sessions found'
           }]);
           return true;
