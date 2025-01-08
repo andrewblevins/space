@@ -7,6 +7,7 @@ import EditAdvisorForm from './EditAdvisorForm';
 import EditPromptForm from './EditPromptForm';
 import '@fontsource/vollkorn';
 import TagAnalyzer from '../lib/tagAnalyzer';
+import ApiKeySetup from './ApiKeySetup';
 
 const Module = ({ title, items = [], onItemClick, activeItems = [] }) => (
   <div className="bg-gray-900 p-4">
@@ -452,6 +453,7 @@ const Terminal = () => {
   const [metaphorsExpanded, setMetaphorsExpanded] = useState(false);
   const [questionsExpanded, setQuestionsExpanded] = useState(false);
   const [contextLimit, setContextLimit] = useState(150000);
+  const [apiKeysSet, setApiKeysSet] = useState(false);
 
   const worksheetQuestions = [
     {
@@ -1729,6 +1731,39 @@ Default is 4,096 tokens.`
           }]);
           return true;
 
+        case '/keys':
+          switch(args[0]) {
+            case 'clear':
+              localStorage.removeItem('space_anthropic_key');
+              localStorage.removeItem('space_openai_key');
+              setApiKeysSet(false);
+              setMessages(prev => [...prev, {
+                type: 'system',
+                content: 'API keys cleared. Please restart the terminal.'
+              }]);
+              return true;
+
+            case 'status':
+              const anthropicKey = localStorage.getItem('space_anthropic_key');
+              const openaiKey = localStorage.getItem('space_openai_key');
+              setMessages(prev => [...prev, {
+                type: 'system',
+                content: `API Keys Status:
+Anthropic: ${anthropicKey ? '✓ Set' : '✗ Not Set'}
+OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
+              }]);
+              return true;
+
+            default:
+              setMessages(prev => [...prev, {
+                type: 'system',
+                content: 'Available key commands:\n' +
+                  '/keys status - Check API key status\n' +
+                  '/keys clear - Clear stored API keys'
+              }]);
+              return true;
+          }
+
         default:
           setMessages(prev => [...prev, {
             type: 'system',
@@ -1742,110 +1777,26 @@ Default is 4,096 tokens.`
   };
 
   const callClaude = async (userMessage) => {
-    // Format timestamp to be compact but meaningful
-    const formatTimestamp = (isoString) => {
-      const date = new Date(isoString);
-      return date.toISOString().slice(0, 16);
-    };
-
     try {
-      // Validate input
-      if (!userMessage?.trim()) {
-        throw new Error('Empty message');
-      }
-
-      const estimateTokens = text => Math.ceil(text.length / 4);
-      const totalTokens = messages.reduce((sum, msg) => 
-        sum + estimateTokens(msg.content), 0
-      );
-
-      // Always start with the current message
-      const contextMessages = [{
-        role: 'user',
-        content: userMessage
-      }];
-
-      // Then add historical context if under the limit
-      if (totalTokens < contextLimit) {
-        const historicalMessages = messages
-          .filter(msg => 
-            (msg.type === 'user' || msg.type === 'assistant') &&
-            msg.content?.trim() !== '' &&
-            msg.content !== userMessage
-          )
-          .map(msg => ({
-            role: msg.type,
-            content: msg.timestamp 
-              ? `[${formatTimestamp(msg.timestamp)}] ${msg.content}`
-              : msg.content
-          }));
-        
-        contextMessages.unshift(...historicalMessages);
-      } else {
-        const managedContext = buildConversationContext(userMessage, messages, memory);
-        if (managedContext?.length) {
-          contextMessages.unshift(...managedContext);
-        }
-      }
-
-      console.log('Messages being sent to Claude:', JSON.stringify(contextMessages, null, 2));
-
-      const systemPromptText = getSystemPrompt();
-
-      if (debugMode) {
-        // Find the most recent user message (the one we're processing)
-        const currentUserMessage = messages
-          .slice()
-          .reverse()
-          .find(msg => msg.type === 'user' && msg.content === userMessage) || 
-          { content: userMessage, tags: [] };
-      
-        console.log('🔄 Debug - Message being processed:', {
-          content: currentUserMessage.content.substring(0, 100) + '...',
-          tags: currentUserMessage.tags,
-          type: 'user'
-        });
-        
-        // Then the existing token estimation code
-        const estimateTokens = (text) => Math.ceil(text.length / 4);
-        const systemTokens = estimateTokens(systemPromptText);
-        const contextTokens = contextMessages.reduce((sum, msg) => 
-          sum + estimateTokens(msg.content), 0
-        );
-        const totalTokens = systemTokens + contextTokens;
-        
-        const inputCost = ((totalTokens / 1000) * 0.003).toFixed(4);
-        
-        const debugOutput = `Claude API Call:
-Estimated tokens: ${totalTokens} (System: ${systemTokens}, Context: ${contextTokens})
-Estimated cost: $${inputCost}
-
-Tags for current message: ${JSON.stringify(currentUserMessage.tags, null, 2)}
-
-System Prompt:
-${systemPromptText}
-
-Context Messages:
-${JSON.stringify(contextMessages, null, 2)}`;
-
-        setMessages(prev => [...prev, {
-          type: 'debug',
-          content: debugOutput
-        }]);
+      const anthropicKey = localStorage.getItem('space_anthropic_key');
+      if (!anthropicKey) {
+        throw new Error('Anthropic API key not found');
       }
 
       const response = await fetch('/api/v1/messages', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': import.meta.env.VITE_ANTHROPIC_API_KEY,
+          'x-api-key': anthropicKey,  // Use stored key instead of env variable
           'anthropic-version': '2023-06-01',
           'anthropic-dangerous-direct-browser-access': 'true'
         },
         body: JSON.stringify({
           model: 'claude-3-5-sonnet-20241022',
-          messages: contextMessages,
-          system: systemPromptText,
+          messages: [{
+            role: 'user',
+            content: userMessage
+          }],
           max_tokens: maxTokens,
           stream: true
         })
@@ -2710,242 +2661,263 @@ ${selectedText}
     ]);
   }, []);
 
+  useEffect(() => {
+    // Check if keys exist in localStorage
+    const anthropicKey = localStorage.getItem('space_anthropic_key');
+    const openaiKey = localStorage.getItem('space_openai_key');
+    
+    if (anthropicKey && openaiKey) {
+      setApiKeysSet(true);
+    }
+  }, []);
+
   return (
-    <div 
-      ref={terminalRef} 
-      className="w-full h-screen bg-gradient-to-b from-gray-900 to-black text-green-400 font-serif flex relative"
-      onContextMenu={handleContextMenu}
-    >
-      <button 
-        onClick={toggleFullscreen}
-        className="absolute top-2 right-2 text-green-400 hover:text-green-300 z-50"
-      >
-        {isFullscreen ? (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        ) : (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
-          </svg>
-        )}
-      </button>
-
-      {/* Left Column */}
-      <div className="w-1/4 p-4 border-r border-gray-800 overflow-y-auto">
-        <CollapsibleModule 
-          title="Metaphors" 
-          items={metaphors}
-          expanded={metaphorsExpanded}
-          onToggle={() => setMetaphorsExpanded(!metaphorsExpanded)}
+    <>
+      {!apiKeysSet ? (
+        <ApiKeySetup 
+          onComplete={({ anthropicKey, openaiKey }) => {
+            setApiKeysSet(true);
+          }} 
         />
-        <div className="mt-4">
-          <GroupableModule
-            title="Advisors"
-            groups={advisorGroups}
-            items={advisors}
-            onItemClick={handleAdvisorClick}
-            onGroupClick={handleGroupClick}
-            activeItems={advisors.filter(a => a.active)}
-            activeGroups={activeGroups}
-            onAddClick={() => setShowAdvisorForm(true)}
-            setEditingAdvisor={setEditingAdvisor}
-            setAdvisors={setAdvisors}
-            setMessages={setMessages}
-          />
-        </div>
-      </div>
-
-      {/* Middle Column */}
-      <div className="w-2/4 p-4 flex flex-col">
+      ) : (
+        // Regular terminal UI
         <div 
-          ref={messagesContainerRef} 
-          className="
-            flex-1 
-            overflow-auto 
-            mb-4 
-            break-words
-            px-6         // Even horizontal padding
-            py-4         // Vertical padding for balance
-            mx-auto      // Center the content
-            max-w-[90ch] // Limit line length for optimal readability
-            leading-relaxed     // Increased line height for better readability
-            tracking-wide       // Slightly increased letter spacing
-          "
+          ref={terminalRef} 
+          className="w-full h-screen bg-gradient-to-b from-gray-900 to-black text-green-400 font-serif flex relative"
+          onContextMenu={handleContextMenu}
         >
-          {messages.map((msg, idx) => (
+          <button 
+            onClick={toggleFullscreen}
+            className="absolute top-2 right-2 text-green-400 hover:text-green-300 z-50"
+          >
+            {isFullscreen ? (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
+              </svg>
+            )}
+          </button>
+
+          {/* Left Column */}
+          <div className="w-1/4 p-4 border-r border-gray-800 overflow-y-auto">
+            <CollapsibleModule 
+              title="Metaphors" 
+              items={metaphors}
+              expanded={metaphorsExpanded}
+              onToggle={() => setMetaphorsExpanded(!metaphorsExpanded)}
+            />
+            <div className="mt-4">
+              <GroupableModule
+                title="Advisors"
+                groups={advisorGroups}
+                items={advisors}
+                onItemClick={handleAdvisorClick}
+                onGroupClick={handleGroupClick}
+                activeItems={advisors.filter(a => a.active)}
+                activeGroups={activeGroups}
+                onAddClick={() => setShowAdvisorForm(true)}
+                setEditingAdvisor={setEditingAdvisor}
+                setAdvisors={setAdvisors}
+                setMessages={setMessages}
+              />
+            </div>
+          </div>
+
+          {/* Middle Column */}
+          <div className="w-2/4 p-4 flex flex-col">
             <div 
-              key={idx}
-              id={`msg-${idx}`}
-              className={(() => {
-                const className = msg.type === 'debug' ? 'text-yellow-400 mb-4 whitespace-pre-wrap break-words' :
-                  msg.type === 'user' ? 'text-green-400 mb-4 whitespace-pre-wrap break-words' :
-                  msg.type === 'assistant' ? 'text-white mb-4 break-words' : 
-                  msg.type === 'system' ? 'text-green-400 mb-4 break-words' :
-                  'text-green-400 mb-4 break-words';
-                return className;
-              })()}
+              ref={messagesContainerRef} 
+              className="
+                flex-1 
+                overflow-auto 
+                mb-4 
+                break-words
+                px-6         // Even horizontal padding
+                py-4         // Vertical padding for balance
+                mx-auto      // Center the content
+                max-w-[90ch] // Limit line length for optimal readability
+                leading-relaxed     // Increased line height for better readability
+                tracking-wide       // Slightly increased letter spacing
+              "
             >
-              {(msg.type === 'system' || msg.type === 'assistant') ? (
-                <MemoizedMarkdownMessage content={msg.content} />
-              ) : (
-                msg.content
-              )}
-            </div>
-          ))}
-          {isLoading && <div className="text-yellow-400">Loading...</div>}
-        </div>
-
-        <div className="mt-auto">
-          <form onSubmit={handleSubmit}>
-            <div className="flex items-center">
-              {editingPrompt ? (
-                <div className="flex-1">
-                  <textarea
-                    value={editText}
-                    onChange={(e) => setEditText(e.target.value)}
-                    onKeyDown={handleEditKeyDown}
-                    className="w-full h-40 bg-black text-green-400 font-serif p-2 border border-green-400 focus:outline-none resize-none"
-                    placeholder="Edit your prompt..."
-                    autoFocus
-                  />
+              {messages.map((msg, idx) => (
+                <div 
+                  key={idx}
+                  id={`msg-${idx}`}
+                  className={(() => {
+                    const className = msg.type === 'debug' ? 'text-yellow-400 mb-4 whitespace-pre-wrap break-words' :
+                      msg.type === 'user' ? 'text-green-400 mb-4 whitespace-pre-wrap break-words' :
+                      msg.type === 'assistant' ? 'text-white mb-4 break-words' : 
+                      msg.type === 'system' ? 'text-green-400 mb-4 break-words' :
+                      'text-green-400 mb-4 break-words';
+                    return className;
+                  })()}
+                >
+                  {(msg.type === 'system' || msg.type === 'assistant') ? (
+                    <MemoizedMarkdownMessage content={msg.content} />
+                  ) : (
+                    msg.content
+                  )}
                 </div>
-              ) : editingAdvisor ? (
-                <div className="flex-1">
-                  <textarea
-                    value={editAdvisorText}
-                    onChange={(e) => setEditAdvisorText(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && e.ctrlKey) {
-                        // Save changes
-                        setAdvisors(prev => prev.map(a => 
-                          a.name === editingAdvisor.name ? { ...a, description: editAdvisorText } : a
-                        ));
-                        setMessages(prev => [...prev, {
-                          type: 'system',
-                          content: `Updated advisor "${editingAdvisor}"`
-                        }]);
-                        setEditingAdvisor(null);
-                        setEditAdvisorText('');
-                      } else if (e.key === 'Escape') {
-                        // Cancel editing
-                        setEditingAdvisor(null);
-                        setEditAdvisorText('');
-                        setMessages(prev => [...prev, {
-                          type: 'system',
-                          content: 'Edit cancelled'
-                        }]);
-                      }
-                    }}
-                    className="w-full h-40 bg-black text-green-400 font-serif p-2 border border-green-400 focus:outline-none resize-none"
-                    placeholder="Edit advisor description..."
-                    autoFocus
-                  />
-                </div>
-              ) : (
-                <>
-                  <span className="mr-2">&gt;</span>
-                  <ExpandingInput
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onSubmit={handleSubmit}
-                    isLoading={isLoading}
-                  />
-                </>
-              )}
+              ))}
+              {isLoading && <div className="text-yellow-400">Loading...</div>}
             </div>
-          </form>
+
+            <div className="mt-auto">
+              <form onSubmit={handleSubmit}>
+                <div className="flex items-center">
+                  {editingPrompt ? (
+                    <div className="flex-1">
+                      <textarea
+                        value={editText}
+                        onChange={(e) => setEditText(e.target.value)}
+                        onKeyDown={handleEditKeyDown}
+                        className="w-full h-40 bg-black text-green-400 font-serif p-2 border border-green-400 focus:outline-none resize-none"
+                        placeholder="Edit your prompt..."
+                        autoFocus
+                      />
+                    </div>
+                  ) : editingAdvisor ? (
+                    <div className="flex-1">
+                      <textarea
+                        value={editAdvisorText}
+                        onChange={(e) => setEditAdvisorText(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && e.ctrlKey) {
+                            // Save changes
+                            setAdvisors(prev => prev.map(a => 
+                              a.name === editingAdvisor.name ? { ...a, description: editAdvisorText } : a
+                            ));
+                            setMessages(prev => [...prev, {
+                              type: 'system',
+                              content: `Updated advisor "${editingAdvisor}"`
+                            }]);
+                            setEditingAdvisor(null);
+                            setEditAdvisorText('');
+                          } else if (e.key === 'Escape') {
+                            // Cancel editing
+                            setEditingAdvisor(null);
+                            setEditAdvisorText('');
+                            setMessages(prev => [...prev, {
+                              type: 'system',
+                              content: 'Edit cancelled'
+                            }]);
+                          }
+                        }}
+                        className="w-full h-40 bg-black text-green-400 font-serif p-2 border border-green-400 focus:outline-none resize-none"
+                        placeholder="Edit advisor description..."
+                        autoFocus
+                      />
+                    </div>
+                  ) : (
+                    <>
+                      <span className="mr-2">&gt;</span>
+                      <ExpandingInput
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onSubmit={handleSubmit}
+                        isLoading={isLoading}
+                      />
+                    </>
+                  )}
+                </div>
+              </form>
+            </div>
+          </div>
+
+          {/* Right Column */}
+          <div className="w-1/4 p-4 border-l border-gray-800 overflow-y-auto">
+            <CollapsibleModule 
+              title="Questions" 
+              items={questions}
+              expanded={questionsExpanded}
+              onToggle={() => setQuestionsExpanded(!questionsExpanded)}
+            />
+          </div>
+
+          {showAdvisorForm && (
+            <AdvisorForm
+              onSubmit={({ name, description }) => {
+                const newAdvisor = {
+                  name,
+                  description,
+                  active: true
+                };
+                setAdvisors(prev => [...prev, newAdvisor]);
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: `Added advisor: ${newAdvisor.name}`
+                }]);
+                setShowAdvisorForm(false);
+              }}
+              onCancel={() => {
+                setShowAdvisorForm(false);
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: 'Cancelled adding advisor'
+                }]);
+              }}
+            />
+          )}
+
+          {editingAdvisor && (
+            <EditAdvisorForm
+              advisor={editingAdvisor}
+              onSubmit={({ name, description }) => {
+                setAdvisors(prev => prev.map(a => 
+                  a.name === editingAdvisor.name 
+                    ? { ...a, name, description }
+                    : a
+                ));
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: `Updated advisor: ${name}`
+                }]);
+                setEditingAdvisor(null);
+              }}
+              onCancel={() => {
+                setEditingAdvisor(null);
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: 'Edit cancelled'
+                }]);
+              }}
+            />
+          )}
+
+          {editingPrompt && (
+            <EditPromptForm
+              prompt={editingPrompt}
+              onSubmit={({ name, text }) => {
+                setSavedPrompts(prev => prev.map(p => 
+                  p.name === editingPrompt.name 
+                    ? { ...p, name, text }
+                    : p
+                ));
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: `Updated prompt: ${name}`
+                }]);
+                setEditingPrompt(null);
+                setEditText('');
+              }}
+              onCancel={() => {
+                setEditingPrompt(null);
+                setEditText('');
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: 'Edit cancelled'
+                }]);
+              }}
+            />
+          )}
         </div>
-      </div>
-
-      {/* Right Column */}
-      <div className="w-1/4 p-4 border-l border-gray-800 overflow-y-auto">
-        <CollapsibleModule 
-          title="Questions" 
-          items={questions}
-          expanded={questionsExpanded}
-          onToggle={() => setQuestionsExpanded(!questionsExpanded)}
-        />
-      </div>
-
-      {showAdvisorForm && (
-        <AdvisorForm
-          onSubmit={({ name, description }) => {
-            const newAdvisor = {
-              name,
-              description,
-              active: true
-            };
-            setAdvisors(prev => [...prev, newAdvisor]);
-            setMessages(prev => [...prev, {
-              type: 'system',
-              content: `Added advisor: ${newAdvisor.name}`
-            }]);
-            setShowAdvisorForm(false);
-          }}
-          onCancel={() => {
-            setShowAdvisorForm(false);
-            setMessages(prev => [...prev, {
-              type: 'system',
-              content: 'Cancelled adding advisor'
-            }]);
-          }}
-        />
       )}
-
-      {editingAdvisor && (
-        <EditAdvisorForm
-          advisor={editingAdvisor}
-          onSubmit={({ name, description }) => {
-            setAdvisors(prev => prev.map(a => 
-              a.name === editingAdvisor.name 
-                ? { ...a, name, description }
-                : a
-            ));
-            setMessages(prev => [...prev, {
-              type: 'system',
-              content: `Updated advisor: ${name}`
-            }]);
-            setEditingAdvisor(null);
-          }}
-          onCancel={() => {
-            setEditingAdvisor(null);
-            setMessages(prev => [...prev, {
-              type: 'system',
-              content: 'Edit cancelled'
-            }]);
-          }}
-        />
-      )}
-
-      {editingPrompt && (
-        <EditPromptForm
-          prompt={editingPrompt}
-          onSubmit={({ name, text }) => {
-            setSavedPrompts(prev => prev.map(p => 
-              p.name === editingPrompt.name 
-                ? { ...p, name, text }
-                : p
-            ));
-            setMessages(prev => [...prev, {
-              type: 'system',
-              content: `Updated prompt: ${name}`
-            }]);
-            setEditingPrompt(null);
-            setEditText('');
-          }}
-          onCancel={() => {
-            setEditingPrompt(null);
-            setEditText('');
-            setMessages(prev => [...prev, {
-              type: 'system',
-              content: 'Edit cancelled'
-            }]);
-          }}
-        />
-      )}
-    </div>
+    </>
   );
-};
+}
 
 export default Terminal;
