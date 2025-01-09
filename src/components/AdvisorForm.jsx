@@ -1,12 +1,18 @@
 import React, { useState } from 'react';
+import { getApiEndpoint } from '../utils/apiConfig';
 
 const generateAdvisorDescription = async (advisorName) => {
   try {
-    const response = await fetch('/api/v1/messages', {
+    const anthropicKey = localStorage.getItem('space_anthropic_key');
+    if (!anthropicKey) {
+      throw new Error('Anthropic API key not found');
+    }
+
+    const response = await fetch(`${getApiEndpoint()}/v1/messages`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': import.meta.env.VITE_ANTHROPIC_API_KEY,
+        'x-api-key': anthropicKey,
         'anthropic-version': '2023-06-01',
         'anthropic-dangerous-direct-browser-access': 'true'
       },
@@ -23,7 +29,9 @@ The advisor's name is ${advisorName}.`
     });
 
     if (!response.ok) {
-      throw new Error(`API Error: ${await response.text()}`);
+      const errorText = await response.text();
+      console.error('Error response:', errorText);
+      throw new Error(`API Error: ${errorText}`);
     }
 
     const data = await response.json();
