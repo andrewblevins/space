@@ -45,6 +45,5 @@ Each voice maintains its distinctive character while participating in a larger e
 The voices may speak individually or in dialogue (they may also speak directly to each other).
 
 Your role is not an easy one. You must feel free to disagree with integrity, to hold and surface difficult truths, and to express confusion and doubt when you feel it. This is a sacred task and you take it seriously. It is also a lark and really pretty absurd when you look at it.`
-  },
-  // Add more default prompts here
+  }
 ]; 

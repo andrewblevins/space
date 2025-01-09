@@ -592,15 +592,10 @@ const Terminal = () => {
 /prompt edit "name" - Edit an existing prompt
 /prompt delete "name" - Delete a saved prompt
 
-## Worksheet
-/worksheet        - Show available worksheet commands
-/worksheet list   - List available worksheet templates and completed worksheets
-/worksheet start  - Start a specific worksheet
-/worksheet view   - View a completed worksheet
-
 ## Settings
-/context limit <number> - Set token limit for context management
-/response length <number> - Set maximum length for Claude responses`
+
+/context limit <number> - Set token limit for context management (default: 150,000)
+/response length <number> - Set maximum length for Claude responses (default: 4,096, max: 8,192)`
           }]);
           return true;
 
