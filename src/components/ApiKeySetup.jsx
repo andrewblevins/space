@@ -30,10 +30,11 @@ const ApiKeySetup = ({ onComplete }) => {
         headers: {
           'Content-Type': 'application/json',
           'x-api-key': anthropicKey,
-          'anthropic-version': '2023-06-01'
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
         },
         body: JSON.stringify({
-          model: 'claude-3-sonnet-20240229',
+          model: 'claude-3-5-sonnet-20241022',
           messages: [{ role: 'user', content: 'Hello' }],
           max_tokens: 10
         })
