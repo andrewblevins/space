@@ -1,57 +1,126 @@
 # SPACE Terminal
 
-SPACE Terminal is an experimental interface for deep conversations with AI, designed to facilitate meaningful dialogue and personal exploration. Built with React and Vite, it provides a terminal-style interface with enhanced features for managing and enriching AI interactions.
+SPACE Terminal is an experimental terminal-style interface for personal discovery and thinking with large language models.
+
+The biggest difference between this and other chat interfaces is the ability to create and manage different AI personas for distinct perspectives, changing them out mid-conversation.
+
+It will also let you have much longer conversations without hitting rate limits (a current limitation of Claude Pro).
+
+For more about this process, see the Insight Cascade advisor process and guidelines here: https://github.com/andrewblevins/insight-cascade. 
+
+SPACE is part of a larger project exploring frameworks and interfaces for using Large Language Models for personal and social discovery. If you're interested in being a part of a community supporting ongoing dialogue, experimentation, and refinement around this kind of thing, sign up here: https://forms.gle/svMNnjJjJdFUjQ9L8.
+
+SPACE uses Claude 3.5 Sonnet for the main conversation and GPT-4o for background analysis features like metaphor tracking and question generation (which you can activate by clicking the triangles next to those menus). Model selection is not configurable through the interface yet, but will be.
+
+## Setup
+
+SPACE Terminal requires API keys from both Anthropic and OpenAI to function.
+
+### 1. Get Your API Keys
+
+#### Anthropic (Claude)
+1. Go to [console.anthropic.com](https://console.anthropic.com/)
+2. Sign up or log in
+3. Navigate to "API Keys" in your account settings
+4. Create a new API key and copy it
+
+#### OpenAI
+1. Visit [platform.openai.com](https://platform.openai.com/)
+2. Sign up or log in
+3. Go to "API Keys" in your account settings
+4. Create a new API key and copy it
+
+### Once that's done, to start playing
+
+Add your first advisor by clicking the + button on the left side of the screen. Type in a name and click "Generate Description" to get a personality, edit to your liking, then click "Create". 
+
+Make sure the advisors you want to talk to are green (selected).
+
+When you have a board of advisors you like, enter:
+
+> /prompt use "serious-play"
+
+This will send a basic starting prompt for the conversation.
 
 ## Features
 
-- **Terminal-Style Interface**: Clean, focused environment for deep conversations
-- **Multi-Column Layout**: 
-  - Left: Metaphor tracking and advisor management
+- **Terminal-Style Interface**: Clean, focused environment for conversation
+
+- **Advisor System**: Create, manage, and generate descriptions for AI personas for varied perspectives
+
+- **Column Layout**: 
+  - Left: Metaphor tracking and advisor menu
   - Center: Main conversation area
-  - Right: Generated questions for deeper exploration
-- **Memory System**: Maintains context across conversations and allows for searching past interactions
-- **Advisor System**: Create and manage different AI personas for varied perspectives
-- **Export Functionality**: Save conversations in markdown format
+  - Right: Generated questions for exploration
 
-## Getting Started
+- **Context Management**: Set token limit beyond which conversation history is shortened (to save tokens/$$$). Past this limit, the LLM will receive the six most recent messages and any messages deemed relevant according to...
 
-1. Clone the repository
-2. Install dependencies:
+- **Tag Analysis**: Background analysis and tracking of conversation themes (currently only used for context management but will be expanded and deepened)
 
-bash
-npm install
+- **Export**: Save your conversation in markdown format
 
-3. Create a `.env` file with your API keys:
+- **Prompts Library**: A library of prompts you can add to, edit, and delete. Also includes a handful of default suggestions
 
-bash
-VITE_ANTHROPIC_API_KEY=your_claude_api_key
-VITE_OPENAI_API_KEY=your_openai_api_key
-
-4. Run the development server:
-
-bash
-npm run dev
-
+- **Capture**: Right click selected text to capture and save to a Markdown file
 
 ## Available Commands
 
-- `/help` - Show all available commands
-- `/export` - Export current session as markdown
-- `/memory` - Access conversation memory functions
-- `/worksheet` - Access worksheet templates (in development)
-- `/tokens` - Adjust response length
+Enter `/help` anytime to see this list of commands in the terminal.
+
+### Session Management
+- `/new` - Start a new session
+- `/sessions` - List all sessions and their numbers
+- `/load <id>` - Load a specific session (id = session number)
+- `/load previous` - Load the most recent session
+
+### Advisor Management
+- `/advisor` - Show available advisor commands
+- `/advisor add` - Add a new advisor
+- `/advisor edit` - Edit an advisor
+- `/advisor remove` - Remove an advisor
+- `/advisor list` - List all advisors
+
+### Group Management
+- `/group create <group_name>` - Create a new advisor group (e.g. `/group create Psychologists`)
+- `/group add <group_name> <advisor>` - Add an advisor to a group (e.g. `/group add Psychologists Carl Jung`)
+- `/group remove <group_name> <advisor>` - Remove an advisor from a group
+- `/group list` - List all advisor groups and their members
+
+### Save and Use Prompts
+- `/prompt add "name" <text>` - Save a new prompt
+- `/prompt list` - Show all saved prompts
+- `/prompt use "name"` - Use a saved prompt
+- `/prompt edit "name"` - Edit an existing prompt
+- `/prompt delete "name"` - Delete a saved prompt
+
+### Settings
+- `/context limit <number>` - Set token limit for context management (default: 150,000)
+- `/response length <number>` - Set maximum length for Claude responses (default: 4,096, max: 8,192)
 
 ## Roadmap
 
-- [ ] Enhanced worksheet system for advisor generation
-- [ ] Improved memory and context management
-- [ ] Additional conversation analysis tools
-- [ ] Extended advisor customization options
+- [ ] Worksheet system for reflection and advisor finding
+- [ ] Model selection and configuration 
+- [ ] Better memory / context management system
+- [ ] More conversation analysis tools (interpersonal patterns, Kegan stages, etc.?)
+- [ ] Ways to share advisors with your friends
+
+## How to Help
+
+I would love for folks to build on this with me. Fork the repo, make the changes you want to see, and submit a pull request when ready.
+
+If you've found a bug or have an idea for a feature, report here:
+- [Bugs](https://github.com/andrewblevins/space/issues/new)
+- [Feature Requests](https://github.com/andrewblevins/space/issues/new?labels=enhancement&template=feature_request.md)
+
+Or talk to me at andrew.s.blevins@gmail.com / [@andrew0blevins](https://x.com/andrew0blevins) on Twitter.
 
 ## License
 
 MIT
 
-## Author
+Author: [Andrew Shade Blevins](www.andrewshadeblevins.com)
 
-Andrew Blevins
+## Acknowledgments
+
+SPACE Terminal would not be possible without the generous support of the Context Appreciation Society. 
