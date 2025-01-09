@@ -16,6 +16,8 @@ The app uses Claude 3.5 Sonnet for the main conversation and GPT-4o for backgrou
 
 SPACE Terminal requires API keys from both Anthropic and OpenAI to function. You'll be prompted to insert them when you first run the app.
 
+You'll also need to add some money to both accounts, or set up payment methods. A few dollars each is enough to last a while.
+
 ### 1. Get Your API Keys
 
 #### Anthropic (Claude)
@@ -62,6 +64,8 @@ This will send a basic starting prompt for the conversation.
 - **Prompts Library**: A library of prompts you can add to, edit, and delete. Also includes a handful of default suggestions
 
 - **Capture**: Right click selected text to capture and save to a Markdown file
+
+- **Debug**: Activate `/debug` to see what's being sent to Claude as well as the estimated cost of each message.
 
 ## Available Commands
 
