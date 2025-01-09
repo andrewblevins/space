@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { getApiEndpoint } from '../utils/apiConfig';
 
-const generateAdvisorDescription = async (advisorName) => {
+const generateAdvisorDescription = async (advisorName, onStream) => {
   try {
     const anthropicKey = localStorage.getItem('space_anthropic_key');
     if (!anthropicKey) {
@@ -20,11 +20,10 @@ const generateAdvisorDescription = async (advisorName) => {
         model: 'claude-3-5-sonnet-20241022',
         messages: [{
           role: 'user',
-          content: `You are generating a description of an AI advisor that will be used to summon that entity into a conversation. You will receive a name and you will write your description based on that name. Your description should be a paragraph spoken directly in the advisor's distinct voice and perspective. It should include a general self-description, any specific lineages, practices, or frameworks they embody, and how they tend to approach problems. Do not include the advisor's name in the description.
-
-The advisor's name is ${advisorName}.`
+          content: `You are generating a description of an AI advisor...`
         }],
-        max_tokens: 500
+        max_tokens: 500,
+        stream: true
       })
     });
 
@@ -34,8 +33,38 @@ The advisor's name is ${advisorName}.`
       throw new Error(`API Error: ${errorText}`);
     }
 
-    const data = await response.json();
-    return data.content[0].text;
+    // Set up streaming response handling
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let description = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6);
+          if (data === '[DONE]') continue;
+
+          try {
+            const parsed = JSON.parse(data);
+            const content = parsed.delta?.text || '';
+            description += content;
+            onStream(description);
+          } catch (e) {
+            console.error('Error parsing stream:', e);
+          }
+        }
+      }
+    }
+
+    return description;
   } catch (error) {
     console.error('Error generating advisor description:', error);
     throw error;
@@ -60,7 +89,9 @@ const AdvisorForm = ({ onSubmit, onCancel }) => {
     
     try {
       setError('');
-      const generatedDescription = await generateAdvisorDescription(name);
+      const generatedDescription = await generateAdvisorDescription(name, (description) => {
+        setDescription(description);
+      });
       setDescription(generatedDescription);
     } catch (error) {
       setError('Failed to generate description: ' + error.message);
