@@ -2003,68 +2003,7 @@ ${JSON.stringify(contextMessages, null, 2)}`;
       }
     }
 
-    // Add worksheet handling here
-    if (worksheetMode) {
-      try {
-        setIsLoading(true);
-        
-        // Save the answer
-        setWorksheetAnswers(prev => ({
-          ...prev,
-          [getCurrentQuestionId()]: input
-        }));
-
-        const template = WORKSHEET_TEMPLATES[currentWorksheetId];
-        const questions = template.type === 'basic' ? template.questions : 
-          template.sections[currentSection].questions;
-        
-        // Add user's answer to messages
-        setMessages(prev => [...prev, { type: 'user', content: input }]);
-
-        // Move to next question or complete worksheet
-        if (currentQuestion < questions.length - 1) {
-          setCurrentQuestion(prev => prev + 1);
-          setMessages(prev => [...prev, {
-            type: 'system',
-            content: questions[currentQuestion + 1].question
-          }]);
-        } else {
-          // Save worksheet
-          const worksheetId = generateWorksheetId(currentWorksheetId);
-          localStorage.setItem(`space_worksheet_${worksheetId}`, JSON.stringify({
-            id: worksheetId,
-            templateId: currentWorksheetId,
-            answers: worksheetAnswers,
-            timestamp: new Date().toISOString()
-          }));
-
-          // Reset worksheet mode
-          setWorksheetMode(false);
-          setCurrentWorksheetId(null);
-          setWorksheetStep(0);
-          setCurrentQuestion(0);
-          
-          setMessages(prev => [...prev, {
-            type: 'system',
-            content: `Worksheet completed and saved as ${worksheetId}`
-          }]);
-        }
-
-        setInput('');
-        setIsLoading(false);
-        return;
-      } catch (error) {
-        console.error('Worksheet error:', error);
-        setMessages(prev => [...prev, {
-          type: 'system',
-          content: `Error processing worksheet: ${error.message}`
-        }]);
-        setIsLoading(false);
-        return;
-      }
-    }
-
-    // Existing message handling continues unchanged
+    // Existing message handling
     console.log('No command handled, proceeding to Claude response');
     try {
       setIsLoading(true);
@@ -2089,7 +2028,7 @@ ${JSON.stringify(contextMessages, null, 2)}`;
         }
       }
       
-      // Create the new message object once
+      // Create the new message object with timestamp and tags
       const newMessage = { 
         type: 'user', 
         content: input,
@@ -2100,7 +2039,7 @@ ${JSON.stringify(contextMessages, null, 2)}`;
       // Add it to messages state
       await setMessages(prev => [...prev, newMessage]);
 
-      // Pass just the content to Claude, since that's what it expects
+      // Pass the content to Claude
       await callClaude(newMessage.content);
 
     } catch (error) {
