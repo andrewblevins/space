@@ -8,6 +8,7 @@ import EditPromptForm from './EditPromptForm';
 import '@fontsource/vollkorn';
 import TagAnalyzer from '../lib/tagAnalyzer';
 import ApiKeySetup from './ApiKeySetup';
+import { getApiEndpoint } from '../utils/apiConfig';
 
 const Module = ({ title, items = [], onItemClick, activeItems = [] }) => (
   <div className="bg-gray-900 p-4">
