@@ -1778,10 +1778,88 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
   };
 
   const callClaude = async (userMessage) => {
+    const formatTimestamp = (isoString) => {
+      const date = new Date(isoString);
+      return date.toISOString().slice(0, 16);
+    };
+
     try {
+      if (!userMessage?.trim()) {
+        throw new Error('Empty message');
+      }
+
       const anthropicKey = localStorage.getItem('space_anthropic_key');
       if (!anthropicKey) {
         throw new Error('Anthropic API key not found');
+      }
+
+      const estimateTokens = text => Math.ceil(text.length / 4);
+      const totalTokens = messages.reduce((sum, msg) => 
+        sum + estimateTokens(msg.content), 0
+      );
+
+      const contextMessages = [{
+        role: 'user',
+        content: userMessage
+      }];
+
+      if (totalTokens < contextLimit) {
+        const historicalMessages = messages
+          .filter(msg => 
+            (msg.type === 'user' || msg.type === 'assistant') &&
+            msg.content?.trim() !== '' &&
+            msg.content !== userMessage
+          )
+          .map(msg => ({
+            role: msg.type,
+            content: msg.timestamp 
+              ? `[${formatTimestamp(msg.timestamp)}] ${msg.content}`
+              : msg.content
+          }));
+        
+        contextMessages.unshift(...historicalMessages);
+      } else {
+        const managedContext = buildConversationContext(userMessage, messages, memory);
+        if (managedContext?.length) {
+          contextMessages.unshift(...managedContext);
+        }
+      }
+
+      console.log('Messages being sent to Claude:', JSON.stringify(contextMessages, null, 2));
+
+      const systemPromptText = getSystemPrompt();
+
+      if (debugMode) {
+        const currentUserMessage = messages
+          .slice()
+          .reverse()
+          .find(msg => msg.type === 'user' && msg.content === userMessage) || 
+          { content: userMessage, tags: [] };
+      
+        const systemTokens = estimateTokens(systemPromptText);
+        const contextTokens = contextMessages.reduce((sum, msg) => 
+          sum + estimateTokens(msg.content), 0
+        );
+        const totalTokens = systemTokens + contextTokens;
+        
+        const inputCost = ((totalTokens / 1000) * 0.003).toFixed(4);
+        
+        const debugOutput = `Claude API Call:
+Estimated tokens: ${totalTokens} (System: ${systemTokens}, Context: ${contextTokens})
+Estimated cost: $${inputCost}
+
+Tags for current message: ${JSON.stringify(currentUserMessage.tags, null, 2)}
+
+System Prompt:
+${systemPromptText}
+
+Context Messages:
+${JSON.stringify(contextMessages, null, 2)}`;
+
+        setMessages(prev => [...prev, {
+          type: 'debug',
+          content: debugOutput
+        }]);
       }
 
       const response = await fetch(`${getApiEndpoint()}/v1/messages`, {
@@ -1794,10 +1872,8 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
         },
         body: JSON.stringify({
           model: 'claude-3-5-sonnet-20241022',
-          messages: [{
-            role: 'user',
-            content: userMessage
-          }],
+          messages: contextMessages,
+          system: systemPromptText,
           max_tokens: maxTokens,
           stream: true
         })
