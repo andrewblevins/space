@@ -2,19 +2,19 @@
 
 SPACE Terminal is an experimental terminal-style interface for personal discovery and thinking with large language models.
 
-The biggest difference between this and other chat interfaces is the ability to create and manage different AI personas for distinct perspectives, changing them out mid-conversation.
+The biggest difference from other chat interfaces is the ability to create and manage AI personas with distinct perspectives, changing them out mid-conversation.
 
-It will also let you have much longer conversations without hitting rate limits (a current limitation of Claude Pro).
+SPACE also lets you have much longer conversations without hitting rate limits, a current limitation of Claude Pro.
 
-For more about this process, see the Insight Cascade advisor process and guidelines here: https://github.com/andrewblevins/insight-cascade. 
+For more about AI advisors, see the Insight Cascade process and guidelines here: https://github.com/andrewblevins/insight-cascade. 
 
-SPACE is part of a larger project exploring frameworks and interfaces for using Large Language Models for personal and social discovery. If you're interested in being a part of a community supporting ongoing dialogue, experimentation, and refinement around this kind of thing, sign up here: https://forms.gle/svMNnjJjJdFUjQ9L8.
+The app uses Claude 3.5 Sonnet for the main conversation and GPT-4o for background analysis features like metaphor tracking and question generation (which you can activate by clicking the triangles next to those menus). Model selection is not configurable through the interface yet, if anyone wants to implement that I'd be very grateful.
 
-SPACE uses Claude 3.5 Sonnet for the main conversation and GPT-4o for background analysis features like metaphor tracking and question generation (which you can activate by clicking the triangles next to those menus). Model selection is not configurable through the interface yet, but will be.
+*SPACE is one node in a larger project exploring frameworks and interfaces for using Large Language Models for personal and social discovery. If you're interested in being a part of a commmunity supporting ongoing dialogue and experimentation around this, sign up for updates here: https://forms.gle/svMNnjJjJdFUjQ9L8.*
 
 ## Setup
 
-SPACE Terminal requires API keys from both Anthropic and OpenAI to function.
+SPACE Terminal requires API keys from both Anthropic and OpenAI to function. You'll be prompted to insert them when you first run the app.
 
 ### 1. Get Your API Keys
 
