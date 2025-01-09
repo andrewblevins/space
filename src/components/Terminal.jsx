@@ -397,7 +397,7 @@ const CollapsibleModule = ({ title, items = [], expanded, onToggle }) => (
 
 const Terminal = () => {
   const openai = new OpenAI({
-    apiKey: import.meta.env.VITE_OPENAI_API_KEY,
+    apiKey: localStorage.getItem('space_openai_key'),
     dangerouslyAllowBrowser: true
   });
 
