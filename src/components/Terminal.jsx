@@ -1002,18 +1002,24 @@ Now, I'd like to generate the final output. Please include the following aspects
           }]);
           return true;
 
-        case '/prompt':
-          if (args[0] === 'list') {
-            setMessages(prev => [...prev, {
-              type: 'system',
-              content: savedPrompts.length ? 
-                '# Available Prompts\n\n' + savedPrompts.map(p => 
-                  `## ${p.name}\n${p.content || p.text || 'No content available'}\n`
-                ).join('\n') :
-                'No saved prompts found'
-            }]);
-            return true;
-          }
+          case '/prompt':
+            if (args[0] === 'use') {
+              const promptName = args[1]; // Remove .toLowerCase()
+              const prompt = savedPrompts.find(p => p.name === promptName);
+              if (prompt) {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: `Using prompt: ${promptName}`
+                }]);
+                await callClaude(prompt.content || prompt.text);
+              } else {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: `Prompt "${promptName}" not found`
+                }]);
+              }
+              return true;
+            }
           switch(args[0]) {
             case 'add':
               if (!args[1]) {
