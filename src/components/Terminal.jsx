@@ -1208,8 +1208,8 @@ Now, I'd like to generate the final output. Please include the following aspects
               setMessages(prev => [...prev, {
                 type: 'system',
                 content: savedPrompts.length ? 
-                  'Saved prompts:\n' + savedPrompts.map(p => 
-                    `${p.name}: ${p.text}`
+                  '# Available Prompts\n\n' + savedPrompts.map(p => 
+                    `## ${p.name}\n${p.content || p.text || 'No content available'}\n`
                   ).join('\n') :
                   'No saved prompts'
               }]);
