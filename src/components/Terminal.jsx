@@ -2681,7 +2681,8 @@ ${selectedText}
       { type: 'system', content: 'Welcome to SPACE - v.0.1' },
       { type: 'system', content: `Context limit (length up to which full conversation memory is retained) is set to ${contextLimit.toLocaleString()} tokens. (Reduce it to save money.)`},
       { type: 'system', content: `Max length for responses is set to ${maxTokens.toLocaleString()} tokens.`},
-      { type: 'system', content: `Type /help for a list of commands. Type /prompt list to see a list of available starting prompts. Press + (to the left of here) to add an advisor to the board.` }
+      { type: 'system', content: `Type /help for a list of commands. Type /prompt list to see a list of available starting prompts. Press + (to the left of here) to add an advisor to the board.` },
+      { type: 'system', content: `Report bugs at [https://github.com/andrewblevins/space/issues/new](https://github.com/andrewblevins/space/issues/new).` }
     ]);
   }, []);
 
