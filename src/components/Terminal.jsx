@@ -1003,6 +1003,17 @@ Now, I'd like to generate the final output. Please include the following aspects
           return true;
 
         case '/prompt':
+          if (args[0] === 'list') {
+            setMessages(prev => [...prev, {
+              type: 'system',
+              content: savedPrompts.length ? 
+                '# Available Prompts\n\n' + savedPrompts.map(p => 
+                  `## ${p.name}\n${p.content}\n`
+                ).join('\n') :
+                'No saved prompts found'
+            }]);
+            return true;
+          }
           switch(args[0]) {
             case 'add':
               if (!args[1]) {
@@ -1180,7 +1191,7 @@ Now, I'd like to generate the final output. Please include the following aspects
             case 'list':
               setMessages(prev => [...prev, {
                 type: 'system',
-                content: savedPrompts.length ?
+                content: savedPrompts.length ? 
                   'Saved prompts:\n' + savedPrompts.map(p => 
                     `${p.name}: ${p.text}`
                   ).join('\n') :
