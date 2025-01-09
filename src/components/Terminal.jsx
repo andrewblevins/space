@@ -9,6 +9,7 @@ import '@fontsource/vollkorn';
 import TagAnalyzer from '../lib/tagAnalyzer';
 import ApiKeySetup from './ApiKeySetup';
 import { getApiEndpoint } from '../utils/apiConfig';
+import { defaultPrompts } from '../lib/defaultPrompts';
 
 const Module = ({ title, items = [], onItemClick, activeItems = [] }) => (
   <div className="bg-gray-900 p-4">
@@ -430,7 +431,14 @@ const Terminal = () => {
   const inputRef = useRef(null);
   const [savedPrompts, setSavedPrompts] = useState(() => {
     const saved = localStorage.getItem('space_prompts');
-    return saved ? JSON.parse(saved) : [];
+    const userPrompts = saved ? JSON.parse(saved) : [];
+    // Merge user prompts with defaults, giving precedence to user prompts
+    const userPromptNames = new Set(userPrompts.map(p => p.name));
+    const mergedPrompts = [
+      ...userPrompts,
+      ...defaultPrompts.filter(p => !userPromptNames.has(p.name))
+    ];
+    return mergedPrompts;
   });
   const [editingPrompt, setEditingPrompt] = useState(null);
   const [editText, setEditText] = useState('');
