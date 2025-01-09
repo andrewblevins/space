@@ -1783,11 +1783,11 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
         throw new Error('Anthropic API key not found');
       }
 
-      const response = await fetch('/api/v1/messages', {
+      const response = await fetch(`${getApiEndpoint()}/v1/messages`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': anthropicKey,  // Use stored key instead of env variable
+          'x-api-key': anthropicKey,
           'anthropic-version': '2023-06-01',
           'anthropic-dangerous-direct-browser-access': 'true'
         },
