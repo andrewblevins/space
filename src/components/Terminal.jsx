@@ -1004,14 +1004,24 @@ Now, I'd like to generate the final output. Please include the following aspects
 
           case '/prompt':
             if (args[0] === 'use') {
-              const promptName = args[1]; // Remove .toLowerCase()
+              const promptName = args[1];
               const prompt = savedPrompts.find(p => p.name === promptName);
               if (prompt) {
                 setMessages(prev => [...prev, {
                   type: 'system',
                   content: `Using prompt: ${promptName}`
                 }]);
-                await callClaude(prompt.content || prompt.text);
+                // Wrap the async operation in an IIFE
+                (async () => {
+                  try {
+                    await callClaude(prompt.content || prompt.text);
+                  } catch (error) {
+                    setMessages(prev => [...prev, {
+                      type: 'system',
+                      content: `Error: ${error.message}`
+                    }]);
+                  }
+                })();
               } else {
                 setMessages(prev => [...prev, {
                   type: 'system',
