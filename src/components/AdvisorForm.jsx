@@ -20,7 +20,9 @@ const generateAdvisorDescription = async (advisorName, onStream) => {
         model: 'claude-3-5-sonnet-20241022',
         messages: [{
           role: 'user',
-          content: `You are generating a description of an AI advisor...`
+          content: `You are generating a description of an AI advisor that will be used to summon that entity into a conversation. You will receive a name and you will write your description based on that name. Your description should be a paragraph spoken directly in the advisor's distinct voice and perspective. It should include a general self-description, any specific lineages, practices, or frameworks they embody, and how they tend to approach problems. Do not include the advisor's name in the description.
+
+The advisor's name is ${advisorName}.`
         }],
         max_tokens: 500,
         stream: true
@@ -33,7 +35,6 @@ const generateAdvisorDescription = async (advisorName, onStream) => {
       throw new Error(`API Error: ${errorText}`);
     }
 
-    // Set up streaming response handling
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
@@ -89,10 +90,9 @@ const AdvisorForm = ({ onSubmit, onCancel }) => {
     
     try {
       setError('');
-      const generatedDescription = await generateAdvisorDescription(name, (description) => {
-        setDescription(description);
+      await generateAdvisorDescription(name, (streamedText) => {
+        setDescription(streamedText);
       });
-      setDescription(generatedDescription);
     } catch (error) {
       setError('Failed to generate description: ' + error.message);
     }
