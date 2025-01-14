@@ -458,6 +458,7 @@ const Terminal = () => {
   const [questionsExpanded, setQuestionsExpanded] = useState(false);
   const [contextLimit, setContextLimit] = useState(150000);
   const [apiKeysSet, setApiKeysSet] = useState(false);
+  const [openaiClient, setOpenaiClient] = useState(null);
 
   const worksheetQuestions = [
     {
@@ -2428,7 +2429,7 @@ When responding, you will adopt the distinct voice(s) of the active advisor(s) a
   };
 
   const analyzeMetaphors = async (messages) => {
-    if (!metaphorsExpanded) return; // Skip if collapsed
+    if (!metaphorsExpanded || !openaiClient) return; // Skip if collapsed or client not ready
     
     const userMessages = messages
       .filter(msg => msg.type === 'user')
@@ -2436,7 +2437,7 @@ When responding, you will adopt the distinct voice(s) of the active advisor(s) a
       .join("\n");
 
     try {
-      const response = await openai.chat.completions.create({
+      const response = await openaiClient.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [{
           role: "system",
@@ -2463,7 +2464,7 @@ When responding, you will adopt the distinct voice(s) of the active advisor(s) a
   };
 
   const analyzeForQuestions = async (messages) => {
-    if (!questionsExpanded) return; // Skip if collapsed
+    if (!questionsExpanded || !openaiClient) return; // Skip if collapsed or client not ready
     
     const recentMessages = messages
       .slice(-2)
@@ -2472,7 +2473,7 @@ When responding, you will adopt the distinct voice(s) of the active advisor(s) a
       .join("\n\n");
 
     try {
-      const response = await openai.chat.completions.create({
+      const response = await openaiClient.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [{
           role: "system",
@@ -2718,11 +2719,11 @@ ${selectedText}
       {!apiKeysSet ? (
         <ApiKeySetup 
           onComplete={({ anthropicKey, openaiKey }) => {
-            // Initialize OpenAI here, after we definitely have the key
-            const openai = new OpenAI({
+            const client = new OpenAI({
               apiKey: openaiKey,
               dangerouslyAllowBrowser: true
             });
+            setOpenaiClient(client);
             setApiKeysSet(true);
           }} 
         />
