@@ -396,11 +396,6 @@ const CollapsibleModule = ({ title, items = [], expanded, onToggle }) => (
 );
 
 const Terminal = () => {
-  const openai = new OpenAI({
-    apiKey: localStorage.getItem('space_openai_key'),
-    dangerouslyAllowBrowser: true
-  });
-
   const getNextSessionId = () => {
     const keys = Object.keys(localStorage).filter(key => key.startsWith('space_session_'));
     if (keys.length === 0) return 1;
@@ -2723,6 +2718,11 @@ ${selectedText}
       {!apiKeysSet ? (
         <ApiKeySetup 
           onComplete={({ anthropicKey, openaiKey }) => {
+            // Initialize OpenAI here, after we definitely have the key
+            const openai = new OpenAI({
+              apiKey: openaiKey,
+              dangerouslyAllowBrowser: true
+            });
             setApiKeysSet(true);
           }} 
         />
