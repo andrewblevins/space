@@ -514,7 +514,11 @@ const Terminal = () => {
     console.log('handleCommand called with:', text);
     if (text.startsWith('/')) {
       console.log('Command detected');
-      const [command, ...args] = text.toLowerCase().split(' ');
+      // Split the command but preserve case for args
+      const parts = text.split(' ');
+      const command = parts[0].toLowerCase();
+      const args = parts.slice(1);
+      
       console.log('Parsed command:', command, 'args:', args);
       
       switch (command) {
