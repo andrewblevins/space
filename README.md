@@ -10,6 +10,8 @@ For more about AI advisors, see the Insight Cascade process and guidelines here:
 
 The app uses Claude 3.5 Sonnet for the main conversation and GPT-4o for background analysis features like metaphor tracking and question generation (which you can activate by clicking the triangles next to those menus). Model selection is not configurable through the interface yet, if anyone wants to implement that I'd be very grateful.
 
+Currently SPACE will only work well on a desktop or laptop computer. Mobile layout TK.
+
 *SPACE is one node in a larger project exploring frameworks and interfaces for using Large Language Models for personal and social discovery. If you're interested in being a part of a commmunity supporting ongoing dialogue and experimentation around this, sign up for updates here: https://forms.gle/svMNnjJjJdFUjQ9L8.*
 
 ## Setup
