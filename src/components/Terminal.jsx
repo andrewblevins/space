@@ -588,6 +588,11 @@ const Terminal = () => {
 /prompt edit "name" - Edit an existing prompt
 /prompt delete "name" - Delete a saved prompt
 
+## API Keys
+/key set [anthropic/openai] <api-key> - Update API key
+/keys status - Check API key status
+/keys clear - Clear stored API keys
+
 ## Settings
 
 /context limit <number> - Set token limit for context management (default: 150,000)
@@ -1794,89 +1799,91 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
         case '/key':
           switch(args[0]) {
             case 'set':
-              if (!args[1] || !args[2]) {
-                setMessages(prev => [...prev, {
-                  type: 'system',
-                  content: 'Usage: /key set [anthropic/openai] <api-key>'
-                }]);
-                return true;
-              }
-
-              const service = args[1].toLowerCase();
-              const newKey = args[2];
-
-              if (service !== 'anthropic' && service !== 'openai') {
-                setMessages(prev => [...prev, {
-                  type: 'system',
-                  content: 'Invalid service. Use "anthropic" or "openai"'
-                }]);
-                return true;
-              }
-
-              // Validate key format
-              if (service === 'anthropic' && !newKey.startsWith('sk-ant-')) {
-                setMessages(prev => [...prev, {
-                  type: 'system',
-                  content: 'Invalid Anthropic API key format'
-                }]);
-                return true;
-              }
-
-              if (service === 'openai' && !newKey.startsWith('sk-')) {
-                setMessages(prev => [...prev, {
-                  type: 'system',
-                  content: 'Invalid OpenAI API key format'
-                }]);
-                return true;
-              }
-
-              // For Anthropic key, validate with API call
-              if (service === 'anthropic') {
-                try {
-                  const response = await fetch(`${getApiEndpoint()}/v1/messages`, {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                      'x-api-key': newKey,
-                      'anthropic-version': '2023-06-01',
-                      'anthropic-dangerous-direct-browser-access': 'true'
-                    },
-                    body: JSON.stringify({
-                      model: 'claude-3-5-sonnet-20241022',
-                      messages: [{ role: 'user', content: 'Hello' }],
-                      max_tokens: 10
-                    })
-                  });
-
-                  if (!response.ok) {
-                    throw new Error('Invalid Anthropic API key');
-                  }
-                } catch (error) {
+              return (async () => {  // Wrap in async IIFE
+                if (!args[1] || !args[2]) {
                   setMessages(prev => [...prev, {
                     type: 'system',
-                    content: `API key validation failed: ${error.message}`
+                    content: 'Usage: /key set [anthropic/openai] <api-key>'
                   }]);
                   return true;
                 }
-              }
 
-              // Store the new key
-              localStorage.setItem(`space_${service}_key`, newKey);
+                const service = args[1].toLowerCase();
+                const newKey = args[2];
 
-              // If OpenAI key, reinitialize the client
-              if (service === 'openai') {
-                const client = new OpenAI({
-                  apiKey: newKey,
-                  dangerouslyAllowBrowser: true
-                });
-                setOpenaiClient(client);
-              }
+                if (service !== 'anthropic' && service !== 'openai') {
+                  setMessages(prev => [...prev, {
+                    type: 'system',
+                    content: 'Invalid service. Use "anthropic" or "openai"'
+                  }]);
+                  return true;
+                }
 
-              setMessages(prev => [...prev, {
-                type: 'system',
-                content: `${service} API key updated successfully`
-              }]);
-              return true;
+                // Validate key format
+                if (service === 'anthropic' && !newKey.startsWith('sk-ant-')) {
+                  setMessages(prev => [...prev, {
+                    type: 'system',
+                    content: 'Invalid Anthropic API key format'
+                  }]);
+                  return true;
+                }
+
+                if (service === 'openai' && !newKey.startsWith('sk-')) {
+                  setMessages(prev => [...prev, {
+                    type: 'system',
+                    content: 'Invalid OpenAI API key format'
+                  }]);
+                  return true;
+                }
+
+                // For Anthropic key, validate with API call
+                if (service === 'anthropic') {
+                  try {
+                    const response = await fetch(`${getApiEndpoint()}/v1/messages`, {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': newKey,
+                        'anthropic-version': '2023-06-01',
+                        'anthropic-dangerous-direct-browser-access': 'true'
+                      },
+                      body: JSON.stringify({
+                        model: 'claude-3-5-sonnet-20241022',
+                        messages: [{ role: 'user', content: 'Hello' }],
+                        max_tokens: 10
+                      })
+                    });
+
+                    if (!response.ok) {
+                      throw new Error('Invalid Anthropic API key');
+                    }
+                  } catch (error) {
+                    setMessages(prev => [...prev, {
+                      type: 'system',
+                      content: `API key validation failed: ${error.message}`
+                    }]);
+                    return true;
+                  }
+                }
+
+                // Store the new key
+                localStorage.setItem(`space_${service}_key`, newKey);
+
+                // If OpenAI key, reinitialize the client
+                if (service === 'openai') {
+                  const client = new OpenAI({
+                    apiKey: newKey,
+                    dangerouslyAllowBrowser: true
+                  });
+                  setOpenaiClient(client);
+                }
+
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: `${service} API key updated successfully`
+                }]);
+                return true;
+              })();
 
             default:
               setMessages(prev => [...prev, {
