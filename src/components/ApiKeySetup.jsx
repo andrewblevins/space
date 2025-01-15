@@ -54,17 +54,17 @@ const ApiKeySetup = ({ onComplete }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center p-4">
-      <div className="bg-gray-900 p-6 rounded-lg border border-green-400 w-full max-w-md">
-        <h2 className="text-green-400 text-xl mb-4">API Key Setup</h2>
-        <p className="text-green-400 mb-6">
-          SPACE Terminal requires API keys from Anthropic and OpenAI to function. 
-          Your keys are stored locally and never sent to our servers.
-        </p>
+    <div className="min-h-screen w-full bg-black flex items-center justify-center p-6">
+      <div className="max-w-2xl w-full">
+        <h1 className="text-2xl text-green-400 mb-4">Welcome to SPACE Terminal</h1>
         
-        {error && (
-          <div className="text-red-400 mb-4">{error}</div>
-        )}
+        <p className="text-gray-300 mb-6">
+          To start, you'll need API keys from two AI providers:
+          <ul className="list-disc ml-6 mt-2 space-y-2">
+            <li><a href="https://console.anthropic.com/account/keys" target="_blank" className="text-green-400 hover:underline">Anthropic (Claude)</a> - Advanced reasoning and analysis</li>
+            <li><a href="https://platform.openai.com/api-keys" target="_blank" className="text-green-400 hover:underline">OpenAI</a> - Background processing and metadata</li>
+          </ul>
+        </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -73,7 +73,7 @@ const ApiKeySetup = ({ onComplete }) => {
               type="password"
               value={anthropicKey}
               onChange={(e) => setAnthropicKey(e.target.value)}
-              className="w-full bg-black text-green-400 p-2 border border-green-400 focus:outline-none"
+              className="w-full bg-black text-green-400 p-2 rounded border border-green-400"
               placeholder="sk-ant-..."
             />
           </div>
@@ -84,16 +84,20 @@ const ApiKeySetup = ({ onComplete }) => {
               type="password"
               value={openaiKey}
               onChange={(e) => setOpenaiKey(e.target.value)}
-              className="w-full bg-black text-green-400 p-2 border border-green-400 focus:outline-none"
+              className="w-full bg-black text-green-400 p-2 rounded border border-green-400"
               placeholder="sk-..."
             />
           </div>
 
-          <button
+          {error && (
+            <div className="text-red-400 mt-2">{error}</div>
+          )}
+
+          <button 
             type="submit"
-            className="w-full px-4 py-2 text-green-400 border border-green-400 rounded hover:bg-green-400 hover:text-black"
+            className="w-full bg-green-400 text-black py-2 rounded hover:bg-green-300 transition-colors"
           >
-            Start SPACE Terminal
+            Start
           </button>
         </form>
       </div>
