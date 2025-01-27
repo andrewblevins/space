@@ -16,7 +16,7 @@ Currently SPACE will only work well on a desktop or laptop computer. Mobile layo
 
 SPACE Terminal requires API keys from both Anthropic and OpenAI to function. You'll be prompted to insert them when you first run the app.
 
-You'll also need to add some money to both accounts, or set up payment methods. For more on this, see [Cost Expectations](##cost-expectations) below. 
+You'll also need to add some money to both accounts, or set up payment methods. For more on this, see [Cost Expectations](#cost-expectations) below. 
 
 ### 1. Get Your API Keys
 
