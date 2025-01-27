@@ -10,6 +10,8 @@ The app uses Claude 3.5 Sonnet for the main conversation and GPT-4o for backgrou
 
 Currently SPACE will only work well on a desktop or laptop computer. Mobile layout TK.
 
+SPACE does not track or store any user data. Everything is saved in local browser storage. (You are, however, sending information to Anthropic and OpenAI, whose data policies are worth reviewing if this is a concern.)
+
 *SPACE is one node in a larger project exploring frameworks and interfaces for using Large Language Models for personal and social discovery. If you're interested in being a part of a commmunity supporting ongoing dialogue and experimentation around this, sign up for updates here: https://forms.gle/svMNnjJjJdFUjQ9L8.*
 
 ## Setup
