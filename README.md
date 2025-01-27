@@ -12,15 +12,11 @@ Currently SPACE will only work well on a desktop or laptop computer. Mobile layo
 
 *SPACE is one node in a larger project exploring frameworks and interfaces for using Large Language Models for personal and social discovery. If you're interested in being a part of a commmunity supporting ongoing dialogue and experimentation around this, sign up for updates here: https://forms.gle/svMNnjJjJdFUjQ9L8.*
 
-## Cost Expectations
-
-SPACE Terminal is very cost-effective to use. For instance, an hour-long deep discussion may run about $0.25-30 (possibly up to a dollar if you send messages very fast). Each message exchange (your message + AI response) costs roughly 2¢ on average. Starting with $5 in each API account will easily give you several hours of conversation. Use the '/debug' command to monitor estimated costs in real-time.
-
 ## Setup
 
 SPACE Terminal requires API keys from both Anthropic and OpenAI to function. You'll be prompted to insert them when you first run the app.
 
-You'll also need to add some money to both accounts, or set up payment methods. A few dollars each is enough to last a while.
+You'll also need to add some money to both accounts, or set up payment methods. For more on this, see [Cost Expectations](##cost-expectations) below. 
 
 ### 1. Get Your API Keys
 
@@ -112,6 +108,10 @@ Enter `/help` anytime to see this list of commands in the terminal.
 - [ ] Better memory / context management system
 - [ ] More conversation analysis tools (interpersonal patterns, Kegan stages, etc.?)
 - [ ] Ways to share advisors with your friends
+
+## Cost Expectations
+
+SPACE Terminal is very cost-effective to use. For instance, an hour-long deep discussion may run about $0.25-30 (possibly up to a dollar if you send messages very fast). Each message exchange (your message + AI response) costs roughly 2¢ on average. Starting with $5 in each API account will easily give you several hours of conversation. Use the '/debug' command to monitor estimated costs in real-time.
 
 ## How to Help
 
