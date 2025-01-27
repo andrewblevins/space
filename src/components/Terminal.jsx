@@ -614,20 +614,20 @@ const Terminal = () => {
         case '/load':
           if (args[0] === 'previous') {
             const sessions = loadSessions();
-            if (sessions.length > 0) {
-              const mostRecent = sessions[0];  // First session is most recent due to sort
-              setCurrentSessionId(mostRecent.id);
-              setMessages(mostRecent.messages);
-              setMetaphors(mostRecent.metaphors || []);
-              setQuestions(mostRecent.questions || []);
+            if (sessions.length > 1) {  // Changed to check for at least 2 sessions
+              const penultimate = sessions[sessions.length - 2];  // Changed to get second-to-last session
+              setCurrentSessionId(penultimate.id);
+              setMessages(penultimate.messages);
+              setMetaphors(penultimate.metaphors || []);
+              setQuestions(penultimate.questions || []);
               setMessages(prev => [...prev, {
                 type: 'system',
-                content: `Loaded previous session ${mostRecent.id} from ${new Date(mostRecent.timestamp).toLocaleString()}`
+                content: `Loaded previous session ${penultimate.id} from ${new Date(penultimate.timestamp).toLocaleString()}`
               }]);
             } else {
               setMessages(prev => [...prev, {
                 type: 'system',
-                content: 'No previous sessions found'
+                content: sessions.length === 1 ? 'Only one session exists' : 'No previous sessions found'
               }]);
             }
             return true;
