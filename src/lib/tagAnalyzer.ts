@@ -1,5 +1,44 @@
 import { OpenAI } from 'openai';
 
+// Improved prompt for better entity and topic extraction
+const TAGGING_PROMPT = `Extract key information as tags to help identify this message's relevance in future conversations.
+
+Focus on these categories:
+1. Named Entities:
+   - People (e.g. 'steve jobs', 'marie curie')
+   - Places (e.g. 'silicon valley', 'new york')
+   - Organizations (e.g. 'google', 'united nations')
+   
+2. Topics and Concepts:
+   - Main themes (e.g. 'artificial intelligence', 'psychology')
+   - Specific techniques or methods (e.g. 'machine learning', 'cognitive therapy')
+   - Fields or domains (e.g. 'technology', 'mental health')
+
+3. Activities and States:
+   - Actions or processes (e.g. 'career transition', 'learning')
+   - Projects or initiatives (e.g. 'startup launch', 'book writing')
+   - States or conditions (e.g. 'job search', 'grief')
+
+Guidelines:
+- Keep proper nouns as natural multi-word phrases
+- Include both specific and general concepts
+- Preserve important compound terms
+- Use lowercase for all tags
+- Aim for 5-15 relevant tags
+
+Respond with only a JSON array of tags.
+Example: {
+  "tags": [
+    "steve jobs",
+    "apple",
+    "product design",
+    "leadership",
+    "technology innovation",
+    "startup culture",
+    "silicon valley"
+  ]
+}`
+
 export default class TagAnalyzer {
   private openai: OpenAI;
 
@@ -26,7 +65,7 @@ export default class TagAnalyzer {
         model: "gpt-4o-mini",
         messages: [{
           role: "system",
-          content: "Extract as many main topic tags from this message as might be useful for identifying its relevance to future conversations. Include names of people mentioned and other proper nouns. (If a proper noun is more than one word, list it as a single tag.) Respond with only a JSON array of lowercase, single-word tags. Example: ['meditation', 'consciousness', 'John']"
+          content: TAGGING_PROMPT
         }, {
           role: "user",
           content
