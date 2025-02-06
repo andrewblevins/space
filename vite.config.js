@@ -4,13 +4,10 @@ import react from '@vitejs/plugin-react'
 export default defineConfig(({ command, mode }) => {
   console.log('Vite config mode:', mode);
   
-  // Get environment variables at build time
-  const anthropicKey = process.env.ANTHROPIC_API_KEY;
-  const openaiKey = process.env.OPENAI_API_KEY;
-  
-  if (!anthropicKey || !openaiKey) {
-    console.error('Missing required environment variables during build');
-  }
+  // For local development, these will come from .dev.vars
+  // For production/preview, these will come from Cloudflare Pages environment variables
+  const anthropicKey = process.env.ANTHROPIC_API_KEY || '';
+  const openaiKey = process.env.OPENAI_API_KEY || '';
   
   console.log('Building with keys:', {
     anthropicExists: !!anthropicKey,
@@ -35,9 +32,9 @@ export default defineConfig(({ command, mode }) => {
       }
     } : undefined,
     define: {
-      // Inject as global constants
-      __ANTHROPIC_KEY__: JSON.stringify(anthropicKey || ''),
-      __OPENAI_KEY__: JSON.stringify(openaiKey || '')
+      // Make environment variables available at runtime
+      'process.env.ANTHROPIC_API_KEY': JSON.stringify(anthropicKey),
+      'process.env.OPENAI_API_KEY': JSON.stringify(openaiKey)
     }
   };
 });
