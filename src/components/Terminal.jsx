@@ -1974,14 +1974,6 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
         throw new Error('Empty message');
       }
 
-      // Get user's API key if set, otherwise use shared key
-      const anthropicKey = localStorage.getItem('space_anthropic_key') || 'sk-ant-shared-key';
-
-      // Check if we've exceeded free tier limit and no personal key is set
-      if (tokenUsage >= FREE_TIER_LIMIT && !localStorage.getItem('space_anthropic_key')) {
-        throw new Error('Free tier token limit reached. Please add your own API keys to continue.');
-      }
-
       const estimateTokens = text => Math.ceil(text.length / 4);
       const totalTokens = messages.reduce((sum, msg) => 
         sum + estimateTokens(msg.content), 0
@@ -2005,7 +1997,7 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
               ? `[${formatTimestamp(msg.timestamp)}] ${msg.content}`
               : msg.content
           }));
-        
+      
         contextMessages.unshift(...historicalMessages);
       } else {
         const managedContext = buildConversationContext(userMessage, messages, memory);
@@ -2014,66 +2006,27 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
         }
       }
 
-      console.log('Messages being sent to Claude:', JSON.stringify(contextMessages, null, 2));
+      if (debugMode) {
+        console.log('Messages being sent to Claude:', JSON.stringify(contextMessages, null, 2));
+      }
 
       const systemPromptText = getSystemPrompt();
 
-      if (debugMode) {
-        const currentUserMessage = messages
-          .slice()
-          .reverse()
-          .find(msg => msg.type === 'user' && msg.content === userMessage) || 
-          { content: userMessage, tags: [] };
-      
-        const systemTokens = estimateTokens(systemPromptText);
-        const contextTokens = contextMessages.reduce((sum, msg) => 
-          sum + estimateTokens(msg.content), 0
-        );
-        const totalTokens = systemTokens + contextTokens;
-        
-        const inputCost = ((totalTokens / 1000) * 0.003).toFixed(4);
-        
-        const debugOutput = `Claude API Call:
-Estimated tokens: ${totalTokens} (System: ${systemTokens}, Context: ${contextTokens})
-Estimated cost: $${inputCost}
-
-Tags for current message: ${JSON.stringify(currentUserMessage.tags, null, 2)}
-
-System Prompt:
-${systemPromptText}
-
-Context Messages:
-${JSON.stringify(contextMessages, null, 2)}`;
-
-        setMessages(prev => [...prev, {
-          type: 'debug',
-          content: debugOutput
-        }]);
-      }
-
-      const response = await fetch(`${getApiEndpoint()}/v1/messages`, {
+      const response = await fetch('/api/chat/claude', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': anthropicKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true'
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: 'claude-3-5-sonnet-20241022',
           messages: contextMessages,
           system: systemPromptText,
-          max_tokens: maxTokens,
-          stream: true
+          max_tokens: maxTokens
         })
       });
 
-      console.log('Response status:', response.status);
-      
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Error response:', errorText);
-        throw new Error(`API Error: ${errorText}`);
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'API Error');
       }
 
       // Set up streaming response handling
@@ -2082,70 +2035,29 @@ ${JSON.stringify(contextMessages, null, 2)}`;
       let buffer = '';
       let currentMessageContent = '';
 
-      console.log('Starting stream handling...');
-
       // Add a temporary message that we'll update as we stream
-      setMessages(prev => {
-        console.log('Adding initial empty message');
-        return [...prev, { type: 'assistant', content: '' }];
-      });
-
-      const STREAM_BASE_DELAY = 0; // Slightly faster base delay
-      const STREAM_VARIANCE = 5; // More variance for natural feel
-      const PUNCTUATION_PAUSE = 0; // Slightly longer pause for more emphasis
-
-      const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
-      // Helper to determine if we should pause longer after this character
-      const isPunctuation = (char) => {
-        return ['.', '!', '?', '\n'].includes(char);
-      };
+      setMessages(prev => [...prev, { type: 'assistant', content: '' }]);
 
       while (true) {
         const { done, value } = await reader.read();
         
         if (done) {
           console.log('Stream complete');
-          // Trigger analysis only once after stream is complete
           analyzeMetaphors(messages);
           analyzeForQuestions(messages);
           break;
         }
 
-        // Add new chunk to buffer and split into complete events
         buffer += decoder.decode(value, { stream: true });
-        const events = buffer.split('\n\n');
-        buffer = events.pop() || ''; // Keep incomplete event in buffer
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
 
-        console.log(`Processing ${events.length} events`);
-
-        for (const event of events) {
-          const dataMatch = event.match(/^data: (.+)$/m);
-          if (!dataMatch) continue;
-          
-          try {
-            const data = JSON.parse(dataMatch[1]);
-            
-            if (data.type === 'content_block_delta' && data.delta.type === 'text_delta') {
-              const text = data.delta.text;
-              
-              // Stream each character with controlled timing
-              for (let i = 0; i < text.length; i++) {
-                const char = text[i];
-                
-                // Calculate delay for this character
-                const baseDelay = STREAM_BASE_DELAY;
-                const variance = Math.random() * STREAM_VARIANCE;
-                let delay = baseDelay + variance;
-                
-                // Add extra pause after punctuation
-                if (i > 0 && isPunctuation(text[i-1])) {
-                  delay += PUNCTUATION_PAUSE;
-                }
-                
-                await sleep(delay);
-                
-                currentMessageContent += char;
+        for (const line of lines) {
+          if (line.trim()) {
+            try {
+              const data = JSON.parse(line);
+              if (data.type === 'content' && data.text) {
+                currentMessageContent += data.text;
                 setMessages(prev => {
                   const newMessages = [...prev];
                   if (newMessages.length > 0) {
@@ -2157,14 +2069,12 @@ ${JSON.stringify(contextMessages, null, 2)}`;
                   return newMessages;
                 });
               }
+            } catch (e) {
+              console.error('Error parsing stream data:', e);
             }
-          } catch (e) {
-            console.error('Error parsing event:', e);
           }
         }
       }
-
-      console.log('Final message content:', currentMessageContent);
 
       // Update token usage after successful response
       const responseTokens = estimateTokens(currentMessageContent);
@@ -2598,7 +2508,7 @@ When responding, you will adopt the distinct voice(s) of the active advisor(s) a
   };
 
   const analyzeMetaphors = async (messages) => {
-    if (!metaphorsExpanded || !openaiClient) return; // Skip if collapsed or client not ready
+    if (!metaphorsExpanded) return;
     
     const userMessages = messages
       .filter(msg => msg.type === 'user')
@@ -2606,20 +2516,29 @@ When responding, you will adopt the distinct voice(s) of the active advisor(s) a
       .join("\n");
 
     try {
-      const response = await openaiClient.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [{
-          role: "system",
-          content: "You are a helpful assistant that responds only in valid JSON format. Your response should be an array of strings."
-        }, {
-          role: "user",
-          content: `Analyze the following messages for conceptual metaphors:\n\n${userMessages}\n\nRespond with a JSON array of metaphors.`
-        }],
-        max_tokens: 150,
-        response_format: { type: "json_object" }
+      const response = await fetch('/api/chat/openai', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          messages: [{
+            role: "system",
+            content: "You are a helpful assistant that responds only in valid JSON format. Your response should be an array of strings."
+          }, {
+            role: "user",
+            content: `Analyze the following messages for conceptual metaphors:\n\n${userMessages}\n\nRespond with a JSON array of metaphors.`
+          }],
+          response_format: { type: "json_object" }
+        })
       });
 
-      const metaphors = JSON.parse(response.choices[0].message.content);
+      if (!response.ok) {
+        throw new Error('Failed to analyze metaphors');
+      }
+
+      const data = await response.json();
+      const metaphors = JSON.parse(data.choices[0].message.content);
       setMetaphors(metaphors.metaphors || []);
     } catch (error) {
       console.error('Error analyzing metaphors:', error);
@@ -2633,7 +2552,7 @@ When responding, you will adopt the distinct voice(s) of the active advisor(s) a
   };
 
   const analyzeForQuestions = async (messages) => {
-    if (!questionsExpanded || !openaiClient) return; // Skip if collapsed or client not ready
+    if (!questionsExpanded) return;
     
     const recentMessages = messages
       .slice(-2)
@@ -2642,20 +2561,29 @@ When responding, you will adopt the distinct voice(s) of the active advisor(s) a
       .join("\n\n");
 
     try {
-      const response = await openaiClient.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [{
-          role: "system",
-          content: "You are a helpful assistant that responds only in valid JSON format. Your response should be an array of strings."
-        }, {
-          role: "user",
-          content: `Based on this recent exchange, suggest 2-3 questions that might help the user deepen their exploration:\n\n${recentMessages}\n\nRespond with a JSON array of questions.`
-        }],
-        max_tokens: 150,
-        response_format: { type: "json_object" }
+      const response = await fetch('/api/chat/openai', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          messages: [{
+            role: "system",
+            content: "You are a helpful assistant that responds only in valid JSON format. Your response should be an array of strings."
+          }, {
+            role: "user",
+            content: `Based on this recent exchange, suggest 2-3 questions that might help the user deepen their exploration:\n\n${recentMessages}\n\nRespond with a JSON array of questions.`
+          }],
+          response_format: { type: "json_object" }
+        })
       });
 
-      const questions = JSON.parse(response.choices[0].message.content);
+      if (!response.ok) {
+        throw new Error('Failed to analyze questions');
+      }
+
+      const data = await response.json();
+      const questions = JSON.parse(data.choices[0].message.content);
       setQuestions(questions.questions || []);
     } catch (error) {
       console.error('Error analyzing for questions:', error);
@@ -2875,17 +2803,7 @@ ${selectedText}
   }, []);
 
   useEffect(() => {
-    // Initialize with shared keys by default
-    const anthropicKey = localStorage.getItem('space_anthropic_key') || 'sk-ant-shared-key';
-    const openaiKey = localStorage.getItem('space_openai_key') || 'sk-shared-key';
-    
-    // Initialize OpenAI client with shared or user key
-    const client = new OpenAI({
-      apiKey: openaiKey,
-      dangerouslyAllowBrowser: true
-    });
-    setOpenaiClient(client);
-    setApiKeysSet(true);
+    setApiKeysSet(true); // Always true now since keys are managed by backend
   }, []);
 
   return (
