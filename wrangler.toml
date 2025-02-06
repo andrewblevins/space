@@ -12,6 +12,5 @@ vars = { }  # Environment variables will be set in Cloudflare dashboard
 [env.preview]
 vars = { }  # Environment variables will be set in Cloudflare dashboard
 
-[[routes]]
-pattern = "/api/*"
-script = "api" 
+# Remove the [[routes]] section as it's not needed for Pages Functions
+# Pages Functions automatically handle routing based on the /functions directory 
