@@ -3,9 +3,14 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig(({ command, mode }) => {
   console.log('Vite config mode:', mode);
-  console.log('Environment variables:', {
-    anthropic: process.env.ANTHROPIC_API_KEY,
-    openai: process.env.OPENAI_API_KEY
+  
+  // Get environment variables at build time
+  const anthropicKey = process.env.ANTHROPIC_API_KEY || '';
+  const openaiKey = process.env.OPENAI_API_KEY || '';
+  
+  console.log('Building with keys:', {
+    anthropicExists: !!anthropicKey,
+    openaiExists: !!openaiKey
   });
 
   return {
@@ -24,8 +29,9 @@ export default defineConfig(({ command, mode }) => {
       }
     } : undefined,
     define: {
-      'import.meta.env.ANTHROPIC_API_KEY': JSON.stringify(process.env.ANTHROPIC_API_KEY),
-      'import.meta.env.OPENAI_API_KEY': JSON.stringify(process.env.OPENAI_API_KEY)
+      // Inject as global constants
+      __ANTHROPIC_KEY__: JSON.stringify(anthropicKey),
+      __OPENAI_KEY__: JSON.stringify(openaiKey)
     }
   };
-})
+});

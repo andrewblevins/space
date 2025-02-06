@@ -2820,17 +2820,17 @@ ${selectedText}
 
   useEffect(() => {
     // Add debugging logs
-    console.log('Checking env variables:', {
-      anthropic: import.meta.env.ANTHROPIC_API_KEY,
-      openai: import.meta.env.OPENAI_API_KEY
+    console.log('Checking build-time variables:', {
+      anthropic: typeof __ANTHROPIC_KEY__ !== 'undefined' ? 'exists' : 'missing',
+      openai: typeof __OPENAI_KEY__ !== 'undefined' ? 'exists' : 'missing'
     });
     
-    // First check environment variables
-    const envAnthropicKey = import.meta.env.ANTHROPIC_API_KEY;
-    const envOpenAIKey = import.meta.env.OPENAI_API_KEY;
+    // Check build-time injected variables
+    const envAnthropicKey = __ANTHROPIC_KEY__;
+    const envOpenAIKey = __OPENAI_KEY__;
     
     if (envAnthropicKey && envOpenAIKey) {
-      console.log('Found env variables, setting in localStorage');
+      console.log('Found build-time variables, setting in localStorage');
       localStorage.setItem('space_anthropic_key', envAnthropicKey);
       localStorage.setItem('space_openai_key', envOpenAIKey);
       setApiKeysSet(true);
