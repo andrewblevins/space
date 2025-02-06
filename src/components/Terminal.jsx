@@ -2829,6 +2829,12 @@ ${selectedText}
     const envAnthropicKey = __ANTHROPIC_KEY__;
     const envOpenAIKey = __OPENAI_KEY__;
     
+    // Add debug log to see actual values
+    console.log('Key values:', {
+      anthropic: envAnthropicKey ? 'has value' : 'empty string',
+      openai: envOpenAIKey ? 'has value' : 'empty string'
+    });
+    
     if (envAnthropicKey && envOpenAIKey) {
       console.log('Found build-time variables, setting in localStorage');
       localStorage.setItem('space_anthropic_key', envAnthropicKey);
