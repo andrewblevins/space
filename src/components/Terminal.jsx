@@ -10,6 +10,7 @@ import TagAnalyzer from '../lib/tagAnalyzer';
 import ApiKeySetup from './ApiKeySetup';
 import { getApiEndpoint } from '../utils/apiConfig';
 import { defaultPrompts } from '../lib/defaultPrompts';
+import { handleApiError } from '../utils/apiErrorHandler';
 
 const Module = ({ title, items = [], onItemClick, activeItems = [] }) => (
   <div className="bg-gray-900 p-4">
@@ -1859,7 +1860,7 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
                     });
 
                     if (!response.ok) {
-                      throw new Error('Invalid Anthropic API key');
+                      await handleApiError(response);  // Add this line to use the new error handler
                     }
                   } catch (error) {
                     setMessages(prev => [...prev, {
@@ -2017,9 +2018,7 @@ ${JSON.stringify(contextMessages, null, 2)}`;
       console.log('Response status:', response.status);
       
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Error response:', errorText);
-        throw new Error(`API Error: ${errorText}`);
+        await handleApiError(response);  // This will handle the 401 and throw an error
       }
 
       // Set up streaming response handling
@@ -2114,6 +2113,12 @@ ${JSON.stringify(contextMessages, null, 2)}`;
       return currentMessageContent;
     } catch (error) {
       console.error('Claude API Error:', error);
+      // Remove the API keys if we got a 401
+      if (error.message.includes('invalid x-api-key')) {
+        localStorage.removeItem('space_anthropic_key');
+        localStorage.removeItem('space_openai_key');
+        window.location.reload();
+      }
       throw error;
     }
   };
