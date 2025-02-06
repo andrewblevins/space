@@ -1,0 +1,15 @@
+name = "space-terminal"
+
+[build]
+command = "npm run build"
+upload.format = "service-worker"
+
+[env.production]
+vars = { }  # Environment variables will be set in Cloudflare dashboard
+
+[env.preview]
+vars = { }  # Environment variables will be set in Cloudflare dashboard
+
+[[routes]]
+pattern = "/api/*"
+script = "api" 

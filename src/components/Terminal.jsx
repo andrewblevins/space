@@ -2819,32 +2819,13 @@ ${selectedText}
   }, []);
 
   useEffect(() => {
-    // Check if we have the keys in localStorage first
-    const storedAnthropicKey = localStorage.getItem('space_anthropic_key');
-    const storedOpenAIKey = localStorage.getItem('space_openai_key');
+    // Check if keys exist in localStorage
+    const anthropicKey = localStorage.getItem('space_anthropic_key');
+    const openaiKey = localStorage.getItem('space_openai_key');
     
-    if (storedAnthropicKey && storedOpenAIKey) {
-      console.log('Found keys in localStorage');
+    if (anthropicKey && openaiKey) {
       setApiKeysSet(true);
-      return;
     }
-
-    // Check for build-time injected variables
-    console.log('Checking build-time variables:', {
-      anthropic: typeof __ANTHROPIC_KEY__ !== 'undefined' ? 'exists' : 'missing',
-      openai: typeof __OPENAI_KEY__ !== 'undefined' ? 'exists' : 'missing'
-    });
-    
-    if (__ANTHROPIC_KEY__ && __OPENAI_KEY__) {
-      console.log('Found build-time variables, setting in localStorage');
-      localStorage.setItem('space_anthropic_key', __ANTHROPIC_KEY__);
-      localStorage.setItem('space_openai_key', __OPENAI_KEY__);
-      setApiKeysSet(true);
-      return;
-    }
-
-    // If we get here, we need the user to input keys
-    console.log('No keys found, showing setup screen');
   }, []);
 
   return (
