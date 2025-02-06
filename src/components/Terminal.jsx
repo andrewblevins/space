@@ -2819,12 +2819,42 @@ ${selectedText}
   }, []);
 
   useEffect(() => {
+    // Add detailed logging for environment variables and localStorage
+    console.log('🔍 Terminal - Environment Check:', {
+      processEnv: {
+        ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
+        OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+      },
+      localStorage: {
+        anthropicKey: localStorage.getItem('space_anthropic_key'),
+        openaiKey: localStorage.getItem('space_openai_key'),
+        // Log key lengths to see if they're actually populated
+        anthropicKeyLength: localStorage.getItem('space_anthropic_key')?.length,
+        openaiKeyLength: localStorage.getItem('space_openai_key')?.length
+      },
+      importMeta: {
+        ANTHROPIC_API_KEY: import.meta.env.ANTHROPIC_API_KEY,
+        OPENAI_API_KEY: import.meta.env.OPENAI_API_KEY,
+      }
+    });
+
     // Check if keys exist in localStorage
     const anthropicKey = localStorage.getItem('space_anthropic_key');
     const openaiKey = localStorage.getItem('space_openai_key');
     
     if (anthropicKey && openaiKey) {
+      console.log('🔍 Terminal - API Keys found:', {
+        anthropicKeyStart: anthropicKey.substring(0, 10) + '...',
+        openaiKeyStart: openaiKey.substring(0, 10) + '...',
+        anthropicKeyLength: anthropicKey.length,
+        openaiKeyLength: openaiKey.length
+      });
       setApiKeysSet(true);
+    } else {
+      console.log('🔍 Terminal - Missing API keys:', {
+        hasAnthropicKey: !!anthropicKey,
+        hasOpenAIKey: !!openaiKey
+      });
     }
   }, []);
 

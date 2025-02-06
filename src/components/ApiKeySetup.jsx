@@ -19,6 +19,13 @@ const ApiKeySetup = ({ onComplete }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    console.log('🔍 ApiKeySetup - Submitting keys:', {
+      anthropicKeyStart: anthropicKey.substring(0, 10) + '...',
+      openaiKeyStart: openaiKey.substring(0, 10) + '...',
+      anthropicKeyLength: anthropicKey.length,
+      openaiKeyLength: openaiKey.length
+    });
+
     if (!anthropicKey || !openaiKey) {
       setError('Both API keys are required');
       return;
@@ -35,6 +42,8 @@ const ApiKeySetup = ({ onComplete }) => {
     }
 
     try {
+      console.log('🔍 ApiKeySetup - Testing Anthropic API with endpoint:', getApiEndpoint());
+      
       const response = await fetch(`${getApiEndpoint()}/v1/messages`, {
         method: 'POST',
         headers: {
@@ -50,15 +59,25 @@ const ApiKeySetup = ({ onComplete }) => {
         })
       });
 
+      console.log('🔍 ApiKeySetup - API Response:', {
+        status: response.status,
+        ok: response.ok,
+        headers: Object.fromEntries(response.headers.entries())
+      });
+
       if (!response.ok) {
+        const errorText = await response.text();
+        console.log('🔍 ApiKeySetup - API Error:', errorText);
         await handleApiError(response);
       }
 
+      console.log('🔍 ApiKeySetup - Storing keys in localStorage');
       localStorage.setItem('space_anthropic_key', anthropicKey);
       localStorage.setItem('space_openai_key', openaiKey);
 
       onComplete({ anthropicKey, openaiKey });
     } catch (error) {
+      console.error('🔍 ApiKeySetup - Error:', error);
       setError(`API key validation failed: ${error.message}`);
     }
   };
