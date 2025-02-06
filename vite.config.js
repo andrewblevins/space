@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-export default defineConfig(({ command }) => ({
+export default defineConfig(({ command, mode }) => ({
   plugins: [react()],
   build: {
     outDir: 'dist',
@@ -17,7 +17,11 @@ export default defineConfig(({ command }) => ({
     }
   } : undefined,
   define: {
-    'import.meta.env.ANTHROPIC_API_KEY': JSON.stringify(process.env.ANTHROPIC_API_KEY),
-    'import.meta.env.OPENAI_API_KEY': JSON.stringify(process.env.OPENAI_API_KEY)
+    'import.meta.env.ANTHROPIC_API_KEY': mode === 'production' || mode === 'preview' 
+      ? JSON.stringify(process.env.ANTHROPIC_API_KEY)
+      : undefined,
+    'import.meta.env.OPENAI_API_KEY': mode === 'production' || mode === 'preview'
+      ? JSON.stringify(process.env.OPENAI_API_KEY)
+      : undefined
   }
 }))
