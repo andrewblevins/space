@@ -1,5 +1,3 @@
-import { OpenAI } from 'openai';
-
 // Improved prompt for better entity and topic extraction
 const TAGGING_PROMPT = `Extract key information as tags to help identify this message's relevance in future conversations.
 
@@ -40,18 +38,6 @@ Example: {
 }`
 
 export default class TagAnalyzer {
-  private openai: OpenAI;
-
-  constructor() {
-    // Use user's key if set, otherwise use shared key
-    const openaiKey = localStorage.getItem('space_openai_key') || 'sk-shared-key';
-
-    this.openai = new OpenAI({
-      apiKey: openaiKey,
-      dangerouslyAllowBrowser: true
-    });
-  }
-
   async analyzeTags(content: string): Promise<string[]> {
     try {
       console.log('🔍 TagAnalyzer - Starting analysis:', {
@@ -59,22 +45,30 @@ export default class TagAnalyzer {
         contentLength: content.length
       });
       
-      const response = await this.openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [{
-          role: "system",
-          content: TAGGING_PROMPT
-        }, {
-          role: "user",
-          content
-        }],
-        temperature: 0.7,
-        response_format: { type: "json_object" }
+      const response = await fetch('/api/chat/openai', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          messages: [{
+            role: "system",
+            content: TAGGING_PROMPT
+          }, {
+            role: "user",
+            content
+          }],
+          response_format: { type: "json_object" }
+        })
       });
 
-      console.log('🔍 TagAnalyzer - Raw OpenAI response:', response.choices[0].message.content);
+      if (!response.ok) {
+        throw new Error('Failed to analyze tags');
+      }
 
-      const result = JSON.parse(response.choices[0].message.content || '{}');
+      const data = await response.json();
+      const result = JSON.parse(data.choices[0].message.content || '{}');
+      
       console.log('🔍 TagAnalyzer - Parsed result:', {
         content: content.substring(0, 50) + '...',
         tags: result.tags,

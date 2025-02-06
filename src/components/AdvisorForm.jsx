@@ -3,21 +3,12 @@ import { getApiEndpoint } from '../utils/apiConfig';
 
 const generateAdvisorDescription = async (advisorName, onStream) => {
   try {
-    const anthropicKey = localStorage.getItem('space_anthropic_key');
-    if (!anthropicKey) {
-      throw new Error('Anthropic API key not found');
-    }
-
-    const response = await fetch(`${getApiEndpoint()}/v1/messages`, {
+    const response = await fetch('/api/chat/claude', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': anthropicKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20241022',
         messages: [{
           role: 'user',
           content: `You are generating a description of an AI advisor that will be used to summon that entity into a conversation. You will receive a name and you will write your description based on that name. Your description should be a paragraph spoken directly in the advisor's distinct voice and perspective. It should include a general self-description, any specific lineages, practices, or frameworks they embody, and how they tend to approach problems. Do not include the advisor's name in the description.
@@ -30,42 +21,34 @@ The advisor's name is ${advisorName}.`
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Error response:', errorText);
-      throw new Error(`API Error: ${errorText}`);
+      throw new Error('Failed to generate advisor description');
     }
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
-    let description = '';
 
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-
+      
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split('\n');
       buffer = lines.pop() || '';
 
       for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const data = line.slice(6);
-          if (data === '[DONE]') continue;
-
+        if (line.trim()) {
           try {
-            const parsed = JSON.parse(data);
-            const content = parsed.delta?.text || '';
-            description += content;
-            onStream(description);
+            const data = JSON.parse(line);
+            if (data.type === 'content' && data.text) {
+              onStream(data.text);
+            }
           } catch (e) {
-            console.error('Error parsing stream:', e);
+            console.error('Error parsing stream data:', e);
           }
         }
       }
     }
-
-    return description;
   } catch (error) {
     console.error('Error generating advisor description:', error);
     throw error;
