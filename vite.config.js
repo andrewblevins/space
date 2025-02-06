@@ -4,16 +4,15 @@ import react from '@vitejs/plugin-react'
 export default defineConfig(({ command, mode }) => {
   console.log('Vite config mode:', mode);
   
-  // For local development, these will come from .dev.vars
-  // For production/preview, these will come from Cloudflare Pages environment variables
-  const anthropicKey = process.env.ANTHROPIC_API_KEY || '';
-  const openaiKey = process.env.OPENAI_API_KEY || '';
+  // Define constants that will be replaced at build time
+  const __ANTHROPIC_KEY__ = '';  // Will be injected by Cloudflare
+  const __OPENAI_KEY__ = '';     // Will be injected by Cloudflare
   
   console.log('Building with keys:', {
-    anthropicExists: !!anthropicKey,
-    openaiExists: !!openaiKey,
-    anthropicLength: anthropicKey?.length || 0,
-    openaiLength: openaiKey?.length || 0
+    anthropicExists: !!__ANTHROPIC_KEY__,
+    openaiExists: !!__OPENAI_KEY__,
+    anthropicLength: __ANTHROPIC_KEY__?.length || 0,
+    openaiLength: __OPENAI_KEY__?.length || 0
   });
 
   return {
@@ -32,9 +31,9 @@ export default defineConfig(({ command, mode }) => {
       }
     } : undefined,
     define: {
-      // Make environment variables available at runtime
-      'process.env.ANTHROPIC_API_KEY': JSON.stringify(anthropicKey),
-      'process.env.OPENAI_API_KEY': JSON.stringify(openaiKey)
+      // These will be replaced at build time by Cloudflare Pages
+      __ANTHROPIC_KEY__: JSON.stringify(__ANTHROPIC_KEY__),
+      __OPENAI_KEY__: JSON.stringify(__OPENAI_KEY__)
     }
   };
 });

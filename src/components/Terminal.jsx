@@ -2819,24 +2819,32 @@ ${selectedText}
   }, []);
 
   useEffect(() => {
-    // Check runtime environment variables
-    console.log('Checking runtime variables:', {
-      anthropic: process.env.ANTHROPIC_API_KEY ? 'exists' : 'missing',
-      openai: process.env.OPENAI_API_KEY ? 'exists' : 'missing'
-    });
+    // Check if we have the keys in localStorage first
+    const storedAnthropicKey = localStorage.getItem('space_anthropic_key');
+    const storedOpenAIKey = localStorage.getItem('space_openai_key');
     
-    const envAnthropicKey = process.env.ANTHROPIC_API_KEY;
-    const envOpenAIKey = process.env.OPENAI_API_KEY;
-    
-    if (envAnthropicKey && envOpenAIKey) {
-      console.log('Found runtime variables, setting in localStorage');
-      localStorage.setItem('space_anthropic_key', envAnthropicKey);
-      localStorage.setItem('space_openai_key', envOpenAIKey);
+    if (storedAnthropicKey && storedOpenAIKey) {
+      console.log('Found keys in localStorage');
       setApiKeysSet(true);
       return;
     }
 
-    // Rest of the code...
+    // Check for build-time injected variables
+    console.log('Checking build-time variables:', {
+      anthropic: typeof __ANTHROPIC_KEY__ !== 'undefined' ? 'exists' : 'missing',
+      openai: typeof __OPENAI_KEY__ !== 'undefined' ? 'exists' : 'missing'
+    });
+    
+    if (__ANTHROPIC_KEY__ && __OPENAI_KEY__) {
+      console.log('Found build-time variables, setting in localStorage');
+      localStorage.setItem('space_anthropic_key', __ANTHROPIC_KEY__);
+      localStorage.setItem('space_openai_key', __OPENAI_KEY__);
+      setApiKeysSet(true);
+      return;
+    }
+
+    // If we get here, we need the user to input keys
+    console.log('No keys found, showing setup screen');
   }, []);
 
   return (
