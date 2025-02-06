@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { getApiEndpoint } from '../utils/apiConfig';
+import { handleApiError } from '../utils/apiErrorHandler';
 
 const generateAdvisorDescription = async (advisorName, onStream) => {
   try {
@@ -30,9 +31,7 @@ The advisor's name is ${advisorName}.`
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Error response:', errorText);
-      throw new Error(`API Error: ${errorText}`);
+      await handleApiError(response);
     }
 
     const reader = response.body.getReader();
