@@ -1,3 +1,5 @@
+import { Anthropic } from '@anthropic-ai/sdk';
+
 export async function onRequestPost(context) {
   try {
     const { messages, max_tokens = 1024, model = 'claude-3-5-sonnet-20241022' } = await context.request.json();
@@ -5,26 +7,38 @@ export async function onRequestPost(context) {
     // Get user's API key from request header if provided
     const userApiKey = context.request.headers.get('x-api-key');
     
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': userApiKey || context.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json'
-      },
-      body: JSON.stringify({
-        model,
-        messages,
-        max_tokens
-      })
+    const anthropic = new Anthropic({
+      apiKey: userApiKey || context.env.ANTHROPIC_API_KEY
     });
 
-    const data = await response.json();
+    const response = await anthropic.messages.create({
+      model,
+      messages,
+      max_tokens,
+      stream: true
+    });
 
-    return new Response(JSON.stringify(data), {
+    // Create a readable stream from the response
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const chunk of response.stream()) {
+            const data = JSON.stringify({ type: 'content', text: chunk.content[0].text }) + '\n';
+            controller.enqueue(new TextEncoder().encode(data));
+          }
+          controller.close();
+        } catch (error) {
+          controller.error(error);
+        }
+      }
+    });
+
+    return new Response(stream, {
       headers: {
-        'content-type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
+        'content-type': 'text/event-stream',
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive'
       }
     });
   } catch (error) {

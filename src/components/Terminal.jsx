@@ -8,7 +8,6 @@ import EditAdvisorForm from './EditAdvisorForm';
 import EditPromptForm from './EditPromptForm';
 import '@fontsource/vollkorn';
 import TagAnalyzer from '../lib/tagAnalyzer';
-import { defaultPrompts } from '../lib/defaultPrompts';
 
 const Module = ({ title, items = [], onItemClick, activeItems = [] }) => (
   <div className="bg-gray-900 p-4">
@@ -319,6 +318,7 @@ const ExpandingInput = ({ value, onChange, onSubmit, isLoading }) => {
   
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
+      console.log('Enter pressed, calling onSubmit');
       e.preventDefault();
       onSubmit(e);
     }
@@ -1964,6 +1964,13 @@ Currently using: ${tokenUsage >= FREE_TIER_LIMIT ? 'Your API keys' : 'Free tier'
 
       const systemPromptText = getSystemPrompt();
 
+      // Before the fetch
+      console.log('Sending request to Claude:', {
+        messages: contextMessages,
+        system: systemPromptText,
+        max_tokens: maxTokens
+      });
+
       const response = await fetch('/api/chat/claude', {
         method: 'POST',
         headers: {
@@ -1978,6 +1985,9 @@ Currently using: ${tokenUsage >= FREE_TIER_LIMIT ? 'Your API keys' : 'Free tier'
           max_tokens: maxTokens
         })
       });
+
+      // After the fetch
+      console.log('Response from Claude:', response);
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -2003,7 +2013,11 @@ Currently using: ${tokenUsage >= FREE_TIER_LIMIT ? 'Your API keys' : 'Free tier'
           break;
         }
 
+        // Add these logs
+        console.log('Received chunk:', value);
         buffer += decoder.decode(value, { stream: true });
+        console.log('Current buffer:', buffer);
+        
         const lines = buffer.split('\n');
         buffer = lines.pop() || '';
 
@@ -2011,6 +2025,7 @@ Currently using: ${tokenUsage >= FREE_TIER_LIMIT ? 'Your API keys' : 'Free tier'
           if (line.trim()) {
             try {
               const data = JSON.parse(line);
+              console.log('Parsed data:', data);  // Add this log
               if (data.type === 'content' && data.text) {
                 currentMessageContent += data.text;
                 setMessages(prev => {
