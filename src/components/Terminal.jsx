@@ -2821,20 +2821,13 @@ ${selectedText}
   useEffect(() => {
     // Add detailed logging for environment variables and localStorage
     console.log('🔍 Terminal - Environment Check:', {
-      processEnv: {
-        ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
-        OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+      importMeta: {
+        ANTHROPIC_API_KEY: import.meta.env.VITE_ANTHROPIC_API_KEY,
+        OPENAI_API_KEY: import.meta.env.VITE_OPENAI_API_KEY,
       },
       localStorage: {
         anthropicKey: localStorage.getItem('space_anthropic_key'),
         openaiKey: localStorage.getItem('space_openai_key'),
-        // Log key lengths to see if they're actually populated
-        anthropicKeyLength: localStorage.getItem('space_anthropic_key')?.length,
-        openaiKeyLength: localStorage.getItem('space_openai_key')?.length
-      },
-      importMeta: {
-        ANTHROPIC_API_KEY: import.meta.env.ANTHROPIC_API_KEY,
-        OPENAI_API_KEY: import.meta.env.OPENAI_API_KEY,
       }
     });
 
@@ -2855,6 +2848,16 @@ ${selectedText}
         hasAnthropicKey: !!anthropicKey,
         hasOpenAIKey: !!openaiKey
       });
+    }
+  }, []);
+
+  useEffect(() => {
+    // Initialize localStorage with environment variables if they exist
+    if (import.meta.env.VITE_ANTHROPIC_API_KEY && !localStorage.getItem('space_anthropic_key')) {
+      localStorage.setItem('space_anthropic_key', import.meta.env.VITE_ANTHROPIC_API_KEY);
+    }
+    if (import.meta.env.VITE_OPENAI_API_KEY && !localStorage.getItem('space_openai_key')) {
+      localStorage.setItem('space_openai_key', import.meta.env.VITE_OPENAI_API_KEY);
     }
   }, []);
 

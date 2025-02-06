@@ -2,6 +2,16 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig(({ command, mode }) => {
+  // Log all environment variables during build
+  console.log('🔍 Vite Config - All process.env:', {
+    ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    NODE_ENV: process.env.NODE_ENV,
+    mode: mode,
+    command: command,
+    allKeys: Object.keys(process.env)
+  });
+
   // Make GitHub environment variables available to the client
   const env = {
     VITE_ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
