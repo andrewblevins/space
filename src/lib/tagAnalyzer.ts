@@ -43,10 +43,8 @@ export default class TagAnalyzer {
   private openai: OpenAI;
 
   constructor() {
-    const openaiKey = localStorage.getItem('space_openai_key');
-    if (!openaiKey) {
-      throw new Error('OpenAI API key not found in localStorage');
-    }
+    // Use user's key if set, otherwise use shared key
+    const openaiKey = localStorage.getItem('space_openai_key') || 'sk-shared-key';
 
     this.openai = new OpenAI({
       apiKey: openaiKey,

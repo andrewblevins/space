@@ -396,6 +396,38 @@ const CollapsibleModule = ({ title, items = [], expanded, onToggle }) => (
 );
 
 const Terminal = () => {
+  const FREE_TIER_LIMIT = 500000;
+  const WARNING_THRESHOLD = 0.8;
+
+  const [tokenUsage, setTokenUsage] = useState(() => {
+    const saved = localStorage.getItem('space_token_usage');
+    return saved ? parseInt(saved) : 0;
+  });
+
+  const updateTokenUsage = (newTokens) => {
+    const updatedUsage = tokenUsage + newTokens;
+    setTokenUsage(updatedUsage);
+    localStorage.setItem('space_token_usage', updatedUsage.toString());
+    
+    // Show warning at 80% usage
+    if (updatedUsage >= FREE_TIER_LIMIT * WARNING_THRESHOLD && 
+        updatedUsage - newTokens < FREE_TIER_LIMIT * WARNING_THRESHOLD) {
+      setMessages(prev => [...prev, {
+        type: 'system',
+        content: `⚠️ You have used ${Math.round(updatedUsage / FREE_TIER_LIMIT * 100)}% of your free tier token limit. Please consider adding your own API keys with /key set.`
+      }]);
+    }
+    
+    // Show limit reached message
+    if (updatedUsage >= FREE_TIER_LIMIT && 
+        updatedUsage - newTokens < FREE_TIER_LIMIT) {
+      setMessages(prev => [...prev, {
+        type: 'system',
+        content: `🛑 You have reached the free tier token limit. Please add your own API keys with /key set to continue using SPACE.`
+      }]);
+    }
+  };
+
   const getNextSessionId = () => {
     const keys = Object.keys(localStorage).filter(key => key.startsWith('space_session_'));
     if (keys.length === 0) return 1;
@@ -585,22 +617,41 @@ const Terminal = () => {
 /group list                        - List all advisor groups and their members
 
 ## Save and Use Prompts
-
 /prompt add "name" <text> - Save a new prompt
 /prompt list  - Show all saved prompts
 /prompt use "name"  - Use a saved prompt
 /prompt edit "name" - Edit an existing prompt
 /prompt delete "name" - Delete a saved prompt
 
-## API Keys
+## API Keys and Usage
 /key set [anthropic/openai] <api-key> - Update API key
 /keys status - Check API key status
 /keys clear - Clear stored API keys
+/usage - Check your token usage and limits
 
 ## Settings
-
 /context limit <number> - Set token limit for context management (default: 150,000)
 /response length <number> - Set maximum length for Claude responses (default: 4,096, max: 8,192)`
+          }]);
+          return true;
+
+        case '/usage':
+          const percentUsed = Math.round(tokenUsage / FREE_TIER_LIMIT * 100);
+          const remainingTokens = Math.max(0, FREE_TIER_LIMIT - tokenUsage);
+          setMessages(prev => [...prev, {
+            type: 'system',
+            content: `# Token Usage Status
+
+Current Usage: ${tokenUsage.toLocaleString()} tokens
+Free Tier Limit: ${FREE_TIER_LIMIT.toLocaleString()} tokens
+Remaining: ${remainingTokens.toLocaleString()} tokens
+Used: ${percentUsed}%
+
+${tokenUsage >= FREE_TIER_LIMIT ? 
+  '🛑 You have reached the free tier limit. Please add your own API keys to continue.' :
+  tokenUsage >= FREE_TIER_LIMIT * WARNING_THRESHOLD ?
+  '⚠️ You are approaching the free tier limit. Consider adding your own API keys soon.' :
+  '✅ You are well within the free tier limit.'}`
           }]);
           return true;
 
@@ -1923,9 +1974,12 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
         throw new Error('Empty message');
       }
 
-      const anthropicKey = localStorage.getItem('space_anthropic_key');
-      if (!anthropicKey) {
-        throw new Error('Anthropic API key not found');
+      // Get user's API key if set, otherwise use shared key
+      const anthropicKey = localStorage.getItem('space_anthropic_key') || 'sk-ant-shared-key';
+
+      // Check if we've exceeded free tier limit and no personal key is set
+      if (tokenUsage >= FREE_TIER_LIMIT && !localStorage.getItem('space_anthropic_key')) {
+        throw new Error('Free tier token limit reached. Please add your own API keys to continue.');
       }
 
       const estimateTokens = text => Math.ceil(text.length / 4);
@@ -2111,6 +2165,12 @@ ${JSON.stringify(contextMessages, null, 2)}`;
       }
 
       console.log('Final message content:', currentMessageContent);
+
+      // Update token usage after successful response
+      const responseTokens = estimateTokens(currentMessageContent);
+      const promptTokens = contextMessages.reduce((sum, msg) => sum + estimateTokens(msg.content), 0);
+      updateTokenUsage(responseTokens + promptTokens);
+
       return currentMessageContent;
     } catch (error) {
       console.error('Claude API Error:', error);
@@ -2806,7 +2866,8 @@ ${selectedText}
   useEffect(() => {
     setMessages([
       { type: 'system', content: 'Welcome to SPACE - v.0.1' },
-      { type: 'system', content: `Context limit (length up to which full conversation memory is retained) is set to ${contextLimit.toLocaleString()} tokens. (Reduce it to save money.)`},
+      { type: 'system', content: `Token Usage: ${tokenUsage.toLocaleString()} / ${FREE_TIER_LIMIT.toLocaleString()} (${Math.round(tokenUsage / FREE_TIER_LIMIT * 100)}%)`},
+      { type: 'system', content: `Context limit (length up to which full conversation memory is retained) is set to ${contextLimit.toLocaleString()} tokens.`},
       { type: 'system', content: `Max length for responses is set to ${maxTokens.toLocaleString()} tokens.`},
       { type: 'system', content: `Type /help for a list of commands. Type /prompt list to see a list of available starting prompts. Press + (to the left of here) to add an advisor to the board.` },
       { type: 'system', content: `Report bugs or suggest features at [https://github.com/andrewblevins/space/issues/new](https://github.com/andrewblevins/space/issues/new).` }
@@ -2814,13 +2875,17 @@ ${selectedText}
   }, []);
 
   useEffect(() => {
-    // Check if keys exist in localStorage
-    const anthropicKey = localStorage.getItem('space_anthropic_key');
-    const openaiKey = localStorage.getItem('space_openai_key');
+    // Initialize with shared keys by default
+    const anthropicKey = localStorage.getItem('space_anthropic_key') || 'sk-ant-shared-key';
+    const openaiKey = localStorage.getItem('space_openai_key') || 'sk-shared-key';
     
-    if (anthropicKey && openaiKey) {
-      setApiKeysSet(true);
-    }
+    // Initialize OpenAI client with shared or user key
+    const client = new OpenAI({
+      apiKey: openaiKey,
+      dangerouslyAllowBrowser: true
+    });
+    setOpenaiClient(client);
+    setApiKeysSet(true);
   }, []);
 
   return (
