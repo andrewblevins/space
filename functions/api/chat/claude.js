@@ -1,11 +1,14 @@
 export async function onRequestPost(context) {
   try {
     const { messages, max_tokens = 1024, model = 'claude-3-5-sonnet-20241022' } = await context.request.json();
-
+    
+    // Get user's API key from request header if provided
+    const userApiKey = context.request.headers.get('x-api-key');
+    
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
-        'x-api-key': context.env.ANTHROPIC_API_KEY,
+        'x-api-key': userApiKey || context.env.ANTHROPIC_API_KEY,
         'anthropic-version': '2023-06-01',
         'content-type': 'application/json'
       },

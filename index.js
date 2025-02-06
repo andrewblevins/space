@@ -30,28 +30,27 @@ app.get('/health', (req, res) => {
 app.post('/api/chat/claude', async (req, res) => {
   try {
     const { messages, max_tokens = 1024, model = 'claude-3-5-sonnet-20241022' } = req.body;
-
-    const response = await axios.post('https://api.anthropic.com/v1/messages', 
-      {
-        model,
-        messages,
-        max_tokens
-      },
-      {
-        headers: {
-          'x-api-key': process.env.ANTHROPIC_API_KEY,
-          'anthropic-version': '2023-06-01',
-          'content-type': 'application/json'
-        }
+    
+    // Mirror Cloudflare Function's API key logic
+    const userApiKey = req.headers['x-api-key'];
+    
+    const response = await axios.post('https://api.anthropic.com/v1/messages', {
+      model,
+      messages,
+      max_tokens
+    }, {
+      headers: {
+        'x-api-key': userApiKey || process.env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json'
       }
-    );
+    });
 
     res.json(response.data);
   } catch (error) {
-    console.error('Error:', error.response?.data || error.message);
-    res.status(error.response?.status || 500).json({ 
+    res.status(500).json({
       error: 'Error communicating with Claude',
-      message: error.response?.data?.error?.message || error.message 
+      message: error.message
     });
   }
 });

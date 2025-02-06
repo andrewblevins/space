@@ -10,9 +10,8 @@ export default defineConfig(({ command }) => ({
   server: command === 'serve' ? {
     proxy: {
       '/api': {
-        target: 'https://api.anthropic.com',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '')
+        target: 'http://localhost:3000',
+        changeOrigin: true
       }
     }
   } : undefined
