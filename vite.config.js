@@ -15,5 +15,9 @@ export default defineConfig(({ command }) => ({
         rewrite: (path) => path.replace(/^\/api/, '')
       }
     }
-  } : undefined
+  } : undefined,
+  define: {
+    'import.meta.env.ANTHROPIC_API_KEY': JSON.stringify(process.env.ANTHROPIC_API_KEY),
+    'import.meta.env.OPENAI_API_KEY': JSON.stringify(process.env.OPENAI_API_KEY)
+  }
 }))

@@ -2819,7 +2819,18 @@ ${selectedText}
   }, []);
 
   useEffect(() => {
-    // Check if keys exist in localStorage
+    // First check environment variables
+    const envAnthropicKey = import.meta.env.ANTHROPIC_API_KEY;
+    const envOpenAIKey = import.meta.env.OPENAI_API_KEY;
+    
+    if (envAnthropicKey && envOpenAIKey) {
+      localStorage.setItem('space_anthropic_key', envAnthropicKey);
+      localStorage.setItem('space_openai_key', envOpenAIKey);
+      setApiKeysSet(true);
+      return;
+    }
+
+    // Fallback to localStorage check
     const anthropicKey = localStorage.getItem('space_anthropic_key');
     const openaiKey = localStorage.getItem('space_openai_key');
     
