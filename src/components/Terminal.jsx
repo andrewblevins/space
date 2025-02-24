@@ -1901,6 +1901,10 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
               return true;
           }
 
+        case '/export-all':
+          exportAllSessions();
+          return true;
+
         default:
           setMessages(prev => [...prev, {
             type: 'system',
@@ -2810,11 +2814,13 @@ ${selectedText}
 
   useEffect(() => {
     setMessages([
-      { type: 'system', content: 'Welcome to SPACE - v.0.1' },
+      { type: 'system', content: 'Welcome to SPACE - v0.1' },
       { type: 'system', content: `Context limit (length up to which full conversation memory is retained) is set to ${contextLimit.toLocaleString()} tokens. (Reduce it to save money.)`},
       { type: 'system', content: `Max length for responses is set to ${maxTokens.toLocaleString()} tokens.`},
       { type: 'system', content: `Type /help for a list of commands. Type /prompt list to see a list of available starting prompts. Press + (to the left of here) to add an advisor to the board.` },
-      { type: 'system', content: `Report bugs or suggest features at [https://github.com/andrewblevins/space/issues/new](https://github.com/andrewblevins/space/issues/new).` }
+      { type: 'system', content: `Report bugs or suggest features at [https://github.com/andrewblevins/space/issues/new](https://github.com/andrewblevins/space/issues/new).` },
+      { type: 'system', content: '/export - Export the current session to a markdown file.' },
+      { type: 'system', content: '/export-all - Export all sessions to a JSON file.' },
     ]);
   }, []);
 
@@ -2827,6 +2833,32 @@ ${selectedText}
       setApiKeysSet(true);
     }
   }, []);
+
+  const exportAllSessions = () => {
+    const sessions = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key.startsWith('space_session_')) {
+        const session = JSON.parse(localStorage.getItem(key));
+        sessions.push(session);
+      }
+    }
+
+    const blob = new Blob([JSON.stringify(sessions, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'all-sessions.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    setMessages(prev => [...prev, {
+      type: 'system',
+      content: 'All sessions exported successfully.'
+    }]);
+  };
 
   return (
     <>
