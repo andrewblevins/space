@@ -74,6 +74,28 @@ const ApiKeySetup = ({ onComplete }) => {
           </div>
         )}
 
+        <p className="mb-4">
+          To use this application, you need API keys from both Anthropic and OpenAI. Follow the instructions below to obtain your keys.
+        </p>
+        <div className="mb-4">
+          <h2 className="text-lg">Anthropic (Claude)</h2>
+          <ol className="list-decimal list-inside">
+            <li>Go to <a href="https://console.anthropic.com" target="_blank" rel="noopener noreferrer" className="text-blue-400 underline">console.anthropic.com</a></li>
+            <li>Sign up or log in</li>
+            <li>Navigate to "API Keys" in your account settings</li>
+            <li>Create a new API key and copy it</li>
+          </ol>
+        </div>
+        <div className="mb-4">
+          <h2 className="text-lg">OpenAI</h2>
+          <ol className="list-decimal list-inside">
+            <li>Visit <a href="https://platform.openai.com" target="_blank" rel="noopener noreferrer" className="text-blue-400 underline">platform.openai.com</a></li>
+            <li>Sign up or log in</li>
+            <li>Go to "API Keys" in your account settings</li>
+            <li>Create a new API key and copy it</li>
+          </ol>
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block mb-2">Anthropic API Key:</label>
