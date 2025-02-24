@@ -66,7 +66,7 @@ const ApiKeySetup = ({ onComplete }) => {
   return (
     <div className="min-h-screen bg-gray-900 text-green-400 p-8">
       <div className="max-w-md mx-auto">
-        <h1 className="text-2xl mb-4">API Key Setup Required</h1>
+        <h1 className="text-2xl mb-4">Welcome to SPACE</h1>
         
         {error && (
           <div className="bg-red-900/50 border border-red-400 text-red-400 p-4 mb-4 rounded">
@@ -75,7 +75,7 @@ const ApiKeySetup = ({ onComplete }) => {
         )}
 
         <p className="mb-4">
-          To use this application, you need API keys from both Anthropic and OpenAI. Follow the instructions below to obtain your keys.
+          To use it, you need API keys from both Anthropic and OpenAI. Follow the instructions below to obtain your keys.
         </p>
         <div className="mb-4">
           <h2 className="text-lg">Anthropic (Claude)</h2>
@@ -95,6 +95,10 @@ const ApiKeySetup = ({ onComplete }) => {
             <li>Create a new API key and copy it</li>
           </ol>
         </div>
+
+        <p className="mb-4">
+          SPACE Terminal is very cost-effective to use. Each message exchange (your message + AI response) costs roughly 2¢ on average. Starting with $5 in each API account will give you several hours of conversation.
+        </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
