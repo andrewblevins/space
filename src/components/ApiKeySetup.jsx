@@ -75,7 +75,10 @@ const ApiKeySetup = ({ onComplete }) => {
         )}
 
         <p className="mb-4">
-          To use it, you need API keys from both Anthropic and OpenAI. Follow the instructions below to obtain your keys.
+          Your terminal for <a href="https://github.com/andrewblevins/insight-cascade" target="_blank" rel="noopener noreferrer" className="text-blue-400 underline">AI advisor conversations</a>.
+        </p>
+        <p className="mb-4">
+          To get started, you need API keys from both Anthropic and OpenAI. Follow the instructions below to obtain your keys.
         </p>
         <div className="mb-4">
           <h2 className="text-lg">Anthropic (Claude)</h2>
