@@ -16,6 +16,11 @@ const ApiKeySetup = ({ onComplete }) => {
     }
   }, []);
 
+  const handleInputChange = (setter) => (e) => {
+    setError(''); // Clear error when user starts typing
+    setter(e.target.value);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -109,7 +114,7 @@ const ApiKeySetup = ({ onComplete }) => {
             <input
               type="password"
               value={anthropicKey}
-              onChange={(e) => setAnthropicKey(e.target.value)}
+              onChange={handleInputChange(setAnthropicKey)}
               className="w-full bg-black text-green-400 border border-green-400 p-2"
               placeholder=""
             />
@@ -120,7 +125,7 @@ const ApiKeySetup = ({ onComplete }) => {
             <input
               type="password"
               value={openaiKey}
-              onChange={(e) => setOpenaiKey(e.target.value)}
+              onChange={handleInputChange(setOpenaiKey)}
               className="w-full bg-black text-green-400 border border-green-400 p-2"
               placeholder=""
             />
