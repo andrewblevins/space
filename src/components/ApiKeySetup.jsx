@@ -108,7 +108,7 @@ const ApiKeySetup = ({ onComplete }) => {
               value={anthropicKey}
               onChange={(e) => setAnthropicKey(e.target.value)}
               className="w-full bg-black text-green-400 border border-green-400 p-2"
-              placeholder="sk-ant-..."
+              placeholder=""
             />
           </div>
 
@@ -119,7 +119,7 @@ const ApiKeySetup = ({ onComplete }) => {
               value={openaiKey}
               onChange={(e) => setOpenaiKey(e.target.value)}
               className="w-full bg-black text-green-400 border border-green-400 p-2"
-              placeholder="sk-..."
+              placeholder=""
             />
           </div>
 
