@@ -88,18 +88,16 @@ const ApiKeySetup = ({ onComplete }) => {
         <div className="mb-4">
           <h2 className="text-lg">Anthropic (Claude)</h2>
           <ol className="list-decimal list-inside">
-            <li>Go to <a href="https://console.anthropic.com" target="_blank" rel="noopener noreferrer" className="text-blue-400 underline">console.anthropic.com</a></li>
+            <li>Go to <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer" className="text-blue-400 underline">console.anthropic.com/settings/keys</a></li>
             <li>Sign up or log in</li>
-            <li>Navigate to "API Keys" in your account settings</li>
             <li>Create a new API key and copy it</li>
           </ol>
         </div>
         <div className="mb-4">
           <h2 className="text-lg">OpenAI</h2>
           <ol className="list-decimal list-inside">
-            <li>Visit <a href="https://platform.openai.com" target="_blank" rel="noopener noreferrer" className="text-blue-400 underline">platform.openai.com</a></li>
+            <li>Visit <a href="https://platform.openai.com/settings/organization/api-keys" target="_blank" rel="noopener noreferrer" className="text-blue-400 underline">platform.openai.com/settings/organization/api-keys</a></li>
             <li>Sign up or log in</li>
-            <li>Go to "API Keys" in your account settings</li>
             <li>Create a new API key and copy it</li>
           </ol>
         </div>
