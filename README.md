@@ -1,6 +1,6 @@
 # SPACE Terminal
 
-[SPACE Terminal](https://www.spaceterminal.xyz) is an experimental terminal-style interface for personal discovery and thinking with large language models. SPACE stands for Simple Perspective-Augmenting Conversation Environment (or maybe, Simulated People Advising Convincingly Enough).
+[SPACE Terminal](https://spaceterminal.xyz) is an experimental terminal-style interface for personal discovery and thinking with large language models. SPACE stands for Simple Perspective-Augmenting Conversation Environment (or maybe, Simulated People Advising Convincingly Enough).
 
 <img src="screenshots/terminal-screenshot.png" alt="SPACE Terminal Interface" width="800"/>
 
