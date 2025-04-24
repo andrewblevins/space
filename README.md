@@ -2,6 +2,8 @@
 
 SPACE Terminal is an experimental terminal-style interface for personal discovery and thinking with large language models. SPACE stands for Simple Perspective-Augmenting Conversation Environment (or maybe, Simulated People Advising Convincingly Enough).
 
+<img src="screenshots/terminal-screenshot.png" alt="SPACE Terminal Interface" width="800"/>
+
 The biggest difference from other chat interfaces is the ability to create and manage AI personas with distinct perspectives, changing them out mid-conversation. For more about AI advisors, see the Insight Cascade process and guidelines here: https://github.com/andrewblevins/insight-cascade. 
 
 SPACE also lets you have much longer conversations without hitting rate limits, a current limitation of Claude Pro.
