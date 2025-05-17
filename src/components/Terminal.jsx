@@ -11,6 +11,7 @@ import ApiKeySetup from './ApiKeySetup';
 import { getApiEndpoint } from '../utils/apiConfig';
 import { defaultPrompts } from '../lib/defaultPrompts';
 import { handleApiError } from '../utils/apiErrorHandler';
+import { getDecrypted, setEncrypted, removeEncrypted } from '../utils/secureStorage';
 
 const Module = ({ title, items = [], onItemClick, activeItems = [] }) => (
   <div className="bg-gray-900 p-4">
@@ -1771,8 +1772,8 @@ Default is 4,096 tokens.`
         case '/keys':
           switch(args[0]) {
             case 'clear':
-              localStorage.removeItem('space_anthropic_key');
-              localStorage.removeItem('space_openai_key');
+              removeEncrypted('space_anthropic_key');
+              removeEncrypted('space_openai_key');
               setApiKeysSet(false);
               setMessages(prev => [...prev, {
                 type: 'system',
@@ -1781,14 +1782,23 @@ Default is 4,096 tokens.`
               return true;
 
             case 'status':
-              const anthropicKey = localStorage.getItem('space_anthropic_key');
-              const openaiKey = localStorage.getItem('space_openai_key');
-              setMessages(prev => [...prev, {
-                type: 'system',
-                content: `API Keys Status:
+              (async () => {
+                try {
+                  const anthropicKey = await getDecrypted('space_anthropic_key');
+                  const openaiKey = await getDecrypted('space_openai_key');
+                  setMessages(prev => [...prev, {
+                    type: 'system',
+                    content: `API Keys Status:
 Anthropic: ${anthropicKey ? '✓ Set' : '✗ Not Set'}
 OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
-              }]);
+                  }]);
+                } catch (error) {
+                  setMessages(prev => [...prev, {
+                    type: 'system',
+                    content: `Error checking API keys: ${error.message}`
+                  }]);
+                }
+              })();
               return true;
 
             default:
@@ -1860,7 +1870,7 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
                     });
 
                     if (!response.ok) {
-                      await handleApiError(response);  // Add this line to use the new error handler
+                      await handleApiError(response);
                     }
                   } catch (error) {
                     setMessages(prev => [...prev, {
@@ -1871,8 +1881,8 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
                   }
                 }
 
-                // Store the new key
-                localStorage.setItem(`space_${service}_key`, newKey);
+                // Store the new key securely
+                await setEncrypted(`space_${service}_key`, newKey);
 
                 // If OpenAI key, reinitialize the client
                 if (service === 'openai') {
@@ -1928,7 +1938,7 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
         throw new Error('Empty message');
       }
 
-      const anthropicKey = localStorage.getItem('space_anthropic_key');
+      const anthropicKey = await getDecrypted('space_anthropic_key');
       if (!anthropicKey) {
         throw new Error('Anthropic API key not found');
       }
@@ -2119,8 +2129,8 @@ ${JSON.stringify(contextMessages, null, 2)}`;
       console.error('Claude API Error:', error);
       // Remove the API keys if we got a 401
       if (error.message.includes('invalid x-api-key')) {
-        localStorage.removeItem('space_anthropic_key');
-        localStorage.removeItem('space_openai_key');
+        removeEncrypted('space_anthropic_key');
+        removeEncrypted('space_openai_key');
         window.location.reload();
       }
       throw error;
@@ -2825,13 +2835,28 @@ ${selectedText}
   }, []);
 
   useEffect(() => {
-    // Check if keys exist in localStorage
-    const anthropicKey = localStorage.getItem('space_anthropic_key');
-    const openaiKey = localStorage.getItem('space_openai_key');
+    // Check if keys exist in secure storage
+    const checkKeys = async () => {
+      try {
+        const anthropicKey = await getDecrypted('space_anthropic_key');
+        const openaiKey = await getDecrypted('space_openai_key');
+        
+        if (anthropicKey && openaiKey) {
+          setApiKeysSet(true);
+          
+          // Initialize OpenAI client if keys are available
+          const client = new OpenAI({
+            apiKey: openaiKey,
+            dangerouslyAllowBrowser: true
+          });
+          setOpenaiClient(client);
+        }
+      } catch (error) {
+        console.error('Error checking API keys:', error);
+      }
+    };
     
-    if (anthropicKey && openaiKey) {
-      setApiKeysSet(true);
-    }
+    checkKeys();
   }, []);
 
   const exportAllSessions = () => {

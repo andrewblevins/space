@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getApiEndpoint } from '../utils/apiConfig';
 import { handleApiError } from '../utils/apiErrorHandler';
+import { setEncrypted } from '../utils/secureStorage';
 
 const ApiKeySetup = ({ onComplete }) => {
   const [anthropicKey, setAnthropicKey] = useState('');
@@ -59,8 +60,8 @@ const ApiKeySetup = ({ onComplete }) => {
         await handleApiError(response);
       }
 
-      localStorage.setItem('space_anthropic_key', anthropicKey);
-      localStorage.setItem('space_openai_key', openaiKey);
+      await setEncrypted('space_anthropic_key', anthropicKey);
+      await setEncrypted('space_openai_key', openaiKey);
 
       onComplete({ anthropicKey, openaiKey });
     } catch (error) {
@@ -96,7 +97,7 @@ const ApiKeySetup = ({ onComplete }) => {
         <div className="mb-4">
           <h2 className="text-lg">OpenAI</h2>
           <ol className="list-decimal list-inside">
-            <li>Visit <a href="https://platform.openai.com/settings/organization/api-keys" target="_blank" rel="noopener noreferrer" className="text-blue-400 underline">platform.openai.com/settings/organization/api-keys</a></li>
+            <li>Visit <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-blue-400 underline">platform.openai.com/api-keys</a></li>
             <li>Sign up or log in</li>
             <li>Create a new API key and copy it</li>
           </ol>
