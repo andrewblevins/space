@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { getApiEndpoint } from '../utils/apiConfig';
 import { handleApiError } from '../utils/apiErrorHandler';
+import { getDecrypted } from '../utils/secureStorage';
 
 const generateAdvisorDescription = async (advisorName, onStream) => {
   try {
-    const anthropicKey = localStorage.getItem('space_anthropic_key');
+    const anthropicKey = await getDecrypted('space_anthropic_key');
     if (!anthropicKey) {
       throw new Error('Anthropic API key not found');
     }

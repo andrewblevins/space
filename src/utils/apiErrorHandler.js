@@ -1,8 +1,10 @@
+import { removeEncrypted } from './secureStorage';
+
 export const handleApiError = async (response) => {
   if (response.status === 401) {
     // Clear stored API keys
-    localStorage.removeItem('space_anthropic_key');
-    localStorage.removeItem('space_openai_key');
+    removeEncrypted('space_anthropic_key');
+    removeEncrypted('space_openai_key');
     
     // Store error message for next page load
     sessionStorage.setItem('auth_error', 'Your API key has expired or been deactivated. Please enter new API keys to continue.');

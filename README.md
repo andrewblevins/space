@@ -16,10 +16,6 @@ SPACE does not track or store any user data. Everything is saved in local browse
 
 *SPACE is one node in a larger project exploring frameworks and interfaces for using Large Language Models for personal and social discovery. If you're interested in being a part of a commmunity supporting ongoing dialogue and experimentation around this, sign up for updates here: https://forms.gle/svMNnjJjJdFUjQ9L8.*
 
-## Security Note
-
-SPACE Terminal currently stores API keys in your browser's localStorage, which poses a security risk (malicious extensions could extract your API key and sell it, for instance). Consider using dedicated API keys with spending limits when using this application. We're working on implementing a more secure approach in an upcoming update.
-
 ## Setup
 
 SPACE Terminal requires API keys from both Anthropic and OpenAI to function. You'll be prompted to insert them when you first run the app.
@@ -35,7 +31,7 @@ You'll also need to add some money to both accounts, or set up payment methods. 
 4. Create a new API key and copy it
 
 #### OpenAI
-1. Visit [platform.openai.com](https://platform.openai.com/)
+1. Visit [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
 2. Sign up or log in
 3. Go to "API Keys" in your account settings
 4. Create a new API key and copy it
@@ -140,3 +136,9 @@ Author: [Andrew Shade Blevins](www.andrewshadeblevins.com)
 ## Acknowledgments
 
 SPACE Terminal would not be possible without the generous support of the Context Appreciation Society. 
+
+## Security Note
+
+SPACE Terminal encrypts API keys in your browser's localStorage to improve security. When you first enter your API keys, you'll be prompted to create a password. This password is used to encrypt your keys before they're stored and is only kept in-memory during your session. This significantly reduces the risk from malicious browser extensions that might try to extract your keys.
+
+We're working on implementing a more secure server-side approach in an upcoming update.

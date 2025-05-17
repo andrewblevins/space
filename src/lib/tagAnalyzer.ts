@@ -1,4 +1,5 @@
 import { OpenAI } from 'openai';
+import { getDecrypted } from '../utils/secureStorage';
 
 // Improved prompt for better entity and topic extraction
 const TAGGING_PROMPT = `Extract key information as tags to help identify this message's relevance in future conversations.
@@ -40,22 +41,43 @@ Example: {
 }`
 
 export default class TagAnalyzer {
-  private openai: OpenAI;
+  private openai: OpenAI | null;
+  private initialized: boolean = false;
 
   constructor() {
-    const openaiKey = localStorage.getItem('space_openai_key');
-    if (!openaiKey) {
-      throw new Error('OpenAI API key not found in localStorage');
-    }
+    this.openai = null;
+    this.initialized = false;
+  }
 
-    this.openai = new OpenAI({
-      apiKey: openaiKey,
-      dangerouslyAllowBrowser: true
-    });
+  private async initialize() {
+    if (this.initialized) return;
+    
+    try {
+      const openaiKey = await getDecrypted('space_openai_key');
+      if (!openaiKey) {
+        throw new Error('OpenAI API key not found in secure storage');
+      }
+
+      this.openai = new OpenAI({
+        apiKey: openaiKey,
+        dangerouslyAllowBrowser: true
+      });
+      
+      this.initialized = true;
+    } catch (error) {
+      console.error('Failed to initialize TagAnalyzer:', error);
+      throw error;
+    }
   }
 
   async analyzeTags(content: string): Promise<string[]> {
     try {
+      await this.initialize();
+      
+      if (!this.openai) {
+        throw new Error('OpenAI client not initialized');
+      }
+      
       console.log('🔍 TagAnalyzer - Starting analysis:', {
         contentPreview: content.substring(0, 100) + '...',
         contentLength: content.length
