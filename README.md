@@ -16,6 +16,10 @@ SPACE does not track or store any user data. Everything is saved in local browse
 
 *SPACE is one node in a larger project exploring frameworks and interfaces for using Large Language Models for personal and social discovery. If you're interested in being a part of a commmunity supporting ongoing dialogue and experimentation around this, sign up for updates here: https://forms.gle/svMNnjJjJdFUjQ9L8.*
 
+## Security Note
+
+SPACE Terminal currently stores API keys in your browser's localStorage, which poses a security risk (malicious extensions could extract your API key and sell it, for instance). Consider using dedicated API keys with spending limits when using this application. We're working on implementing a more secure approach in an upcoming update.
+
 ## Setup
 
 SPACE Terminal requires API keys from both Anthropic and OpenAI to function. You'll be prompted to insert them when you first run the app.
