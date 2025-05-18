@@ -81,7 +81,8 @@ const getEncryptionPassword = async (forDecryption = false) => {
         `Incorrect password.\n\n` +
         "Please enter your password to access your API keys.";
     } else {
-      message = "Please enter your password to access your API keys.";
+      message = "🔒 Security Update: SPACE Terminal now encrypts your API keys.\n\n" +
+                "Please enter your password to access your API keys. Your saved conversations are not affected.";
     }
   } else {
     message = 
