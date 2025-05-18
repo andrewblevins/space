@@ -405,6 +405,29 @@ const Terminal = () => {
   useEffect(() => {
     if (modalController) {
       setModalController(modalController);
+      
+      // Only check for API keys after modal controller is initialized
+      const checkKeys = async () => {
+        try {
+          const anthropicKey = await getDecrypted('space_anthropic_key');
+          const openaiKey = await getDecrypted('space_openai_key');
+          
+          if (anthropicKey && openaiKey) {
+            setApiKeysSet(true);
+            
+            // Initialize OpenAI client if keys are available
+            const client = new OpenAI({
+              apiKey: openaiKey,
+              dangerouslyAllowBrowser: true
+            });
+            setOpenaiClient(client);
+          }
+        } catch (error) {
+          console.error('Error checking API keys:', error);
+        }
+      };
+      
+      checkKeys();
     }
   }, [modalController]);
 
@@ -2842,31 +2865,6 @@ ${selectedText}
       { type: 'system', content: '/export - Export the current session to a markdown file.' },
       { type: 'system', content: '/export-all - Export all sessions to a JSON file.' },
     ]);
-  }, []);
-
-  useEffect(() => {
-    // Check if keys exist in secure storage
-    const checkKeys = async () => {
-      try {
-        const anthropicKey = await getDecrypted('space_anthropic_key');
-        const openaiKey = await getDecrypted('space_openai_key');
-        
-        if (anthropicKey && openaiKey) {
-          setApiKeysSet(true);
-          
-          // Initialize OpenAI client if keys are available
-          const client = new OpenAI({
-            apiKey: openaiKey,
-            dangerouslyAllowBrowser: true
-          });
-          setOpenaiClient(client);
-        }
-      } catch (error) {
-        console.error('Error checking API keys:', error);
-      }
-    };
-    
-    checkKeys();
   }, []);
 
   const exportAllSessions = () => {
