@@ -1,8 +1,11 @@
 import Terminal from './components/Terminal'
+import { ModalProvider } from './contexts/ModalContext'
 
 function App() {
   return (
-    <Terminal />
+    <ModalProvider>
+      <Terminal />
+    </ModalProvider>
   )
 }
 
