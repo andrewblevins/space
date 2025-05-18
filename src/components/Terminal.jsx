@@ -11,7 +11,8 @@ import ApiKeySetup from './ApiKeySetup';
 import { getApiEndpoint } from '../utils/apiConfig';
 import { defaultPrompts } from '../lib/defaultPrompts';
 import { handleApiError } from '../utils/apiErrorHandler';
-import { getDecrypted, setEncrypted, removeEncrypted } from '../utils/secureStorage';
+import { getDecrypted, setEncrypted, removeEncrypted, setModalController } from '../utils/secureStorage';
+import { useModal } from '../contexts/ModalContext';
 
 const Module = ({ title, items = [], onItemClick, activeItems = [] }) => (
   <div className="bg-gray-900 p-4">
@@ -398,6 +399,15 @@ const CollapsibleModule = ({ title, items = [], expanded, onToggle }) => (
 );
 
 const Terminal = () => {
+  const modalController = useModal();
+  
+  // Initialize the modal controller for secureStorage
+  useEffect(() => {
+    if (modalController) {
+      setModalController(modalController);
+    }
+  }, [modalController]);
+
   const getNextSessionId = () => {
     const keys = Object.keys(localStorage).filter(key => key.startsWith('space_session_'));
     if (keys.length === 0) return 1;

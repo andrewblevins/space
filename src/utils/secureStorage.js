@@ -85,9 +85,10 @@ const getEncryptionPassword = async (forDecryption = false) => {
     }
   } else {
     message = 
-      "Please create a password to secure your API keys.\n\n" +
-      "You'll need this to access your keys in the future.\n\n" +
-      "WARNING: If you forget this password, you'll need to re-enter your API keys.";
+      "🔒 Security Update: SPACE Terminal now encrypts your API keys for better security.\n\n" +
+      "Please create a password to secure your API keys. Your saved conversations are safe and won't be affected.\n\n" +
+      "You'll need this password to access your keys in the future.\n\n" +
+      "WARNING: If you forget this password, you'll only need to re-enter your API keys.";
   }
   
   try {
