@@ -24,13 +24,13 @@ The result is a return to open, curious, relaxed responsiveness, fresh ways of s
 Anyone who would talk to a chatbot about their problems is a potential user. The ideal user already has some set of perspectives, fields, and/or lineages they are in relationship with, but has natural limitations in their ability to map those lineages to their lives in concrete ways.
 
 ### What is the user feeling at the start of the journey?
-Confusion, overwhelm, a sense of grating dissonance between their inner and outer worlds.
+Confusion, overwhelm, a sense of grating dissonance between their inner and outer worlds. Or wanting urgently to come to clarity about an important question. 
 
 ### What should the user feel at the end of the journey?
 Clarity, pleasant anticipation, relaxed free-flowing energy. Spaciousness and open possibility. Relaxed breathing, alert contentment, the feeling of completion, especially as pertains to the topic they brought to the conversation.
 
 ### What is the job that the user is trying to achieve that they "hire" this product for?
-Aligning their inner and outer worlds. Grappling with heretofore overwhelming amounts of complexity.
+Aligning their inner and outer worlds. The user should want to hire SPACE when they are facing a complex or difficult situation, they don't want to talk to another human about it (or another human isn't available), and they are experiencing a sense of internal conflict (competing unintegrated perspectives).
 
 ### At a product level, what data will we measure to track the "health" of the product? That is, whether it's creating value for our users? What are these metrics?
 
@@ -50,7 +50,7 @@ Rate ABSENCE of sycophantic patterns (excessive agreement, vague platitudes)
 This is a slightly aspirational user journey, not the one that currently exists.
 
 1. Inputs their API keys or enters their password.
-2. If it's their first time, they can go through an optional "worksheet" dialogue where they answer questions about themselves and out of that, receive a set of starting advisors.
+2. If it's their first time, they might go through an optional "worksheet" dialogue where they answer questions about themselves and out of that, receive a set of starting advisors.
 3. If they want a custom advisor, they click the + button to create an advisor.
 4. Writes the name of the advisor and then its description, or can auto-generate a description with a button. Does this for as many advisors as desired.
 5. Starts a conversation with a custom prompt or by selecting one from the /prompt list.
