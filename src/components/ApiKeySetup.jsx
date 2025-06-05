@@ -15,7 +15,46 @@ const ApiKeySetup = ({ onComplete }) => {
       setError(authError);
       sessionStorage.removeItem('auth_error'); // Clear the message
     }
-  }, []);
+
+    // Automation helper: expose functions globally for Puppeteer
+    window.spaceAutomation = {
+      setApiKeys: (anthropicKey, openaiKey) => {
+        setAnthropicKey(anthropicKey);
+        setOpenaiKey(openaiKey);
+        setError(''); // Clear any errors
+        return { success: true };
+      },
+      submitForm: () => {
+        const form = document.querySelector('form');
+        if (form) {
+          form.dispatchEvent(new Event('submit', { bubbles: true }));
+          return { success: true };
+        }
+        return { success: false, error: 'Form not found' };
+      },
+      getCurrentState: () => ({
+        anthropicKey: anthropicKey ? '***set***' : '',
+        openaiKey: openaiKey ? '***set***' : '',
+        error,
+        hasError: !!error
+      })
+    };
+
+    // Check for environment variables (for development)
+    try {
+      const envAnthropicKey = import.meta.env.VITE_ANTHROPIC_API_KEY;
+      const envOpenaiKey = import.meta.env.VITE_OPENAI_API_KEY;
+      
+      if (envAnthropicKey && envOpenaiKey) {
+        console.log('🔑 Found API keys in environment, auto-filling...');
+        setAnthropicKey(envAnthropicKey);
+        setOpenaiKey(envOpenaiKey);
+      }
+    } catch (error) {
+      // Environment variables not available, continue normally
+      console.log('No environment variables found for auto-fill');
+    }
+  }, [anthropicKey, openaiKey, error]);
 
   const handleInputChange = (setter) => (e) => {
     setError(''); // Clear error when user starts typing
@@ -107,7 +146,7 @@ const ApiKeySetup = ({ onComplete }) => {
           SPACE Terminal is very cost-effective to use. Each message exchange (your message + AI response) costs roughly 2¢ on average. Starting with $5 in each API account will give you several hours of conversation.
         </p>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4" data-testid="api-key-form">
           <div>
             <label className="block mb-2">Anthropic API Key:</label>
             <input
@@ -116,6 +155,8 @@ const ApiKeySetup = ({ onComplete }) => {
               onChange={handleInputChange(setAnthropicKey)}
               className="w-full bg-black text-green-400 border border-green-400 p-2"
               placeholder=""
+              data-testid="anthropic-api-key"
+              id="anthropic-api-key"
             />
           </div>
 
@@ -127,12 +168,15 @@ const ApiKeySetup = ({ onComplete }) => {
               onChange={handleInputChange(setOpenaiKey)}
               className="w-full bg-black text-green-400 border border-green-400 p-2"
               placeholder=""
+              data-testid="openai-api-key"
+              id="openai-api-key"
             />
           </div>
 
           <button 
             type="submit"
             className="w-full bg-green-400 text-black py-2 px-4 hover:bg-green-300 transition-colors"
+            data-testid="save-api-keys-button"
           >
             Save API Keys
           </button>
