@@ -64,7 +64,7 @@ The user is looking at a fresh conversation. In the advisor panel, they have a s
 - Completion rate of worksheet
 - Number of questions answered on worksheet
 - User acceptance rate of suggested advisors
-- Number of turns taken with suggested advisors
+**- Number of turns taken with suggested advisors**
 - Length of advisor selection conversation
 
 ### Actionable Questions
@@ -87,7 +87,7 @@ The user is looking at a fresh conversation. In the advisor panel, they have a s
 - Do the suggested advisors actually reflect the user's stated interests/values from the worksheet?
 - How often do worksheet-generated panels lead to return usage compared to manually created panels?
 - How long are conversations with worksheet-generated advisors compared with custom advisors? 
-
+- Is this the right panel of advisors for the user's needs? 
 
 1. Questions we picked and rationale
 
@@ -114,6 +114,24 @@ The user is looking at a fresh conversation. In the advisor panel, they have a s
 - How often do suggested panels include perspectives that would naturally disagree with each other on a battery of questions?
 
   Variation on the above, but more exacting. This determines how much we want to adjust prompts/process for more distinctiveness. It also gets into the deeper matter of "actually having a position" (which may want to be built in as a goal at higher levels of this document, now that I'm thinking about it).
+
+- What percentage of the suggested advisors get added to the advisors panel? 
+
+- What percentage of users make it from this journey to the next one, i.e. after doing this, start a conversation with their advisors? 
+
+Target metric: Percentage of users who go through the worksheet process and then click Start Conversation with This Panel. 
+
+What are things the AI should do more or less of to increase this metric? 
+
+- Could give the usdr a clear and enticing sense or an example of what converation with this advisor or set would be like. (Give an example workthrough of a problem related to something the user said in the worksheets.)
+- Could just like make really high-quality advisors and descriptions.
+    - Advisors have compelling voices
+    - Advisors are directly tied to traditions/lineages that the user expressed interest in (or that are latent in their values etc.)
+    - Advisors are charming
+    - Advisors convincingly display expertise that is relevant to the user's problems
+- Faithfully follow the worksheet
+
+Actionable Question: Does the system generate high-quality advisors and descriptions based on the basic worksheet? 
 
 ## 1.2. Advisor Creation Sub-Journey
 
