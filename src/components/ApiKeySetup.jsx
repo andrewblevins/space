@@ -50,7 +50,7 @@ const ApiKeySetup = ({ onComplete }) => {
           'anthropic-dangerous-direct-browser-access': 'true'
         },
         body: JSON.stringify({
-          model: 'claude-3-7-sonnet-20250219',
+          model: 'claude-sonnet-4-20250514',
           messages: [{ role: 'user', content: 'Hello' }],
           max_tokens: 10
         })
