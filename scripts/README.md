@@ -38,3 +38,20 @@ This script is particularly useful when you want an AI assistant (like Claude) t
 ### Stopping
 
 Press `Ctrl+C` to stop the development server and close the browser.
+
+## Modern Puppeteer Best Practices
+
+This project demonstrates automation-friendly React development using modern Puppeteer patterns:
+
+### ✅ Recommended Approaches
+- **Use `page.locator().fill()`** for React controlled components
+- **Add `data-testid` attributes** for reliable element targeting
+- **Environment variable auto-fill** for development workflows
+- **Fallback selector strategies** for robust automation
+
+### ❌ Avoid These Patterns
+- `elementHandle.type()` - doesn't work well with React
+- Complex automation APIs - adds unnecessary complexity
+- Manual event dispatching - modern Puppeteer handles this
+
+See [../docs/AUTOMATION.md](../docs/AUTOMATION.md) for comprehensive patterns and examples.

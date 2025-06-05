@@ -20,7 +20,10 @@ SPACE does not track or store any user data. Everything is saved in local browse
 
 SPACE Terminal requires API keys from both Anthropic and OpenAI to function. You'll be prompted to insert them when you first run the app.
 
-You'll also need to add some money to both accounts, or set up payment methods. For more on this, see [Cost Expectations](#cost-expectations) below. 
+You'll also need to add some money to both accounts, or set up payment methods. For more on this, see [Cost Expectations](#cost-expectations) below.
+
+### Quick Development Setup
+For developers, run `npm run dev:setup` to automatically start the server and configure API keys from environment variables. See [AUTOMATION.md](docs/AUTOMATION.md) for details. 
 
 ### 1. Get Your API Keys
 
