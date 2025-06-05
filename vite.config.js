@@ -8,6 +8,7 @@ export default defineConfig(({ command }) => ({
     sourcemap: true
   },
   server: command === 'serve' ? {
+    port: 3000,
     proxy: {
       '/api': {
         target: 'https://api.anthropic.com',

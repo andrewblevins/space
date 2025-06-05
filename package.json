@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:setup": "node scripts/setup-dev-keys.js",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
@@ -14,6 +15,7 @@
     "@fontsource/vollkorn": "^5.1.1",
     "autoprefixer": "^10.4.20",
     "axios": "^1.7.9",
+    "dotenv": "^16.5.0",
     "openai": "^4.77.0",
     "postcss": "^8.4.49",
     "puppeteer": "^24.10.0",
