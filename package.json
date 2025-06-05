@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:setup": "node scripts/setup-dev-keys.js",
+    "dev:setup": "node scripts/improved-setup.js",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"

@@ -67,6 +67,7 @@ const PasswordModal = ({
           onKeyDown={handleKeyDown}
           className="w-full bg-black text-green-400 border border-green-400 p-2 mb-4 focus:outline-none"
           placeholder="Enter password"
+          data-testid="password-input"
           autoFocus
         />
 
@@ -88,6 +89,7 @@ const PasswordModal = ({
           <button
             onClick={handleSubmit}
             className="px-4 py-2 text-green-400 border border-green-400 rounded hover:bg-green-400 hover:text-black"
+            data-testid="password-submit-btn"
           >
             Submit
           </button>
