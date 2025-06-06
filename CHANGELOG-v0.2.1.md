@@ -22,6 +22,12 @@ Version 0.2.1 enhances the advisor suggestion system with improved variety, bett
 - **File Previews**: Shows exact filename before download
 - **Visual Descriptions**: Clear explanations of what each export option provides
 
+### Help System Deprecation
+- **Deprecated /help Command**: Replaced outdated command list with GUI guidance
+- **Updated Welcome Messages**: Now point users to bottom-left menu interface
+- **Responsible Migration**: Users guided to equivalent GUI features
+- **Cleaner Onboarding**: Removes command-line complexity for new users
+
 ### Enhanced Advisor Suggestions
 - **Increased Suggestions**: Now generates 5 advisor suggestions instead of 2
 - **Diverse Mix**: Balanced recommendations across 4 categories:
@@ -74,6 +80,8 @@ Version 0.2.1 enhances the advisor suggestion system with improved variety, bett
 - **Faster Selection**: One-click addition of suggested advisors
 - **Better Discovery**: More diverse suggestions help users explore different perspectives
 - **Export Discoverability**: GUI export options replace hidden slash commands (`/export`, `/export-all`)
+- **Help System Modernization**: Removes outdated command documentation in favor of discoverable GUI
+- **Cleaner Interface**: New users no longer need to learn terminal commands
 - **Improved Workflow**: Seamless integration with existing advisor management and new export functionality
 
 ## 🔄 Migration Notes
@@ -82,6 +90,7 @@ Version 0.2.1 enhances the advisor suggestion system with improved variety, bett
 - **No Breaking Changes**: All existing functionality preserved
 - **Enhanced Experience**: Existing users get immediate benefit from improved suggestions and export GUI
 - **Slash Commands Still Work**: Original `/export` and `/export-all` commands remain functional
+- **Help Command Graceful Deprecation**: `/help` shows migration guidance instead of removal
 - **Automatic Upgrade**: Changes take effect immediately without user action required
 
 ## 🐛 Bug Fixes
