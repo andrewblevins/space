@@ -14,6 +14,9 @@ import { defaultPrompts } from '../lib/defaultPrompts';
 import { handleApiError } from '../utils/apiErrorHandler';
 import { getDecrypted, setEncrypted, removeEncrypted, setModalController } from '../utils/secureStorage';
 import { useModal } from '../contexts/ModalContext';
+import AccordionMenu from './AccordionMenu';
+import PromptLibrary from './PromptLibrary';
+import AddPromptForm from './AddPromptForm';
 
 const Module = ({ title, items = [], onItemClick, activeItems = [] }) => (
   <div className="bg-gray-900 p-4">
@@ -466,9 +469,12 @@ const Terminal = () => {
     const userPrompts = saved ? JSON.parse(saved) : [];
     // Merge user prompts with defaults, giving precedence to user prompts
     const userPromptNames = new Set(userPrompts.map(p => p.name));
+    const defaultPromptsWithTextProperty = defaultPrompts
+      .filter(p => !userPromptNames.has(p.name))
+      .map(p => ({ name: p.name, text: p.content })); // Map content to text
     const mergedPrompts = [
       ...userPrompts,
-      ...defaultPrompts.filter(p => !userPromptNames.has(p.name))
+      ...defaultPromptsWithTextProperty
     ];
     return mergedPrompts;
   });
@@ -497,6 +503,8 @@ const Terminal = () => {
   const [apiKeysSet, setApiKeysSet] = useState(false);
   const [openaiClient, setOpenaiClient] = useState(null);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
+  const [showPromptLibrary, setShowPromptLibrary] = useState(false);
+  const [showAddPromptForm, setShowAddPromptForm] = useState(false);
 
   const worksheetQuestions = [
     {
@@ -2330,6 +2338,43 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
     }
   };
 
+  // Prompt Library handlers
+  const handleUsePrompt = (prompt) => {
+    setInput(prompt.text);
+    setMessages(prev => [...prev, {
+      type: 'system',
+      content: `Loaded prompt: "${prompt.name}"`
+    }]);
+  };
+
+  const handleEditPrompt = (prompt) => {
+    setEditingPrompt(prompt);
+    setShowPromptLibrary(false);
+  };
+
+  const handleDeletePrompt = (prompt) => {
+    setSavedPrompts(prev => prev.filter(p => p.name !== prompt.name));
+    setMessages(prev => [...prev, {
+      type: 'system',
+      content: `Deleted prompt: "${prompt.name}"`
+    }]);
+  };
+
+  const handleAddNewPrompt = () => {
+    setShowPromptLibrary(false);
+    setShowAddPromptForm(true);
+  };
+
+  const handleAddPromptSubmit = ({ name, text }) => {
+    const newPrompt = { name, text };
+    setSavedPrompts(prev => [...prev, newPrompt]);
+    setMessages(prev => [...prev, {
+      type: 'system',
+      content: `Added new prompt: "${name}"`
+    }]);
+    setShowAddPromptForm(false);
+  };
+
   // Add this helper function to format messages as markdown
   const formatSessionAsMarkdown = (messages) => {
     // Add timestamp at the beginning
@@ -3244,27 +3289,29 @@ ${selectedText}
         onShowApiKeyStatus={handleShowApiKeyStatus}
       />
 
-      {/* Settings Button - Bottom Left */}
-      <div className="fixed bottom-4 left-4 z-50">
-        <button
-          onClick={() => setShowSettingsMenu(true)}
-          className="flex items-center justify-center w-8 h-8 rounded-full bg-black border border-green-400 text-green-400 hover:bg-green-400 hover:text-black transition-colors"
-          title="Settings"
-        >
-          <svg 
-            xmlns="http://www.w3.org/2000/svg" 
-            className="h-5 w-5" 
-            viewBox="0 0 20 20" 
-            fill="currentColor"
-          >
-            <path 
-              fillRule="evenodd" 
-              d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" 
-              clipRule="evenodd" 
-            />
-          </svg>
-        </button>
-      </div>
+      {/* Prompt Library Component */}
+      <PromptLibrary
+        isOpen={showPromptLibrary}
+        onClose={() => setShowPromptLibrary(false)}
+        savedPrompts={savedPrompts}
+        onUsePrompt={handleUsePrompt}
+        onEditPrompt={handleEditPrompt}
+        onDeletePrompt={handleDeletePrompt}
+        onAddNewPrompt={handleAddNewPrompt}
+      />
+
+      {/* Add Prompt Form Component */}
+      <AddPromptForm
+        isOpen={showAddPromptForm}
+        onSubmit={handleAddPromptSubmit}
+        onCancel={() => setShowAddPromptForm(false)}
+      />
+
+      {/* Accordion Menu - Bottom Left */}
+      <AccordionMenu
+        onSettingsClick={() => setShowSettingsMenu(true)}
+        onPromptLibraryClick={() => setShowPromptLibrary(true)}
+      />
 
       {/* Info Button - Bottom Right */}
       <div className="fixed bottom-4 right-4 z-50">
