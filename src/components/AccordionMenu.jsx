@@ -4,7 +4,9 @@ const AccordionMenu = ({
   onSettingsClick,
   onPromptLibraryClick,
   onSessionManagerClick,
-  onExportClick
+  onExportClick,
+  onAboutClick,
+  isInline = false
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -16,7 +18,7 @@ const AccordionMenu = ({
       icon: (
         <svg 
           xmlns="http://www.w3.org/2000/svg" 
-          className="h-4 w-4" 
+          className="h-5 w-5 md:h-4 md:w-4" 
           fill="none" 
           viewBox="0 0 24 24" 
           stroke="currentColor"
@@ -37,7 +39,7 @@ const AccordionMenu = ({
       icon: (
         <svg 
           xmlns="http://www.w3.org/2000/svg" 
-          className="h-4 w-4" 
+          className="h-5 w-5 md:h-4 md:w-4" 
           viewBox="0 0 20 20" 
           fill="currentColor"
         >
@@ -56,7 +58,7 @@ const AccordionMenu = ({
       icon: (
         <svg 
           xmlns="http://www.w3.org/2000/svg" 
-          className="h-4 w-4" 
+          className="h-5 w-5 md:h-4 md:w-4" 
           fill="none" 
           viewBox="0 0 24 24" 
           stroke="currentColor"
@@ -77,7 +79,7 @@ const AccordionMenu = ({
       icon: (
         <svg 
           xmlns="http://www.w3.org/2000/svg" 
-          className="h-4 w-4" 
+          className="h-5 w-5 md:h-4 md:w-4" 
           fill="none" 
           viewBox="0 0 24 24" 
           stroke="currentColor"
@@ -90,7 +92,26 @@ const AccordionMenu = ({
           />
         </svg>
       )
-    }
+    },
+    ...(onAboutClick ? [{
+      id: 'about',
+      label: 'About',
+      onClick: onAboutClick,
+      icon: (
+        <svg 
+          xmlns="http://www.w3.org/2000/svg" 
+          className="h-5 w-5 md:h-4 md:w-4" 
+          viewBox="0 0 20 20" 
+          fill="currentColor"
+        >
+          <path 
+            fillRule="evenodd" 
+            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" 
+            clipRule="evenodd" 
+          />
+        </svg>
+      )
+    }] : [])
   ];
 
   const handleItemClick = (item) => {
@@ -99,15 +120,15 @@ const AccordionMenu = ({
   };
 
   return (
-    <div className="fixed bottom-4 left-4 z-50">
+    <div className={isInline ? "relative z-50" : "fixed bottom-4 left-4 z-50"}>
       {/* Expanded Menu Items */}
       {isExpanded && (
-        <div className="absolute bottom-full mb-2 bg-black border border-green-400 rounded-lg shadow-lg">
+        <div className={`absolute ${isInline ? 'bottom-full right-0 mb-2 min-w-[160px]' : 'bottom-full mb-2'} bg-black border border-green-400 rounded-lg shadow-lg`}>
           {menuItems.map((item) => (
             <button
               key={item.id}
               onClick={() => handleItemClick(item)}
-              className="flex items-center w-full px-4 py-3 text-green-400 hover:bg-green-400 hover:text-black transition-colors first:rounded-t-lg last:rounded-b-lg border-b border-green-400 last:border-b-0"
+              className="flex items-center w-full px-4 py-4 md:py-3 text-green-400 hover:bg-green-400 hover:text-black transition-colors first:rounded-t-lg last:rounded-b-lg border-b border-green-400 last:border-b-0 text-base md:text-sm"
               title={item.label}
             >
               {item.icon}
@@ -120,7 +141,7 @@ const AccordionMenu = ({
       {/* Toggle Button */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className={`flex items-center justify-center w-8 h-8 rounded-full border border-green-400 transition-colors ${
+        className={`flex items-center justify-center ${isInline ? 'w-12 h-12' : 'w-12 h-12 md:w-8 md:h-8'} rounded-full border border-green-400 transition-colors ${
           isExpanded 
             ? 'bg-green-400 text-black' 
             : 'bg-black text-green-400 hover:bg-green-400 hover:text-black'
@@ -129,7 +150,7 @@ const AccordionMenu = ({
       >
         <svg 
           xmlns="http://www.w3.org/2000/svg" 
-          className={`h-5 w-5 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+          className={`${isInline ? 'h-5 w-5' : 'h-5 w-5'} transition-transform ${isExpanded ? 'rotate-180' : ''}`}
           fill="none" 
           viewBox="0 0 24 24" 
           stroke="currentColor"

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 
 /**
  * Textarea that can be resized vertically by dragging the handle.
@@ -9,7 +9,20 @@ import { useState } from "react";
  * @param {boolean} props.isLoading
  */
 export function ExpandingInput({ value, onChange, onSubmit, isLoading }) {
-  const [height, setHeight] = useState('100px');
+  const [height, setHeight] = useState('60px');
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Mobile detection
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -20,15 +33,16 @@ export function ExpandingInput({ value, onChange, onSubmit, isLoading }) {
 
   return (
     <div className="flex-1">
-      <div
-        className="w-full h-1 cursor-ns-resize bg-green-400/10 hover:bg-green-400/20 transition-colors"
+      {!isMobile && (
+        <div
+          className="w-full h-1 cursor-ns-resize bg-green-400/10 hover:bg-green-400/20 transition-colors"
         onMouseDown={(e) => {
           const startY = e.clientY;
           const startHeight = parseInt(height);
 
           const handleMouseMove = (moveEvent) => {
             const deltaY = startY - moveEvent.clientY;
-            const newHeight = Math.min(400, Math.max(100, startHeight + deltaY));
+            const newHeight = Math.min(300, Math.max(60, startHeight + deltaY));
             setHeight(`${newHeight}px`);
           };
 
@@ -40,25 +54,27 @@ export function ExpandingInput({ value, onChange, onSubmit, isLoading }) {
           document.addEventListener('mousemove', handleMouseMove);
           document.addEventListener('mouseup', handleMouseUp);
         }}
-      />
+        />
+      )}
       <textarea
         value={value}
         onChange={onChange}
         onKeyDown={handleKeyDown}
-        style={{ height }}
+        style={{ height: isMobile ? '80px' : height }}
         className={`
           w-full
-          min-h-[100px]
-          max-h-[400px]
+          min-h-[80px]
+          max-h-[300px]
           bg-black
           text-green-400
           font-serif
-          p-4
+          ${isMobile ? 'p-4 text-base' : 'p-2 md:p-4 text-sm md:text-base'}
           border
           border-green-400
           focus:outline-none
           rounded-md
           resize-none
+          leading-relaxed
           ${isLoading ? 'opacity-50' : ''}
         `}
         placeholder={isLoading ? 'Waiting for response...' : 'Type your message...'}

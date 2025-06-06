@@ -76,7 +76,7 @@ const Terminal = () => {
 
   const [messages, setMessages] = useState([
     { type: 'system', content: 'SPACE Terminal - v0.2' },
-    { type: 'system', content: 'Start a conversation, add an advisor (+), or explore features in the bottom-left menu.' }
+    { type: 'system', content: 'Start a conversation or add an advisor (+) to begin.' }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -147,6 +147,8 @@ const Terminal = () => {
   const [advisorSuggestions, setAdvisorSuggestions] = useState([]);
   const [suggestedAdvisorName, setSuggestedAdvisorName] = useState('');
   const [contextLimit, setContextLimit] = useState(150000);
+  const [showLeftPanel, setShowLeftPanel] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const [apiKeysSet, setApiKeysSet] = useState(false);
   const [openaiClient, setOpenaiClient] = useState(null);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
@@ -2303,8 +2305,20 @@ ${selectedText}
   useEffect(() => {
     setMessages([
       { type: 'system', content: 'Welcome to SPACE - v0.2.1' },
-      { type: 'system', content: 'Start a conversation, add an advisor (+), or explore features in the bottom-left menu.' }
+      { type: 'system', content: 'Start a conversation or add an advisor (+) to begin.' }
     ]);
+  }, []);
+
+  // Mobile detection
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024); // lg breakpoint is 1024px
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   const exportAllSessions = () => {
@@ -2351,7 +2365,7 @@ ${selectedText}
         // Regular terminal UI
         <div 
           ref={terminalRef} 
-          className="w-full h-screen bg-gradient-to-b from-gray-900 to-black text-green-400 font-serif flex relative"
+          className="w-full h-screen bg-gradient-to-b from-gray-900 to-black text-green-400 font-serif flex flex-col lg:flex-row relative"
           onContextMenu={handleContextMenu}
           style={{
             /* Custom scrollbar styling for webkit browsers */
@@ -2384,30 +2398,63 @@ ${selectedText}
               background: transparent;
             }
           `}</style>
-          <button 
-            onClick={toggleFullscreen}
-            className="absolute top-2 right-2 text-green-400 hover:text-green-300 z-50"
-          >
-            {isFullscreen ? (
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          {/* Fullscreen button - Desktop only */}
+          {!isMobile && (
+            <button 
+              onClick={toggleFullscreen}
+              className="absolute top-2 right-2 text-green-400 hover:text-green-300 z-50"
+            >
+              {isFullscreen ? (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
+                </svg>
+              )}
+            </button>
+          )}
+
+          {/* Mobile Navigation Buttons */}
+          {isMobile && (
+            <button 
+              onClick={() => setShowLeftPanel(!showLeftPanel)}
+              className="absolute top-4 left-4 text-green-400 hover:text-green-300 z-50 flex items-center space-x-2 bg-gray-900/80 px-3 py-2 rounded-lg backdrop-blur-sm"
+            >
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
-              </svg>
-            )}
-          </button>
+              <span className="text-sm font-medium">Advisors</span>
+            </button>
+          )}
 
           {/* Left Column */}
-          <div className="w-1/4 p-4 border-r border-gray-800 overflow-y-auto scrollbar-terminal">
-            <CollapsibleModule 
-              title="Metaphors" 
-              items={metaphors}
-              expanded={metaphorsExpanded}
-              onToggle={() => setMetaphorsExpanded(!metaphorsExpanded)}
-            />
-            <div className="mt-4">
+          <div className={`${isMobile ? 'fixed inset-0 bg-gray-900/98 backdrop-blur-sm z-40 flex flex-col' : 'w-full lg:w-1/4'} p-4 border-b lg:border-b-0 lg:border-r border-gray-800 overflow-y-auto scrollbar-terminal ${isMobile ? (showLeftPanel ? 'block' : 'hidden') : 'block'}`}>
+            {isMobile && showLeftPanel && (
+              <>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-semibold text-green-400">Advisors</h2>
+                  <button 
+                    onClick={() => setShowLeftPanel(false)}
+                    className="text-green-400 hover:text-green-300 p-2"
+                  >
+                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </>
+            )}
+            {!isMobile && (
+              <CollapsibleModule 
+                title="Metaphors" 
+                items={metaphors}
+                expanded={metaphorsExpanded}
+                onToggle={() => setMetaphorsExpanded(!metaphorsExpanded)}
+              />
+            )}
+            <div className={isMobile ? "mt-0" : "mt-4"}>
               <GroupableModule
                 title="Advisors"
                 groups={advisorGroups}
@@ -2428,7 +2475,7 @@ ${selectedText}
           </div>
 
           {/* Middle Column */}
-          <div className="w-2/4 p-4 flex flex-col">
+          <div className={`w-full lg:w-2/4 ${isMobile ? 'p-0' : 'p-4'} flex flex-col flex-1`}>
             <div 
               ref={messagesContainerRef} 
               className="
@@ -2436,10 +2483,10 @@ ${selectedText}
                 overflow-auto 
                 mb-4 
                 break-words
-                px-6         // Even horizontal padding
-                py-4         // Vertical padding for balance
+                px-4 md:px-6         // Proper mobile padding
+                py-4 md:py-4         // Consistent vertical padding
                 mx-auto      // Center the content
-                max-w-[90ch] // Limit line length for optimal readability
+                max-w-full md:max-w-[90ch] // Full width on mobile, limited on desktop
                 leading-relaxed     // Increased line height for better readability
                 tracking-wide       // Slightly increased letter spacing
                 scrollbar-terminal
@@ -2450,11 +2497,11 @@ ${selectedText}
                     key={idx}
                     id={`msg-${idx}`}
                     className={(() => {
-                      const className = msg.type === 'debug' ? 'text-yellow-400 mb-4 whitespace-pre-wrap break-words' :
-                        msg.type === 'user' ? 'text-green-400 mb-4 whitespace-pre-wrap break-words' :
-                        msg.type === 'assistant' ? 'text-white mb-4 break-words' : 
-                        msg.type === 'system' ? 'text-green-400 mb-4 break-words' :
-                        'text-green-400 mb-4 break-words';
+                      const className = msg.type === 'debug' ? 'text-yellow-400 mb-6 whitespace-pre-wrap break-words text-base md:text-base leading-relaxed' :
+                        msg.type === 'user' ? 'text-green-400 mb-6 whitespace-pre-wrap break-words text-base md:text-base leading-relaxed' :
+                        msg.type === 'assistant' ? 'text-white mb-6 break-words text-base md:text-base leading-relaxed' : 
+                        msg.type === 'system' ? 'text-green-400 mb-6 break-words text-base md:text-base leading-relaxed' :
+                        'text-green-400 mb-6 break-words text-base md:text-base leading-relaxed';
                       return className;
                     })()}
                   >
@@ -2468,16 +2515,16 @@ ${selectedText}
               {isLoading && <div className="text-yellow-400">Loading...</div>}
             </div>
 
-            <div className="mt-auto">
+            <div className={`mt-auto ${isMobile ? 'p-4 bg-gray-900/50 border-t border-gray-800' : ''}`}>
               <form onSubmit={handleSubmit}>
-                <div className="flex items-center">
+                <div className={`flex items-center ${isMobile ? 'space-x-3' : 'space-x-2'}`}>
                   {editingPrompt ? (
                     <div className="flex-1">
                       <textarea
                         value={editText}
                         onChange={(e) => setEditText(e.target.value)}
                         onKeyDown={handleEditKeyDown}
-                        className="w-full h-40 bg-black text-green-400 font-serif p-2 border border-green-400 focus:outline-none resize-none"
+                        className="w-full h-32 md:h-40 bg-black text-green-400 font-serif p-2 border border-green-400 focus:outline-none resize-none"
                         placeholder="Edit your prompt..."
                         autoFocus
                       />
@@ -2509,45 +2556,64 @@ ${selectedText}
                             }]);
                           }
                         }}
-                        className="w-full h-40 bg-black text-green-400 font-serif p-2 border border-green-400 focus:outline-none resize-none"
+                        className="w-full h-32 md:h-40 bg-black text-green-400 font-serif p-2 border border-green-400 focus:outline-none resize-none"
                         placeholder="Edit advisor description..."
                         autoFocus
                       />
                     </div>
                   ) : (
-                    <>
-                      <span className="mr-2">&gt;</span>
+                    <div className="flex items-center space-x-2">
+                      {!isMobile && <span className="mr-2">&gt;</span>}
                       <ExpandingInput
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onSubmit={handleSubmit}
                         isLoading={isLoading}
                       />
-                    </>
+                      {isMobile && (
+                        <div className="flex-shrink-0">
+                          <AccordionMenu 
+                            onSettingsClick={() => setShowSettingsMenu(true)}
+                            onPromptLibraryClick={() => setShowPromptLibrary(true)}
+                            onSessionManagerClick={() => setShowSessionPanel(true)}
+                            onExportClick={() => setShowExportMenu(true)}
+                            onAboutClick={() => {
+                              setMessages(prev => [...prev, {
+                                type: 'system',
+                                content: 'SPACE Terminal v0.2.1 - An experimental interface for conversations with AI advisors.'
+                              }]);
+                            }}
+                            isInline={true}
+                          />
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
               </form>
             </div>
           </div>
 
-          {/* Right Column */}
-          <div className="w-1/4 p-4 border-l border-gray-800 overflow-y-auto scrollbar-terminal">
-            <CollapsibleModule 
-              title="Questions" 
-              items={questions}
-              expanded={questionsExpanded}
-              onToggle={() => setQuestionsExpanded(!questionsExpanded)}
-            />
-            <div className="mt-4">
-              <CollapsibleSuggestionsModule
-                title="Suggested Advisors"
-                items={advisorSuggestions}
-                expanded={advisorSuggestionsExpanded}
-                onToggle={() => setAdvisorSuggestionsExpanded(!advisorSuggestionsExpanded)}
-                onItemClick={(item) => handleAdvisorSuggestionClick(item)}
+          {/* Right Column - Hidden on Mobile */}
+          {!isMobile && (
+            <div className="w-full lg:w-1/4 p-4 border-t lg:border-t-0 lg:border-l border-gray-800 overflow-y-auto scrollbar-terminal">
+              <CollapsibleModule 
+                title="Questions" 
+                items={questions}
+                expanded={questionsExpanded}
+                onToggle={() => setQuestionsExpanded(!questionsExpanded)}
               />
+              <div className="mt-4">
+                <CollapsibleSuggestionsModule
+                  title="Suggested Advisors"
+                  items={advisorSuggestions}
+                  expanded={advisorSuggestionsExpanded}
+                  onToggle={() => setAdvisorSuggestionsExpanded(!advisorSuggestionsExpanded)}
+                  onItemClick={(item) => handleAdvisorSuggestionClick(item)}
+                />
+              </div>
             </div>
-          </div>
+          )}
 
           {showAdvisorForm && (
             <AdvisorForm
@@ -2693,17 +2759,20 @@ ${selectedText}
         })()}
       />
 
-      {/* Accordion Menu - Bottom Left */}
-      <AccordionMenu
-        onSettingsClick={() => setShowSettingsMenu(true)}
-        onPromptLibraryClick={() => setShowPromptLibrary(true)}
-        onSessionManagerClick={() => setShowSessionPanel(true)}
-        onExportClick={() => setShowExportMenu(true)}
-      />
+      {/* Accordion Menu - Bottom Left (Desktop only) */}
+      {!isMobile && (
+        <AccordionMenu
+          onSettingsClick={() => setShowSettingsMenu(true)}
+          onPromptLibraryClick={() => setShowPromptLibrary(true)}
+          onSessionManagerClick={() => setShowSessionPanel(true)}
+          onExportClick={() => setShowExportMenu(true)}
+        />
+      )}
 
-      {/* Info Button - Bottom Right */}
-      <div className="fixed bottom-4 right-4 z-50">
-        <button
+      {/* Info Button - Bottom Right (Desktop only) */}
+      {!isMobile && (
+        <div className="fixed bottom-4 right-4 z-50">
+          <button
           className="flex items-center justify-center w-8 h-8 rounded-full bg-black border border-green-400 text-green-400 hover:bg-green-400 hover:text-black transition-colors"
           title="About SPACE Terminal"
           onClick={() => {
@@ -2725,8 +2794,9 @@ ${selectedText}
               clipRule="evenodd" 
             />
           </svg>
-        </button>
-      </div>
+          </button>
+        </div>
+      )}
     </>
   );
 }
