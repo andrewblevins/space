@@ -18,6 +18,7 @@ import AccordionMenu from './AccordionMenu';
 import SessionPanel from './SessionPanel';
 import PromptLibrary from './PromptLibrary';
 import AddPromptForm from './AddPromptForm';
+import ExportMenu from './ExportMenu';
 
 const Module = ({ title, items = [], onItemClick, activeItems = [] }) => (
   <div className="bg-gray-900 p-4">
@@ -602,6 +603,7 @@ const Terminal = () => {
   const [showPromptLibrary, setShowPromptLibrary] = useState(false);
   const [showSessionPanel, setShowSessionPanel] = useState(false);
   const [showAddPromptForm, setShowAddPromptForm] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   const worksheetQuestions = [
     {
@@ -3739,13 +3741,29 @@ ${selectedText}
         onDeleteSession={handleDeleteSession}
       />
 
+      {/* Export Menu Component */}
+      <ExportMenu
+        isOpen={showExportMenu}
+        onClose={() => setShowExportMenu(false)}
+        onExportSession={handleExportSession}
+        onExportAll={handleExportAll}
+        currentSessionId={currentSessionId}
+        sessionTitle={(() => {
+          const sessionData = localStorage.getItem(`space_session_${currentSessionId}`);
+          if (sessionData) {
+            const session = JSON.parse(sessionData);
+            return session.title;
+          }
+          return null;
+        })()}
+      />
+
       {/* Accordion Menu - Bottom Left */}
       <AccordionMenu
         onSettingsClick={() => setShowSettingsMenu(true)}
         onPromptLibraryClick={() => setShowPromptLibrary(true)}
         onSessionManagerClick={() => setShowSessionPanel(true)}
-        onExportSessionClick={handleExportSession}
-        onExportAllClick={handleExportAll}
+        onExportClick={() => setShowExportMenu(true)}
       />
 
       {/* Info Button - Bottom Right */}

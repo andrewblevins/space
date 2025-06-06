@@ -4,8 +4,7 @@ const AccordionMenu = ({
   onSettingsClick,
   onPromptLibraryClick,
   onSessionManagerClick,
-  onExportSessionClick,
-  onExportAllClick
+  onExportClick
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -72,9 +71,9 @@ const AccordionMenu = ({
       )
     },
     {
-      id: 'export-session',
-      label: 'Export Session',
-      onClick: onExportSessionClick,
+      id: 'export',
+      label: 'Export',
+      onClick: onExportClick,
       icon: (
         <svg 
           xmlns="http://www.w3.org/2000/svg" 
@@ -87,28 +86,7 @@ const AccordionMenu = ({
             strokeLinecap="round" 
             strokeLinejoin="round" 
             strokeWidth={2} 
-            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-          />
-        </svg>
-      )
-    },
-    {
-      id: 'export-all',
-      label: 'Export All Sessions',
-      onClick: onExportAllClick,
-      icon: (
-        <svg 
-          xmlns="http://www.w3.org/2000/svg" 
-          className="h-4 w-4" 
-          fill="none" 
-          viewBox="0 0 24 24" 
-          stroke="currentColor"
-        >
-          <path 
-            strokeLinecap="round" 
-            strokeLinejoin="round" 
-            strokeWidth={2} 
-            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"
+            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
           />
         </svg>
       )
