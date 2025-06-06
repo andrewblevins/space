@@ -746,6 +746,49 @@ const Terminal = () => {
     }]);
   };
 
+  // Export functions for GUI buttons
+  const handleExportSession = () => {
+    try {
+      const markdown = formatSessionAsMarkdown(messages);
+      const blob = new Blob([markdown], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      
+      // Use session title if available, otherwise use session ID
+      const sessionData = localStorage.getItem(`space_session_${currentSessionId}`);
+      let filename = `space-session-${currentSessionId}`;
+      if (sessionData) {
+        const session = JSON.parse(sessionData);
+        if (session.title) {
+          // Sanitize title for filename
+          const sanitizedTitle = session.title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+          filename = `space-${sanitizedTitle}`;
+        }
+      }
+      
+      a.download = `${filename}.md`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      setMessages(prev => [...prev, {
+        type: 'system',
+        content: 'Session exported successfully'
+      }]);
+    } catch (error) {
+      setMessages(prev => [...prev, {
+        type: 'system',
+        content: `Error exporting session: ${error.message}`
+      }]);
+    }
+  };
+
+  const handleExportAll = () => {
+    exportAllSessions();
+  };
+
   const handleCommand = (text) => {
     console.log('handleCommand called with:', text);
     if (text.startsWith('/')) {
@@ -3701,6 +3744,8 @@ ${selectedText}
         onSettingsClick={() => setShowSettingsMenu(true)}
         onPromptLibraryClick={() => setShowPromptLibrary(true)}
         onSessionManagerClick={() => setShowSessionPanel(true)}
+        onExportSessionClick={handleExportSession}
+        onExportAllClick={handleExportAll}
       />
 
       {/* Info Button - Bottom Right */}
