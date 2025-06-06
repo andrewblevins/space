@@ -20,6 +20,16 @@ Version 0.2.0 introduces a comprehensive settings menu that transforms SPACE fro
 - **Auto-save**: All settings persist immediately to localStorage
 - **Terminal Aesthetic**: Green-themed design matching the terminal interface
 
+### Accordion Menu & Prompt Library (New Feature)
+- **Expandable Menu System**: Replaced single settings gear with discoverable accordion menu
+- **Prompt Library Interface**: Full GUI for viewing, editing, and managing saved prompts
+- **Search & Filter**: Find prompts quickly with real-time search functionality
+- **CRUD Operations**: Create, read, update, delete prompts through intuitive interface
+- **Default Prompt Integration**: Built-in contemplative, basic-start, and serious-play prompts
+- **Modal-based Design**: Consistent floating modals matching terminal aesthetic
+- **Auto-close Behavior**: Menus close after selection for smooth workflow
+- **Form Validation**: Proper input validation for prompt names and content
+
 ### Range Validation & UX
 - **Smart Input Clamping**: Invalid values automatically correct to valid ranges
 - **Claude 4 Compatibility**: Context limit updated to match 200K token window
@@ -70,11 +80,12 @@ Version 0.2.0 introduces a comprehensive settings menu that transforms SPACE fro
 ## 🎨 User Interface Enhancements
 
 ### Visual Improvements
-- **Consistent Theming**: Green terminal aesthetic throughout settings
-- **Responsive Design**: Mobile-friendly modal and input sizing
-- **Hover Effects**: Smooth transitions for interactive elements
-- **Typography**: Clear labeling and helpful descriptions
-- **Status Indicators**: Visual feedback for current settings values
+- **Consistent Theming**: Green terminal aesthetic throughout settings and prompt library
+- **Responsive Design**: Mobile-friendly modal and input sizing for all interfaces
+- **Hover Effects**: Smooth transitions for interactive elements and menu items
+- **Typography**: Clear labeling and helpful descriptions across all components
+- **Status Indicators**: Visual feedback for current settings values and prompt actions
+- **Icon Design**: Intuitive SVG icons for settings, prompts, and navigation
 
 ### Accessibility
 - **Keyboard Navigation**: Proper focus management in modals
@@ -104,6 +115,7 @@ Version 0.2.0 introduces a comprehensive settings menu that transforms SPACE fro
 - **Questions Generation**: Resolved JSON parsing and response formatting issues
 - **State Synchronization**: Improved consistency between settings and application state
 - **Form Validation**: Enhanced input handling for React controlled components
+- **Default Prompts**: Fixed property mapping from `content` to `text` for consistent editing
 
 ### Browser Automation
 - **Password Modal Handling**: Improved reliability of authentication flow
@@ -146,6 +158,7 @@ Version 0.2.0 introduces a comprehensive settings menu that transforms SPACE fro
 - **Export Integration**: GUI buttons for session export/import
 - **Advanced Controls**: Model selection, temperature adjustment
 - **Keyboard Shortcuts**: Quick access to common settings
+- **Menu Expansion**: Additional tools and utilities in accordion menu system
 
 ### Technical Debt
 - **Data-testid Attributes**: Add automation-friendly selectors to more components
