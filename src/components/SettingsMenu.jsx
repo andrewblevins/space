@@ -190,7 +190,7 @@ const SettingsMenu = ({
             onClick={handleRestoreDefaults}
             className="w-full px-4 py-2 bg-black border border-blue-400 rounded text-blue-400 hover:bg-blue-400 hover:text-black transition-colors"
           >
-            Restore Defaults (High Quality)
+            Restore Defaults
           </button>
           <p className="text-xs text-gray-500 text-center">
             Settings are saved automatically
