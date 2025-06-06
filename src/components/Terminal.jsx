@@ -421,6 +421,7 @@ const Terminal = () => {
               dangerouslyAllowBrowser: true
             });
             setOpenaiClient(client);
+            console.log('✅ OpenAI client initialized successfully');
           }
         } catch (error) {
           console.error('Error checking API keys:', error);
@@ -1924,6 +1925,7 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
                     dangerouslyAllowBrowser: true
                   });
                   setOpenaiClient(client);
+                  console.log('✅ OpenAI client re-initialized after key update');
                 }
 
                 setMessages(prev => [...prev, {
@@ -2113,9 +2115,7 @@ ${JSON.stringify(contextMessages, null, 2)}`;
         
         if (done) {
           console.log('Stream complete');
-          // Trigger analysis only once after stream is complete
-          analyzeMetaphors(messages);
-          analyzeForQuestions(messages);
+          // Analysis will be triggered by useEffect when messages update
           break;
         }
 
@@ -2605,29 +2605,42 @@ When responding, you will adopt the distinct voice(s) of the active advisor(s) a
   };
 
   const analyzeMetaphors = async (messages) => {
-    if (!metaphorsExpanded || !openaiClient) return; // Skip if collapsed or client not ready
+    if (!metaphorsExpanded || !openaiClient) {
+      console.log('Skipping metaphor analysis:', { metaphorsExpanded, hasClient: !!openaiClient });
+      return;
+    }
     
     const userMessages = messages
       .filter(msg => msg.type === 'user')
       .map(msg => msg.content)
       .join("\n");
+      
+    if (!userMessages.trim()) {
+      console.log('No user messages found for metaphor analysis');
+      return;
+    }
+
+    console.log('🔍 Analyzing metaphors for:', userMessages.substring(0, 100) + '...');
 
     try {
       const response = await openaiClient.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [{
           role: "system",
-          content: "You are a helpful assistant that responds only in valid JSON format. Your response should be an array of strings."
+          content: "You are a helpful assistant that responds only in valid JSON format. Your response should be a JSON object with a 'metaphors' property containing an array of strings."
         }, {
           role: "user",
-          content: `Analyze the following messages for conceptual metaphors:\n\n${userMessages}\n\nRespond with a JSON array of metaphors.`
+          content: `Analyze the following messages for conceptual metaphors. Extract metaphors like "life is a journey", "time is money", "mind as computer", etc.:\n\n${userMessages}\n\nRespond with JSON in this format: {"metaphors": ["metaphor1", "metaphor2", ...]}`
         }],
         max_tokens: 150,
         response_format: { type: "json_object" }
       });
 
-      const metaphors = JSON.parse(response.choices[0].message.content);
-      setMetaphors(metaphors.metaphors || []);
+      const result = JSON.parse(response.choices[0].message.content);
+      const metaphors = result.metaphors || [];
+      
+      console.log('✅ Metaphors found:', metaphors);
+      setMetaphors(metaphors);
     } catch (error) {
       console.error('Error analyzing metaphors:', error);
       if (debugMode) {
@@ -2640,30 +2653,43 @@ When responding, you will adopt the distinct voice(s) of the active advisor(s) a
   };
 
   const analyzeForQuestions = async (messages) => {
-    if (!questionsExpanded || !openaiClient) return; // Skip if collapsed or client not ready
+    if (!questionsExpanded || !openaiClient) {
+      console.log('Skipping question analysis:', { questionsExpanded, hasClient: !!openaiClient });
+      return;
+    }
     
     const recentMessages = messages
-      .slice(-2)
+      .slice(-3) // Get last 3 messages for better context
       .filter(msg => msg.type === 'assistant' || msg.type === 'user')
       .map(msg => `${msg.type === 'user' ? 'User' : 'Assistant'}: ${msg.content}`)
       .join("\n\n");
+      
+    if (!recentMessages.trim()) {
+      console.log('No recent messages found for question analysis');
+      return;
+    }
+
+    console.log('❓ Analyzing for questions from:', recentMessages.substring(0, 150) + '...');
 
     try {
       const response = await openaiClient.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [{
           role: "system",
-          content: "You are a helpful assistant that responds only in valid JSON format. Your response should be an array of strings."
+          content: "You are a helpful assistant that responds only in valid JSON format. Your response should be a JSON object with a 'questions' property containing an array of strings."
         }, {
           role: "user",
-          content: `Based on this recent exchange, suggest 2-3 questions that might help the user deepen their exploration:\n\n${recentMessages}\n\nRespond with a JSON array of questions.`
+          content: `Based on this recent conversation exchange, suggest 2-3 insightful follow-up questions that might help the user deepen their exploration and discover new perspectives:\n\n${recentMessages}\n\nRespond with JSON in this format: {"questions": ["question1", "question2", "question3"]}`
         }],
-        max_tokens: 150,
+        max_tokens: 200,
         response_format: { type: "json_object" }
       });
 
-      const questions = JSON.parse(response.choices[0].message.content);
-      setQuestions(questions.questions || []);
+      const result = JSON.parse(response.choices[0].message.content);
+      const questions = result.questions || [];
+      
+      console.log('✅ Questions generated:', questions);
+      setQuestions(questions);
     } catch (error) {
       console.error('Error analyzing for questions:', error);
       if (debugMode) {
@@ -2690,6 +2716,19 @@ When responding, you will adopt the distinct voice(s) of the active advisor(s) a
       localStorage.setItem(`space_session_${currentSessionId}`, JSON.stringify(sessionData));
     }
   }, [messages, metaphors, questions, currentSessionId]);
+
+  // Trigger analysis when messages change and we have a Claude response
+  useEffect(() => {
+    if (messages.length > 1 && !isLoading) {
+      const lastMessage = messages[messages.length - 1];
+      // Only analyze after Claude responses (assistant messages)
+      if (lastMessage.type === 'assistant') {
+        console.log('🔍 Triggering analysis after Claude response');
+        analyzeMetaphors(messages);
+        analyzeForQuestions(messages);
+      }
+    }
+  }, [messages, isLoading, metaphorsExpanded, questionsExpanded, openaiClient]);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -2918,6 +2957,7 @@ ${selectedText}
               dangerouslyAllowBrowser: true
             });
             setOpenaiClient(client);
+            console.log('✅ OpenAI client initialized on API key setup complete');
             setApiKeysSet(true);
           }} 
         />
