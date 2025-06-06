@@ -1723,7 +1723,6 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
     return false;
   };
 
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
