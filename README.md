@@ -8,7 +8,7 @@ The biggest difference from other chat interfaces is the ability to create and m
 
 SPACE also lets you have much longer conversations without hitting rate limits, a current limitation of Claude Pro.
 
-The app uses Claude 3.5 Sonnet for the main conversation and GPT-4o for background analysis features like metaphor tracking and question generation (which you can activate by clicking the triangles next to those menus). Model selection is not configurable through the interface yet, if anyone wants to implement that I'd be very grateful.
+The app uses Claude 4 Sonnet for the main conversation and GPT-4o for background analysis features like metaphor tracking and question generation (which you can activate by clicking the triangles next to those menus). Model selection is not configurable through the interface yet, if anyone wants to implement that I'd be very grateful.
 
 Currently SPACE will only work well on a desktop or laptop computer. Mobile layout TK.
 
@@ -32,6 +32,7 @@ For developers, run `npm run dev:setup` to automatically start the server and co
 2. Sign up or log in
 3. Navigate to "API Keys" in your account settings
 4. Create a new API key and copy it
+5. Include the header `anthropic-version: 2023-06-01` in your requests to use Claude 4 Sonnet
 
 #### OpenAI
 1. Visit [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
