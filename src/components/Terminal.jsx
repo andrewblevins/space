@@ -379,7 +379,7 @@ const ExpandingInput = ({ value, onChange, onSubmit, isLoading }) => {
 
 const CollapsibleModule = ({ title, items = [], expanded, onToggle }) => (
   <div className="bg-gray-900 p-4">
-    <div 
+    <div
       className="flex justify-between items-center cursor-pointer hover:text-green-300 mb-2"
       onClick={onToggle}
     >
@@ -390,6 +390,37 @@ const CollapsibleModule = ({ title, items = [], expanded, onToggle }) => (
       <ul className="space-y-4">
         {items.map((item, idx) => (
           <li key={idx} className="text-gray-300 whitespace-pre-wrap">
+            {item}
+          </li>
+        ))}
+      </ul>
+    )}
+  </div>
+);
+
+const CollapsibleClickableModule = ({
+  title,
+  items = [],
+  expanded,
+  onToggle,
+  onItemClick
+}) => (
+  <div className="bg-gray-900 p-4">
+    <div
+      className="flex justify-between items-center cursor-pointer hover:text-green-300 mb-2"
+      onClick={onToggle}
+    >
+      <h2 className="text-white">{title}</h2>
+      <span className="text-green-400">{expanded ? '▼' : '▶'}</span>
+    </div>
+    {expanded && (
+      <ul className="space-y-4">
+        {items.map((item, idx) => (
+          <li
+            key={idx}
+            className="text-gray-300 cursor-pointer hover:text-green-400 transition-colors whitespace-pre-wrap"
+            onClick={() => onItemClick && onItemClick(item)}
+          >
             {item}
           </li>
         ))}
@@ -491,6 +522,9 @@ const Terminal = () => {
   });
   const [metaphorsExpanded, setMetaphorsExpanded] = useState(false);
   const [questionsExpanded, setQuestionsExpanded] = useState(false);
+  const [advisorSuggestionsExpanded, setAdvisorSuggestionsExpanded] = useState(false);
+  const [advisorSuggestions, setAdvisorSuggestions] = useState([]);
+  const [suggestedAdvisorName, setSuggestedAdvisorName] = useState('');
   const [contextLimit, setContextLimit] = useState(150000);
   const [apiKeysSet, setApiKeysSet] = useState(false);
   const [openaiClient, setOpenaiClient] = useState(null);
@@ -655,6 +689,7 @@ const Terminal = () => {
               setMessages(penultimate.messages);
               setMetaphors(penultimate.metaphors || []);
               setQuestions(penultimate.questions || []);
+              setAdvisorSuggestions(penultimate.advisorSuggestions || []);
               setMessages(prev => [...prev, {
                 type: 'system',
                 content: `Loaded previous session ${penultimate.id} from ${new Date(penultimate.timestamp).toLocaleString()}`
@@ -683,6 +718,7 @@ const Terminal = () => {
             setMessages(session.messages);
             setMetaphors(session.metaphors || []);
             setQuestions(session.questions || []);
+            setAdvisorSuggestions(session.advisorSuggestions || []);
           } else {
             setMessages(prev => [...prev, {
               type: 'system',
@@ -835,6 +871,7 @@ Now, I'd like to generate the final output. Please include the following aspects
               return true;
 
             case 'add':
+              setSuggestedAdvisorName('');
               setShowAdvisorForm(true);
               return true;
 
@@ -2098,9 +2135,6 @@ ${JSON.stringify(contextMessages, null, 2)}`;
         
         if (done) {
           console.log('Stream complete');
-          // Trigger analysis only once after stream is complete
-          analyzeMetaphors(messages);
-          analyzeForQuestions(messages);
           break;
         }
 
@@ -2260,6 +2294,15 @@ ${JSON.stringify(contextMessages, null, 2)}`;
       localStorage.setItem('space_prompts', JSON.stringify(savedPrompts));
     }
   }, [savedPrompts]);
+
+  // Run analysis whenever messages update
+  useEffect(() => {
+    if (!isLoading && messages.length > 0) {
+      analyzeMetaphors(messages);
+      analyzeForQuestions(messages);
+      analyzeAdvisorSuggestions(messages);
+    }
+  }, [messages, isLoading]);
 
   const handleEditKeyDown = (e) => {
     if (e.key === 'Enter' && e.ctrlKey) {
@@ -2660,6 +2703,42 @@ When responding, you will adopt the distinct voice(s) of the active advisor(s) a
     }
   };
 
+  const analyzeAdvisorSuggestions = async (messages) => {
+    if (!advisorSuggestionsExpanded || !openaiClient) return;
+
+    const recentMessages = messages
+      .slice(-3)
+      .filter(msg => msg.type === 'assistant' || msg.type === 'user')
+      .map(msg => `${msg.type === 'user' ? 'User' : 'Assistant'}: ${msg.content}`)
+      .join("\n\n");
+
+    try {
+      const response = await openaiClient.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [{
+          role: "system",
+          content: "You are a helpful assistant that responds only in valid JSON format. Your response should be an array of strings."
+        }, {
+          role: "user",
+          content: `Based on this conversation, suggest 1-2 short advisor titles that could add useful perspective:\n\n${recentMessages}\n\nRespond with a JSON array named suggestions.`
+        }],
+        max_tokens: 100,
+        response_format: { type: "json_object" }
+      });
+
+      const suggestions = JSON.parse(response.choices[0].message.content);
+      setAdvisorSuggestions(suggestions.suggestions || []);
+    } catch (error) {
+      console.error('Error generating advisor suggestions:', error);
+      if (debugMode) {
+        setMessages(prev => [...prev, {
+          type: 'system',
+          content: `❌ Advisor Suggestion Error:\n${error.message}`
+        }]);
+      }
+    }
+  };
+
   useEffect(() => {
     if (messages.length > 1) { // Don't save empty sessions
       const sessionData = {
@@ -2670,11 +2749,12 @@ When responding, you will adopt the distinct voice(s) of the active advisor(s) a
           tags: msg.tags || [] // Ensure tags are preserved
         })),
         metaphors,
-        questions
+        questions,
+        advisorSuggestions
       };
       localStorage.setItem(`space_session_${currentSessionId}`, JSON.stringify(sessionData));
     }
-  }, [messages, metaphors, questions, currentSessionId]);
+  }, [messages, metaphors, questions, advisorSuggestions, currentSessionId]);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -2839,12 +2919,17 @@ ${selectedText}
     } else {
       // Activate group and all its advisors
       setActiveGroups(prev => [...prev, group.name]);
-      setAdvisors(prev => prev.map(advisor => 
-        group.advisors.includes(advisor.name) 
+      setAdvisors(prev => prev.map(advisor =>
+        group.advisors.includes(advisor.name)
           ? { ...advisor, active: true }
           : advisor
       ));
     }
+  };
+
+  const handleAdvisorSuggestionClick = (suggestion) => {
+    setSuggestedAdvisorName(suggestion);
+    setShowAdvisorForm(true);
   };
 
   const getCurrentQuestionId = () => {
@@ -2945,7 +3030,10 @@ ${selectedText}
                 onGroupClick={handleGroupClick}
                 activeItems={advisors.filter(a => a.active)}
                 activeGroups={activeGroups}
-                onAddClick={() => setShowAdvisorForm(true)}
+                onAddClick={() => {
+                  setSuggestedAdvisorName('');
+                  setShowAdvisorForm(true);
+                }}
                 setEditingAdvisor={setEditingAdvisor}
                 setAdvisors={setAdvisors}
                 setMessages={setMessages}
@@ -3057,16 +3145,26 @@ ${selectedText}
 
           {/* Right Column */}
           <div className="w-1/4 p-4 border-l border-gray-800 overflow-y-auto">
-            <CollapsibleModule 
-              title="Questions" 
+            <CollapsibleModule
+              title="Questions"
               items={questions}
               expanded={questionsExpanded}
               onToggle={() => setQuestionsExpanded(!questionsExpanded)}
             />
+            <div className="mt-4">
+              <CollapsibleClickableModule
+                title="Advisor Ideas"
+                items={advisorSuggestions.map(a => `Add ${a}`)}
+                expanded={advisorSuggestionsExpanded}
+                onToggle={() => setAdvisorSuggestionsExpanded(!advisorSuggestionsExpanded)}
+                onItemClick={(item) => handleAdvisorSuggestionClick(item.replace(/^Add /, ''))}
+              />
+            </div>
           </div>
 
           {showAdvisorForm && (
             <AdvisorForm
+              initialName={suggestedAdvisorName}
               onSubmit={({ name, description }) => {
                 const newAdvisor = {
                   name,
@@ -3079,9 +3177,11 @@ ${selectedText}
                   content: `Added advisor: ${newAdvisor.name}`
                 }]);
                 setShowAdvisorForm(false);
+                setSuggestedAdvisorName('');
               }}
               onCancel={() => {
                 setShowAdvisorForm(false);
+                setSuggestedAdvisorName('');
                 setMessages(prev => [...prev, {
                   type: 'system',
                   content: 'Cancelled adding advisor'
