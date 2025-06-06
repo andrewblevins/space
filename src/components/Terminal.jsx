@@ -672,9 +672,10 @@ const Terminal = () => {
     if (sessionData) {
       const session = JSON.parse(sessionData);
       setCurrentSessionId(session.id);
+      const displayName = session.title || `Session ${session.id}`;
       setMessages([...session.messages, {
         type: 'system',
-        content: `Loaded session ${session.id} from ${new Date(session.timestamp).toLocaleString()}`
+        content: `Loaded "${displayName}" from ${new Date(session.timestamp).toLocaleString()}`
       }]);
       setMetaphors(session.metaphors || []);
       setQuestions(session.questions || []);
@@ -692,9 +693,10 @@ const Terminal = () => {
     if (sessions.length > 1) {
       const penultimate = sessions[sessions.length - 2];
       setCurrentSessionId(penultimate.id);
+      const displayName = penultimate.title || `Session ${penultimate.id}`;
       setMessages([...penultimate.messages, {
         type: 'system',
-        content: `Loaded previous session ${penultimate.id} from ${new Date(penultimate.timestamp).toLocaleString()}`
+        content: `Loaded previous "${displayName}" from ${new Date(penultimate.timestamp).toLocaleString()}`
       }]);
       setMetaphors(penultimate.metaphors || []);
       setQuestions(penultimate.questions || []);
@@ -729,10 +731,18 @@ const Terminal = () => {
   };
 
   const handleDeleteSession = (sessionId) => {
+    // Get session data to show title in deletion message
+    const sessionData = localStorage.getItem(`space_session_${sessionId}`);
+    let displayName = `Session ${sessionId}`;
+    if (sessionData) {
+      const session = JSON.parse(sessionData);
+      displayName = session.title || `Session ${session.id}`;
+    }
+    
     localStorage.removeItem(`space_session_${sessionId}`);
     setMessages(prev => [...prev, {
       type: 'system',
-      content: `Deleted session ${sessionId}`
+      content: `Deleted "${displayName}"`
     }]);
   };
 
@@ -3034,24 +3044,78 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
     }
   };
 
+  // Generate conversation title using gpt-4o-mini
+  const generateConversationTitle = async (messages) => {
+    if (!openaiClient) return null;
+    
+    try {
+      // Use first few user/assistant messages for title generation
+      const conversationText = messages
+        .filter(msg => msg.type === 'user' || msg.type === 'assistant')
+        .slice(0, 6) // Use first 6 messages to capture the conversation direction
+        .map(msg => `${msg.type}: ${msg.content.slice(0, 200)}`) // Limit content length
+        .join('\n');
+        
+      if (!conversationText.trim()) return null;
+      
+      const response = await openaiClient.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [{
+          role: "system",
+          content: "Generate a concise, descriptive title (2-6 words) for this conversation. Focus on the main topic or question. Return only the title, no quotes or extra text. Examples: 'Python debugging help', 'Recipe for pasta', 'Career advice discussion'."
+        }, {
+          role: "user",
+          content: `Generate a title for this conversation:\n\n${conversationText}`
+        }],
+        max_tokens: 30,
+        temperature: 0.7
+      });
+      
+      return response.choices[0].message.content.trim();
+    } catch (error) {
+      console.error('Title generation failed:', error);
+      return null;
+    }
+  };
+
   useEffect(() => {
     // Only save sessions that have actual user/assistant messages (not just system messages)
     const nonSystemMessages = messages.filter(msg => msg.type !== 'system');
     if (nonSystemMessages.length > 0) {
-      const sessionData = {
-        id: currentSessionId,
-        timestamp: new Date().toISOString(),
-        messages: messages.map(msg => ({
-          ...msg,
-          tags: msg.tags || [] // Ensure tags are preserved
-        })),
-        metaphors,
-        questions,
-        advisorSuggestions
+      const saveSession = async () => {
+        const sessionData = {
+          id: currentSessionId,
+          timestamp: new Date().toISOString(),
+          messages: messages.map(msg => ({
+            ...msg,
+            tags: msg.tags || [] // Ensure tags are preserved
+          })),
+          metaphors,
+          questions,
+          advisorSuggestions
+        };
+
+        // Generate title if this is a new session with enough content and no title yet
+        const existingSession = localStorage.getItem(`space_session_${currentSessionId}`);
+        const hasTitle = existingSession ? JSON.parse(existingSession).title : false;
+        
+        if (!hasTitle && nonSystemMessages.length >= 2) {
+          // Generate title when we have a back-and-forth conversation
+          const title = await generateConversationTitle(messages);
+          if (title) {
+            sessionData.title = title;
+          }
+        } else if (hasTitle) {
+          // Preserve existing title
+          sessionData.title = JSON.parse(existingSession).title;
+        }
+
+        localStorage.setItem(`space_session_${currentSessionId}`, JSON.stringify(sessionData));
       };
-      localStorage.setItem(`space_session_${currentSessionId}`, JSON.stringify(sessionData));
+
+      saveSession();
     }
-  }, [messages, metaphors, questions, advisorSuggestions, currentSessionId]);
+  }, [messages, metaphors, questions, advisorSuggestions, currentSessionId, openaiClient]);
 
   // Trigger analysis when messages change and we have a Claude response
   useEffect(() => {
