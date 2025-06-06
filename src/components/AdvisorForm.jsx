@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { getApiEndpoint } from '../utils/apiConfig';
 import { handleApiError } from '../utils/apiErrorHandler';
 import { getDecrypted } from '../utils/secureStorage';
@@ -19,7 +19,7 @@ const generateAdvisorDescription = async (advisorName, onStream) => {
         'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-3-7-sonnet-20250219',
         messages: [{
           role: 'user',
           content: `You are generating a description of an AI advisor that will be used to summon that entity into a conversation. You will receive a name and you will write your description based on that name. Your description should be a paragraph spoken directly in the advisor's distinct voice and perspective. It should include a general self-description, any specific lineages, practices, or frameworks they embody, and how they tend to approach problems. Do not include the advisor's name in the description.
@@ -72,10 +72,14 @@ The advisor's name is ${advisorName}.`
   }
 };
 
-const AdvisorForm = ({ onSubmit, onCancel }) => {
-  const [name, setName] = useState('');
+const AdvisorForm = ({ onSubmit, onCancel, initialName = '' }) => {
+  const [name, setName] = useState(initialName);
   const [description, setDescription] = useState('');
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    setName(initialName);
+  }, [initialName]);
 
   const handleGenerate = async () => {
     if (!name.trim()) {

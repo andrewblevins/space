@@ -402,6 +402,37 @@ const CollapsibleModule = ({ title, items = [], expanded, onToggle }) => (
   </div>
 );
 
+const CollapsibleClickableModule = ({
+  title,
+  items = [],
+  expanded,
+  onToggle,
+  onItemClick
+}) => (
+  <div className="bg-gray-900 p-4">
+    <div
+      className="flex justify-between items-center cursor-pointer hover:text-green-300 mb-2"
+      onClick={onToggle}
+    >
+      <h2 className="text-white">{title}</h2>
+      <span className="text-green-400">{expanded ? '▼' : '▶'}</span>
+    </div>
+    {expanded && (
+      <ul className="space-y-4">
+        {items.map((item, idx) => (
+          <li
+            key={idx}
+            className="text-gray-300 cursor-pointer hover:text-green-400 transition-colors whitespace-pre-wrap"
+            onClick={() => onItemClick && onItemClick(item)}
+          >
+            {item}
+          </li>
+        ))}
+      </ul>
+    )}
+  </div>
+);
+
 const Terminal = () => {
   const modalController = useModal();
   
@@ -513,6 +544,9 @@ const Terminal = () => {
   });
   const [metaphorsExpanded, setMetaphorsExpanded] = useState(false);
   const [questionsExpanded, setQuestionsExpanded] = useState(false);
+  const [advisorSuggestionsExpanded, setAdvisorSuggestionsExpanded] = useState(false);
+  const [advisorSuggestions, setAdvisorSuggestions] = useState([]);
+  const [suggestedAdvisorName, setSuggestedAdvisorName] = useState('');
   const [contextLimit, setContextLimit] = useState(150000);
   const [apiKeysSet, setApiKeysSet] = useState(false);
   const [openaiClient, setOpenaiClient] = useState(null);
@@ -680,6 +714,7 @@ const Terminal = () => {
               setMessages(penultimate.messages);
               setMetaphors(penultimate.metaphors || []);
               setQuestions(penultimate.questions || []);
+              setAdvisorSuggestions(penultimate.advisorSuggestions || []);
               setMessages(prev => [...prev, {
                 type: 'system',
                 content: `Loaded previous session ${penultimate.id} from ${new Date(penultimate.timestamp).toLocaleString()}`
@@ -708,6 +743,7 @@ const Terminal = () => {
             setMessages(session.messages);
             setMetaphors(session.metaphors || []);
             setQuestions(session.questions || []);
+            setAdvisorSuggestions(session.advisorSuggestions || []);
           } else {
             setMessages(prev => [...prev, {
               type: 'system',
@@ -860,6 +896,7 @@ Now, I'd like to generate the final output. Please include the following aspects
               return true;
 
             case 'add':
+              setSuggestedAdvisorName('');
               setShowAdvisorForm(true);
               return true;
 
@@ -2769,7 +2806,26 @@ When responding, you will adopt the distinct voice(s) of the active advisor(s) a
           content: "You are a helpful assistant that responds only in valid JSON format. Your response should be a JSON object with a 'questions' property containing an array of strings."
         }, {
           role: "user",
-          content: `Based on this recent conversation exchange, suggest 2-3 insightful follow-up questions that might help the user deepen their exploration and discover new perspectives:\n\n${recentMessages}\n\nRespond with JSON in this format: {"questions": ["question1", "question2", "question3"]}`
+          content: `Based on this recent conversation exchange, suggest 1-2 specific advisors who could add valuable perspective to this discussion.
+
+Consider suggesting:
+- Real historical figures, thinkers, or experts relevant to the topic
+- Fictional characters whose wisdom or approach would be illuminating  
+- Professional roles or archetypes that bring useful frameworks
+- Philosophers, scientists, artists, or practitioners with relevant expertise
+
+Focus on advisors who would bring genuinely different perspectives, challenge assumptions, or offer specialized knowledge that could deepen the exploration.
+
+Examples of good suggestions:
+- "Carl Jung" (for psychological/symbolic discussions)
+- "Marie Kondo" (for organization/simplicity topics)
+- "Socrates" (for philosophical questioning)
+- "A Trauma-Informed Therapist" (for healing/recovery conversations)
+
+Recent conversation:
+${recentMessages}
+
+Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2"]}`
         }],
         max_tokens: 200,
         response_format: { type: "json_object" }
@@ -2791,6 +2847,61 @@ When responding, you will adopt the distinct voice(s) of the active advisor(s) a
     }
   };
 
+  const analyzeAdvisorSuggestions = async (messages) => {
+    if (!advisorSuggestionsExpanded || !openaiClient) return;
+
+    const recentMessages = messages
+      .slice(-3)
+      .filter(msg => msg.type === 'assistant' || msg.type === 'user')
+      .map(msg => `${msg.type === 'user' ? 'User' : 'Assistant'}: ${msg.content}`)
+      .join("\n\n");
+
+    try {
+      const response = await openaiClient.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [{
+          role: "system",
+          content: "You are a helpful assistant that responds only in valid JSON format."
+        }, {
+          role: "user",
+          content: `Based on this recent conversation exchange, suggest 1-2 specific advisors who could add valuable perspective to this discussion.
+
+Consider suggesting:
+- Real historical figures, thinkers, or experts relevant to the topic
+- Fictional characters whose wisdom or approach would be illuminating  
+- Professional roles or archetypes that bring useful frameworks
+- Philosophers, scientists, artists, or practitioners with relevant expertise
+
+Focus on advisors who would bring genuinely different perspectives, challenge assumptions, or offer specialized knowledge that could deepen the exploration.
+
+Examples of good suggestions:
+- "Carl Jung" (for psychological/symbolic discussions)
+- "Marie Kondo" (for organization/simplicity topics)
+- "Socrates" (for philosophical questioning)
+- "A Trauma-Informed Therapist" (for healing/recovery conversations)
+
+Recent conversation:
+${recentMessages}
+
+Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2"]}`
+        }],
+        max_tokens: 100,
+        response_format: { type: "json_object" }
+      });
+
+      const suggestions = JSON.parse(response.choices[0].message.content);
+      setAdvisorSuggestions(suggestions.suggestions || []);
+    } catch (error) {
+      console.error('Error generating advisor suggestions:', error);
+      if (debugMode) {
+        setMessages(prev => [...prev, {
+          type: 'system',
+          content: `❌ Advisor Suggestion Error:\n${error.message}`
+        }]);
+      }
+    }
+  };
+
   useEffect(() => {
     if (messages.length > 1) { // Don't save empty sessions
       const sessionData = {
@@ -2801,11 +2912,12 @@ When responding, you will adopt the distinct voice(s) of the active advisor(s) a
           tags: msg.tags || [] // Ensure tags are preserved
         })),
         metaphors,
-        questions
+        questions,
+        advisorSuggestions
       };
       localStorage.setItem(`space_session_${currentSessionId}`, JSON.stringify(sessionData));
     }
-  }, [messages, metaphors, questions, currentSessionId]);
+  }, [messages, metaphors, questions, advisorSuggestions, currentSessionId]);
 
   // Trigger analysis when messages change and we have a Claude response
   useEffect(() => {
@@ -2814,11 +2926,12 @@ When responding, you will adopt the distinct voice(s) of the active advisor(s) a
       // Only analyze after Claude responses (assistant messages)
       if (lastMessage.type === 'assistant') {
         console.log('🔍 Triggering analysis after Claude response');
-        analyzeMetaphors(messages);
-        analyzeForQuestions(messages);
+                  analyzeMetaphors(messages);
+          analyzeForQuestions(messages);
+          analyzeAdvisorSuggestions(messages);
       }
     }
-  }, [messages, isLoading, metaphorsExpanded, questionsExpanded, openaiClient]);
+  }, [messages, isLoading, metaphorsExpanded, questionsExpanded, advisorSuggestionsExpanded, openaiClient]);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -2991,6 +3104,11 @@ ${selectedText}
     }
   };
 
+  const handleAdvisorSuggestionClick = (suggestion) => {
+    setSuggestedAdvisorName(suggestion);
+    setShowAdvisorForm(true);
+  };
+
   const getCurrentQuestionId = () => {
     const template = WORKSHEET_TEMPLATES[currentWorksheetId];
     if (template.type === 'basic') {
@@ -3090,7 +3208,10 @@ ${selectedText}
                 onGroupClick={handleGroupClick}
                 activeItems={advisors.filter(a => a.active)}
                 activeGroups={activeGroups}
-                onAddClick={() => setShowAdvisorForm(true)}
+                onAddClick={() => {
+                  setSuggestedAdvisorName('');
+                  setShowAdvisorForm(true);
+                }}
                 setEditingAdvisor={setEditingAdvisor}
                 setAdvisors={setAdvisors}
                 setMessages={setMessages}
@@ -3208,10 +3329,20 @@ ${selectedText}
               expanded={questionsExpanded}
               onToggle={() => setQuestionsExpanded(!questionsExpanded)}
             />
+            <div className="mt-4">
+              <CollapsibleClickableModule
+                title="Advisor Ideas"
+                items={advisorSuggestions.map(a => `Add ${a}`)}
+                expanded={advisorSuggestionsExpanded}
+                onToggle={() => setAdvisorSuggestionsExpanded(!advisorSuggestionsExpanded)}
+                onItemClick={(item) => handleAdvisorSuggestionClick(item.replace(/^Add /, ''))}
+              />
+            </div>
           </div>
 
           {showAdvisorForm && (
             <AdvisorForm
+              initialName={suggestedAdvisorName}
               onSubmit={({ name, description }) => {
                 const newAdvisor = {
                   name,
@@ -3224,9 +3355,11 @@ ${selectedText}
                   content: `Added advisor: ${newAdvisor.name}`
                 }]);
                 setShowAdvisorForm(false);
+                setSuggestedAdvisorName('');
               }}
               onCancel={() => {
                 setShowAdvisorForm(false);
+                setSuggestedAdvisorName('');
                 setMessages(prev => [...prev, {
                   type: 'system',
                   content: 'Cancelled adding advisor'
