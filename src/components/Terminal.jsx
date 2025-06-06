@@ -433,6 +433,53 @@ const CollapsibleClickableModule = ({
   </div>
 );
 
+const CollapsibleSuggestionsModule = ({
+  title,
+  items = [],
+  expanded,
+  onToggle,
+  onItemClick
+}) => (
+  <div className="bg-gray-900 p-4">
+    <div
+      className="flex justify-between items-center cursor-pointer hover:text-green-300 mb-2"
+      onClick={onToggle}
+    >
+      <h2 className="text-white">{title}</h2>
+      <span className="text-green-400">{expanded ? '▼' : '▶'}</span>
+    </div>
+    {expanded && (
+      <ul className="space-y-4">
+        {items.map((item, idx) => (
+          <li
+            key={idx}
+            className="flex items-center justify-between text-gray-300 hover:text-green-400 transition-colors"
+          >
+            <span className="whitespace-pre-wrap">{item}</span>
+            <button 
+              onClick={() => onItemClick && onItemClick(item)}
+              className="ml-2 text-green-400 hover:text-green-300 transition-colors"
+            >
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                className="h-4 w-4" 
+                viewBox="0 0 20 20" 
+                fill="currentColor"
+              >
+                <path 
+                  fillRule="evenodd" 
+                  d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" 
+                  clipRule="evenodd" 
+                />
+              </svg>
+            </button>
+          </li>
+        ))}
+      </ul>
+    )}
+  </div>
+);
+
 const Terminal = () => {
   const modalController = useModal();
   
@@ -2864,28 +2911,28 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2"]}`
           content: "You are a helpful assistant that responds only in valid JSON format."
         }, {
           role: "user",
-          content: `Based on this recent conversation exchange, suggest 1-2 specific advisors who could add valuable perspective to this discussion.
+          content: `Based on this recent conversation exchange, suggest exactly 5 specific advisors who could add valuable perspective to this discussion.
 
-Consider suggesting:
-- Real historical figures, thinkers, or experts relevant to the topic
-- Fictional characters whose wisdom or approach would be illuminating  
-- Professional roles or archetypes that bring useful frameworks
-- Philosophers, scientists, artists, or practitioners with relevant expertise
+Please provide a balanced mix of:
+1. Real historical figures, thinkers, or experts (living or dead)
+2. Mythic figures, gods/goddesses, or legendary characters from various cultures
+3. Professional roles or archetypal figures that bring useful frameworks
+4. Fictional characters whose wisdom or approach would be illuminating
 
 Focus on advisors who would bring genuinely different perspectives, challenge assumptions, or offer specialized knowledge that could deepen the exploration.
 
-Examples of good suggestions:
-- "Carl Jung" (for psychological/symbolic discussions)
-- "Marie Kondo" (for organization/simplicity topics)
-- "Socrates" (for philosophical questioning)
-- "A Trauma-Informed Therapist" (for healing/recovery conversations)
+Examples of good suggestions by category:
+Real People: "Carl Jung", "Marie Kondo", "Socrates", "Maya Angelou"
+Mythic Figures: "Athena", "Thoth", "Coyote", "Quan Yin"
+Role-Based: "A Trauma-Informed Therapist", "A Master Craftsperson", "A Village Elder"
+Fictional: "Hermione Granger", "Gandalf", "Tyrion Lannister"
 
 Recent conversation:
 ${recentMessages}
 
-Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2"]}`
+Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor Name 3", "Advisor Name 4", "Advisor Name 5"]}`
         }],
-        max_tokens: 100,
+        max_tokens: 150,
         response_format: { type: "json_object" }
       });
 
@@ -3119,7 +3166,7 @@ ${selectedText}
 
   useEffect(() => {
     setMessages([
-      { type: 'system', content: 'Welcome to SPACE - v0.2' },
+      { type: 'system', content: 'Welcome to SPACE - v0.2.1' },
       { type: 'system', content: `Context limit (length up to which full conversation memory is retained) is set to ${contextLimit.toLocaleString()} tokens. (Reduce it to save money.)`},
       { type: 'system', content: `Max length for responses is set to ${maxTokens.toLocaleString()} tokens.`},
       { type: 'system', content: `Type /help for a list of commands. Type /prompt list to see a list of available starting prompts. Press + (to the left of here) to add an advisor to the board.` },
@@ -3330,12 +3377,12 @@ ${selectedText}
               onToggle={() => setQuestionsExpanded(!questionsExpanded)}
             />
             <div className="mt-4">
-              <CollapsibleClickableModule
-                title="Advisor Ideas"
-                items={advisorSuggestions.map(a => `Add ${a}`)}
+              <CollapsibleSuggestionsModule
+                title="Suggested Advisors"
+                items={advisorSuggestions}
                 expanded={advisorSuggestionsExpanded}
                 onToggle={() => setAdvisorSuggestionsExpanded(!advisorSuggestionsExpanded)}
-                onItemClick={(item) => handleAdvisorSuggestionClick(item.replace(/^Add /, ''))}
+                onItemClick={(item) => handleAdvisorSuggestionClick(item)}
               />
             </div>
           </div>
