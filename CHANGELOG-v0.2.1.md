@@ -51,6 +51,7 @@ Version 0.2.1 enhances the advisor suggestion system with improved variety, bett
 - **Intuitive Icons**: Plus buttons clearly indicate "add this advisor" action
 - **Consistent Theming**: Green terminal aesthetic maintained throughout
 - **Better Visual Hierarchy**: Clear distinction between advisor name and action button
+- **Custom Scrollbars**: Redesigned scrollbars with transparent background and subtle dark gray thumb for more elegant, unobtrusive scrolling experience that blends seamlessly with the terminal aesthetic
 
 ### User Experience
 - **Reduced Cognitive Load**: Simpler, more direct interaction pattern
