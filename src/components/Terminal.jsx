@@ -3373,7 +3373,37 @@ ${selectedText}
           ref={terminalRef} 
           className="w-full h-screen bg-gradient-to-b from-gray-900 to-black text-green-400 font-serif flex relative"
           onContextMenu={handleContextMenu}
+          style={{
+            /* Custom scrollbar styling for webkit browsers */
+            scrollbarWidth: 'thin',
+            scrollbarColor: '#374151 transparent'
+          }}
         >
+          <style jsx>{`
+            /* Webkit scrollbar styling */
+            .scrollbar-terminal::-webkit-scrollbar {
+              width: 8px;
+              height: 8px;
+            }
+            
+            .scrollbar-terminal::-webkit-scrollbar-track {
+              background: transparent;
+            }
+            
+            .scrollbar-terminal::-webkit-scrollbar-thumb {
+              background: #374151;
+              border-radius: 4px;
+              border: none;
+            }
+            
+            .scrollbar-terminal::-webkit-scrollbar-thumb:hover {
+              background: #4b5563;
+            }
+            
+            .scrollbar-terminal::-webkit-scrollbar-corner {
+              background: transparent;
+            }
+          `}</style>
           <button 
             onClick={toggleFullscreen}
             className="absolute top-2 right-2 text-green-400 hover:text-green-300 z-50"
@@ -3390,7 +3420,7 @@ ${selectedText}
           </button>
 
           {/* Left Column */}
-          <div className="w-1/4 p-4 border-r border-gray-800 overflow-y-auto">
+          <div className="w-1/4 p-4 border-r border-gray-800 overflow-y-auto scrollbar-terminal">
             <CollapsibleModule 
               title="Metaphors" 
               items={metaphors}
@@ -3432,6 +3462,7 @@ ${selectedText}
                 max-w-[90ch] // Limit line length for optimal readability
                 leading-relaxed     // Increased line height for better readability
                 tracking-wide       // Slightly increased letter spacing
+                scrollbar-terminal
               "
             >
               {messages.map((msg, idx) => (
@@ -3520,7 +3551,7 @@ ${selectedText}
           </div>
 
           {/* Right Column */}
-          <div className="w-1/4 p-4 border-l border-gray-800 overflow-y-auto">
+          <div className="w-1/4 p-4 border-l border-gray-800 overflow-y-auto scrollbar-terminal">
             <CollapsibleModule 
               title="Questions" 
               items={questions}
