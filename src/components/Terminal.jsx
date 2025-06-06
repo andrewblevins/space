@@ -2135,10 +2135,6 @@ ${JSON.stringify(contextMessages, null, 2)}`;
         
         if (done) {
           console.log('Stream complete');
-          // Trigger analysis only once after stream is complete
-          analyzeMetaphors(messages);
-          analyzeForQuestions(messages);
-          analyzeAdvisorSuggestions(messages);
           break;
         }
 
@@ -2298,6 +2294,15 @@ ${JSON.stringify(contextMessages, null, 2)}`;
       localStorage.setItem('space_prompts', JSON.stringify(savedPrompts));
     }
   }, [savedPrompts]);
+
+  // Run analysis whenever messages update
+  useEffect(() => {
+    if (!isLoading && messages.length > 0) {
+      analyzeMetaphors(messages);
+      analyzeForQuestions(messages);
+      analyzeAdvisorSuggestions(messages);
+    }
+  }, [messages, isLoading]);
 
   const handleEditKeyDown = (e) => {
     if (e.key === 'Enter' && e.ctrlKey) {
