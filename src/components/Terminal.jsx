@@ -15,6 +15,7 @@ import { handleApiError } from '../utils/apiErrorHandler';
 import { getDecrypted, setEncrypted, removeEncrypted, setModalController } from '../utils/secureStorage';
 import { useModal } from '../contexts/ModalContext';
 import AccordionMenu from './AccordionMenu';
+import SessionPanel from './SessionPanel';
 import PromptLibrary from './PromptLibrary';
 import AddPromptForm from './AddPromptForm';
 
@@ -599,6 +600,7 @@ const Terminal = () => {
   const [openaiClient, setOpenaiClient] = useState(null);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [showPromptLibrary, setShowPromptLibrary] = useState(false);
+  const [showSessionPanel, setShowSessionPanel] = useState(false);
   const [showAddPromptForm, setShowAddPromptForm] = useState(false);
 
   const worksheetQuestions = [
@@ -644,11 +646,94 @@ const Terminal = () => {
     }
     
     return sessions
+      .filter(session => {
+        // Only include sessions with actual user/assistant messages (not just system messages)
+        const nonSystemMessages = session.messages.filter(m => m.type !== 'system');
+        return nonSystemMessages.length > 0;
+      })
       .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))  // Changed from b - a to a - b
       .map(session => ({
         ...session,
         messageCount: session.messages.filter(m => m.type !== 'system').length,
       }));
+  };
+
+  // Session management functions for SessionPanel
+  const handleNewSession = () => {
+    setCurrentSessionId(getNextSessionId());
+    setMessages([{ type: 'system', content: 'Started new session' }]);
+    setMetaphors([]);
+    setQuestions([]);
+    setAdvisorSuggestions([]);
+  };
+
+  const handleLoadSession = (sessionId) => {
+    const sessionData = localStorage.getItem(`space_session_${sessionId}`);
+    if (sessionData) {
+      const session = JSON.parse(sessionData);
+      setCurrentSessionId(session.id);
+      setMessages([...session.messages, {
+        type: 'system',
+        content: `Loaded session ${session.id} from ${new Date(session.timestamp).toLocaleString()}`
+      }]);
+      setMetaphors(session.metaphors || []);
+      setQuestions(session.questions || []);
+      setAdvisorSuggestions(session.advisorSuggestions || []);
+    } else {
+      setMessages(prev => [...prev, {
+        type: 'system',
+        content: `Session ${sessionId} not found`
+      }]);
+    }
+  };
+
+  const handleLoadPrevious = () => {
+    const sessions = loadSessions();
+    if (sessions.length > 1) {
+      const penultimate = sessions[sessions.length - 2];
+      setCurrentSessionId(penultimate.id);
+      setMessages([...penultimate.messages, {
+        type: 'system',
+        content: `Loaded previous session ${penultimate.id} from ${new Date(penultimate.timestamp).toLocaleString()}`
+      }]);
+      setMetaphors(penultimate.metaphors || []);
+      setQuestions(penultimate.questions || []);
+      setAdvisorSuggestions(penultimate.advisorSuggestions || []);
+    } else {
+      setMessages(prev => [...prev, {
+        type: 'system',
+        content: sessions.length === 1 ? 'Only one session exists' : 'No previous sessions found'
+      }]);
+    }
+  };
+
+  const handleClearTerminal = () => {
+    setMessages([{ type: 'system', content: 'Terminal cleared' }]);
+    setMetaphors([]);
+    setQuestions([]);
+  };
+
+  const handleResetAllSessions = () => {
+    // Clear all sessions from localStorage
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('space_session_')) {
+        localStorage.removeItem(key);
+      }
+    });
+    // Reset current session
+    setCurrentSessionId(1);
+    setMessages([{ type: 'system', content: 'All sessions cleared. Starting fresh with Session 1' }]);
+    setMetaphors([]);
+    setQuestions([]);
+    setAdvisorSuggestions([]);
+  };
+
+  const handleDeleteSession = (sessionId) => {
+    localStorage.removeItem(`space_session_${sessionId}`);
+    setMessages(prev => [...prev, {
+      type: 'system',
+      content: `Deleted session ${sessionId}`
+    }]);
   };
 
   const handleCommand = (text) => {
@@ -2950,7 +3035,9 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
   };
 
   useEffect(() => {
-    if (messages.length > 1) { // Don't save empty sessions
+    // Only save sessions that have actual user/assistant messages (not just system messages)
+    const nonSystemMessages = messages.filter(msg => msg.type !== 'system');
+    if (nonSystemMessages.length > 0) {
       const sessionData = {
         id: currentSessionId,
         timestamp: new Date().toISOString(),
@@ -3501,10 +3588,24 @@ ${selectedText}
         onCancel={() => setShowAddPromptForm(false)}
       />
 
+      {/* Session Panel Component */}
+      <SessionPanel
+        isOpen={showSessionPanel}
+        onClose={() => setShowSessionPanel(false)}
+        currentSessionId={currentSessionId}
+        onNewSession={handleNewSession}
+        onLoadSession={handleLoadSession}
+        onLoadPrevious={handleLoadPrevious}
+        onClearTerminal={handleClearTerminal}
+        onResetAllSessions={handleResetAllSessions}
+        onDeleteSession={handleDeleteSession}
+      />
+
       {/* Accordion Menu - Bottom Left */}
       <AccordionMenu
         onSettingsClick={() => setShowSettingsMenu(true)}
         onPromptLibraryClick={() => setShowPromptLibrary(true)}
+        onSessionManagerClick={() => setShowSessionPanel(true)}
       />
 
       {/* Info Button - Bottom Right */}
