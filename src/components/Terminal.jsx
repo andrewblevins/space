@@ -292,37 +292,80 @@ const GroupableModule = ({
   );
 };
 
-const MemoizedMarkdownMessage = React.memo(({ content }) => (
-  <ReactMarkdown
-    className="text-left font-serif w-full"
-    components={{
-      h1: ({children}) => <h1 className="text-blue-400 font-bold font-serif">{children}</h1>,
-      h2: ({children}) => <h2 className="text-green-400 font-bold font-serif">{children}</h2>,
-      code: ({node, inline, className, children, ...props}) => {
-        const match = /language-(\w+)/.exec(className || '');
-        return !inline ? (
-          <pre className="bg-gray-900 p-4 rounded-md my-2 overflow-x-auto whitespace-pre-wrap break-all w-full">
-            <code
-              className={`${match ? `language-${match[1]}` : ''} text-white font-mono block`}
-              {...props}
-            >
+const MemoizedMarkdownMessage = React.memo(({ content, advisorName, advisorColor }) => {
+  // If we have an advisor name, we need to render it separately with its color
+  if (advisorName) {
+    return (
+      <div className="text-left font-serif w-full">
+        <div className={`${advisorColor} font-bold mb-2`}>
+          {advisorName}:
+        </div>
+        <ReactMarkdown
+          className="text-left font-serif w-full"
+          components={{
+            h1: ({children}) => <h1 className="text-blue-400 font-bold font-serif">{children}</h1>,
+            h2: ({children}) => <h2 className="text-green-400 font-bold font-serif">{children}</h2>,
+            code: ({node, inline, className, children, ...props}) => {
+              const match = /language-(\w+)/.exec(className || '');
+              return !inline ? (
+                <pre className="bg-gray-900 p-4 rounded-md my-2 overflow-x-auto whitespace-pre-wrap break-all w-full">
+                  <code
+                    className={`${match ? `language-${match[1]}` : ''} text-white font-mono block`}
+                    {...props}
+                  >
+                    {children}
+                  </code>
+                </pre>
+              ) : (
+                <code className="text-green-400 font-mono bg-gray-900 px-1 rounded" {...props}>
+                  {children}
+                </code>
+              );
+            },
+            p: ({children}) => <p className="text-white whitespace-pre-wrap font-serif mb-2 w-full">{children}</p>,
+            ul: ({children}) => <ul className="text-white list-disc pl-4 space-y-1 mb-2 w-full">{children}</ul>,
+            li: ({children}) => <li className="text-white">{children}</li>,
+          }}
+        >
+          {content}
+        </ReactMarkdown>
+      </div>
+    );
+  }
+
+  // Default rendering without advisor styling
+  return (
+    <ReactMarkdown
+      className="text-left font-serif w-full"
+      components={{
+        h1: ({children}) => <h1 className="text-blue-400 font-bold font-serif">{children}</h1>,
+        h2: ({children}) => <h2 className="text-green-400 font-bold font-serif">{children}</h2>,
+        code: ({node, inline, className, children, ...props}) => {
+          const match = /language-(\w+)/.exec(className || '');
+          return !inline ? (
+            <pre className="bg-gray-900 p-4 rounded-md my-2 overflow-x-auto whitespace-pre-wrap break-all w-full">
+              <code
+                className={`${match ? `language-${match[1]}` : ''} text-white font-mono block`}
+                {...props}
+              >
+                {children}
+              </code>
+            </pre>
+          ) : (
+            <code className="text-green-400 font-mono bg-gray-900 px-1 rounded" {...props}>
               {children}
             </code>
-          </pre>
-        ) : (
-          <code className="text-green-400 font-mono bg-gray-900 px-1 rounded" {...props}>
-            {children}
-          </code>
-        );
-      },
-      p: ({children}) => <p className="text-white whitespace-pre-wrap font-serif mb-2 w-full">{children}</p>,
-      ul: ({children}) => <ul className="text-white list-disc pl-4 space-y-1 mb-2 w-full">{children}</ul>,
-      li: ({children}) => <li className="text-white">{children}</li>,
-    }}
-  >
-    {content}
-  </ReactMarkdown>
-));
+          );
+        },
+        p: ({children}) => <p className="text-white whitespace-pre-wrap font-serif mb-2 w-full">{children}</p>,
+        ul: ({children}) => <ul className="text-white list-disc pl-4 space-y-1 mb-2 w-full">{children}</ul>,
+        li: ({children}) => <li className="text-white">{children}</li>,
+      }}
+    >
+      {content}
+    </ReactMarkdown>
+  );
+});
 
 const ExpandingInput = ({ value, onChange, onSubmit, isLoading }) => {
   const [height, setHeight] = useState('100px');
@@ -746,6 +789,52 @@ const Terminal = () => {
       type: 'system',
       content: `Deleted "${displayName}"`
     }]);
+  };
+
+  // Color assignment for advisors
+  const getAdvisorColor = (advisorName) => {
+    const colors = [
+      'text-blue-400',
+      'text-purple-400', 
+      'text-pink-400',
+      'text-indigo-400',
+      'text-cyan-400',
+      'text-teal-400',
+      'text-amber-400',
+      'text-orange-400',
+      'text-red-400',
+      'text-emerald-400',
+      'text-lime-400',
+      'text-violet-400'
+    ];
+    
+    // Create a simple hash of the advisor name to consistently assign colors
+    let hash = 0;
+    for (let i = 0; i < advisorName.length; i++) {
+      hash = advisorName.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return colors[Math.abs(hash) % colors.length];
+  };
+
+  // Parse advisor name from message content
+  const parseAdvisorFromMessage = (content) => {
+    // Look for "Name:" at the start of the message
+    const match = content.match(/^([^:]+):\s*/);
+    if (match) {
+      const advisorName = match[1].trim();
+      // Verify this is actually an advisor name (check against active advisors)
+      const activeAdvisors = advisors.filter(a => a.active);
+      const matchingAdvisor = activeAdvisors.find(a => 
+        a.name.toLowerCase() === advisorName.toLowerCase()
+      );
+      if (matchingAdvisor) {
+        return {
+          advisorName: matchingAdvisor.name,
+          contentWithoutName: content.replace(match[0], '').trim()
+        };
+      }
+    }
+    return null;
   };
 
   // Export functions for GUI buttons
@@ -2888,7 +2977,9 @@ Exported on: ${timestamp}\n\n`;
     return `You are currently embodying the following advisors:
 ${activeAdvisors.map(a => `\n${a.name}: ${a.description}`).join('\n')}
 
-When responding, you will adopt the distinct voice(s) of the active advisor(s) as appropriate to the context and question.`;
+When responding, you will adopt the distinct voice(s) of the active advisor(s) as appropriate to the context and question.
+
+IMPORTANT: When speaking as a specific advisor, begin your response with the advisor's name followed by a colon (e.g., "Carl Jung:" or "Marie Kondo:"). When providing general responses that don't embody a specific advisor, you may respond without a name prefix.`;
   };
 
   const analyzeMetaphors = async (messages) => {
@@ -3478,26 +3569,43 @@ ${selectedText}
                 scrollbar-terminal
               "
             >
-              {messages.map((msg, idx) => (
-                <div 
-                  key={idx}
-                  id={`msg-${idx}`}
-                  className={(() => {
-                    const className = msg.type === 'debug' ? 'text-yellow-400 mb-4 whitespace-pre-wrap break-words' :
-                      msg.type === 'user' ? 'text-green-400 mb-4 whitespace-pre-wrap break-words' :
-                      msg.type === 'assistant' ? 'text-white mb-4 break-words' : 
-                      msg.type === 'system' ? 'text-green-400 mb-4 break-words' :
-                      'text-green-400 mb-4 break-words';
-                    return className;
-                  })()}
-                >
-                  {(msg.type === 'system' || msg.type === 'assistant') ? (
-                    <MemoizedMarkdownMessage content={msg.content} />
-                  ) : (
-                    msg.content
-                  )}
-                </div>
-              ))}
+              {messages.map((msg, idx) => {
+                // Parse advisor information for assistant messages
+                let advisorInfo = null;
+                let displayContent = msg.content;
+                
+                if (msg.type === 'assistant') {
+                  advisorInfo = parseAdvisorFromMessage(msg.content);
+                  if (advisorInfo) {
+                    displayContent = advisorInfo.contentWithoutName;
+                  }
+                }
+                
+                return (
+                  <div 
+                    key={idx}
+                    id={`msg-${idx}`}
+                    className={(() => {
+                      const className = msg.type === 'debug' ? 'text-yellow-400 mb-4 whitespace-pre-wrap break-words' :
+                        msg.type === 'user' ? 'text-green-400 mb-4 whitespace-pre-wrap break-words' :
+                        msg.type === 'assistant' ? 'text-white mb-4 break-words' : 
+                        msg.type === 'system' ? 'text-green-400 mb-4 break-words' :
+                        'text-green-400 mb-4 break-words';
+                      return className;
+                    })()}
+                  >
+                    {(msg.type === 'system' || msg.type === 'assistant') ? (
+                      <MemoizedMarkdownMessage 
+                        content={displayContent}
+                        advisorName={advisorInfo?.advisorName}
+                        advisorColor={advisorInfo?.advisorName ? getAdvisorColor(advisorInfo.advisorName) : null}
+                      />
+                    ) : (
+                      msg.content
+                    )}
+                  </div>
+                );
+              })}
               {isLoading && <div className="text-yellow-400">Loading...</div>}
             </div>
 
