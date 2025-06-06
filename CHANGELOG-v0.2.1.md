@@ -2,13 +2,25 @@
 
 **Release Date**: 6-6-25
 **Previous Version**: v0.2.0  
-**Branch**: `feature/advisor-suggestions-improvements`
+**Branch**: `feature/advisor-suggestions-improvements` + `feature/export-functions-gui`
 
 ## 🎯 Overview
 
-Version 0.2.1 enhances the advisor suggestion system with improved variety, better UI design, and more diverse advisor recommendations. This release focuses on enriching the advisor discovery experience with mythic figures, real people, and role-based suggestions.
+Version 0.2.1 enhances the advisor suggestion system with improved variety, better UI design, and more diverse advisor recommendations. Additionally, this release introduces a comprehensive GUI-based export system, replacing terminal slash commands with intuitive interface elements. This release focuses on enriching the advisor discovery experience and improving export functionality discoverability.
 
 ## ✨ Major Features
+
+### GUI-Based Export System
+- **Export Menu**: New dedicated export interface accessible via AccordionMenu
+- **Consolidated UX**: Single "Export" button opens comprehensive export options
+- **Smart Filenames**: Session exports use AI-generated titles for descriptive filenames
+  - With title: `space-python_debugging_help.md`
+  - Without title: `space-session-5.md`
+- **Two Export Options**:
+  - **Export Current Session**: Markdown format with conversation history
+  - **Export All Sessions**: JSON format with complete session data
+- **File Previews**: Shows exact filename before download
+- **Visual Descriptions**: Clear explanations of what each export option provides
 
 ### Enhanced Advisor Suggestions
 - **Increased Suggestions**: Now generates 5 advisor suggestions instead of 2
@@ -40,16 +52,20 @@ Version 0.2.1 enhances the advisor suggestion system with improved variety, bett
 
 ### Component Architecture
 - **New Component**: `CollapsibleSuggestionsModule` for advisor suggestions display
-- **Separation of Concerns**: Distinct component for suggestions vs. general clickable items
-- **Reusable Design**: Component can be used for other suggestion types in the future
-- **Maintainable Code**: Clean props interface and consistent styling
+- **New Component**: `ExportMenu` for consolidated export functionality
+- **Enhanced Component**: `AccordionMenu` with new export button integration
+- **Separation of Concerns**: Distinct components for suggestions, export, and general clickable items
+- **Reusable Design**: Components can be used for other suggestion/menu types in the future
+- **Maintainable Code**: Clean props interface and consistent styling across all components
 
 ## 🎨 User Interface Enhancements
 
 ### Visual Improvements
 - **Cleaner Presentation**: Direct display of advisor names without prefixes
 - **Intuitive Icons**: Plus buttons clearly indicate "add this advisor" action
-- **Consistent Theming**: Green terminal aesthetic maintained throughout
+- **Export Interface**: Clean, modal-based export menu with clear visual hierarchy
+- **Color-Coded Actions**: Green for current session, blue for all sessions export
+- **Consistent Theming**: Green terminal aesthetic maintained throughout all new components
 - **Better Visual Hierarchy**: Clear distinction between advisor name and action button
 - **Custom Scrollbars**: Redesigned scrollbars with transparent background and subtle dark gray thumb for more elegant, unobtrusive scrolling experience that blends seamlessly with the terminal aesthetic
 
@@ -57,13 +73,15 @@ Version 0.2.1 enhances the advisor suggestion system with improved variety, bett
 - **Reduced Cognitive Load**: Simpler, more direct interaction pattern
 - **Faster Selection**: One-click addition of suggested advisors
 - **Better Discovery**: More diverse suggestions help users explore different perspectives
-- **Improved Workflow**: Seamless integration with existing advisor management
+- **Export Discoverability**: GUI export options replace hidden slash commands (`/export`, `/export-all`)
+- **Improved Workflow**: Seamless integration with existing advisor management and new export functionality
 
 ## 🔄 Migration Notes
 
 ### Backward Compatibility
 - **No Breaking Changes**: All existing functionality preserved
-- **Enhanced Experience**: Existing users get immediate benefit from improved suggestions
+- **Enhanced Experience**: Existing users get immediate benefit from improved suggestions and export GUI
+- **Slash Commands Still Work**: Original `/export` and `/export-all` commands remain functional
 - **Automatic Upgrade**: Changes take effect immediately without user action required
 
 ## 🐛 Bug Fixes
