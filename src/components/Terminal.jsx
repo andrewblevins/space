@@ -3680,7 +3680,7 @@ ${selectedText}
           onClick={() => {
             setMessages(prev => [...prev, {
               type: 'system',
-              content: 'SPACE Terminal v0.2.1 - A sophisticated AI conversation interface with advisor support and session management.'
+              content: 'SPACE Terminal v0.2.1 - An experimental interface for conversations with AI advisors.'
             }]);
           }}
         >
