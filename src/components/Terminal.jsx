@@ -2045,6 +2045,22 @@ ${JSON.stringify(contextMessages, null, 2)}`;
         }]);
       }
 
+      const requestBody = {
+        model: 'claude-sonnet-4-20250514',
+        messages: contextMessages,
+        system: systemPromptText,
+        max_tokens: maxTokens,
+        stream: true
+      };
+      
+      console.log('🔍 CLAUDE 4 API REQUEST:');
+      console.log('Model:', requestBody.model);
+      console.log('API Key present:', !!anthropicKey);
+      console.log('API Key prefix:', anthropicKey ? anthropicKey.substring(0, 20) + '...' : 'null');
+      console.log('API Endpoint:', `${getApiEndpoint()}/v1/messages`);
+      console.log('Messages count:', contextMessages.length);
+      console.log('Max tokens:', maxTokens);
+      
       const response = await fetch(`${getApiEndpoint()}/v1/messages`, {
         method: 'POST',
         headers: {
@@ -2053,18 +2069,17 @@ ${JSON.stringify(contextMessages, null, 2)}`;
           'anthropic-version': '2023-06-01',
           'anthropic-dangerous-direct-browser-access': 'true'
         },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          messages: contextMessages,
-          system: systemPromptText,
-          max_tokens: maxTokens,
-          stream: true
-        })
+        body: JSON.stringify(requestBody)
       });
 
+      console.log('🔍 CLAUDE 4 API RESPONSE:');
       console.log('Response status:', response.status);
+      console.log('Response statusText:', response.statusText);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
       
       if (!response.ok) {
+        const errorText = await response.text();
+        console.log('🚨 API ERROR RESPONSE:', errorText);
         await handleApiError(response);  // This will handle the 401 and throw an error
       }
 

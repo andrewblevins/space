@@ -17,9 +17,34 @@ async function testPuppeteer() {
   try {
     const page = await browser.newPage();
     
+    // Set up console log capture for testing
+    page.on('console', (msg) => {
+      const type = msg.type();
+      const text = msg.text();
+      const timestamp = new Date().toISOString().split('T')[1].slice(0, -1);
+      const prefix = `[${timestamp}] [BROWSER:${type.toUpperCase()}]`;
+      
+      switch (type) {
+        case 'error':
+          console.error(`${prefix} ${text}`);
+          break;
+        case 'warn':
+          console.warn(`${prefix} ${text}`);
+          break;
+        default:
+          console.log(`${prefix} ${text}`);
+      }
+    });
+    
+    page.on('pageerror', (error) => {
+      console.error(`[BROWSER:PAGE_ERROR] ${error.message}`);
+    });
+    
+    console.log('✓ Console logging enabled for testing');
+    
     // Navigate to localhost:3000
     console.log('Navigating to http://localhost:3000...');
-    await page.goto('http://localhost:3000', { 
+    await page.goto('http://localhost:3001', { 
       waitUntil: 'networkidle0',
       timeout: 10000 
     });

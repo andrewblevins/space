@@ -79,6 +79,43 @@ async function setupApiKeys() {
   try {
     const page = await browser.newPage();
     
+    // Set up console log capture
+    page.on('console', (msg) => {
+      const type = msg.type();
+      const text = msg.text();
+      
+      // Format console output with timestamp and type
+      const timestamp = new Date().toISOString().split('T')[1].slice(0, -1);
+      const prefix = `[${timestamp}] [BROWSER:${type.toUpperCase()}]`;
+      
+      // Use appropriate Node.js console method based on browser console type
+      switch (type) {
+        case 'error':
+          console.error(`${prefix} ${text}`);
+          break;
+        case 'warn':
+          console.warn(`${prefix} ${text}`);
+          break;
+        case 'debug':
+        case 'verbose':
+          console.debug(`${prefix} ${text}`);
+          break;
+        default:
+          console.log(`${prefix} ${text}`);
+      }
+    });
+    
+    // Set up error handlers for additional debugging
+    page.on('pageerror', (error) => {
+      console.error(`[BROWSER:PAGE_ERROR] ${error.message}`);
+    });
+    
+    page.on('requestfailed', (request) => {
+      console.error(`[BROWSER:REQUEST_FAILED] ${request.url()} - ${request.failure()?.errorText || 'Unknown error'}`);
+    });
+    
+    console.log('✓ Browser console logging enabled');
+    
     // Navigate to the app
     console.log('Navigating to SPACE app...');
     await page.goto(DEV_URL, { waitUntil: 'networkidle0' });
