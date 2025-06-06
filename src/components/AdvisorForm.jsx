@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { getApiEndpoint } from '../utils/apiConfig';
 import { handleApiError } from '../utils/apiErrorHandler';
 import { getDecrypted } from '../utils/secureStorage';
@@ -72,10 +72,14 @@ The advisor's name is ${advisorName}.`
   }
 };
 
-const AdvisorForm = ({ onSubmit, onCancel }) => {
-  const [name, setName] = useState('');
+const AdvisorForm = ({ onSubmit, onCancel, initialName = '' }) => {
+  const [name, setName] = useState(initialName);
   const [description, setDescription] = useState('');
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    setName(initialName);
+  }, [initialName]);
 
   const handleGenerate = async () => {
     if (!name.trim()) {
