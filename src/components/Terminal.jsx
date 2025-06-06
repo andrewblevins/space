@@ -2722,11 +2722,9 @@ When responding, you will adopt the distinct voice(s) of the active advisor(s) a
     if (messages.length > 1 && !isLoading) {
       const lastMessage = messages[messages.length - 1];
       // Only analyze after Claude responses (assistant messages)
-      if (lastMessage.type === 'assistant') {
-        console.log('🔍 Triggering analysis after Claude response');
-        analyzeMetaphors(messages);
-        analyzeForQuestions(messages);
-      }
+        if (lastMessage.type === 'assistant') {
+          console.log('🔍 Triggering analysis after Claude response');
+        }
     }
   }, [messages, isLoading, metaphorsExpanded, questionsExpanded, openaiClient]);
 
