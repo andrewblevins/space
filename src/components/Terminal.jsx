@@ -5,6 +5,7 @@ import { OpenAI } from 'openai';
 import AdvisorForm from './AdvisorForm';
 import EditAdvisorForm from './EditAdvisorForm';
 import EditPromptForm from './EditPromptForm';
+import SettingsMenu from './SettingsMenu';
 import '@fontsource/vollkorn';
 import TagAnalyzer from '../lib/tagAnalyzer';
 import ApiKeySetup from './ApiKeySetup';
@@ -495,6 +496,7 @@ const Terminal = () => {
   const [contextLimit, setContextLimit] = useState(150000);
   const [apiKeysSet, setApiKeysSet] = useState(false);
   const [openaiClient, setOpenaiClient] = useState(null);
+  const [showSettingsMenu, setShowSettingsMenu] = useState(false);
 
   const worksheetQuestions = [
     {
@@ -2299,6 +2301,35 @@ ${JSON.stringify(contextMessages, null, 2)}`;
     }
   };
 
+  // Settings Menu Callback Functions
+  const handleClearApiKeys = () => {
+    removeEncrypted('space_anthropic_key');
+    removeEncrypted('space_openai_key');
+    setApiKeysSet(false);
+    setMessages(prev => [...prev, {
+      type: 'system',
+      content: 'API keys cleared. Please restart the terminal.'
+    }]);
+  };
+
+  const handleShowApiKeyStatus = async () => {
+    try {
+      const anthropicKey = await getDecrypted('space_anthropic_key');
+      const openaiKey = await getDecrypted('space_openai_key');
+      setMessages(prev => [...prev, {
+        type: 'system',
+        content: `API Keys Status:
+Anthropic: ${anthropicKey ? '✓ Set' : '✗ Not Set'}
+OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
+      }]);
+    } catch (error) {
+      setMessages(prev => [...prev, {
+        type: 'system',
+        content: `Error checking API keys: ${error.message}`
+      }]);
+    }
+  };
+
   // Add this helper function to format messages as markdown
   const formatSessionAsMarkdown = (messages) => {
     // Add timestamp at the beginning
@@ -3198,7 +3229,44 @@ ${selectedText}
           )}
         </div>
       )}
-      {/* Add this near the top where other buttons are rendered */}
+
+      {/* Settings Menu Component */}
+      <SettingsMenu
+        isOpen={showSettingsMenu}
+        onClose={() => setShowSettingsMenu(false)}
+        debugMode={debugMode}
+        setDebugMode={setDebugMode}
+        contextLimit={contextLimit}
+        setContextLimit={setContextLimit}
+        maxTokens={maxTokens}
+        setMaxTokens={setMaxTokens}
+        onClearApiKeys={handleClearApiKeys}
+        onShowApiKeyStatus={handleShowApiKeyStatus}
+      />
+
+      {/* Settings Button - Bottom Left */}
+      <div className="fixed bottom-4 left-4 z-50">
+        <button
+          onClick={() => setShowSettingsMenu(true)}
+          className="flex items-center justify-center w-8 h-8 rounded-full bg-black border border-green-400 text-green-400 hover:bg-green-400 hover:text-black transition-colors"
+          title="Settings"
+        >
+          <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            className="h-5 w-5" 
+            viewBox="0 0 20 20" 
+            fill="currentColor"
+          >
+            <path 
+              fillRule="evenodd" 
+              d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" 
+              clipRule="evenodd" 
+            />
+          </svg>
+        </button>
+      </div>
+
+      {/* Info Button - Bottom Right */}
       <div className="fixed bottom-4 right-4 z-50">
         <a
           href="https://github.com/andrewblevins/space"
