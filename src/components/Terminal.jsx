@@ -2097,9 +2097,21 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
       // Only analyze after Claude responses (assistant messages)
       if (lastMessage.type === 'assistant') {
         console.log('🔍 Triggering analysis after Claude response');
-                  analyzeMetaphors(messages);
-          analyzeForQuestions(messages);
-          analyzeAdvisorSuggestions(messages);
+        analyzeMetaphors(messages, {
+          enabled: metaphorsExpanded,
+          openaiClient,
+          setMetaphors,
+          debugMode,
+          setMessages
+        });
+        analyzeForQuestions(messages, {
+          enabled: questionsExpanded,
+          openaiClient,
+          setQuestions,
+          debugMode,
+          setMessages
+        });
+        analyzeAdvisorSuggestions(messages);
       }
     }
   }, [messages, isLoading, metaphorsExpanded, questionsExpanded, advisorSuggestionsExpanded, openaiClient]);
