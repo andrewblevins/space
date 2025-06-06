@@ -124,6 +124,35 @@ await page.keyboard.press('Enter');
 await page.locator('.message.ai').wait();
 ```
 
+### Settings Menu Automation
+```javascript
+// Open settings menu via gear icon (bottom-left)
+await page.locator('.fixed.bottom-4.left-4 button').click();
+
+// Toggle debug mode
+await page.locator('.relative.inline-flex').click(); // Toggle switch
+
+// Update context limit
+await page.locator('input[type="number"]').first().fill('200000');
+
+// Update max tokens
+await page.locator('input[type="number"]').nth(1).fill('8192');
+
+// Check API key status (adds message to terminal)
+await page.evaluate(() => {
+  const buttons = document.querySelectorAll('button');
+  for (let button of buttons) {
+    if (button.textContent.trim() === 'View API Key Status') {
+      button.click();
+      break;
+    }
+  }
+});
+
+// Close settings menu
+await page.locator('button[title="Close Settings"]').click();
+```
+
 ## Error Handling
 
 ### Robust Element Selection
@@ -190,10 +219,86 @@ const browser = await puppeteer.launch({
 });
 ```
 
+## Advanced Techniques
+
+### Console Logging Integration
+SPACE includes comprehensive browser console logging that can be monitored during automation:
+
+```javascript
+// Enable console logging in automation scripts
+page.on('console', (msg) => {
+  const type = msg.type();
+  const text = msg.text();
+  const timestamp = new Date().toISOString().split('T')[1].slice(0, -1);
+  console.log(`[${timestamp}] [BROWSER:${type.toUpperCase()}] ${text}`);
+});
+```
+
+### Working with React Controlled Components
+When standard selectors fail, use JavaScript evaluation for complex interactions:
+
+```javascript
+// For buttons with text content that CSS selectors can't handle
+await page.evaluate(() => {
+  const buttons = document.querySelectorAll('button');
+  for (let button of buttons) {
+    if (button.textContent.trim() === 'Submit') {
+      button.click();
+      break;
+    }
+  }
+});
+
+// For forms that need special handling
+await page.evaluate((value) => {
+  const input = document.querySelector('input[type="password"]');
+  const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+    window.HTMLInputElement.prototype, 'value'
+  ).set;
+  nativeInputValueSetter.call(input, value);
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+}, 'password123');
+```
+
+### Password Modal Persistence
+The SPACE password modal can be persistent due to validation requirements:
+- Try multiple approaches: `page.locator()`, `page.evaluate()`, direct selectors
+- Always verify the modal is dismissed before proceeding
+- Use environment variables (`VITE_DEV_PASSWORD`) for consistent testing
+
+### Settings Menu State Management
+Settings changes are immediately persisted to localStorage and state:
+- No need to wait for save operations
+- Changes are reflected instantly in the UI
+- Debug mode toggle affects console output immediately
+- API key operations add system messages to terminal
+
 ## Future Enhancements
+
+### Known Working Selectors
+```javascript
+// Bottom action buttons
+'.fixed.bottom-4.left-4 button'   // Settings gear icon
+'.fixed.bottom-4.right-4 a'       // Info button
+
+// Settings menu elements  
+'.relative.inline-flex'            // Debug mode toggle switch
+'input[type="number"]'             // Numeric inputs (context/tokens)
+'button[title="Close Settings"]'   // Close button with title attribute
+
+// Password modal
+'input[type="password"]'           // Password input field
+'input[placeholder="Enter password"]' // Alternative password selector
+
+// General patterns
+'button:nth-of-type(N)'           // When multiple buttons exist
+'button:first-of-type'            // First button in container
+'button:last-child'               // Last button (often submit)
+```
 
 ### Planned Improvements
 - [ ] Add data-testid to Terminal component interactions
+- [ ] Add data-testid to Settings Menu components  
 - [ ] Implement keyboard shortcut automation
 - [ ] Add export/import automation workflows
 - [ ] Create test fixtures for common scenarios
