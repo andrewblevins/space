@@ -2434,24 +2434,24 @@ ${selectedText}
               "
             >
               {messages.map((msg, idx) => (
-                <div 
-                  key={idx}
-                  id={`msg-${idx}`}
-                  className={(() => {
-                    const className = msg.type === 'debug' ? 'text-yellow-400 mb-4 whitespace-pre-wrap break-words' :
-                      msg.type === 'user' ? 'text-green-400 mb-4 whitespace-pre-wrap break-words' :
-                      msg.type === 'assistant' ? 'text-white mb-4 break-words' : 
-                      msg.type === 'system' ? 'text-green-400 mb-4 break-words' :
-                      'text-green-400 mb-4 break-words';
-                    return className;
-                  })()}
-                >
-                  {(msg.type === 'system' || msg.type === 'assistant') ? (
+                  <div 
+                    key={idx}
+                    id={`msg-${idx}`}
+                    className={(() => {
+                      const className = msg.type === 'debug' ? 'text-yellow-400 mb-4 whitespace-pre-wrap break-words' :
+                        msg.type === 'user' ? 'text-green-400 mb-4 whitespace-pre-wrap break-words' :
+                        msg.type === 'assistant' ? 'text-white mb-4 break-words' : 
+                        msg.type === 'system' ? 'text-green-400 mb-4 break-words' :
+                        'text-green-400 mb-4 break-words';
+                      return className;
+                    })()}
+                  >
+                    {(msg.type === 'system' || msg.type === 'assistant') ? (
                     <MemoizedMarkdownMessage content={msg.content} />
-                  ) : (
-                    msg.content
-                  )}
-                </div>
+                    ) : (
+                      msg.content
+                    )}
+                  </div>
               ))}
               {isLoading && <div className="text-yellow-400">Loading...</div>}
             </div>
