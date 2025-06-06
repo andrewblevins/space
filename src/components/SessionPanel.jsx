@@ -158,7 +158,9 @@ const SessionPanel = ({
                       ) : (
                         <div className="w-2 h-2 bg-gray-600 rounded-full mr-2"></div>
                       )}
-                      <span className="text-green-400 font-medium">Session {session.id}</span>
+                      <span className="text-green-400 font-medium">
+                        {session.title || `Session ${session.id}`}
+                      </span>
                     </div>
                     {session.id === currentSessionId && (
                       <span className="text-xs text-green-400 bg-green-400 bg-opacity-20 px-2 py-1 rounded">
