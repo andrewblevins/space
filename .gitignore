@@ -37,3 +37,13 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+
+# Business sensitive files
+*.key
+*.pem
+config/production.json
+deployment/
+business-plan/
+marketing/
+pricing/
+customer-data/
