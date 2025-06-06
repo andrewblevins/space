@@ -121,19 +121,13 @@ Enter `/help` anytime to see this list of commands in the terminal.
 
 SPACE Terminal is very cost-effective to use. For instance, an hour-long deep discussion may run about $0.25-30 (possibly up to a dollar if you send messages very fast). Each message exchange (your message + AI response) costs roughly 2¢ on average. Starting with $5 in each API account will easily give you several hours of conversation. Use the '/debug' command to monitor estimated costs in real-time.
 
-## How to Help
+## Support
 
-I would love for folks to build on this with me. Fork the repo, make the changes you want to see, and submit a pull request when ready.
-
-If you've found a bug or have an idea for a feature, report here:
-- [Bugs](https://github.com/andrewblevins/space/issues/new)
-- [Feature Requests](https://github.com/andrewblevins/space/issues/new?labels=enhancement&template=feature_request.md)
-
-Or talk to me at andrew.s.blevins@gmail.com / [@andrew0blevins](https://x.com/andrew0blevins) on Twitter.
+If you've found a bug or have an idea for a feature, contact me at andrew.s.blevins@gmail.com or [@andrew0blevins](https://x.com/andrew0blevins) on Twitter.
 
 ## License
 
-MIT
+Proprietary Software - All Rights Reserved. See LICENSE file for details.
 
 Author: [Andrew Shade Blevins](www.andrewshadeblevins.com)
 

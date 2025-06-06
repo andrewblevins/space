@@ -3257,7 +3257,7 @@ ${selectedText}
       { type: 'system', content: `Context limit (length up to which full conversation memory is retained) is set to ${contextLimit.toLocaleString()} tokens. (Reduce it to save money.)`},
       { type: 'system', content: `Max length for responses is set to ${maxTokens.toLocaleString()} tokens.`},
       { type: 'system', content: `Type /help for a list of commands. Type /prompt list to see a list of available starting prompts. Press + (to the left of here) to add an advisor to the board.` },
-      { type: 'system', content: `Report bugs or suggest features at [https://github.com/andrewblevins/space/issues/new](https://github.com/andrewblevins/space/issues/new).` },
+      { type: 'system', content: `Contact support for bugs or feature requests.` },
       { type: 'system', content: '/export - Export the current session to a markdown file.' },
       { type: 'system', content: '/export-all - Export all sessions to a JSON file.' },
     ]);
@@ -3610,12 +3610,15 @@ ${selectedText}
 
       {/* Info Button - Bottom Right */}
       <div className="fixed bottom-4 right-4 z-50">
-        <a
-          href="https://github.com/andrewblevins/space"
-          target="_blank"
-          rel="noopener noreferrer"
+        <button
           className="flex items-center justify-center w-8 h-8 rounded-full bg-black border border-green-400 text-green-400 hover:bg-green-400 hover:text-black transition-colors"
           title="About SPACE Terminal"
+          onClick={() => {
+            setMessages(prev => [...prev, {
+              type: 'system',
+              content: 'SPACE Terminal v0.2.1 - A sophisticated AI conversation interface with advisor support and session management.'
+            }]);
+          }}
         >
           <svg 
             xmlns="http://www.w3.org/2000/svg" 
@@ -3629,7 +3632,7 @@ ${selectedText}
               clipRule="evenodd" 
             />
           </svg>
-        </a>
+        </button>
       </div>
     </>
   );
