@@ -526,7 +526,7 @@ const Terminal = () => {
 
   const [messages, setMessages] = useState([
     { type: 'system', content: 'SPACE Terminal - v0.2' },
-    { type: 'system', content: 'Type /help for a list of commands.' }
+    { type: 'system', content: 'Start a conversation, add an advisor (+), or explore features in the bottom-left menu.' }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -844,44 +844,17 @@ const Terminal = () => {
         case '/help':
           setMessages(prev => [...prev, {
             type: 'system',
-            content: `# Available commands
+            content: `⚠️ The /help command has been deprecated.
 
-## Session Management
-/new              - Start a new session
-/sessions         - List all sessions and their numbers
-/load <id>        - Load a specific session (id = session number)
-/load previous    - Load the most recent session
+All functionality is now available through the graphical interface:
 
-## Advisor Management
-/advisor          - Show available advisor commands
-/advisor add      - Add a new advisor
-/advisor edit     - Edit an advisor
-/advisor remove   - Remove an advisor
-/advisor list     - List all advisors
+🔧 **Settings & API Keys**: Click the gear icon (⚙️) in the bottom-left menu
+📂 **Session Management**: Click "Session Manager" in the bottom-left menu  
+📤 **Export Options**: Click "Export" in the bottom-left menu
+📝 **Prompts**: Click "Prompt Library" in the bottom-left menu
+👥 **Advisors**: Use the advisor panel on the left sidebar
 
-## Group Management
-/group create <group_name>         - Create a new advisor group (e.g. "/group create Psychologists")
-/group add <group_name> <advisor>  - Add an advisor to a group (e.g. "/group add Psychologists Carl Jung")
-/group remove <group_name> <advisor> - Remove an advisor from a group
-/group list                        - List all advisor groups and their members
-
-## Save and Use Prompts
-
-/prompt add "name" <text> - Save a new prompt
-/prompt list  - Show all saved prompts
-/prompt use "name"  - Use a saved prompt
-/prompt edit "name" - Edit an existing prompt
-/prompt delete "name" - Delete a saved prompt
-
-## API Keys
-/key set [anthropic/openai] <api-key> - Update API key
-/keys status - Check API key status
-/keys clear - Clear stored API keys
-
-## Settings
-
-/context limit <number> - Set token limit for context management (default: 150,000)
-/response length <number> - Set maximum length for Claude responses (default: 4,096, max: 8,192)`
+The interface is now fully discoverable - no commands needed!`
           }]);
           return true;
 
@@ -3363,12 +3336,7 @@ ${selectedText}
   useEffect(() => {
     setMessages([
       { type: 'system', content: 'Welcome to SPACE - v0.2.1' },
-      { type: 'system', content: `Context limit (length up to which full conversation memory is retained) is set to ${contextLimit.toLocaleString()} tokens. (Reduce it to save money.)`},
-      { type: 'system', content: `Max length for responses is set to ${maxTokens.toLocaleString()} tokens.`},
-      { type: 'system', content: `Type /help for a list of commands. Type /prompt list to see a list of available starting prompts. Press + (to the left of here) to add an advisor to the board.` },
-      { type: 'system', content: `Contact support for bugs or feature requests.` },
-      { type: 'system', content: '/export - Export the current session to a markdown file.' },
-      { type: 'system', content: '/export-all - Export all sessions to a JSON file.' },
+      { type: 'system', content: 'Start a conversation, add an advisor (+), or explore features in the bottom-left menu.' }
     ]);
   }, []);
 
