@@ -467,15 +467,29 @@ const Terminal = () => {
   const [savedPrompts, setSavedPrompts] = useState(() => {
     const saved = localStorage.getItem('space_prompts');
     const userPrompts = saved ? JSON.parse(saved) : [];
+    
+    // Migrate existing prompts that may have 'content' instead of 'text'
+    const migratedUserPrompts = userPrompts.map(p => ({
+      name: p.name,
+      text: p.text || p.content || '' // Use text if it exists, otherwise content, otherwise empty
+    }));
+    
     // Merge user prompts with defaults, giving precedence to user prompts
-    const userPromptNames = new Set(userPrompts.map(p => p.name));
+    const userPromptNames = new Set(migratedUserPrompts.map(p => p.name));
     const defaultPromptsWithTextProperty = defaultPrompts
       .filter(p => !userPromptNames.has(p.name))
       .map(p => ({ name: p.name, text: p.content })); // Map content to text
     const mergedPrompts = [
-      ...userPrompts,
+      ...migratedUserPrompts,
       ...defaultPromptsWithTextProperty
     ];
+    
+    // Save migrated prompts back to localStorage if migration occurred
+    const needsMigration = userPrompts.some(p => p.content && !p.text);
+    if (needsMigration) {
+      localStorage.setItem('space_prompts', JSON.stringify(mergedPrompts));
+    }
+    
     return mergedPrompts;
   });
   const [editingPrompt, setEditingPrompt] = useState(null);
