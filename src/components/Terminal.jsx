@@ -2467,11 +2467,11 @@ ${selectedText}
                       const color = msg.type === 'debug'
                         ? '#d97706 !important'  // yellow-600
                         : msg.type === 'user'
-                        ? '#16a34a !important'  // green-600
+                        ? '#00ff00 !important'  // bright green - user input text
                         : msg.type === 'assistant'
-                        ? '#1f2937 !important'  // gray-900
+                        ? '#1f2937 !important'  // gray-900 - AI response text
                         : msg.type === 'system'
-                        ? '#16a34a !important'  // green-600
+                        ? '#16a34a !important'  // green-600 - system messages
                         : '#16a34a !important';
                       return { color };
                     })()}
