@@ -2300,12 +2300,6 @@ ${selectedText}
     return template.sections[currentSection].questions[currentQuestion].id;
   };
 
-  useEffect(() => {
-    setMessages([
-      { type: 'system', content: 'Welcome to SPACE - v0.2.1' },
-      { type: 'system', content: 'Start a conversation, add an advisor (+), or explore features in the bottom-left menu.' }
-    ]);
-  }, []);
 
   const exportAllSessions = () => {
     const sessions = [];
@@ -2361,31 +2355,6 @@ ${selectedText}
             scrollbarColor: '#374151 transparent'
           }}
         >
-          <style jsx>{`
-            /* Webkit scrollbar styling */
-            .scrollbar-terminal::-webkit-scrollbar {
-              width: 8px;
-              height: 8px;
-            }
-            
-            .scrollbar-terminal::-webkit-scrollbar-track {
-              background: transparent;
-            }
-            
-            .scrollbar-terminal::-webkit-scrollbar-thumb {
-              background: #374151;
-              border-radius: 4px;
-              border: none;
-            }
-            
-            .scrollbar-terminal::-webkit-scrollbar-thumb:hover {
-              background: #4b5563;
-            }
-            
-            .scrollbar-terminal::-webkit-scrollbar-corner {
-              background: transparent;
-            }
-          `}</style>
           <button
             onClick={toggleFullscreen}
             className="absolute top-2 right-2 text-green-400 hover:text-green-300 z-50"
@@ -2451,30 +2420,12 @@ ${selectedText}
                   <div 
                     key={idx}
                     id={`msg-${idx}`}
-                    className={(() => {
-                      const className = msg.type === 'debug'
-                        ? 'mb-4 whitespace-pre-wrap break-words'
-                        : msg.type === 'user'
-                        ? 'mb-4 whitespace-pre-wrap break-words'
-                        : msg.type === 'assistant'
-                        ? 'mb-4 break-words'
-                        : msg.type === 'system'
-                        ? 'mb-4 break-words'
-                        : 'mb-4 break-words';
-                      return className;
-                    })()}
-                    style={(() => {
-                      const color = msg.type === 'debug'
-                        ? '#d97706 !important'  // yellow-600
-                        : msg.type === 'user'
-                        ? '#00ff00 !important'  // bright green - user input text
-                        : msg.type === 'assistant'
-                        ? '#1f2937 !important'  // gray-900 - AI response text
-                        : msg.type === 'system'
-                        ? '#16a34a !important'  // green-600 - system messages
-                        : '#16a34a !important';
-                      return { color };
-                    })()}
+                    className="mb-4 whitespace-pre-wrap break-words"
+                    style={{
+                      color: msg.type === 'user' ? '#16a34a' : 
+                             msg.type === 'assistant' ? '#1f2937' : 
+                             msg.type === 'debug' ? '#d97706' : '#16a34a'
+                    }}
                   >
                     {(msg.type === 'system' || msg.type === 'assistant') ? (
                     <MemoizedMarkdownMessage content={msg.content} />
