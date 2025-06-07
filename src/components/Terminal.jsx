@@ -2351,9 +2351,11 @@ ${selectedText}
         // Regular terminal UI
         <div
           ref={terminalRef}
-          className="w-full h-screen font-serif flex relative bg-gradient-to-b from-gray-100 to-white text-gray-800 dark:from-gray-900 dark:to-black dark:text-green-400"
+          className="w-full h-screen font-serif flex relative dark:from-gray-900 dark:to-black dark:text-green-400"
           onContextMenu={handleContextMenu}
           style={{
+            background: 'linear-gradient(to bottom, #f5f0e8, #f0e6d2)',
+            color: '#1f2937',
             /* Custom scrollbar styling for webkit browsers */
             scrollbarWidth: 'thin',
             scrollbarColor: '#374151 transparent'
@@ -2395,20 +2397,6 @@ ${selectedText}
             ) : (
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
-              </svg>
-            )}
-          </button>
-          <button
-            onClick={toggleTheme}
-            className="absolute top-2 right-10 text-green-400 hover:text-green-300 z-50"
-          >
-            {theme === 'dark' ? (
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M10 2a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 0110 2zM4.22 4.22a.75.75 0 011.06 0l1.06 1.06a.75.75 0 11-1.06 1.06L4.22 5.28a.75.75 0 010-1.06zM2 10a.75.75 0 01.75-.75h1.5a.75.75 0 010 1.5h-1.5A.75.75 0 012 10zm8 6a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 0110 16zm7.78-11.78a.75.75 0 010 1.06l-1.06 1.06a.75.75 0 11-1.06-1.06l1.06-1.06a.75.75 0 011.06 0zM16.25 9.25h1.5a.75.75 0 010 1.5h-1.5a.75.75 0 010-1.5zm-2.03 5.47a.75.75 0 011.06 1.06l-1.06 1.06a.75.75 0 11-1.06-1.06l1.06-1.06zM5.28 14.72a.75.75 0 010 1.06l-1.06 1.06a.75.75 0 11-1.06-1.06l1.06-1.06a.75.75 0 011.06 0z" />
-              </svg>
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M10 2a8 8 0 100 16 8 8 0 000-16zM10 4a6 6 0 110 12A6 6 0 0110 4z" />
               </svg>
             )}
           </button>
@@ -2465,15 +2453,27 @@ ${selectedText}
                     id={`msg-${idx}`}
                     className={(() => {
                       const className = msg.type === 'debug'
-                        ? 'mb-4 whitespace-pre-wrap break-words text-yellow-600 dark:text-yellow-400'
+                        ? 'mb-4 whitespace-pre-wrap break-words'
                         : msg.type === 'user'
-                        ? 'mb-4 whitespace-pre-wrap break-words text-green-600 dark:text-green-400'
+                        ? 'mb-4 whitespace-pre-wrap break-words'
                         : msg.type === 'assistant'
-                        ? 'mb-4 break-words text-gray-800 dark:text-white'
+                        ? 'mb-4 break-words'
                         : msg.type === 'system'
-                        ? 'mb-4 break-words text-green-600 dark:text-green-400'
-                        : 'mb-4 break-words text-green-600 dark:text-green-400';
+                        ? 'mb-4 break-words'
+                        : 'mb-4 break-words';
                       return className;
+                    })()}
+                    style={(() => {
+                      const color = msg.type === 'debug'
+                        ? '#d97706 !important'  // yellow-600
+                        : msg.type === 'user'
+                        ? '#16a34a !important'  // green-600
+                        : msg.type === 'assistant'
+                        ? '#1f2937 !important'  // gray-900
+                        : msg.type === 'system'
+                        ? '#16a34a !important'  // green-600
+                        : '#16a34a !important';
+                      return { color };
                     })()}
                   >
                     {(msg.type === 'system' || msg.type === 'assistant') ? (
@@ -2483,7 +2483,7 @@ ${selectedText}
                     )}
                   </div>
               ))}
-              {isLoading && <div className="text-yellow-400">Loading...</div>}
+              {isLoading && <div style={{ color: '#d97706 !important' }}>Loading...</div>}
             </div>
 
             <div className="mt-auto">
@@ -2661,6 +2661,8 @@ ${selectedText}
         setMaxTokens={setMaxTokens}
         onClearApiKeys={handleClearApiKeys}
         onShowApiKeyStatus={handleShowApiKeyStatus}
+        theme={theme}
+        toggleTheme={toggleTheme}
       />
 
       {/* Prompt Library Component */}
