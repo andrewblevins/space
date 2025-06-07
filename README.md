@@ -74,6 +74,7 @@ This will send a basic starting prompt for the conversation.
 - **Capture**: Right click selected text to capture and save to a Markdown file
 
 - **Debug**: Activate `/debug` to see what's being sent to Claude as well as the estimated cost of each message.
+- **Advisor Sharing**: Use `/advisor share` to copy your advisor profiles and `/advisor import <json>` to load profiles from a friend
 
 ## Available Commands
 
@@ -89,8 +90,10 @@ Enter `/help` anytime to see this list of commands in the terminal.
 - `/advisor` - Show available advisor commands
 - `/advisor add` - Add a new advisor
 - `/advisor edit` - Edit an advisor
-- `/advisor remove` - Remove an advisor
+- `/advisor delete` - Delete an advisor
 - `/advisor list` - List all advisors
+- `/advisor share` - Copy advisor profiles to clipboard
+- `/advisor import <json>` - Import advisors from JSON
 
 ### Group Management
 - `/group create <group_name>` - Create a new advisor group (e.g. `/group create Psychologists`)
@@ -115,7 +118,7 @@ Enter `/help` anytime to see this list of commands in the terminal.
 - [ ] Model selection and configuration 
 - [ ] Better memory / context management system
 - [ ] More conversation analysis tools (interpersonal patterns, Kegan stages, etc.?)
-- [ ] Ways to share advisors with your friends
+- [x] Ways to share advisors with your friends
 
 ## Cost Expectations
 
