@@ -2775,7 +2775,7 @@ ${selectedText}
           onClick={() => {
             setMessages(prev => [...prev, {
               type: 'system',
-              content: 'SPACE Terminal v0.2.1 - An experimental interface for conversations with AI advisors.'
+                              content: 'SPACE Terminal v0.2.1 - An experimental interface for conversations with AI advisors.\n\nCreated by [Andrew Blevins](https://www.andrewshadeblevins.com). To give feedback or report bugs, email andrew.s.blevins@gmail.com.'
             }]);
           }}
         >
