@@ -119,3 +119,45 @@ export async function analyzeForQuestions(messages, { enabled, openaiClient, set
     console.error('Error analyzing for questions:', err);
   }
 }
+
+/**
+ * Summarize a previously saved session.
+ * @param {number} sessionId
+ * @param {object} options
+ * @param {import('openai').OpenAI} options.openaiClient
+ * @returns {Promise<string|null>}
+ */
+export async function summarizeSession(sessionId, { openaiClient }) {
+  if (!openaiClient) return null;
+
+  const sessionData = localStorage.getItem(`space_session_${sessionId}`);
+  if (!sessionData) return null;
+
+  const session = JSON.parse(sessionData);
+  const convoText = session.messages
+    .filter((m) => m.type === 'user' || m.type === 'assistant')
+    .map((m) => `${m.type === 'user' ? 'User' : 'Assistant'}: ${m.content}`)
+    .join('\n\n');
+
+  try {
+    const response = await openaiClient.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: 'Summarize the key points of the following conversation in 3-5 short bullet points.'
+        },
+        {
+          role: 'user',
+          content: convoText.slice(0, 6000)
+        }
+      ],
+      max_tokens: 150
+    });
+
+    return response.choices[0].message.content.trim();
+  } catch (err) {
+    console.error('Error summarizing session:', err);
+    return null;
+  }
+}

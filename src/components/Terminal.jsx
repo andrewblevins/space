@@ -27,7 +27,7 @@ import { CollapsibleSuggestionsModule } from "./terminal/CollapsibleSuggestionsM
 import { ExpandingInput } from "./terminal/ExpandingInput";
 import { MemoizedMarkdownMessage } from "./terminal/MemoizedMarkdownMessage";
 import useClaude from "../hooks/useClaude";
-import { analyzeMetaphors, analyzeForQuestions } from "../utils/terminalHelpers";
+import { analyzeMetaphors, analyzeForQuestions, summarizeSession } from "../utils/terminalHelpers";
 import { worksheetQuestions, WORKSHEET_TEMPLATES } from "../utils/worksheetTemplates";
 
 
@@ -1763,13 +1763,24 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
     console.log('No command handled, proceeding to Claude response');
     try {
       setIsLoading(true);
-      
+
+      // Replace @ references with summaries
+      let processedInput = input;
+      const atRegex = /@(\d+)/g;
+      const matches = [...processedInput.matchAll(atRegex)];
+      for (const m of matches) {
+        const summary = await summarizeSession(parseInt(m[1], 10), { openaiClient });
+        if (summary) {
+          processedInput = processedInput.replace(m[0], summary);
+        }
+      }
+
       // Analyze tags for user message
       const analyzer = new TagAnalyzer();
       let tags = [];
       try {
-        console.log('🏷️ Starting tag analysis for:', input.substring(0, 100) + '...');
-        tags = await analyzer.analyzeTags(input);
+        console.log('🏷️ Starting tag analysis for:', processedInput.substring(0, 100) + '...');
+        tags = await analyzer.analyzeTags(processedInput);
         console.log('🏷️ Tags generated:', tags);
         if (debugMode) {
           console.log('🏷️ Debug mode active, tags:', tags);
@@ -1785,9 +1796,9 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
       }
       
       // Create the new message object with timestamp and tags
-      const newMessage = { 
-        type: 'user', 
-        content: input,
+      const newMessage = {
+        type: 'user',
+        content: processedInput,
         tags,
         timestamp: new Date().toISOString()
       };
