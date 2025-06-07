@@ -13,9 +13,11 @@ The flow consists of five sub-journeys:
 ## Goals
 
 - Make clear the user's options in terms of starting the conversation (see 2.1 below for sub-journeys)
-- Guide users from a state of cognitive constriction to expanded awareness and clarity
+- Guide users from cognitive constriction to expanded awareness and clarity
 - Illuminate blind spots and unexamined assumptions
-- Generate novel insights and possibilities that the user wouldn't reach on their own
+- Generate novel insights and possibilities the user wouldn't reach alone
+- Support both emotional integration AND practical action planning
+- Enable comprehensive analysis through multiple expert perspectives when needed
 
 ## Non-goals
 
@@ -50,6 +52,10 @@ The user feels a sense of spaciousness, clarity, and possibility. Their breathin
 - Sentiment shift in user responses (from negative/constrained to positive/expansive)
 - Presence of "insight markers" in user language ("I hadn't thought of that," "That's a new perspective," etc.)
 - Conversation length, both in terms of turns taken and in terms of how often the user returns to the same conversation more than 2 hours since the last engagement
+- Evidence of actionable next steps in user responses
+- Diversity of advisor types engaged (experts, stakeholders, synthesizers)
+- User-initiated addition of new advisors mid-conversation
+- Successful integration of 10+ advisor perspectives when relevant
 
 ## 2.1 Problem Exploration Sub-Journeys
 
