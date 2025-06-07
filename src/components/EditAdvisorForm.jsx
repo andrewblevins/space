@@ -25,6 +25,9 @@ const EditAdvisorForm = ({ advisor, onSubmit, onCancel }) => {
               onChange={(e) => setName(e.target.value)}
               className="w-full bg-white text-gray-800 border border-gray-300 p-2 focus:outline-none dark:bg-black dark:text-green-400 dark:border-green-400"
               autoFocus
+              autoComplete="off"
+              spellCheck="true"
+              data-role="advisor-name"
             />
           </div>
           <div className="mb-4">
@@ -33,6 +36,9 @@ const EditAdvisorForm = ({ advisor, onSubmit, onCancel }) => {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="w-full bg-white text-gray-800 border border-gray-300 p-2 h-32 focus:outline-none resize-none dark:bg-black dark:text-green-400 dark:border-green-400"
+              autoComplete="off"
+              spellCheck="true"
+              data-role="advisor-description"
             />
           </div>
           <div className="flex justify-end space-x-4">

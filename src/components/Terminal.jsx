@@ -2518,6 +2518,9 @@ ${selectedText}
                         className="w-full h-40 bg-white text-gray-800 font-serif p-2 border border-gray-300 focus:outline-none resize-none dark:bg-black dark:text-green-400 dark:border-green-400"
                         placeholder="Edit your prompt..."
                         autoFocus
+                        autoComplete="off"
+                        spellCheck="true"
+                        data-role="text-editor"
                       />
                     </div>
                   ) : editingAdvisor ? (
@@ -2550,6 +2553,9 @@ ${selectedText}
                         className="w-full h-40 bg-white text-gray-800 font-serif p-2 border border-gray-300 focus:outline-none resize-none dark:bg-black dark:text-green-400 dark:border-green-400"
                         placeholder="Edit advisor description..."
                         autoFocus
+                        autoComplete="off"
+                        spellCheck="true"
+                        data-role="text-editor"
                       />
                     </div>
                   ) : (
