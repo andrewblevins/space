@@ -44,11 +44,10 @@ export function GroupableModule({
 
   return (
     <div 
-      className="border border-stone-300 dark:border-gray-700 rounded-md p-4"
-      style={{ backgroundColor: '#f0e6d2' }}
+      className="border border-stone-300 dark:border-gray-700 rounded-md p-4 bg-amber-100 dark:bg-gray-800"
     >
       <div className="flex justify-between items-center mb-2">
-        <h2 style={{ color: '#1f2937 !important' }}>{title}</h2>
+        <h2 className="text-gray-800 dark:text-gray-200">{title}</h2>
         {onAddClick && (
           <button
             onClick={onAddClick}

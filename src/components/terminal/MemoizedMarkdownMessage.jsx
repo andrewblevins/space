@@ -16,7 +16,7 @@ export const MemoizedMarkdownMessage = memo(({ content }) => (
         const match = /language-(\w+)/.exec(className || '');
         return !inline ? (
           <pre className="bg-stone-200 dark:bg-gray-900 p-4 rounded-md my-2 overflow-x-auto whitespace-pre-wrap break-all w-full">
-            <code className={`${match ? `language-${match[1]}` : ''} font-mono block`} style={{ color: '#1f2937 !important' }} {...props}>
+            <code className={`${match ? `language-${match[1]}` : ''} font-mono block text-gray-800 dark:text-gray-200`} {...props}>
               {children}
             </code>
           </pre>
@@ -26,9 +26,9 @@ export const MemoizedMarkdownMessage = memo(({ content }) => (
           </code>
         );
       },
-      p: ({ children }) => <p className="whitespace-pre-wrap font-serif mb-2 w-full" style={{ color: '#1f2937 !important' }}>{children}</p>,
-      ul: ({ children }) => <ul className="list-disc pl-4 space-y-1 mb-2 w-full" style={{ color: '#1f2937 !important' }}>{children}</ul>,
-      li: ({ children }) => <li style={{ color: '#1f2937 !important' }}>{children}</li>,
+      p: ({ children }) => <p className="whitespace-pre-wrap font-serif mb-2 w-full text-gray-800 dark:text-gray-200">{children}</p>,
+      ul: ({ children }) => <ul className="list-disc pl-4 space-y-1 mb-2 w-full text-gray-800 dark:text-gray-200">{children}</ul>,
+      li: ({ children }) => <li className="text-gray-800 dark:text-gray-200">{children}</li>,
     }}
   >
     {content}

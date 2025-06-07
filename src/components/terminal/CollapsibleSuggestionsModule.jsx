@@ -11,11 +11,10 @@
 export function CollapsibleSuggestionsModule({ title, items = [], expanded, onToggle, onItemClick }) {
   return (
     <div 
-      className="border border-stone-300 dark:border-gray-700 rounded-md p-4"
-      style={{ backgroundColor: '#f0e6d2' }}
+      className="border border-stone-300 dark:border-gray-700 rounded-md p-4 bg-amber-100 dark:bg-gray-800"
     >
       <div className="flex justify-between items-center cursor-pointer hover:text-green-600 dark:hover:text-green-300 mb-2" onClick={onToggle}>
-        <h2 style={{ color: '#1f2937 !important' }}>{title}</h2>
+        <h2 className="text-gray-800 dark:text-gray-200">{title}</h2>
         <span className="text-green-700 dark:text-green-400">{expanded ? '▼' : '▶'}</span>
       </div>
       {expanded && (
