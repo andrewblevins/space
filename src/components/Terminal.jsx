@@ -32,36 +32,40 @@ import { worksheetQuestions, WORKSHEET_TEMPLATES } from "../utils/worksheetTempl
 
 
 
-const Terminal = () => {
+const Terminal = ({ theme, toggleTheme }) => {
   const modalController = useModal();
   
   // Initialize the modal controller for secureStorage
   useEffect(() => {
     if (modalController) {
       setModalController(modalController);
-      
-      // Only check for API keys after modal controller is initialized
-      const checkKeys = async () => {
-        try {
-          const anthropicKey = await getDecrypted('space_anthropic_key');
-          const openaiKey = await getDecrypted('space_openai_key');
+    }
+  }, [modalController]);
+
+  useEffect(() => {
+    // Only check for API keys after modal controller is initialized
+    const checkKeys = async () => {
+      try {
+        const anthropicKey = await getDecrypted('space_anthropic_key');
+        const openaiKey = await getDecrypted('space_openai_key');
+        
+        if (anthropicKey && openaiKey) {
+          setApiKeysSet(true);
           
-          if (anthropicKey && openaiKey) {
-            setApiKeysSet(true);
-            
-            // Initialize OpenAI client if keys are available
-            const client = new OpenAI({
-              apiKey: openaiKey,
-              dangerouslyAllowBrowser: true
-            });
-            setOpenaiClient(client);
-            console.log('✅ OpenAI client initialized successfully');
-          }
-        } catch (error) {
-          console.error('Error checking API keys:', error);
+          // Initialize OpenAI client if keys are available
+          const client = new OpenAI({
+            apiKey: openaiKey,
+            dangerouslyAllowBrowser: true
+          });
+          setOpenaiClient(client);
+          console.log('✅ OpenAI client initialized successfully');
         }
-      };
-      
+      } catch (error) {
+        console.error('Error checking API keys:', error);
+      }
+    };
+    
+    if (modalController) {
       checkKeys();
     }
   }, [modalController]);
