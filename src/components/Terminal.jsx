@@ -19,6 +19,7 @@ import PromptLibrary from './PromptLibrary';
 import AddPromptForm from './AddPromptForm';
 import ExportMenu from './ExportMenu';
 import DossierModal from './DossierModal';
+import ImportExportModal from './ImportExportModal';
 import { Module } from "./terminal/Module";
 import { GroupableModule } from "./terminal/GroupableModule";
 import { CollapsibleModule } from "./terminal/CollapsibleModule";
@@ -77,6 +78,33 @@ const Terminal = ({ theme, toggleTheme }) => {
     
     const ids = keys.map(key => parseInt(key.replace('space_session_', '')));
     return Math.max(...ids) + 1;
+  };
+
+  const handleAdvisorImport = (importedAdvisors, mode) => {
+    if (mode === 'replace') {
+      setAdvisors(importedAdvisors);
+      setMessages(prev => [...prev, {
+        type: 'system',
+        content: `Replaced all advisors with ${importedAdvisors.length} imported advisors.`
+      }]);
+    } else {
+      // Add mode - append to existing advisors, avoiding duplicates
+      const existingNames = new Set(advisors.map(a => a.name.toLowerCase()));
+      const newAdvisors = importedAdvisors.filter(a => !existingNames.has(a.name.toLowerCase()));
+      const duplicates = importedAdvisors.length - newAdvisors.length;
+      
+      setAdvisors(prev => [...prev, ...newAdvisors]);
+      
+      let message = `Added ${newAdvisors.length} new advisors.`;
+      if (duplicates > 0) {
+        message += ` Skipped ${duplicates} duplicate${duplicates > 1 ? 's' : ''}.`;
+      }
+      
+      setMessages(prev => [...prev, {
+        type: 'system',
+        content: message
+      }]);
+    }
   };
 
   const [messages, setMessages] = useState([
@@ -168,6 +196,7 @@ const Terminal = ({ theme, toggleTheme }) => {
   const [showAddPromptForm, setShowAddPromptForm] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showDossierModal, setShowDossierModal] = useState(false);
+  const [showImportExportModal, setShowImportExportModal] = useState(false);
 
 const getSystemPrompt = () => {
   const activeAdvisors = advisors.filter(a => a.active);
@@ -485,10 +514,12 @@ The interface is now fully discoverable - no commands needed!`
               content: `Available advisor commands:
 /advisor add      - Add a new advisor
 /advisor edit     - Edit an advisor
-/advisor remove   - Remove an advisor
+/advisor delete   - Delete an advisor
 /advisor list     - List all advisors
 /advisor generate - Generate advisor suggestions from worksheet
-/advisor finalize - Get detailed profiles for chosen advisors`
+/advisor finalize - Get detailed profiles for chosen advisors
+
+Note: Advisor sharing is now available through the GUI menu (bottom-left → Import/Export Advisors)`
             }]);
             return true;  // Add this to prevent fall-through to debug command
           }
@@ -781,7 +812,7 @@ Now, I'd like to generate the final output. Please include the following aspects
                 return true;
               }
 
-              setAdvisors(prev => prev.filter(a => 
+              setAdvisors(prev => prev.filter(a =>
                 a.name.toLowerCase() !== nameToDelete.toLowerCase()
               ));
               setMessages(prev => [...prev, {
@@ -789,6 +820,7 @@ Now, I'd like to generate the final output. Please include the following aspects
                 content: `Deleted advisor: ${advisorToDelete.name}`
               }]);
               return true;
+
           }
 
         case '/debug':
@@ -2715,6 +2747,13 @@ ${selectedText}
         }}
       />
 
+      <ImportExportModal
+        isOpen={showImportExportModal}
+        onClose={() => setShowImportExportModal(false)}
+        advisors={advisors}
+        onImport={handleAdvisorImport}
+      />
+
       {/* Accordion Menu - Bottom Left */}
       <AccordionMenu
         onSettingsClick={() => setShowSettingsMenu(true)}
@@ -2722,6 +2761,7 @@ ${selectedText}
         onSessionManagerClick={() => setShowSessionPanel(true)}
         onExportClick={() => setShowExportMenu(true)}
         onDossierClick={() => setShowDossierModal(true)}
+        onImportExportAdvisorsClick={() => setShowImportExportModal(true)}
       />
 
       {/* Info Button - Bottom Right */}
