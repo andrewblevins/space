@@ -348,7 +348,7 @@ const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimi
                 const tags = new Set();
                 s.messages.forEach(msg => {
                   if (msg.tags) {
-                    msg.tags.forEach(tag => tags.add(tag));
+                    msg.tags.forEach(tag => tags.add(tag.value));
                   }
                 });
                 const tagList = Array.from(tags);
@@ -1206,6 +1206,22 @@ Now, I'd like to generate the final output. Please include the following aspects
               }]);
               return true;
           }
+
+        case '/dossier':
+          if (!args[0]) {
+            setMessages(prev => [...prev, {
+              type: 'system',
+              content: 'Usage: /dossier <subject>'
+            }]);
+            return true;
+          }
+          const subject = args.join(' ');
+          const dossierMsgs = memory.compileDossier(subject);
+          setMessages(prev => [...prev, {
+            type: 'system',
+            content: `Dossier for "${subject}" contains ${dossierMsgs.length} messages.`
+          }]);
+          return true;
 
         case '/memory':
           switch(args[0]) {
