@@ -2416,11 +2416,9 @@ ${selectedText}
         // Regular terminal UI
         <div
           ref={terminalRef}
-          className="w-full h-screen font-serif flex relative dark:from-gray-900 dark:to-black dark:text-green-400"
+          className="w-full h-screen font-serif flex relative bg-gradient-to-b from-amber-50 to-amber-100 text-gray-800 dark:bg-gradient-to-b dark:from-gray-900 dark:to-black dark:text-green-400"
           onContextMenu={handleContextMenu}
           style={{
-            background: 'linear-gradient(to bottom, #f5f0e8, #f0e6d2)',
-            color: '#1f2937',
             /* Custom scrollbar styling for webkit browsers */
             scrollbarWidth: 'thin',
             scrollbarColor: '#374151 transparent'
@@ -2491,13 +2489,12 @@ ${selectedText}
                   <div 
                     key={idx}
                     id={`msg-${idx}`}
-                    className="mb-4 whitespace-pre-wrap break-words"
-                    style={{
-                      color: msg.type === 'user' ? '#16a34a' : 
-                             msg.type === 'assistant' ? '#1f2937' : 
-                             msg.type === 'system' ? '#1f2937' : 
-                             msg.type === 'debug' ? '#d97706' : '#16a34a'
-                    }}
+                    className={`mb-4 whitespace-pre-wrap break-words ${
+                      msg.type === 'user' ? 'text-green-600 dark:text-green-400' : 
+                      msg.type === 'assistant' ? 'text-gray-800 dark:text-gray-200' : 
+                      msg.type === 'system' ? 'text-gray-800 dark:text-gray-200' : 
+                      msg.type === 'debug' ? 'text-amber-600 dark:text-amber-400' : 'text-green-600 dark:text-green-400'
+                    }`}
                   >
                     {(msg.type === 'system' || msg.type === 'assistant') ? (
                     <MemoizedMarkdownMessage content={msg.content} />
@@ -2506,7 +2503,7 @@ ${selectedText}
                     )}
                   </div>
               ))}
-              {isLoading && <div style={{ color: '#d97706 !important' }}>Loading...</div>}
+              {isLoading && <div className="text-amber-600 dark:text-amber-400">Loading...</div>}
             </div>
 
             <div className="mt-auto">

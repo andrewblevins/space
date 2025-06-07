@@ -45,11 +45,7 @@ export function ExpandingInput({ value, onChange, onSubmit, isLoading }) {
         value={value}
         onChange={onChange}
         onKeyDown={handleKeyDown}
-        style={{ 
-          height,
-          backgroundColor: '#f5f0e8 !important', 
-          color: '#1f2937 !important' 
-        }}
+        style={{ height }}
         className={`
           w-full
           min-h-[100px]
@@ -61,6 +57,7 @@ export function ExpandingInput({ value, onChange, onSubmit, isLoading }) {
           focus:outline-none
           rounded-md
           resize-none
+          bg-amber-50 text-gray-800 dark:bg-black dark:text-green-400
           ${isLoading ? 'opacity-50' : ''}
         `}
         placeholder={isLoading ? 'Waiting for response...' : 'Type your message...'}
