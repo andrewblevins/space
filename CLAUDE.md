@@ -31,6 +31,7 @@ npm run dev
 # Testing and validation
 npm run lint
 npm run build
+npm run preview  # Preview production build
 ```
 
 ### Environment Variables Required
@@ -95,12 +96,16 @@ await page.evaluate(() => {
 
 ## 📁 Project Structure
 
+SPACE is a React-based terminal interface with dual-AI integration: Claude Sonnet 4 for main conversations and GPT-4o-mini for background analysis (metaphors, questions, suggestions).
+
 ### Key Files
-- `src/components/Terminal.jsx` - Main terminal interface
+- `src/components/Terminal.jsx` - Main terminal interface (central hub)
 - `src/components/SettingsMenu.jsx` - Settings panel
 - `src/components/ApiKeySetup.jsx` - Initial setup flow
+- `src/hooks/useClaude.js` - Claude API integration hook
 - `scripts/improved-setup.js` - Automated development setup
 - `docs/AUTOMATION.md` - **REQUIRED READING** for automation
+- `docs/ARCHITECTURE.md` - Comprehensive technical architecture reference
 
 ### Testing Scripts
 - `scripts/improved-setup.js` - Complete automated setup
@@ -152,6 +157,7 @@ The settings menu was designed to replace terminal commands with GUI controls:
 ## 📚 Additional Resources
 
 - **Automation Guide**: `/docs/AUTOMATION.md` ⚠️ **CRITICAL REFERENCE**
+- **Technical Architecture**: `/docs/ARCHITECTURE.md` - Comprehensive system overview
 - **API Documentation**: Check component files for props and usage
 - **Environment Setup**: Use `npm run dev:setup` for quick start
 
