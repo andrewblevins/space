@@ -18,6 +18,7 @@ import SessionPanel from './SessionPanel';
 import PromptLibrary from './PromptLibrary';
 import AddPromptForm from './AddPromptForm';
 import ExportMenu from './ExportMenu';
+import ImportExportModal from './ImportExportModal';
 import { Module } from "./terminal/Module";
 import { GroupableModule } from "./terminal/GroupableModule";
 import { CollapsibleModule } from "./terminal/CollapsibleModule";
@@ -72,6 +73,33 @@ const Terminal = () => {
     
     const ids = keys.map(key => parseInt(key.replace('space_session_', '')));
     return Math.max(...ids) + 1;
+  };
+
+  const handleAdvisorImport = (importedAdvisors, mode) => {
+    if (mode === 'replace') {
+      setAdvisors(importedAdvisors);
+      setMessages(prev => [...prev, {
+        type: 'system',
+        content: `Replaced all advisors with ${importedAdvisors.length} imported advisors.`
+      }]);
+    } else {
+      // Add mode - append to existing advisors, avoiding duplicates
+      const existingNames = new Set(advisors.map(a => a.name.toLowerCase()));
+      const newAdvisors = importedAdvisors.filter(a => !existingNames.has(a.name.toLowerCase()));
+      const duplicates = importedAdvisors.length - newAdvisors.length;
+      
+      setAdvisors(prev => [...prev, ...newAdvisors]);
+      
+      let message = `Added ${newAdvisors.length} new advisors.`;
+      if (duplicates > 0) {
+        message += ` Skipped ${duplicates} duplicate${duplicates > 1 ? 's' : ''}.`;
+      }
+      
+      setMessages(prev => [...prev, {
+        type: 'system',
+        content: message
+      }]);
+    }
   };
 
   const [messages, setMessages] = useState([
@@ -156,6 +184,7 @@ const Terminal = () => {
 
   const [showAddPromptForm, setShowAddPromptForm] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [showImportExportModal, setShowImportExportModal] = useState(false);
 
 const getSystemPrompt = () => {
   const activeAdvisors = advisors.filter(a => a.active);
@@ -475,10 +504,10 @@ The interface is now fully discoverable - no commands needed!`
 /advisor edit     - Edit an advisor
 /advisor delete   - Delete an advisor
 /advisor list     - List all advisors
-/advisor share    - Copy advisor profiles to clipboard
-/advisor import   - Import advisors from JSON
 /advisor generate - Generate advisor suggestions from worksheet
-/advisor finalize - Get detailed profiles for chosen advisors`
+/advisor finalize - Get detailed profiles for chosen advisors
+
+Note: Advisor sharing is now available through the GUI menu (bottom-left → Import/Export Advisors)`
             }]);
             return true;  // Add this to prevent fall-through to debug command
           }
@@ -780,44 +809,6 @@ Now, I'd like to generate the final output. Please include the following aspects
               }]);
               return true;
 
-            case 'share':
-              const advisorJson = JSON.stringify(advisors, null, 2);
-              (async () => {
-                try {
-                  await navigator.clipboard.writeText(advisorJson);
-                  setMessages(prev => [...prev, {
-                    type: 'system',
-                    content: 'Advisor profiles copied to clipboard. Share this JSON with your friends.'
-                  }]);
-                } catch (err) {
-                  setMessages(prev => [...prev, {
-                    type: 'system',
-                    content: 'Advisor profiles JSON:\n```json\n' + advisorJson + '\n```'
-                  }]);
-                }
-              })();
-              return true;
-
-            case 'import':
-              const jsonText = text.slice('/advisor import'.length).trim();
-              try {
-                const imported = JSON.parse(jsonText);
-                if (Array.isArray(imported)) {
-                  setAdvisors(imported);
-                  setMessages(prev => [...prev, {
-                    type: 'system',
-                    content: 'Imported ' + imported.length + ' advisors.'
-                  }]);
-                } else {
-                  throw new Error('JSON must be an array of advisors');
-                }
-              } catch (err) {
-                setMessages(prev => [...prev, {
-                  type: 'system',
-                  content: 'Error importing advisors: ' + err.message
-                }]);
-              }
-              return true;
           }
 
         case '/debug':
@@ -2734,12 +2725,20 @@ ${selectedText}
         })()}
       />
 
+      <ImportExportModal
+        isOpen={showImportExportModal}
+        onClose={() => setShowImportExportModal(false)}
+        advisors={advisors}
+        onImport={handleAdvisorImport}
+      />
+
       {/* Accordion Menu - Bottom Left */}
       <AccordionMenu
         onSettingsClick={() => setShowSettingsMenu(true)}
         onPromptLibraryClick={() => setShowPromptLibrary(true)}
         onSessionManagerClick={() => setShowSessionPanel(true)}
         onExportClick={() => setShowExportMenu(true)}
+        onImportExportAdvisorsClick={() => setShowImportExportModal(true)}
       />
 
       {/* Info Button - Bottom Right */}

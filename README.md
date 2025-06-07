@@ -73,44 +73,26 @@ This will send a basic starting prompt for the conversation.
 
 - **Capture**: Right click selected text to capture and save to a Markdown file
 
-- **Debug**: Activate `/debug` to see what's being sent to Claude as well as the estimated cost of each message.
-- **Advisor Sharing**: Use `/advisor share` to copy your advisor profiles and `/advisor import <json>` to load profiles from a friend
+- **Debug**: Use the settings menu (gear icon, bottom-left) to toggle debug mode and see what's being sent to Claude plus estimated costs.
 
-## Available Commands
+## Interface
 
-Enter `/help` anytime to see this list of commands in the terminal.
+SPACE has moved to a **fully GUI-based interface** for ease of use. All functionality is accessible through:
 
-### Session Management
-- `/new` - Start a new session
-- `/sessions` - List all sessions and their numbers
-- `/load <id>` - Load a specific session (id = session number)
-- `/load previous` - Load the most recent session
+- **Settings Menu**: Click the gear icon (bottom-left) for debug mode, token limits, API key management
+- **Advisors Panel**: Left sidebar for creating, editing, and selecting AI advisors  
+- **Conversation**: Main terminal area for natural conversation
+- **Export Menu**: Click export icon for saving conversations in markdown format
+- **Prompts Library**: Access saved prompts through the interface
 
-### Advisor Management
-- `/advisor` - Show available advisor commands
-- `/advisor add` - Add a new advisor
-- `/advisor edit` - Edit an advisor
-- `/advisor delete` - Delete an advisor
-- `/advisor list` - List all advisors
-- `/advisor share` - Copy advisor profiles to clipboard
-- `/advisor import <json>` - Import advisors from JSON
+### Legacy Commands
 
-### Group Management
-- `/group create <group_name>` - Create a new advisor group (e.g. `/group create Psychologists`)
-- `/group add <group_name> <advisor>` - Add an advisor to a group (e.g. `/group add Psychologists Carl Jung`)
-- `/group remove <group_name> <advisor>` - Remove an advisor from a group
-- `/group list` - List all advisor groups and their members
+Some terminal commands are still available for power users:
+- `/new` - Start a new session  
+- `/debug` - Toggle debug mode
+- `/help` - Show available commands
 
-### Save and Use Prompts
-- `/prompt add "name" <text>` - Save a new prompt
-- `/prompt list` - Show all saved prompts
-- `/prompt use "name"` - Use a saved prompt
-- `/prompt edit "name"` - Edit an existing prompt
-- `/prompt delete "name"` - Delete a saved prompt
-
-### Settings
-- `/context limit <number>` - Set token limit for context management (default: 150,000)
-- `/response length <number>` - Set maximum length for Claude responses (default: 4,096, max: 8,192)
+*Note: Advisor sharing, group management, and most other features are now handled through the graphical interface rather than slash commands.*
 
 ## Roadmap
 
@@ -118,11 +100,11 @@ Enter `/help` anytime to see this list of commands in the terminal.
 - [ ] Model selection and configuration 
 - [ ] Better memory / context management system
 - [ ] More conversation analysis tools (interpersonal patterns, Kegan stages, etc.?)
-- [x] Ways to share advisors with your friends
+- [x] Advisor sharing through file import/export
 
 ## Cost Expectations
 
-SPACE Terminal is very cost-effective to use. For instance, an hour-long deep discussion may run about $0.25-30 (possibly up to a dollar if you send messages very fast). Each message exchange (your message + AI response) costs roughly 2¢ on average. Starting with $5 in each API account will easily give you several hours of conversation. Use the '/debug' command to monitor estimated costs in real-time.
+SPACE Terminal is very cost-effective to use. For instance, an hour-long deep discussion may run about $0.25-30 (possibly up to a dollar if you send messages very fast). Each message exchange (your message + AI response) costs roughly 2¢ on average. Starting with $5 in each API account will easily give you several hours of conversation. Use debug mode in the settings menu to monitor estimated costs in real-time.
 
 ## Support
 
