@@ -50,15 +50,18 @@ export function ExpandingInput({ value, onChange, onSubmit, isLoading }) {
           w-full
           min-h-[100px]
           max-h-[400px]
-          bg-black
-          text-green-400
+          bg-white
+          text-gray-800
           font-serif
           p-4
           border
-          border-green-400
+          border-gray-300
           focus:outline-none
           rounded-md
           resize-none
+          dark:bg-black
+          dark:text-green-400
+          dark:border-green-400
           ${isLoading ? 'opacity-50' : ''}
         `}
         placeholder={isLoading ? 'Waiting for response...' : 'Type your message...'}

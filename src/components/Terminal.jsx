@@ -32,7 +32,7 @@ import { worksheetQuestions, WORKSHEET_TEMPLATES } from "../utils/worksheetTempl
 
 
 
-const Terminal = () => {
+const Terminal = ({ theme, toggleTheme }) => {
   const modalController = useModal();
   
   // Initialize the modal controller for secureStorage
@@ -2349,9 +2349,9 @@ ${selectedText}
         />
       ) : (
         // Regular terminal UI
-        <div 
-          ref={terminalRef} 
-          className="w-full h-screen bg-gradient-to-b from-gray-900 to-black text-green-400 font-serif flex relative"
+        <div
+          ref={terminalRef}
+          className="w-full h-screen font-serif flex relative bg-gradient-to-b from-gray-100 to-white text-gray-800 dark:from-gray-900 dark:to-black dark:text-green-400"
           onContextMenu={handleContextMenu}
           style={{
             /* Custom scrollbar styling for webkit browsers */
@@ -2384,7 +2384,7 @@ ${selectedText}
               background: transparent;
             }
           `}</style>
-          <button 
+          <button
             onClick={toggleFullscreen}
             className="absolute top-2 right-2 text-green-400 hover:text-green-300 z-50"
           >
@@ -2398,9 +2398,23 @@ ${selectedText}
               </svg>
             )}
           </button>
+          <button
+            onClick={toggleTheme}
+            className="absolute top-2 right-10 text-green-400 hover:text-green-300 z-50"
+          >
+            {theme === 'dark' ? (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M10 2a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 0110 2zM4.22 4.22a.75.75 0 011.06 0l1.06 1.06a.75.75 0 11-1.06 1.06L4.22 5.28a.75.75 0 010-1.06zM2 10a.75.75 0 01.75-.75h1.5a.75.75 0 010 1.5h-1.5A.75.75 0 012 10zm8 6a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 0110 16zm7.78-11.78a.75.75 0 010 1.06l-1.06 1.06a.75.75 0 11-1.06-1.06l1.06-1.06a.75.75 0 011.06 0zM16.25 9.25h1.5a.75.75 0 010 1.5h-1.5a.75.75 0 010-1.5zm-2.03 5.47a.75.75 0 011.06 1.06l-1.06 1.06a.75.75 0 11-1.06-1.06l1.06-1.06zM5.28 14.72a.75.75 0 010 1.06l-1.06 1.06a.75.75 0 11-1.06-1.06l1.06-1.06a.75.75 0 011.06 0z" />
+              </svg>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M10 2a8 8 0 100 16 8 8 0 000-16zM10 4a6 6 0 110 12A6 6 0 0110 4z" />
+              </svg>
+            )}
+          </button>
 
           {/* Left Column */}
-          <div className="w-1/4 p-4 border-r border-gray-800 overflow-y-auto scrollbar-terminal">
+          <div className="w-1/4 p-4 border-r border-gray-300 dark:border-gray-800 overflow-y-auto scrollbar-terminal">
             <CollapsibleModule 
               title="Metaphors" 
               items={metaphors}
@@ -2450,11 +2464,15 @@ ${selectedText}
                     key={idx}
                     id={`msg-${idx}`}
                     className={(() => {
-                      const className = msg.type === 'debug' ? 'text-yellow-400 mb-4 whitespace-pre-wrap break-words' :
-                        msg.type === 'user' ? 'text-green-400 mb-4 whitespace-pre-wrap break-words' :
-                        msg.type === 'assistant' ? 'text-white mb-4 break-words' : 
-                        msg.type === 'system' ? 'text-green-400 mb-4 break-words' :
-                        'text-green-400 mb-4 break-words';
+                      const className = msg.type === 'debug'
+                        ? 'mb-4 whitespace-pre-wrap break-words text-yellow-600 dark:text-yellow-400'
+                        : msg.type === 'user'
+                        ? 'mb-4 whitespace-pre-wrap break-words text-green-600 dark:text-green-400'
+                        : msg.type === 'assistant'
+                        ? 'mb-4 break-words text-gray-800 dark:text-white'
+                        : msg.type === 'system'
+                        ? 'mb-4 break-words text-green-600 dark:text-green-400'
+                        : 'mb-4 break-words text-green-600 dark:text-green-400';
                       return className;
                     })()}
                   >
@@ -2477,7 +2495,7 @@ ${selectedText}
                         value={editText}
                         onChange={(e) => setEditText(e.target.value)}
                         onKeyDown={handleEditKeyDown}
-                        className="w-full h-40 bg-black text-green-400 font-serif p-2 border border-green-400 focus:outline-none resize-none"
+                        className="w-full h-40 bg-white text-gray-800 font-serif p-2 border border-gray-300 focus:outline-none resize-none dark:bg-black dark:text-green-400 dark:border-green-400"
                         placeholder="Edit your prompt..."
                         autoFocus
                       />
@@ -2509,7 +2527,7 @@ ${selectedText}
                             }]);
                           }
                         }}
-                        className="w-full h-40 bg-black text-green-400 font-serif p-2 border border-green-400 focus:outline-none resize-none"
+                        className="w-full h-40 bg-white text-gray-800 font-serif p-2 border border-gray-300 focus:outline-none resize-none dark:bg-black dark:text-green-400 dark:border-green-400"
                         placeholder="Edit advisor description..."
                         autoFocus
                       />
@@ -2531,7 +2549,7 @@ ${selectedText}
           </div>
 
           {/* Right Column */}
-          <div className="w-1/4 p-4 border-l border-gray-800 overflow-y-auto scrollbar-terminal">
+          <div className="w-1/4 p-4 border-l border-gray-300 dark:border-gray-800 overflow-y-auto scrollbar-terminal">
             <CollapsibleModule 
               title="Questions" 
               items={questions}

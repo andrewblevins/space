@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
 
-const SettingsMenu = ({ 
-  isOpen, 
-  onClose, 
-  debugMode, 
+const SettingsMenu = ({
+  isOpen,
+  onClose,
+  debugMode,
   setDebugMode,
   contextLimit,
   setContextLimit,
   maxTokens,
   setMaxTokens,
   onClearApiKeys,
-  onShowApiKeyStatus
+  onShowApiKeyStatus,
+  theme,
+  toggleTheme
 }) => {
   const [tempContextLimit, setTempContextLimit] = useState(contextLimit);
   const [tempMaxTokens, setTempMaxTokens] = useState(maxTokens);
@@ -73,9 +75,9 @@ const SettingsMenu = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={onClose}>
-      <div 
-        className="bg-gray-900 border border-green-400 rounded-lg p-6 w-full max-w-md mx-4"
+    <div className="fixed inset-0 bg-white/70 dark:bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
+      <div
+        className="bg-gray-100 border border-green-600 rounded-lg p-6 w-full max-w-md mx-4 dark:bg-gray-900 dark:border-green-400"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-6">
@@ -97,20 +99,40 @@ const SettingsMenu = ({
             <div>
               <label className="text-green-400 font-medium">Debug Mode</label>
               <p className="text-gray-400 text-sm">Show detailed API call information</p>
-            </div>
-            <button
-              onClick={handleDebugToggle}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                debugMode ? 'bg-green-400' : 'bg-gray-600'
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  debugMode ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
-            </button>
           </div>
+          <button
+            onClick={handleDebugToggle}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              debugMode ? 'bg-green-400' : 'bg-gray-600'
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                debugMode ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
+        </div>
+
+        {/* Theme */}
+        <div className="flex items-center justify-between">
+          <div>
+            <label className="text-green-400 font-medium">Theme</label>
+            <p className="text-gray-400 text-sm">Toggle light or dark mode</p>
+          </div>
+          <button
+            onClick={toggleTheme}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              theme === 'dark' ? 'bg-green-400' : 'bg-gray-600'
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                theme === 'dark' ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
+        </div>
 
           {/* Context Limit */}
           <div>
@@ -126,7 +148,7 @@ const SettingsMenu = ({
                 value={tempContextLimit}
                 onChange={(e) => setTempContextLimit(e.target.value)}
                 onBlur={(e) => handleContextLimitChange(e.target.value)}
-                className="bg-black text-green-400 border border-green-400 rounded px-3 py-1 w-24 focus:outline-none focus:ring-1 focus:ring-green-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="bg-white text-gray-800 border border-gray-300 rounded px-3 py-1 w-24 focus:outline-none focus:ring-1 focus:ring-green-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none dark:bg-black dark:text-green-400 dark:border-green-400"
                 min="1000"
                 max="200000"
                 step="1000"
@@ -152,7 +174,7 @@ const SettingsMenu = ({
                 value={tempMaxTokens}
                 onChange={(e) => setTempMaxTokens(e.target.value)}
                 onBlur={(e) => handleMaxTokensChange(e.target.value)}
-                className="bg-black text-green-400 border border-green-400 rounded px-3 py-1 w-20 focus:outline-none focus:ring-1 focus:ring-green-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="bg-white text-gray-800 border border-gray-300 rounded px-3 py-1 w-20 focus:outline-none focus:ring-1 focus:ring-green-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none dark:bg-black dark:text-green-400 dark:border-green-400"
                 min="1"
                 max="8192"
               />
@@ -171,13 +193,13 @@ const SettingsMenu = ({
             <div className="space-y-2">
               <button
                 onClick={onShowApiKeyStatus}
-                className="w-full text-left px-3 py-2 bg-black border border-green-400 rounded text-green-400 hover:bg-green-400 hover:text-black transition-colors"
+                className="w-full text-left px-3 py-2 bg-white border border-green-600 rounded text-green-600 hover:bg-green-600 hover:text-white transition-colors dark:bg-black dark:border-green-400 dark:text-green-400 dark:hover:bg-green-400 dark:hover:text-black"
               >
                 View API Key Status
               </button>
               <button
                 onClick={handleClearApiKeysClick}
-                className="w-full text-left px-3 py-2 bg-black border border-red-400 rounded text-red-400 hover:bg-red-400 hover:text-black transition-colors"
+                className="w-full text-left px-3 py-2 bg-white border border-red-600 rounded text-red-600 hover:bg-red-600 hover:text-white transition-colors dark:bg-black dark:border-red-400 dark:text-red-400 dark:hover:bg-red-400 dark:hover:text-black"
               >
                 Clear API Keys
               </button>
@@ -188,7 +210,7 @@ const SettingsMenu = ({
         <div className="mt-6 pt-4 border-t border-gray-700 space-y-3">
           <button
             onClick={handleRestoreDefaults}
-            className="w-full px-4 py-2 bg-black border border-blue-400 rounded text-blue-400 hover:bg-blue-400 hover:text-black transition-colors"
+            className="w-full px-4 py-2 bg-white border border-blue-600 rounded text-blue-600 hover:bg-blue-600 hover:text-white transition-colors dark:bg-black dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-400 dark:hover:text-black"
           >
             Restore Defaults
           </button>
@@ -200,12 +222,12 @@ const SettingsMenu = ({
 
       {/* Confirmation Dialog for Clear API Keys */}
       {showClearConfirmation && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-60"
+        <div
+          className="fixed inset-0 bg-white/70 dark:bg-black/75 flex items-center justify-center z-60"
           onClick={(e) => e.stopPropagation()}
         >
-          <div 
-            className="bg-gray-900 border border-red-400 rounded-lg p-6 w-full max-w-sm mx-4"
+          <div
+            className="bg-gray-100 border border-red-600 rounded-lg p-6 w-full max-w-sm mx-4 dark:bg-gray-900 dark:border-red-400"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-4">
@@ -220,13 +242,13 @@ const SettingsMenu = ({
             <div className="flex space-x-3">
               <button
                 onClick={() => setShowClearConfirmation(false)}
-                className="flex-1 px-4 py-2 bg-black border border-gray-400 rounded text-gray-400 hover:bg-gray-400 hover:text-black transition-colors"
+                className="flex-1 px-4 py-2 bg-white border border-gray-400 rounded text-gray-600 hover:bg-gray-200 transition-colors dark:bg-black dark:text-gray-400 dark:hover:bg-gray-400"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmClearApiKeys}
-                className="flex-1 px-4 py-2 bg-black border border-red-400 rounded text-red-400 hover:bg-red-400 hover:text-black transition-colors"
+                className="flex-1 px-4 py-2 bg-white border border-red-600 rounded text-red-600 hover:bg-red-600 hover:text-white transition-colors dark:bg-black dark:border-red-400 dark:text-red-400 dark:hover:bg-red-400 dark:hover:text-black"
               >
                 Clear Keys
               </button>

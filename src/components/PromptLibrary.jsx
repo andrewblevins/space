@@ -40,9 +40,9 @@ const PromptLibrary = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={onClose}>
-      <div 
-        className="bg-gray-900 border border-green-400 rounded-lg w-full max-w-4xl mx-4 max-h-[80vh] flex flex-col"
+    <div className="fixed inset-0 bg-white/70 dark:bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
+      <div
+        className="bg-gray-100 border border-green-600 rounded-lg w-full max-w-4xl mx-4 max-h-[80vh] flex flex-col dark:bg-gray-900 dark:border-green-400"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -68,7 +68,7 @@ const PromptLibrary = ({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search prompts..."
-                className="w-full bg-black text-green-400 border border-green-400 rounded px-3 py-2 pl-10 focus:outline-none focus:ring-1 focus:ring-green-400"
+                className="w-full bg-white text-gray-800 border border-gray-300 rounded px-3 py-2 pl-10 focus:outline-none focus:ring-1 focus:ring-green-600 dark:bg-black dark:text-green-400 dark:border-green-400"
               />
               <svg 
                 className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"
@@ -81,7 +81,7 @@ const PromptLibrary = ({
             </div>
             <button
               onClick={onAddNewPrompt}
-              className="px-4 py-2 bg-black border border-green-400 rounded text-green-400 hover:bg-green-400 hover:text-black transition-colors"
+              className="px-4 py-2 bg-white border border-green-600 rounded text-green-600 hover:bg-green-600 hover:text-white transition-colors dark:bg-black dark:border-green-400 dark:text-green-400 dark:hover:bg-green-400 dark:hover:text-black"
             >
               Add New Prompt
             </button>
@@ -98,7 +98,7 @@ const PromptLibrary = ({
               {!searchQuery && (
                 <button
                   onClick={onAddNewPrompt}
-                  className="px-4 py-2 bg-black border border-green-400 rounded text-green-400 hover:bg-green-400 hover:text-black transition-colors"
+                  className="px-4 py-2 bg-white border border-green-600 rounded text-green-600 hover:bg-green-600 hover:text-white transition-colors dark:bg-black dark:border-green-400 dark:text-green-400 dark:hover:bg-green-400 dark:hover:text-black"
                 >
                   Create Your First Prompt
                 </button>
@@ -107,7 +107,7 @@ const PromptLibrary = ({
           ) : (
             <div className="space-y-4">
               {filteredPrompts.map((prompt) => (
-                <div key={prompt.name} className="bg-black border border-gray-600 rounded-lg p-4">
+                <div key={prompt.name} className="bg-white border border-gray-300 rounded-lg p-4 dark:bg-black dark:border-gray-600">
                   <div className="flex items-start justify-between mb-3">
                     <h3 className="text-green-400 font-semibold text-lg">{prompt.name}</h3>
                     <div className="flex items-center space-x-2">
@@ -120,14 +120,14 @@ const PromptLibrary = ({
                       </button>
                       <button
                         onClick={() => onEditPrompt(prompt)}
-                        className="px-3 py-1 bg-black border border-blue-400 text-blue-400 rounded text-sm hover:bg-blue-400 hover:text-black transition-colors"
+                        className="px-3 py-1 bg-white border border-blue-600 text-blue-600 rounded text-sm hover:bg-blue-600 hover:text-white transition-colors dark:bg-black dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-400 dark:hover:text-black"
                         title="Edit this prompt"
                       >
                         Edit
                       </button>
                       <button
                         onClick={() => handleDeleteClick(prompt)}
-                        className="px-3 py-1 bg-black border border-red-400 text-red-400 rounded text-sm hover:bg-red-400 hover:text-black transition-colors"
+                        className="px-3 py-1 bg-white border border-red-600 text-red-600 rounded text-sm hover:bg-red-600 hover:text-white transition-colors dark:bg-black dark:border-red-400 dark:text-red-400 dark:hover:bg-red-400 dark:hover:text-black"
                         title="Delete this prompt"
                       >
                         Delete
@@ -147,11 +147,11 @@ const PromptLibrary = ({
       {/* Delete Confirmation Dialog */}
       {showDeleteConfirmation && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-60"
+          className="fixed inset-0 bg-white/70 dark:bg-black/75 flex items-center justify-center z-60"
           onClick={(e) => e.stopPropagation()}
         >
-          <div 
-            className="bg-gray-900 border border-red-400 rounded-lg p-6 w-full max-w-sm mx-4"
+          <div
+            className="bg-gray-100 border border-red-600 rounded-lg p-6 w-full max-w-sm mx-4 dark:bg-gray-900 dark:border-red-400"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-4">
@@ -166,13 +166,13 @@ const PromptLibrary = ({
             <div className="flex space-x-3">
               <button
                 onClick={handleCancelDelete}
-                className="flex-1 px-4 py-2 bg-black border border-gray-400 rounded text-gray-400 hover:bg-gray-400 hover:text-black transition-colors"
+                className="flex-1 px-4 py-2 bg-white border border-gray-400 rounded text-gray-600 hover:bg-gray-200 transition-colors dark:bg-black dark:text-gray-400 dark:hover:bg-gray-400"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmDelete}
-                className="flex-1 px-4 py-2 bg-black border border-red-400 rounded text-red-400 hover:bg-red-400 hover:text-black transition-colors"
+                className="flex-1 px-4 py-2 bg-white border border-red-600 rounded text-red-600 hover:bg-red-600 hover:text-white transition-colors dark:bg-black dark:border-red-400 dark:text-red-400 dark:hover:bg-red-400 dark:hover:text-black"
               >
                 Delete
               </button>
