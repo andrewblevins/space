@@ -1,8 +1,10 @@
+import { Tag } from '../types/tags';
+
 interface Message {
   type: 'system' | 'user' | 'assistant';
   content: string;
   timestamp?: string;
-  tags?: string[];  // Simple array of string tags
+  tags?: Tag[];
 }
 
 interface Session {
@@ -35,7 +37,12 @@ export class MemorySystem {
   }
 
   // Basic retrieval strategy - get relevant messages across sessions
-  retrieveRelevantContext(query: string, currentMessages: Message[]): Message[] {
+  retrieveRelevantContext(query: string, currentMessages: Message[] = []): Message[] {
+    if (currentMessages.length === 0) {
+      const sessions = this.getAllSessions();
+      currentMessages = sessions.flatMap(s => s.messages);
+    }
+
     const queryWords = query.toLowerCase().split(/\s+/);
     
     console.log('Memory Debug:', {
@@ -52,11 +59,12 @@ export class MemorySystem {
       .filter(msg => {
         if (!msg.tags || msg.type === 'system') return false;
         
-        const matches = msg.tags.filter(tag => 
+        const matches = msg.tags.filter(tag =>
           queryWords.some(word => {
-            const isMatch = tag.toLowerCase() === word.replace(/[.,?!]/g, '');
+            const normalized = word.replace(/[.,?!]/g, '');
+            const isMatch = tag.value.toLowerCase() === normalized;
             if (isMatch) {
-              console.log(`Match found: tag "${tag}" matches query word "${word}"`);
+              console.log(`Match found: tag "${tag.value}" matches query word "${word}"`);
             }
             return isMatch;
           })
@@ -105,7 +113,7 @@ export class MemorySystem {
     if (message.tags) {
       // Bonus points if query matches any tags
       message.tags.forEach(tag => {
-        if (tag.toLowerCase().includes(queryLower)) {
+        if (tag.value.toLowerCase().includes(queryLower)) {
           score += 1;
         }
       });
@@ -113,4 +121,21 @@ export class MemorySystem {
 
     return score;
   }
-} 
+
+  // Build a simple dossier of messages related to a subject
+  compileDossier(subject: string): Message[] {
+    const allSessions = this.getAllSessions();
+    const allMessages = allSessions.flatMap(s => s.messages);
+    const query = subject.toLowerCase();
+
+    return allMessages
+      .filter(m => {
+        if (m.type === 'system') return false;
+        if (m.tags && m.tags.some(t => t.value.toLowerCase().includes(query))) {
+          return true;
+        }
+        return m.content.toLowerCase().includes(query);
+      })
+      .sort((a, b) => new Date(a.timestamp || '').getTime() - new Date(b.timestamp || '').getTime());
+  }
+}
