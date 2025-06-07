@@ -5,17 +5,78 @@ SPACE is a terminal-style AI conversation interface built with React, featuring 
 
 ## 🤖 Automation-First Development
 
-**CRITICAL**: Always consult `/docs/AUTOMATION.md` before performing any browser testing or interaction with the application. This file contains battle-tested techniques and known working selectors.
+### ⚠️ CRITICAL AUTOMATION RULES
+1. **Use detached server startup**: `nohup npm run dev > /dev/null 2>&1 & echo "Server started"`
+2. **Use modern Puppeteer methods**: `page.locator().fill()` NOT `element.type()`
+3. **Use data-testid selectors first**, CSS selectors as fallback
+4. **Enable console logging** to monitor application behavior
 
-### Required Reading
-- **Before browser automation**: Read `/docs/AUTOMATION.md` completely
-- **Before adding UI components**: Review automation patterns in the docs
-- **Before testing**: Use documented selectors and techniques
+### Server Management for Automation
+```bash
+# ❌ WRONG - This hangs automation
+npm run dev
+
+# ✅ CORRECT - Start server detached
+nohup npm run dev > /dev/null 2>&1 & echo "Server started with PID $!"
+sleep 3  # Wait for server to start
+# Clean up: kill $(lsof -ti:3000)
+```
+
+### Essential Puppeteer Patterns
+```javascript
+// Setup with console logging (REQUIRED)
+page.on('console', (msg) => {
+  console.log(`[BROWSER:${msg.type().toUpperCase()}] ${msg.text()}`);
+});
+
+// Setup flow with data-testid selectors
+await page.locator('[data-testid="save-api-keys-button"]').click();
+await page.locator('[data-testid="password-input"]').fill('development123');
+await page.locator('[data-testid="password-submit-btn"]').click();
+
+// Settings menu automation
+await page.locator('.fixed.bottom-4.left-4 button').click(); // Gear icon
+await page.locator('.relative.inline-flex').click(); // Debug toggle
+
+// Text-based button selection for React components
+await page.evaluate(() => {
+  const buttons = document.querySelectorAll('button');
+  for (let button of buttons) {
+    if (button.textContent.trim() === 'Submit') {
+      button.click();
+      break;
+    }
+  }
+});
+```
+
+### Complete Setup Workflow (Copy-Paste Ready)
+```javascript
+// 1. Start detached server first
+// nohup npm run dev > /dev/null 2>&1 & echo "Server started with PID $!"
+// sleep 3
+
+// 2. Navigate and setup
+await page.goto('http://localhost:3000');
+await page.locator('[data-testid="save-api-keys-button"]').click();
+await page.locator('[data-testid="password-input"]').fill('development123');
+await page.locator('[data-testid="password-submit-btn"]').click();
+// Main interface should now be loaded
+```
+
+### Known Working Selectors
+- Settings gear: `.fixed.bottom-4.left-4 button`
+- Debug toggle: `.relative.inline-flex` (inside settings menu)
+- Theme toggle: `.relative.inline-flex` (second one in settings menu)
+- Password input: `input[type="password"]` or `[data-testid="password-input"]`
+- Number inputs: `input[type="number"]`
+- API key save: `[data-testid="save-api-keys-button"]`
+- Password submit: `[data-testid="password-submit-btn"]`
 
 ### Automation Principles
-1. **Always prefer existing documented selectors** from `/docs/AUTOMATION.md`
-2. **Use `page.evaluate()` for React components** when CSS selectors fail
-3. **Enable console logging** to monitor application behavior
+1. **Always use `page.locator().fill()`** - NOT `element.type()` (React incompatible)
+2. **Multi-selector fallbacks** - Try data-testid, then CSS, then text-based
+3. **Wait for dynamic content** - Use `.wait()` for async operations
 4. **Add `data-testid` attributes** to new interactive components
 
 ## 🏗️ Development Workflow
@@ -46,13 +107,13 @@ VITE_DEV_PASSWORD=development123   # Optional
 
 ### Settings Menu (Bottom-Left Gear Icon)
 - **Selector**: `.fixed.bottom-4.left-4 button`
-- **Features**: Debug mode, context limit, max tokens, API key management
+- **Features**: Debug mode, theme toggle, context limit, max tokens, API key management
 - **State**: Changes persist immediately to localStorage
 
 ### Terminal Interface
-- **Input area**: Main conversation interface
-- **Advisors panel**: Left sidebar for AI advisors
-- **Metaphors/Questions**: Right sidebar analysis panels
+- **Input area**: Main conversation interface with green border (all themes)
+- **Advisors panel**: Left sidebar for AI advisors (bordered modules)
+- **Metaphors/Questions**: Right sidebar analysis panels (bordered modules)
 
 ### API Key Management
 - **Setup flow**: Auto-fills from environment variables
@@ -96,11 +157,12 @@ await page.evaluate(() => {
 ## 📁 Project Structure
 
 ### Key Files
-- `src/components/Terminal.jsx` - Main terminal interface
+- `src/components/Terminal.jsx` - Main terminal interface (central hub)
 - `src/components/SettingsMenu.jsx` - Settings panel
 - `src/components/ApiKeySetup.jsx` - Initial setup flow
+- `src/hooks/useClaude.js` - Claude API integration hook
 - `scripts/improved-setup.js` - Automated development setup
-- `docs/AUTOMATION.md` - **REQUIRED READING** for automation
+- `docs/ARCHITECTURE.md` - Comprehensive technical architecture reference
 
 ### Testing Scripts
 - `scripts/improved-setup.js` - Complete automated setup
@@ -110,15 +172,15 @@ await page.evaluate(() => {
 ## 🚨 Important Reminders
 
 ### Before Any Browser Work
-1. **Read `/docs/AUTOMATION.md` first** - Contains proven techniques
-2. **Use documented selectors** - Don't reinvent working patterns
-3. **Enable console logging** - Monitor application behavior
+1. **Use detached server startup** - See automation section above
+2. **Enable console logging** - Monitor application behavior
+3. **Use documented selectors** - From Known Working Selectors section
 4. **Test with environment variables** - Use auto-fill for efficiency
 
 ### When Adding New Components
 1. **Add `data-testid` attributes** to interactive elements
 2. **Test with Puppeteer** using modern `.locator()` methods
-3. **Update `/docs/AUTOMATION.md`** with new patterns
+3. **Update CLAUDE.md** with new patterns in Known Working Selectors
 4. **Consider automation during design** - not as an afterthought
 
 ### Error Handling
@@ -151,10 +213,10 @@ The settings menu was designed to replace terminal commands with GUI controls:
 
 ## 📚 Additional Resources
 
-- **Automation Guide**: `/docs/AUTOMATION.md` ⚠️ **CRITICAL REFERENCE**
+- **Technical Architecture**: `/docs/ARCHITECTURE.md` - Comprehensive system overview
 - **API Documentation**: Check component files for props and usage
 - **Environment Setup**: Use `npm run dev:setup` for quick start
 
 ---
 
-**Remember**: SPACE is built for automation. Always consider the automation impact of any changes and consult the automation documentation before browser testing.
+**Remember**: SPACE is built for automation. Always consider the automation impact of any changes and use the automation patterns documented above.

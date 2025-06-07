@@ -43,13 +43,16 @@ export function GroupableModule({
   };
 
   return (
-    <div className="bg-gray-900 p-4">
+    <div 
+      className="border border-stone-300 dark:border-gray-700 rounded-md p-4"
+      style={{ backgroundColor: '#f0e6d2' }}
+    >
       <div className="flex justify-between items-center mb-2">
-        <h2 className="text-white">{title}</h2>
+        <h2 style={{ color: '#1f2937 !important' }}>{title}</h2>
         {onAddClick && (
           <button
             onClick={onAddClick}
-            className="text-green-400 hover:text-green-300 transition-colors"
+            className="text-green-700 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 transition-colors"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
@@ -61,7 +64,7 @@ export function GroupableModule({
         {groups.map((group, idx) => (
           <li key={`group-${idx}`} className="mb-2">
             <div
-              className={`flex items-center justify-between text-gray-300 cursor-pointer hover:text-green-400 transition-colors ${activeGroups.includes(group.name) ? 'text-green-400' : ''}`}
+              className={`flex items-center justify-between text-gray-600 dark:text-gray-300 cursor-pointer hover:text-green-600 dark:hover:text-green-400 transition-colors ${activeGroups.includes(group.name) ? 'text-green-600 dark:text-green-400' : ''}`}
               onClick={() => onGroupClick && onGroupClick(group)}
             >
               <span>{group.name}</span>
@@ -70,7 +73,7 @@ export function GroupableModule({
                   e.stopPropagation();
                   toggleGroup(group.name);
                 }}
-                className="ml-2 text-gray-400 hover:text-green-400"
+                className="ml-2 text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400"
               >
                 {expandedGroups.has(group.name) ? '▼' : '▶'}
               </button>
@@ -83,7 +86,7 @@ export function GroupableModule({
                   return (
                     <li
                       key={advisorName}
-                      className={`text-gray-300 cursor-pointer hover:text-green-400 transition-colors ${activeItems.includes(advisor) ? 'text-green-400' : ''}`}
+                      className={`text-gray-600 dark:text-gray-300 cursor-pointer hover:text-green-600 dark:hover:text-green-400 transition-colors ${activeItems.includes(advisor) ? 'text-green-600 dark:text-green-400' : ''}`}
                       onClick={() => onItemClick && onItemClick(advisor)}
                       onContextMenu={(e) => {
                         e.preventDefault();
@@ -145,7 +148,7 @@ export function GroupableModule({
           .map((item, idx) => (
             <li
               key={`item-${idx}`}
-              className={`text-gray-300 cursor-pointer hover:text-green-400 transition-colors ${activeItems.includes(item) ? 'text-green-400' : ''}`}
+              className={`text-gray-900 dark:text-gray-300 cursor-pointer hover:text-green-700 dark:hover:text-green-400 transition-colors ${activeItems.includes(item) ? 'text-green-700 dark:text-green-400' : ''}`}
               onClick={() => onItemClick && onItemClick(item)}
               onContextMenu={(e) => {
                 e.preventDefault();
