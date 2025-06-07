@@ -72,7 +72,7 @@ This will send a basic starting prompt for the conversation.
 - **Prompts Library**: A library of prompts you can add to, edit, and delete. Also includes a handful of default suggestions
 
 - **Capture**: Right click selected text to capture and save to a Markdown file
-
+- **@ References**: Use `@<session_id>` in a message to insert a brief summary of that past session
 - **Debug**: Activate `/debug` to see what's being sent to Claude as well as the estimated cost of each message.
 
 ## Available Commands
