@@ -2424,6 +2424,7 @@ ${selectedText}
                     style={{
                       color: msg.type === 'user' ? '#16a34a' : 
                              msg.type === 'assistant' ? '#1f2937' : 
+                             msg.type === 'system' ? '#1f2937' : 
                              msg.type === 'debug' ? '#d97706' : '#16a34a'
                     }}
                   >
