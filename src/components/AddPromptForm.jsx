@@ -52,6 +52,9 @@ const AddPromptForm = ({ isOpen, onSubmit, onCancel }) => {
               placeholder="Enter prompt name..."
               className="w-full bg-white text-gray-800 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-green-600 dark:bg-black dark:text-green-400 dark:border-green-400"
               autoFocus
+              autoComplete="off"
+              spellCheck="true"
+              data-role="prompt-name"
             />
           </div>
 
@@ -64,6 +67,9 @@ const AddPromptForm = ({ isOpen, onSubmit, onCancel }) => {
               onChange={(e) => setText(e.target.value)}
               placeholder="Enter your prompt text..."
               className="w-full h-40 bg-white text-gray-800 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-green-600 resize-none dark:bg-black dark:text-green-400 dark:border-green-400"
+              autoComplete="off"
+              spellCheck="true"
+              data-role="prompt-text"
             />
           </div>
 

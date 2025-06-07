@@ -118,12 +118,18 @@ const AdvisorForm = ({ onSubmit, onCancel, initialName = '' }) => {
           onChange={(e) => setName(e.target.value)}
           placeholder="Advisor name"
           className="w-full bg-white text-gray-800 p-2 mb-4 border border-gray-300 focus:outline-none dark:bg-black dark:text-green-400 dark:border-green-400"
+          autoComplete="off"
+          spellCheck="true"
+          data-role="advisor-name"
         />
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Advisor description"
           className="w-full h-40 bg-white text-gray-800 p-2 mb-4 border border-gray-300 focus:outline-none resize-none dark:bg-black dark:text-green-400 dark:border-green-400"
+          autoComplete="off"
+          spellCheck="true"
+          data-role="advisor-description"
         />
         <div className="flex justify-between">
           <button

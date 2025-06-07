@@ -62,6 +62,9 @@ export function ExpandingInput({ value, onChange, onSubmit, isLoading }) {
         `}
         placeholder={isLoading ? 'Waiting for response...' : 'Type your message...'}
         disabled={isLoading}
+        autoComplete="off"
+        spellCheck="true"
+        data-role="chat-input"
       />
     </div>
   );
