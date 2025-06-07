@@ -473,8 +473,10 @@ The interface is now fully discoverable - no commands needed!`
               content: `Available advisor commands:
 /advisor add      - Add a new advisor
 /advisor edit     - Edit an advisor
-/advisor remove   - Remove an advisor
+/advisor delete   - Delete an advisor
 /advisor list     - List all advisors
+/advisor share    - Copy advisor profiles to clipboard
+/advisor import   - Import advisors from JSON
 /advisor generate - Generate advisor suggestions from worksheet
 /advisor finalize - Get detailed profiles for chosen advisors`
             }]);
@@ -769,13 +771,52 @@ Now, I'd like to generate the final output. Please include the following aspects
                 return true;
               }
 
-              setAdvisors(prev => prev.filter(a => 
+              setAdvisors(prev => prev.filter(a =>
                 a.name.toLowerCase() !== nameToDelete.toLowerCase()
               ));
               setMessages(prev => [...prev, {
                 type: 'system',
                 content: `Deleted advisor: ${advisorToDelete.name}`
               }]);
+              return true;
+
+            case 'share':
+              const advisorJson = JSON.stringify(advisors, null, 2);
+              (async () => {
+                try {
+                  await navigator.clipboard.writeText(advisorJson);
+                  setMessages(prev => [...prev, {
+                    type: 'system',
+                    content: 'Advisor profiles copied to clipboard. Share this JSON with your friends.'
+                  }]);
+                } catch (err) {
+                  setMessages(prev => [...prev, {
+                    type: 'system',
+                    content: 'Advisor profiles JSON:\n```json\n' + advisorJson + '\n```'
+                  }]);
+                }
+              })();
+              return true;
+
+            case 'import':
+              const jsonText = text.slice('/advisor import'.length).trim();
+              try {
+                const imported = JSON.parse(jsonText);
+                if (Array.isArray(imported)) {
+                  setAdvisors(imported);
+                  setMessages(prev => [...prev, {
+                    type: 'system',
+                    content: 'Imported ' + imported.length + ' advisors.'
+                  }]);
+                } else {
+                  throw new Error('JSON must be an array of advisors');
+                }
+              } catch (err) {
+                setMessages(prev => [...prev, {
+                  type: 'system',
+                  content: 'Error importing advisors: ' + err.message
+                }]);
+              }
               return true;
           }
 
