@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { LibraryModal } from './Library';
 import { getApiEndpoint } from '../utils/apiConfig';
 import { handleApiError } from '../utils/apiErrorHandler';
 import { getDecrypted } from '../utils/secureStorage';
@@ -76,6 +77,8 @@ const AdvisorForm = ({ onSubmit, onCancel, initialName = '' }) => {
   const [name, setName] = useState(initialName);
   const [description, setDescription] = useState('');
   const [error, setError] = useState('');
+  const [libraryItems, setLibraryItems] = useState([]);
+  const [showLibrary, setShowLibrary] = useState(false);
 
   useEffect(() => {
     setName(initialName);
@@ -130,18 +133,35 @@ const AdvisorForm = ({ onSubmit, onCancel, initialName = '' }) => {
             Cancel
           </button>
           <button
+            onClick={() => setShowLibrary(true)}
+            className="px-4 py-2 mr-2 text-green-400 border border-green-400 rounded hover:bg-green-400 hover:text-black"
+          >
+            📚 Manage Library
+          </button>
+          <button
             onClick={handleGenerate}
             className="px-4 py-2 mx-2 text-yellow-400 border border-yellow-400 rounded hover:bg-yellow-400 hover:text-black"
           >
             Generate Description
           </button>
           <button
-            onClick={() => onSubmit({ name, description })}
+            onClick={() => onSubmit({ name, description, library: libraryItems, hasLibrary: libraryItems.length > 0 })}
             className="px-4 py-2 text-green-400 border border-green-400 rounded hover:bg-green-400 hover:text-black"
           >
             Add Advisor
           </button>
         </div>
+        {showLibrary && (
+          <LibraryModal
+            isOpen={showLibrary}
+            advisorName={name || 'New Advisor'}
+            items={libraryItems}
+            existingDescription={description}
+            onClose={() => setShowLibrary(false)}
+            onUpdate={(items) => setLibraryItems(items)}
+            onGenerate={(desc) => setDescription(desc)}
+          />
+        )}
       </div>
     </div>
   );
