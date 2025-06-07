@@ -1,6 +1,4 @@
 export const getApiEndpoint = () => {
-  if (import.meta.env.PROD) {
-    return 'https://api.anthropic.com'
-  }
-  return '/api'
+  // Always use direct API endpoint since we're using dangerous-direct-browser-access
+  return 'https://api.anthropic.com'
 } 
