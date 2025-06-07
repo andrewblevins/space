@@ -18,6 +18,7 @@ import SessionPanel from './SessionPanel';
 import PromptLibrary from './PromptLibrary';
 import AddPromptForm from './AddPromptForm';
 import ExportMenu from './ExportMenu';
+import DossierModal from './DossierModal';
 import { Module } from "./terminal/Module";
 import { GroupableModule } from "./terminal/GroupableModule";
 import { CollapsibleModule } from "./terminal/CollapsibleModule";
@@ -160,6 +161,7 @@ const Terminal = ({ theme, toggleTheme }) => {
 
   const [showAddPromptForm, setShowAddPromptForm] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [showDossierModal, setShowDossierModal] = useState(false);
 
 const getSystemPrompt = () => {
   const activeAdvisors = advisors.filter(a => a.active);
@@ -2713,12 +2715,22 @@ ${selectedText}
         })()}
       />
 
+      <DossierModal
+        isOpen={showDossierModal}
+        onClose={() => setShowDossierModal(false)}
+        onJumpToSession={(sessionId) => {
+          setShowDossierModal(false);
+          handleLoadSession(sessionId);
+        }}
+      />
+
       {/* Accordion Menu - Bottom Left */}
       <AccordionMenu
         onSettingsClick={() => setShowSettingsMenu(true)}
         onPromptLibraryClick={() => setShowPromptLibrary(true)}
         onSessionManagerClick={() => setShowSessionPanel(true)}
         onExportClick={() => setShowExportMenu(true)}
+        onDossierClick={() => setShowDossierModal(true)}
       />
 
       {/* Info Button - Bottom Right */}
