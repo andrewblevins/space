@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
+import { LibraryModal } from './Library';
 
 const EditAdvisorForm = ({ advisor, onSubmit, onCancel }) => {
   const [name, setName] = useState(advisor.name);
   const [description, setDescription] = useState(advisor.description);
+  const [libraryItems, setLibraryItems] = useState(advisor.library || []);
+  const [showLibrary, setShowLibrary] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit({ name, description });
+    onSubmit({ name, description, library: libraryItems, hasLibrary: libraryItems.length > 0 });
   };
 
   return (
@@ -41,6 +44,13 @@ const EditAdvisorForm = ({ advisor, onSubmit, onCancel }) => {
               Cancel
             </button>
             <button
+              type="button"
+              onClick={() => setShowLibrary(true)}
+              className="text-green-400 hover:text-green-300"
+            >
+              📚 Manage Library
+            </button>
+            <button
               type="submit"
               className="text-green-400 hover:text-green-300"
             >
@@ -48,6 +58,17 @@ const EditAdvisorForm = ({ advisor, onSubmit, onCancel }) => {
             </button>
           </div>
         </form>
+        {showLibrary && (
+          <LibraryModal
+            isOpen={showLibrary}
+            advisorName={name}
+            items={libraryItems}
+            existingDescription={description}
+            onClose={() => setShowLibrary(false)}
+            onUpdate={(items) => setLibraryItems(items)}
+            onGenerate={(desc) => setDescription(desc)}
+          />
+        )}
       </div>
     </div>
   );

@@ -135,7 +135,7 @@ export function GroupableModule({
                         }
                       }}
                     >
-                      {advisor.name}
+                      {advisor.name}{advisor.hasLibrary ? ` \ud83d\udcda${advisor.library?.length || ''}` : ''}
                     </li>
                   );
                 })}
@@ -197,7 +197,7 @@ export function GroupableModule({
                 }
               }}
             >
-              {item.name}
+              {item.name}{item.hasLibrary ? ` \ud83d\udcda${item.library?.length || ''}` : ''}
             </li>
           ))}
       </ul>
