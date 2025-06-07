@@ -10,8 +10,8 @@ const EditAdvisorForm = ({ advisor, onSubmit, onCancel }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-      <div className="bg-gray-900 p-6 rounded-lg border border-green-400 w-96">
+    <div className="fixed inset-0 bg-white/70 dark:bg-black/50 flex items-center justify-center">
+      <div className="bg-gray-100 p-6 rounded-lg border border-green-600 w-96 dark:bg-gray-900 dark:border-green-400">
         <h2 className="text-green-400 text-xl mb-4">Edit Advisor</h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
@@ -20,7 +20,7 @@ const EditAdvisorForm = ({ advisor, onSubmit, onCancel }) => {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full bg-black text-green-400 border border-green-400 p-2 focus:outline-none"
+              className="w-full bg-white text-gray-800 border border-gray-300 p-2 focus:outline-none dark:bg-black dark:text-green-400 dark:border-green-400"
               autoFocus
             />
           </div>
@@ -29,7 +29,7 @@ const EditAdvisorForm = ({ advisor, onSubmit, onCancel }) => {
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full bg-black text-green-400 border border-green-400 p-2 h-32 focus:outline-none resize-none"
+              className="w-full bg-white text-gray-800 border border-gray-300 p-2 h-32 focus:outline-none resize-none dark:bg-black dark:text-green-400 dark:border-green-400"
             />
           </div>
           <div className="flex justify-end space-x-4">
