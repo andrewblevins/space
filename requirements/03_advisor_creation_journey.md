@@ -9,7 +9,8 @@
 ## Non-goals
 
 - Creating advisors that give harmful, unethical, or dangerous advice
-- Creating advisors that are merely slight variations of each other (this is okay if the user wants it, but the system should consistently nudge against it)
+- Artificially limiting the number or types of advisors users can create
+- Assuming users need only a small, balanced panel (some situations benefit from 20+ specialized perspectives)
 
 ## User State at Start
 
@@ -29,6 +30,14 @@ The user feels confident that they have assembled a diverse panel of advisors th
 
 - Frequency with which user accepts generated advisors without revision
 - Number of completed rounds with generated advisors
+
+## Advisor Abundance Philosophy
+
+SPACE embraces an "abundance over curation" approach to advisors:
+- Users can create unlimited advisors without restrictions
+- Complex decisions may benefit from 20-30+ specialized perspectives
+- Users naturally self-organize advisors into categories (experts, stakeholders, process facilitators)
+- The system should encourage exploration of "who else might help?" rather than limiting options
 
 ## Advisor Creation Sub-Journeys
 

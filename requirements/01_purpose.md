@@ -8,15 +8,20 @@ A few aspirational features are also described, marked "non-MVP" where they appe
 
 ## Core User Problem & Solution
 
-Users come to SPACE when experiencing cognitive or emotional constriction - they feel stuck between limited options, overwhelmed by complexity, unable to integrate conflicting perspectives on a situation.
+Users come to SPACE when experiencing cognitive or emotional constriction - they feel stuck between limited options, overwhelmed by complexity, unable to integrate conflicting perspectives. This could manifest as:
+- Business decisions with multiple stakeholders and complex tradeoffs
+- Personal situations requiring emotional integration
+- Strategic planning needing diverse expertise
+- Life transitions demanding multiple viewpoints
 
 The key user need is to expand their mental space beyond what a single perspective (their own or a standard AI assistant's) can provide.
 
 SPACE solves this by facilitating conversations with multiple AI advisors that:
 
-1. Offer a set of well-balanced and genuinely distinct perspectives
+1. Offer genuinely distinct perspectives - whether domain expertise, stakeholder viewpoints, or thinking styles
 2. Hold the relevant details of the situation in memory
-3. Illuminate possibilities or patterns the user would not have considered on their own
+3. Illuminate possibilities, patterns, or blind spots the user would not have considered alone
+4. Support both analytical decision-making and emotional processing as needed
 
 ## Non-goals
 

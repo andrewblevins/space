@@ -13,4 +13,11 @@ We will also count:
 - Instances of specific value acknowledgments (e.g., "that's helpful," "I hadn't considered that")
 - Level of productive challenge (were difficult perspectives offered?)
 - Evidence of new connections or insights in user responses
-- Instances of sycophantic patterns (excessive agreement without evidence) 
+- Instances of sycophantic patterns (excessive agreement without evidence)
+
+We will also track metrics specific to decision-making use cases:
+- Creation of specialized advisor categories (experts, stakeholders, facilitators)
+- Average number of advisors created per conversation
+- Frequency of users adding advisors mid-conversation
+- Evidence of structured decision documentation in conversations
+- Return rate for iterative decision refinement 
