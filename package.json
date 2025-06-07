@@ -8,7 +8,13 @@
     "dev:setup": "node scripts/improved-setup.js",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:api": "node tests/api/run-tests.js",
+    "test:real-api": "node tests/api/real-api-test.js",
+    "test:tag-analyzer": "node tests/api/run-tests.js --suite=tag-analyzer",
+    "test:memory": "node tests/api/run-tests.js --suite=memory",
+    "test:integration": "node tests/api/run-tests.js --suite=integration",
+    "test:performance": "node tests/api/run-tests.js --performance"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.53.0",
