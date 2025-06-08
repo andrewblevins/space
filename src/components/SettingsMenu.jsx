@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { getDecrypted } from '../utils/secureStorage';
 
 const SettingsMenu = ({
   isOpen,
@@ -10,7 +11,6 @@ const SettingsMenu = ({
   maxTokens,
   setMaxTokens,
   onClearApiKeys,
-  onShowApiKeyStatus,
   theme,
   toggleTheme
 }) => {
@@ -18,6 +18,33 @@ const SettingsMenu = ({
   const [tempMaxTokens, setTempMaxTokens] = useState(maxTokens);
   const [showClearConfirmation, setShowClearConfirmation] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
+  const [apiKeyStatus, setApiKeyStatus] = useState({ anthropic: false, openai: false });
+  const [isCheckingKeys, setIsCheckingKeys] = useState(false);
+
+  // Check API keys when modal opens or when switching to API tab
+  const checkApiKeys = async () => {
+    setIsCheckingKeys(true);
+    try {
+      const anthropicKey = await getDecrypted('space_anthropic_key');
+      const openaiKey = await getDecrypted('space_openai_key');
+      setApiKeyStatus({
+        anthropic: !!anthropicKey,
+        openai: !!openaiKey
+      });
+    } catch (error) {
+      console.error('Error checking API keys:', error);
+      setApiKeyStatus({ anthropic: false, openai: false });
+    } finally {
+      setIsCheckingKeys(false);
+    }
+  };
+
+  // Check keys when modal opens or when switching to API tab
+  useEffect(() => {
+    if (isOpen && activeTab === 'api') {
+      checkApiKeys();
+    }
+  }, [isOpen, activeTab]);
 
   if (!isOpen) return null;
 
@@ -54,8 +81,8 @@ const SettingsMenu = ({
   const handleConfirmClearApiKeys = () => {
     onClearApiKeys();
     setShowClearConfirmation(false);
-    // Close settings menu after clearing keys
-    onClose();
+    // Refresh API status after clearing
+    checkApiKeys();
   };
 
   const handleRestoreDefaults = () => {
@@ -233,6 +260,31 @@ const SettingsMenu = ({
 
           {activeTab === 'api' && (
             <div className="space-y-6">
+              {/* API Key Status */}
+              <div>
+                <label className="text-green-400 font-medium block mb-3">
+                  API Key Status
+                </label>
+                {isCheckingKeys ? (
+                  <div className="text-gray-400 text-sm">Checking API keys...</div>
+                ) : (
+                  <div className="space-y-2 mb-4">
+                    <div className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-800 rounded">
+                      <span className="text-gray-600 dark:text-gray-300 text-sm">Anthropic (Claude)</span>
+                      <span className={`text-sm font-medium ${apiKeyStatus.anthropic ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                        {apiKeyStatus.anthropic ? '✓ Set' : '✗ Not Set'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-800 rounded">
+                      <span className="text-gray-600 dark:text-gray-300 text-sm">OpenAI (GPT)</span>
+                      <span className={`text-sm font-medium ${apiKeyStatus.openai ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                        {apiKeyStatus.openai ? '✓ Set' : '✗ Not Set'}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* API Key Management */}
               <div>
                 <label className="text-green-400 font-medium block mb-3">
@@ -243,10 +295,11 @@ const SettingsMenu = ({
                 </p>
                 <div className="space-y-3">
                   <button
-                    onClick={onShowApiKeyStatus}
-                    className="w-full text-left px-3 py-2 bg-stone-50 border border-green-600 rounded text-green-600 hover:bg-green-600 hover:text-white transition-colors dark:bg-black dark:border-green-400 dark:text-green-400 dark:hover:bg-green-400 dark:hover:text-black"
+                    onClick={checkApiKeys}
+                    disabled={isCheckingKeys}
+                    className="w-full text-left px-3 py-2 bg-stone-50 border border-green-600 rounded text-green-600 hover:bg-green-600 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed dark:bg-black dark:border-green-400 dark:text-green-400 dark:hover:bg-green-400 dark:hover:text-black"
                   >
-                    View API Key Status
+                    {isCheckingKeys ? 'Checking...' : 'Refresh Status'}
                   </button>
                   <button
                     onClick={handleClearApiKeysClick}
