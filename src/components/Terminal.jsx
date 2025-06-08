@@ -114,7 +114,8 @@ const Terminal = ({ theme, toggleTheme }) => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [metaphors, setMetaphors] = useState([]);
-  const [questions, setQuestions] = useState([]);
+  // DEPRECATED: Questions feature temporarily disabled - can be reactivated by uncommenting
+  // const [questions, setQuestions] = useState([]);
   const [currentSessionId, setCurrentSessionId] = useState(getNextSessionId());
   const [advisors, setAdvisors] = useState(() => {
     const saved = localStorage.getItem('space_advisors');
@@ -181,7 +182,8 @@ const Terminal = ({ theme, toggleTheme }) => {
     return saved ? parseInt(saved) : 4096;
   });
   const [metaphorsExpanded, setMetaphorsExpanded] = useState(false);
-  const [questionsExpanded, setQuestionsExpanded] = useState(false);
+  // DEPRECATED: Questions feature temporarily disabled
+  // const [questionsExpanded, setQuestionsExpanded] = useState(false);
   const [advisorSuggestionsExpanded, setAdvisorSuggestionsExpanded] = useState(false);
   const [advisorSuggestions, setAdvisorSuggestions] = useState([]);
   const [suggestedAdvisorName, setSuggestedAdvisorName] = useState('');
@@ -239,7 +241,8 @@ const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimi
     setCurrentSessionId(getNextSessionId());
     setMessages([{ type: 'system', content: 'Started new session' }]);
     setMetaphors([]);
-    setQuestions([]);
+    // DEPRECATED: Questions feature temporarily disabled
+    // setQuestions([]);
     setAdvisorSuggestions([]);
   };
 
@@ -254,7 +257,8 @@ const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimi
         content: `Loaded "${displayName}" from ${new Date(session.timestamp).toLocaleString()}`
       }]);
       setMetaphors(session.metaphors || []);
-      setQuestions(session.questions || []);
+      // DEPRECATED: Questions feature temporarily disabled
+      // setQuestions(session.questions || []);
       setAdvisorSuggestions(session.advisorSuggestions || []);
     } else {
       setMessages(prev => [...prev, {
@@ -275,7 +279,8 @@ const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimi
         content: `Loaded previous "${displayName}" from ${new Date(penultimate.timestamp).toLocaleString()}`
       }]);
       setMetaphors(penultimate.metaphors || []);
-      setQuestions(penultimate.questions || []);
+      // DEPRECATED: Questions feature temporarily disabled
+      // setQuestions(penultimate.questions || []);
       setAdvisorSuggestions(penultimate.advisorSuggestions || []);
     } else {
       setMessages(prev => [...prev, {
@@ -288,7 +293,8 @@ const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimi
   const handleClearTerminal = () => {
     setMessages([{ type: 'system', content: 'Terminal cleared' }]);
     setMetaphors([]);
-    setQuestions([]);
+    // DEPRECATED: Questions feature temporarily disabled
+    // setQuestions([]);
   };
 
   const handleResetAllSessions = () => {
@@ -302,7 +308,8 @@ const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimi
     setCurrentSessionId(1);
     setMessages([{ type: 'system', content: 'All sessions cleared. Starting fresh with Session 1' }]);
     setMetaphors([]);
-    setQuestions([]);
+    // DEPRECATED: Questions feature temporarily disabled
+    // setQuestions([]);
     setAdvisorSuggestions([]);
   };
 
@@ -412,7 +419,8 @@ const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimi
         case '/clear':
           setMessages([{ type: 'system', content: 'Terminal cleared' }]);
           setMetaphors([]);
-          setQuestions([]);
+          // DEPRECATED: Questions feature temporarily disabled
+          // setQuestions([]);
           return true;
 
         case '/help':
@@ -436,7 +444,8 @@ The interface is now fully discoverable - no commands needed!`
           setCurrentSessionId(getNextSessionId());
           setMessages([{ type: 'system', content: 'Started new session' }]);
           setMetaphors([]);
-          setQuestions([]);
+          // DEPRECATED: Questions feature temporarily disabled
+          // setQuestions([]);
           return true;
 
         case '/load':
@@ -447,7 +456,8 @@ The interface is now fully discoverable - no commands needed!`
               setCurrentSessionId(penultimate.id);
               setMessages(penultimate.messages);
               setMetaphors(penultimate.metaphors || []);
-              setQuestions(penultimate.questions || []);
+              // DEPRECATED: Questions feature temporarily disabled
+              // setQuestions(penultimate.questions || []);
               setAdvisorSuggestions(penultimate.advisorSuggestions || []);
               setMessages(prev => [...prev, {
                 type: 'system',
@@ -476,7 +486,8 @@ The interface is now fully discoverable - no commands needed!`
             setCurrentSessionId(session.id);
             setMessages(session.messages);
             setMetaphors(session.metaphors || []);
-            setQuestions(session.questions || []);
+            // DEPRECATED: Questions feature temporarily disabled
+            // setQuestions(session.questions || []);
             setAdvisorSuggestions(session.advisorSuggestions || []);
           } else {
             setMessages(prev => [...prev, {
@@ -504,7 +515,8 @@ The interface is now fully discoverable - no commands needed!`
           setCurrentSessionId(1);
           setMessages([{ type: 'system', content: 'All sessions cleared. Starting fresh with Session 1' }]);
           setMetaphors([]);
-          setQuestions([]);
+          // DEPRECATED: Questions feature temporarily disabled
+          // setQuestions([]);
           return true;
 
         case '/advisor':
@@ -2135,7 +2147,8 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
             tags: msg.tags || [] // Ensure tags are preserved
           })),
           metaphors,
-          questions,
+          // DEPRECATED: Questions feature temporarily disabled
+          // questions,
           advisorSuggestions
         };
 
@@ -2159,7 +2172,7 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
 
       saveSession();
     }
-  }, [messages, metaphors, questions, advisorSuggestions, currentSessionId, openaiClient]);
+  }, [messages, metaphors, /* questions, */ advisorSuggestions, currentSessionId, openaiClient]);
 
   // Trigger analysis when messages change and we have a Claude response
   useEffect(() => {
@@ -2175,17 +2188,52 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
           debugMode,
           setMessages
         });
-        analyzeForQuestions(messages, {
-          enabled: questionsExpanded,
-          openaiClient,
-          setQuestions,
-          debugMode,
-          setMessages
-        });
+        // DEPRECATED: Questions feature temporarily disabled
+        // analyzeForQuestions(messages, {
+        //   enabled: questionsExpanded,
+        //   openaiClient,
+        //   setQuestions,
+        //   debugMode,
+        //   setMessages
+        // });
         analyzeAdvisorSuggestions(messages);
       }
     }
-  }, [messages, isLoading, metaphorsExpanded, questionsExpanded, advisorSuggestionsExpanded, openaiClient]);
+  }, [messages, isLoading, metaphorsExpanded, /* questionsExpanded, */ advisorSuggestionsExpanded, openaiClient]);
+
+  // Trigger metaphors analysis when expanded state changes
+  useEffect(() => {
+    if (metaphorsExpanded && messages.length > 0 && openaiClient) {
+      analyzeMetaphors(messages, {
+        enabled: metaphorsExpanded,
+        openaiClient,
+        setMetaphors,
+        debugMode,
+        setMessages
+      });
+    }
+  }, [metaphorsExpanded, openaiClient]);
+
+  // DEPRECATED: Questions feature temporarily disabled
+  // // Trigger questions analysis when expanded state changes
+  // useEffect(() => {
+  //   if (questionsExpanded && messages.length > 0 && openaiClient) {
+  //     analyzeForQuestions(messages, {
+  //       enabled: questionsExpanded,
+  //       openaiClient,
+  //       setQuestions,
+  //       debugMode,
+  //       setMessages
+  //     });
+  //   }
+  // }, [questionsExpanded, openaiClient]);
+
+  // Trigger advisor suggestions analysis when expanded state changes
+  useEffect(() => {
+    if (advisorSuggestionsExpanded && messages.length > 0 && openaiClient) {
+      analyzeAdvisorSuggestions(messages);
+    }
+  }, [advisorSuggestionsExpanded, openaiClient]);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -2576,21 +2624,22 @@ ${selectedText}
 
           {/* Right Column */}
           <div className="w-1/4 p-4 border-l border-gray-300 dark:border-gray-800 overflow-y-auto scrollbar-terminal">
+            {/* DEPRECATED: Questions feature temporarily disabled */}
+            {/*
             <CollapsibleModule 
               title="Questions" 
               items={questions}
               expanded={questionsExpanded}
               onToggle={() => setQuestionsExpanded(!questionsExpanded)}
             />
-            <div className="mt-4">
-              <CollapsibleSuggestionsModule
+            */}
+            <CollapsibleSuggestionsModule
                 title="Suggested Advisors"
                 items={advisorSuggestions}
                 expanded={advisorSuggestionsExpanded}
                 onToggle={() => setAdvisorSuggestionsExpanded(!advisorSuggestionsExpanded)}
                 onItemClick={(item) => handleAdvisorSuggestionClick(item)}
               />
-            </div>
           </div>
 
           {showAdvisorForm && (
