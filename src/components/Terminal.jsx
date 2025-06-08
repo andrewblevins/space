@@ -20,6 +20,7 @@ import AddPromptForm from './AddPromptForm';
 import ExportMenu from './ExportMenu';
 import DossierModal from './DossierModal';
 import ImportExportModal from './ImportExportModal';
+import HelpModal from './HelpModal';
 import { Module } from "./terminal/Module";
 import { GroupableModule } from "./terminal/GroupableModule";
 import { CollapsibleModule } from "./terminal/CollapsibleModule";
@@ -109,7 +110,8 @@ const Terminal = ({ theme, toggleTheme }) => {
 
   const [messages, setMessages] = useState([
     { type: 'system', content: 'SPACE Terminal - v0.2.2' },
-    { type: 'system', content: 'Start a conversation, add an advisor (+), or explore features in the bottom-left menu.' }
+    { type: 'system', content: '🎉 New in v0.2.2: Light/dark theme • Knowledge Dossier • Session summaries (@1, @2) • Advisor libraries • File sharing' },
+    { type: 'system', content: 'Start a conversation, add an advisor (+), or type /help for instructions.' }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -199,6 +201,7 @@ const Terminal = ({ theme, toggleTheme }) => {
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showDossierModal, setShowDossierModal] = useState(false);
   const [showImportExportModal, setShowImportExportModal] = useState(false);
+  const [showHelpModal, setShowHelpModal] = useState(false);
 
 const getSystemPrompt = () => {
   const activeAdvisors = advisors.filter(a => a.active);
@@ -424,20 +427,7 @@ const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimi
           return true;
 
         case '/help':
-          setMessages(prev => [...prev, {
-            type: 'system',
-            content: `⚠️ The /help command has been deprecated.
-
-All functionality is now available through the graphical interface:
-
-🔧 **Settings & API Keys**: Click the gear icon (⚙️) in the bottom-left menu
-📂 **Session Management**: Click "Session Manager" in the bottom-left menu  
-📤 **Export Options**: Click "Export" in the bottom-left menu
-📝 **Prompts**: Click "Prompt Library" in the bottom-left menu
-👥 **Advisors**: Use the advisor panel on the left sidebar
-
-The interface is now fully discoverable - no commands needed!`
-          }]);
+          setShowHelpModal(true);
           return true;
 
         case '/new':
@@ -2806,6 +2796,11 @@ ${selectedText}
         onImport={handleAdvisorImport}
       />
 
+      <HelpModal
+        isOpen={showHelpModal}
+        onClose={() => setShowHelpModal(false)}
+      />
+
       {/* Accordion Menu - Bottom Left */}
       <AccordionMenu
         onSettingsClick={() => setShowSettingsMenu(true)}
@@ -2814,6 +2809,7 @@ ${selectedText}
         onExportClick={() => setShowExportMenu(true)}
         onDossierClick={() => setShowDossierModal(true)}
         onImportExportAdvisorsClick={() => setShowImportExportModal(true)}
+        onHelpClick={() => setShowHelpModal(true)}
       />
 
       {/* Info Button - Bottom Right */}
