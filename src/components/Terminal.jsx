@@ -21,6 +21,7 @@ import ExportMenu from './ExportMenu';
 import DossierModal from './DossierModal';
 import ImportExportModal from './ImportExportModal';
 import HelpModal from './HelpModal';
+import InfoModal from './InfoModal';
 import { Module } from "./terminal/Module";
 import { GroupableModule } from "./terminal/GroupableModule";
 import { CollapsibleModule } from "./terminal/CollapsibleModule";
@@ -110,7 +111,7 @@ const Terminal = ({ theme, toggleTheme }) => {
 
   const [messages, setMessages] = useState([
     { type: 'system', content: 'SPACE Terminal - v0.2.2' },
-    { type: 'system', content: '🎉 New in v0.2.2: Light/dark theme • Knowledge Dossier • Session summaries (@1, @2) • Advisor libraries • File sharing' },
+    { type: 'system', content: '🎉 New in v0.2.2: Light/dark theme • Knowledge Dossier • Session summaries (@ autocomplete) • File sharing' },
     { type: 'system', content: 'Start a conversation, add an advisor (+), or type /help for instructions.' }
   ]);
   const [input, setInput] = useState('');
@@ -196,6 +197,9 @@ const Terminal = ({ theme, toggleTheme }) => {
   const [showDossierModal, setShowDossierModal] = useState(false);
   const [showImportExportModal, setShowImportExportModal] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
+  const [showInfoModal, setShowInfoModal] = useState(false);
+  const [sessions, setSessions] = useState([]);
+  const [sessionSelections, setSessionSelections] = useState(new Map()); // Map from title to session object
 
 const getSystemPrompt = () => {
   const activeAdvisors = advisors.filter(a => a.active);
@@ -1800,6 +1804,22 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
 
       // Replace @ references with summaries
       let processedInput = input;
+      
+      // Handle new format: @"Session Title"
+      const atTitleRegex = /@"([^"]+)"/g;
+      const titleMatches = [...processedInput.matchAll(atTitleRegex)];
+      for (const m of titleMatches) {
+        const title = m[1];
+        const session = sessionSelections.get(title);
+        if (session) {
+          const summary = await summarizeSession(session.id, { openaiClient });
+          if (summary) {
+            processedInput = processedInput.replace(m[0], summary);
+          }
+        }
+      }
+      
+      // Still support legacy format: @1, @2, etc. for backward compatibility
       const atRegex = /@(\d+)/g;
       const matches = [...processedInput.matchAll(atRegex)];
       for (const m of matches) {
@@ -1869,6 +1889,12 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
     focusInput();
   }, [messages, isLoading]);
 
+  // Load sessions for autocomplete
+  useEffect(() => {
+    const loadedSessions = loadSessions();
+    setSessions(loadedSessions);
+  }, [currentSessionId]); // Reload when session changes
+
   useEffect(() => {
     if (savedPrompts.length > 0) {
       localStorage.setItem('space_prompts', JSON.stringify(savedPrompts));
@@ -1909,23 +1935,11 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
     }]);
   };
 
-  const handleShowApiKeyStatus = async () => {
-    try {
-      const anthropicKey = await getDecrypted('space_anthropic_key');
-      const openaiKey = await getDecrypted('space_openai_key');
-      setMessages(prev => [...prev, {
-        type: 'system',
-        content: `API Keys Status:
-Anthropic: ${anthropicKey ? '✓ Set' : '✗ Not Set'}
-OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
-      }]);
-    } catch (error) {
-      setMessages(prev => [...prev, {
-        type: 'system',
-        content: `Error checking API keys: ${error.message}`
-      }]);
-    }
+  // Handle session selection from autocomplete
+  const handleSessionSelect = (session, title) => {
+    setSessionSelections(prev => new Map(prev.set(title, session)));
   };
+
 
   // Prompt Library handlers
   const handleUsePrompt = (prompt) => {
@@ -2598,6 +2612,8 @@ ${selectedText}
                         onChange={(e) => setInput(e.target.value)}
                         onSubmit={handleSubmit}
                         isLoading={isLoading}
+                        sessions={sessions}
+                        onSessionSelect={handleSessionSelect}
                       />
                     </>
                   )}
@@ -2719,7 +2735,6 @@ ${selectedText}
         maxTokens={maxTokens}
         setMaxTokens={setMaxTokens}
         onClearApiKeys={handleClearApiKeys}
-        onShowApiKeyStatus={handleShowApiKeyStatus}
         theme={theme}
         toggleTheme={toggleTheme}
       />
@@ -2793,6 +2808,11 @@ ${selectedText}
         onClose={() => setShowHelpModal(false)}
       />
 
+      <InfoModal
+        isOpen={showInfoModal}
+        onClose={() => setShowInfoModal(false)}
+      />
+
       {/* Accordion Menu - Bottom Left */}
       <AccordionMenu
         onSettingsClick={() => setShowSettingsMenu(true)}
@@ -2809,12 +2829,7 @@ ${selectedText}
         <button
           className="flex items-center justify-center w-8 h-8 rounded-full bg-black border border-green-400 text-green-400 hover:bg-green-400 hover:text-black transition-colors"
           title="About SPACE Terminal"
-          onClick={() => {
-            setMessages(prev => [...prev, {
-              type: 'system',
-                              content: 'SPACE Terminal v0.2.1 - An experimental interface for conversations with AI advisors.\n\nCreated by [Andrew Blevins](https://www.andrewshadeblevins.com). To give feedback or report bugs, email andrew.s.blevins@gmail.com.'
-            }]);
-          }}
+          onClick={() => setShowInfoModal(true)}
         >
           <svg 
             xmlns="http://www.w3.org/2000/svg" 

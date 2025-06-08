@@ -60,7 +60,7 @@ const HelpModal = ({ isOpen, onClose }) => {
                   <h4 className="text-green-400 font-medium mb-2">🏷️ Memory & Knowledge</h4>
                   <ul className="space-y-1 text-gray-600 dark:text-gray-300">
                     <li>• Knowledge Dossier tracks conversation topics</li>
-                    <li>• Use @1, @2, etc. to reference past sessions</li>
+                    <li>• Type @ to get autocomplete for referencing past sessions</li>
                     <li>• Search and browse your conversation history</li>
                     <li>• Tags automatically organize by category</li>
                   </ul>
@@ -69,7 +69,7 @@ const HelpModal = ({ isOpen, onClose }) => {
                   <h4 className="text-green-400 font-medium mb-2">👥 Advisors</h4>
                   <ul className="space-y-1 text-gray-600 dark:text-gray-300">
                     <li>• Create advisors with unique perspectives</li>
-                    <li>• Attach files (PDF, TXT, MD) to advisors</li>
+                    <li>• Import/export advisor profiles</li>
                     <li>• Share advisor profiles via file export</li>
                     <li>• Toggle advisors on/off for conversations</li>
                   </ul>
@@ -93,8 +93,8 @@ const HelpModal = ({ isOpen, onClose }) => {
                 <ul className="space-y-2 text-gray-600 dark:text-gray-300">
                   <li>• <strong>Triangle buttons (▼):</strong> Click to analyze conversation for metaphors or get advisor suggestions</li>
                   <li>• <strong>Menu access:</strong> All features accessible via the bottom-left menu</li>
-                  <li>• <strong>Session references:</strong> Type @1, @2, etc. to pull in summaries from previous sessions</li>
-                  <li>• <strong>File attachments:</strong> Use the 📚 Library button when creating advisors to attach reference materials</li>
+                  <li>• <strong>Session references:</strong> Type @ to get autocomplete dropdown for referencing previous sessions</li>
+                  <li>• <strong>Advisor management:</strong> Right-click advisors to edit or delete them</li>
                   <li>• <strong>Knowledge search:</strong> Use View Dossier to explore and search your conversation history</li>
                   <li>• <strong>Settings:</strong> Adjust theme, performance, and API settings in the Settings menu</li>
                 </ul>
@@ -113,7 +113,7 @@ const HelpModal = ({ isOpen, onClose }) => {
                   </div>
                   <div>
                     <p><code className="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">/debug</code> - Toggle debug mode</p>
-                    <p><code className="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">@N</code> - Reference session N</p>
+                    <p><code className="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">@</code> - Autocomplete to reference sessions</p>
                   </div>
                 </div>
               </div>
