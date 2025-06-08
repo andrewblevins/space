@@ -70,7 +70,6 @@ This will send a basic starting prompt for the conversation.
 - **Export**: Save your conversation in markdown format
 
 - **Prompts Library**: A library of prompts you can add to, edit, and delete. Also includes a handful of default suggestions
-- **Advisor Library**: Attach texts or files to advisors and generate richer descriptions from those materials
 
 - **Capture**: Right click selected text to capture and save to a Markdown file
 - **@ References**: Use `@<session_id>` in a message to insert a brief summary of that past session

@@ -121,13 +121,7 @@ const Terminal = ({ theme, toggleTheme }) => {
   const [currentSessionId, setCurrentSessionId] = useState(getNextSessionId());
   const [advisors, setAdvisors] = useState(() => {
     const saved = localStorage.getItem('space_advisors');
-    if (!saved) return [];
-    try {
-      const parsed = JSON.parse(saved);
-      return parsed.map(a => ({ hasLibrary: false, library: [], ...a }));
-    } catch {
-      return [];
-    }
+    return saved ? JSON.parse(saved) : [];
   });
   const [advisorGroups, setAdvisorGroups] = useState(() => {
     const saved = localStorage.getItem('space_advisor_groups');
@@ -2635,13 +2629,11 @@ ${selectedText}
           {showAdvisorForm && (
             <AdvisorForm
               initialName={suggestedAdvisorName}
-              onSubmit={({ name, description, library, hasLibrary }) => {
+              onSubmit={({ name, description }) => {
                 const newAdvisor = {
                   name,
                   description,
-                  active: true,
-                  library: library || [],
-                  hasLibrary: !!hasLibrary
+                  active: true
                 };
                 setAdvisors(prev => [...prev, newAdvisor]);
                 setMessages(prev => [...prev, {
@@ -2665,10 +2657,10 @@ ${selectedText}
           {editingAdvisor && (
             <EditAdvisorForm
               advisor={editingAdvisor}
-              onSubmit={({ name, description, library, hasLibrary }) => {
-                setAdvisors(prev => prev.map(a =>
-                  a.name === editingAdvisor.name
-                    ? { ...a, name, description, library, hasLibrary }
+              onSubmit={({ name, description }) => {
+                setAdvisors(prev => prev.map(a => 
+                  a.name === editingAdvisor.name 
+                    ? { ...a, name, description }
                     : a
                 ));
                 setMessages(prev => [...prev, {
