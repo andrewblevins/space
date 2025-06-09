@@ -50,38 +50,43 @@ const Terminal = ({ theme, toggleTheme }) => {
   useEffect(() => {
     // Only check for API keys after modal controller is initialized
     const checkKeys = async () => {
-      // First check if encrypted data exists
-      if (!hasEncryptedData()) {
-        console.log('❌ No encrypted keys found, showing welcome screen');
-        const skipWelcome = localStorage.getItem('space_skip_welcome');
-        if (!skipWelcome) {
-          setShowWelcome(true);
-        }
-        return;
-      }
-
-      // If encrypted data exists, try to decrypt it (this will prompt for password if needed)
-      console.log('🔒 Encrypted keys found, attempting to decrypt...');
       try {
-        const anthropicKey = await getDecrypted('space_anthropic_key');
-        const openaiKey = await getDecrypted('space_openai_key');
-        
-        if (anthropicKey && openaiKey) {
-          setApiKeysSet(true);
-          
-          // Initialize OpenAI client if keys are available
-          const client = new OpenAI({
-            apiKey: openaiKey,
-            dangerouslyAllowBrowser: true
-          });
-          setOpenaiClient(client);
-          console.log('✅ OpenAI client initialized successfully');
+        // First check if encrypted data exists
+        if (!hasEncryptedData()) {
+          console.log('❌ No encrypted keys found, showing welcome screen');
+          const skipWelcome = localStorage.getItem('space_skip_welcome');
+          if (!skipWelcome) {
+            setShowWelcome(true);
+          }
+          return;
         }
-      } catch (error) {
-        console.error('Error decrypting API keys:', error);
-        // If decryption fails (user canceled password, wrong password, etc.), 
-        // don't show welcome screen - they have encrypted keys, just couldn't access them this time
-        console.log('🔑 Password entry was required but failed/canceled');
+
+        // If encrypted data exists, try to decrypt it (this will prompt for password if needed)
+        console.log('🔒 Encrypted keys found, attempting to decrypt...');
+        try {
+          const anthropicKey = await getDecrypted('space_anthropic_key');
+          const openaiKey = await getDecrypted('space_openai_key');
+          
+          if (anthropicKey && openaiKey) {
+            setApiKeysSet(true);
+            
+            // Initialize OpenAI client if keys are available
+            const client = new OpenAI({
+              apiKey: openaiKey,
+              dangerouslyAllowBrowser: true
+            });
+            setOpenaiClient(client);
+            console.log('✅ OpenAI client initialized successfully');
+          }
+        } catch (error) {
+          console.error('Error decrypting API keys:', error);
+          // If decryption fails (user canceled password, wrong password, etc.), 
+          // don't show welcome screen - they have encrypted keys, just couldn't access them this time
+          console.log('🔑 Password entry was required but failed/canceled');
+        }
+      } finally {
+        // Always stop the loading state once initialization is complete
+        setIsInitializing(false);
       }
     };
     
@@ -203,6 +208,7 @@ const Terminal = ({ theme, toggleTheme }) => {
   const [contextLimit, setContextLimit] = useState(150000);
   const [apiKeysSet, setApiKeysSet] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
   
   // Handler to reset to welcome screen
   const resetToWelcome = () => {
@@ -2604,7 +2610,12 @@ ${selectedText}
 
   return (
     <>
-      {showWelcome ? (
+      {isInitializing ? (
+        // Loading state to prevent flash of wrong screen
+        <div className="w-full h-screen bg-black flex items-center justify-center">
+          <div className="text-green-400 animate-pulse">Loading SPACE Terminal...</div>
+        </div>
+      ) : showWelcome ? (
         <WelcomeScreen 
           onGetStarted={() => setShowWelcome(false)}
         />
