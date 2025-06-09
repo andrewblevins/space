@@ -22,6 +22,7 @@ import DossierModal from './DossierModal';
 import ImportExportModal from './ImportExportModal';
 import HelpModal from './HelpModal';
 import InfoModal from './InfoModal';
+import WelcomeScreen from './WelcomeScreen';
 import { Module } from "./terminal/Module";
 import { GroupableModule } from "./terminal/GroupableModule";
 import { CollapsibleModule } from "./terminal/CollapsibleModule";
@@ -63,9 +64,16 @@ const Terminal = ({ theme, toggleTheme }) => {
           });
           setOpenaiClient(client);
           console.log('✅ OpenAI client initialized successfully');
+        } else {
+          // Show welcome screen if no API keys are set (unless user opted to skip)
+          const skipWelcome = localStorage.getItem('space_skip_welcome');
+          if (!skipWelcome) {
+            setShowWelcome(true);
+          }
         }
       } catch (error) {
         console.error('Error checking API keys:', error);
+        setShowWelcome(true);
       }
     };
     
@@ -186,6 +194,12 @@ const Terminal = ({ theme, toggleTheme }) => {
   const [suggestedAdvisorName, setSuggestedAdvisorName] = useState('');
   const [contextLimit, setContextLimit] = useState(150000);
   const [apiKeysSet, setApiKeysSet] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
+  
+  // Handler to reset to welcome screen
+  const resetToWelcome = () => {
+    setShowWelcome(true);
+  };
   const [openaiClient, setOpenaiClient] = useState(null);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [showPromptLibrary, setShowPromptLibrary] = useState(false);
@@ -2582,7 +2596,11 @@ ${selectedText}
 
   return (
     <>
-      {!apiKeysSet ? (
+      {showWelcome ? (
+        <WelcomeScreen 
+          onGetStarted={() => setShowWelcome(false)}
+        />
+      ) : !apiKeysSet ? (
         <ApiKeySetup 
           onComplete={({ anthropicKey, openaiKey }) => {
             const client = new OpenAI({
