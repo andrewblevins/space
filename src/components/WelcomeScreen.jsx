@@ -11,32 +11,56 @@ const WelcomeScreen = ({ onGetStarted }) => {
 
   const features = [
     {
-      icon: "🎭",
+      icon: (
+        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+      ),
       title: "Generate advisors frictionlessly",
       description: "Create a constellation of advisors—each with distinct expertise and perspective"
     },
     {
-      icon: "📄", 
+      icon: (
+        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+        </svg>
+      ), 
       title: "Reference previous conversations",
       description: "Context carries across sessions, building understanding over time"
     },
     {
-      icon: "🤖",
+      icon: (
+        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+        </svg>
+      ),
       title: "Smart advisor recommendations",
       description: "Get intelligent suggestions based on your conversation context"
     },
     {
-      icon: "🏷️",
+      icon: (
+        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+        </svg>
+      ),
       title: "Automatic knowledge tags",
       description: "Track and search conversations by topic with intelligent categorization"
     },
     {
-      icon: "🔮",
+      icon: (
+        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+        </svg>
+      ),
       title: "Metaphor pattern tracking",
       description: "Make the structure of thought visible through connection mapping"
     },
     {
-      icon: "🔒",
+      icon: (
+        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+      ),
       title: "Local encrypted storage",
       description: "Your API keys and data stay on your machine, encrypted and secure"
     }
@@ -108,7 +132,7 @@ const WelcomeScreen = ({ onGetStarted }) => {
             {features.map((feature, index) => (
               <div key={index} className="bg-gray-900/30 border border-green-400/10 rounded-lg p-4 backdrop-blur-sm hover:border-green-400/30 transition-colors duration-300">
                 <div className="text-center">
-                  <div className="text-2xl mb-2 opacity-80">{feature.icon}</div>
+                  <div className="flex justify-center mb-3 text-green-400 opacity-80">{feature.icon}</div>
                   <h3 className="text-sm font-medium text-green-400 mb-2 leading-tight">
                     {feature.title}
                   </h3>
