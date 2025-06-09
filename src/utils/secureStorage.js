@@ -63,7 +63,7 @@ const resetEncryptedKeys = () => {
  * Check if there's any encrypted data in localStorage
  * @returns {boolean} True if encrypted API keys exist
  */
-const hasEncryptedData = () => {
+export const hasEncryptedData = () => {
   return localStorage.getItem('space_anthropic_key') !== null || 
          localStorage.getItem('space_openai_key') !== null;
 };
