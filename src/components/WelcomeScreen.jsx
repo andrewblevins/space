@@ -11,17 +11,17 @@ const WelcomeScreen = ({ onGetStarted }) => {
 
   const features = [
     {
-      icon: "⚡",
+      icon: "🎭",
       title: "Generate advisors frictionlessly",
       description: "Create a constellation of advisors—each with distinct expertise and perspective"
     },
     {
-      icon: "🔗", 
+      icon: "📄", 
       title: "Reference previous conversations",
       description: "Context carries across sessions, building understanding over time"
     },
     {
-      icon: "🎯",
+      icon: "🤖",
       title: "Smart advisor recommendations",
       description: "Get intelligent suggestions based on your conversation context"
     },
@@ -31,7 +31,7 @@ const WelcomeScreen = ({ onGetStarted }) => {
       description: "Track and search conversations by topic with intelligent categorization"
     },
     {
-      icon: "🕸️",
+      icon: "🔮",
       title: "Metaphor pattern tracking",
       description: "Make the structure of thought visible through connection mapping"
     },
