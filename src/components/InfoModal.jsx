@@ -70,36 +70,30 @@ const AboutContent = ({ onShowChangelog }) => {
               </p>
               
               <h4 className="text-green-400 font-medium mb-3">Features</h4>
-              <div className="space-y-3">
-                <div>
-                  <h5 className="text-green-600 dark:text-green-400 font-medium text-sm">Generate advisors frictionlessly</h5>
-                  <p className="text-gray-600 dark:text-gray-300 text-xs mt-1">Create a constellation of advisors—each with distinct expertise and perspective</p>
-                </div>
+              <div className="space-y-2">
+                <p className="text-gray-600 dark:text-gray-300 text-sm">
+                  <strong>Generate advisors frictionlessly.</strong> Create a constellation of advisors—each with distinct expertise and perspective.
+                </p>
                 
-                <div>
-                  <h5 className="text-green-600 dark:text-green-400 font-medium text-sm">Reference previous conversations</h5>
-                  <p className="text-gray-600 dark:text-gray-300 text-xs mt-1">Context carries across sessions, building understanding over time</p>
-                </div>
+                <p className="text-gray-600 dark:text-gray-300 text-sm">
+                  <strong>Reference previous conversations.</strong> Context carries across sessions, building understanding over time.
+                </p>
                 
-                <div>
-                  <h5 className="text-green-600 dark:text-green-400 font-medium text-sm">Smart advisor suggestions</h5>
-                  <p className="text-gray-600 dark:text-gray-300 text-xs mt-1">Get intelligent suggestions based on your conversation context</p>
-                </div>
+                <p className="text-gray-600 dark:text-gray-300 text-sm">
+                  <strong>Smart advisor suggestions.</strong> Get intelligent suggestions based on your conversation context.
+                </p>
                 
-                <div>
-                  <h5 className="text-green-600 dark:text-green-400 font-medium text-sm">Automatic knowledge tags</h5>
-                  <p className="text-gray-600 dark:text-gray-300 text-xs mt-1">Track and search conversations by topic with intelligent categorization</p>
-                </div>
+                <p className="text-gray-600 dark:text-gray-300 text-sm">
+                  <strong>Automatic knowledge tags.</strong> Track and search conversations by topic with intelligent categorization.
+                </p>
                 
-                <div>
-                  <h5 className="text-green-600 dark:text-green-400 font-medium text-sm">Metaphor pattern tracking</h5>
-                  <p className="text-gray-600 dark:text-gray-300 text-xs mt-1">Make the structure of thought visible through connection mapping</p>
-                </div>
+                <p className="text-gray-600 dark:text-gray-300 text-sm">
+                  <strong>Metaphor pattern tracking.</strong> Make the structure of thought visible through connection mapping.
+                </p>
                 
-                <div>
-                  <h5 className="text-green-600 dark:text-green-400 font-medium text-sm">Local encrypted storage</h5>
-                  <p className="text-gray-600 dark:text-gray-300 text-xs mt-1">Your API keys and data stay on your machine, encrypted and secure</p>
-                </div>
+                <p className="text-gray-600 dark:text-gray-300 text-sm">
+                  <strong>Local encrypted storage.</strong> Your API keys and data stay on your machine, encrypted and secure.
+                </p>
               </div>
               
               <div className="mt-3">
