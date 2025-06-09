@@ -111,7 +111,7 @@ const Terminal = ({ theme, toggleTheme }) => {
 
   const [messages, setMessages] = useState([
     { type: 'system', content: 'SPACE Terminal - v0.2.2' },
-    { type: 'system', content: '🎉 New in v0.2.2: Light/dark theme • Knowledge Dossier • Session summaries (@ autocomplete) • File sharing' },
+    { type: 'system', content: '🎉 New in v0.2.2:\n• Light/dark theme\n• Knowledge Dossier\n• Session summaries (@ autocomplete)\n• File sharing' },
     { type: 'system', content: 'Start a conversation, add an advisor (+), or type /help for instructions.' }
   ]);
   const [input, setInput] = useState('');
