@@ -71,11 +71,10 @@ const AboutContent = ({ onShowChangelog }) => {
               
               <h4 className="text-green-400 font-medium mb-2">Features</h4>
               <ul className="text-gray-600 dark:text-gray-300 text-sm space-y-1">
-                <li>• Multiple AI advisor perspectives</li>
-                <li>• Knowledge dossier and session memory</li>
-                <li>• Light/dark theme support</li>
-                <li>• Conversation export and sharing</li>
-                <li>• Advanced context management</li>
+                <li>• Generate advisors frictionlessly</li>
+                <li>• Metaphor pattern tracking</li>
+                <li>• Reference previous conversations</li>
+                <li>• Automatic knowledge tags</li>
               </ul>
               
               <div className="mt-3">
