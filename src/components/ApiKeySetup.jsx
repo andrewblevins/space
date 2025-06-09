@@ -170,7 +170,7 @@ const ApiKeySetup = ({ onComplete }) => {
               className="text-green-400 hover:text-green-300 underline text-sm transition-colors"
               title="Learn about API keys"
             >
-              (What is this?)
+              (What does this mean?)
             </button>
           </div>
           
@@ -208,7 +208,10 @@ const ApiKeySetup = ({ onComplete }) => {
             
             <div className="mt-6 pt-4 border-t border-green-400/20">
               <p className="text-gray-400 text-sm text-center">
-                ~2¢ per message • $5 per account gives you hours of conversation
+                <strong>Realistic costs:</strong> ~3-4¢ per message • Light usage: $5-12/month • Moderate: $15-30/month
+              </p>
+              <p className="text-gray-300 text-xs text-center mt-2">
+                Higher than basic AI chat due to multi-model architecture, knowledge dossier, and advisor personas
               </p>
             </div>
           </div>
@@ -313,7 +316,7 @@ const ApiKeySetup = ({ onComplete }) => {
                 
                 <div className="pt-4 border-t border-green-400/20">
                   <p className="text-xs text-gray-400">
-                    Don't have API keys yet? Follow the instructions above to get free accounts with both providers.
+                    If you don't have API keys yet, follow the instructions below to get free accounts with both providers.
                   </p>
                 </div>
               </div>

@@ -89,6 +89,23 @@ Version 0.2.2 represents a major comprehensive update to SPACE Terminal, integra
 - **Structured export format** with metadata and versioning
 - **Import modes**: Add (merge) or Replace (overwrite)
 
+### 💰 Comprehensive Usage Tracking System
+- **Real-time API cost tracking** with current 2025 pricing (Claude: $3/$15, GPT: $0.15/$0.60 per million tokens)
+- **Privacy-first local storage** - no usage data sent to servers
+- **Comprehensive tracking** across all SPACE features:
+  - Main conversations (Claude Sonnet 4)
+  - Knowledge dossier tagging (GPT-4o-mini)
+  - Session summaries and titles (GPT-4o-mini)
+  - Metaphor analysis and advisor suggestions (GPT-4o-mini)
+- **Usage analytics dashboard** in Settings → API Keys:
+  - Total spending with provider breakdown
+  - Session count and token usage statistics
+  - Average cost per session and per day
+  - Time period tracking since first use
+- **Accurate cost estimates** updated on API setup page (~3-4¢ per message)
+- **Session tracking** for usage pattern analysis
+- **Reset functionality** with confirmation for clearing usage history
+
 ## 🔧 User Interface Improvements
 
 ### 📋 Modular Settings Menu

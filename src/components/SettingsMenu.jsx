@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getDecrypted } from '../utils/secureStorage';
+import UsageDisplay from './UsageDisplay';
 
 const SettingsMenu = ({
   isOpen,
@@ -311,6 +312,11 @@ const SettingsMenu = ({
                 <div className="mt-4 p-3 bg-gray-100 dark:bg-gray-800 rounded text-xs text-gray-600 dark:text-gray-400">
                   <p>API keys are encrypted and stored locally in your browser. They are never sent to SPACE servers.</p>
                 </div>
+              </div>
+
+              {/* Usage Statistics */}
+              <div className="border-t border-gray-300 dark:border-gray-600 pt-6">
+                <UsageDisplay />
               </div>
             </div>
           )}

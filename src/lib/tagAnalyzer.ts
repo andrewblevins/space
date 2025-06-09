@@ -1,6 +1,7 @@
 import { OpenAI } from 'openai';
 import { getDecrypted } from '../utils/secureStorage';
 import { Tag } from '../types/tags';
+import { trackUsage } from '../utils/usageTracking';
 
 
 // Overhauled prompt for structured tagging with categories
@@ -56,6 +57,7 @@ export default class TagAnalyzer {
         contentLength: content.length
       });
       
+      const inputTokens = Math.ceil((TAGGING_PROMPT.length + content.length) / 4); // Estimate input tokens
       const response = await this.openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [{
@@ -72,6 +74,10 @@ export default class TagAnalyzer {
       console.log('🔍 TagAnalyzer - Raw OpenAI response:', response.choices[0].message.content);
 
       const result = JSON.parse(response.choices[0].message.content || '{}');
+      
+      // Track usage
+      const outputTokens = Math.ceil((response.choices[0].message.content || '').length / 4);
+      trackUsage('gpt', inputTokens, outputTokens);
       console.log('🔍 TagAnalyzer - Parsed result:', {
         content: content.substring(0, 50) + '...',
         tags: result.tags,

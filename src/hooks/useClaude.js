@@ -3,6 +3,7 @@ import { getApiEndpoint } from '../utils/apiConfig';
 import { handleApiError } from '../utils/apiErrorHandler';
 import { getDecrypted } from '../utils/secureStorage';
 import { buildConversationContext } from '../utils/terminalHelpers';
+import { trackUsage, formatCost } from '../utils/usageTracking';
 
 /**
  * Hook providing the callClaude function used to stream responses from the API.
@@ -38,13 +39,16 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
     }
 
     const systemPromptText = customGetSystemPrompt ? customGetSystemPrompt() : getSystemPrompt();
+    
+    // Calculate input tokens for tracking
+    const systemTokens = estimateTokens(systemPromptText);
+    const contextTokens = contextMessages.reduce((s, m) => s + estimateTokens(m.content), 0);
+    const inputTokens = systemTokens + contextTokens;
+    
     if (debugMode) {
       const currentUserMessage = [...messages].reverse().find((m) => m.type === 'user' && m.content === userMessage) || { content: userMessage, tags: [] };
-      const systemTokens = estimateTokens(systemPromptText);
-      const contextTokens = contextMessages.reduce((s, m) => s + estimateTokens(m.content), 0);
-      const total = systemTokens + contextTokens;
-      const inputCost = ((total / 1000) * 0.003).toFixed(4);
-      const debugOutput = `Claude API Call:\nEstimated tokens: ${total} (System: ${systemTokens}, Context: ${contextTokens})\nEstimated cost: $${inputCost}\n\nTags for current message: ${JSON.stringify(currentUserMessage.tags, null, 2)}\n\nSystem Prompt:\n${systemPromptText}\n\nContext Messages:\n${JSON.stringify(contextMessages, null, 2)}`;
+      const inputCost = inputTokens * (3.00 / 1_000_000); // Current Claude pricing
+      const debugOutput = `Claude API Call:\nEstimated input tokens: ${inputTokens} (System: ${systemTokens}, Context: ${contextTokens})\nEstimated input cost: ${formatCost(inputCost)}\n\nTags for current message: ${JSON.stringify(currentUserMessage.tags, null, 2)}\n\nSystem Prompt:\n${systemPromptText}\n\nContext Messages:\n${JSON.stringify(contextMessages, null, 2)}`;
       setMessages((prev) => [...prev, { type: 'debug', content: debugOutput }]);
     }
 
@@ -116,6 +120,16 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
         }
       }
     }
+    
+    // Track usage after successful completion
+    const outputTokens = estimateTokens(currentMessageContent);
+    const cost = trackUsage('claude', inputTokens, outputTokens);
+    
+    if (debugMode) {
+      const debugOutput = `Response complete:\nOutput tokens: ${outputTokens}\nTotal cost for this call: ${formatCost(cost)}`;
+      setMessages((prev) => [...prev, { type: 'debug', content: debugOutput }]);
+    }
+    
     return currentMessageContent;
   }, [messages, setMessages, maxTokens, contextLimit, memory, debugMode, getSystemPrompt]);
 

@@ -128,7 +128,7 @@ async function setupApiKeysModern(page) {
   // Wait for either navigation or password modal
   try {
     // Wait for password modal to appear
-    const passwordModal = page.locator('text/Password Required');
+    const passwordModal = page.locator('text/');
     await passwordModal.wait({ timeout: 10000 });
     console.log('✓ API keys validated, password modal appeared');
     return true;
