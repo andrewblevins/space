@@ -11,7 +11,8 @@ const PasswordModal = ({
   showResetOption = false,
   onReset = null,
   attemptCount = 0,
-  maxAttempts = 3
+  maxAttempts = 3,
+  isCreatingPassword = false
 }) => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -70,9 +71,7 @@ const PasswordModal = ({
           className="w-full bg-black text-green-400 border border-green-400 p-2 mb-4 focus:outline-none"
           placeholder="Enter password"
           data-testid="password-input"
-          autoComplete="off"
-          data-lpignore="true"
-          data-form-type="other"
+          autoComplete={isCreatingPassword ? "new-password" : "current-password"}
           autoFocus
         />
 

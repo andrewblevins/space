@@ -136,7 +136,8 @@ const getEncryptionPassword = async (forDecryption = false) => {
         showResetOption: encryptedDataExists && forDecryption,
         onReset: handleReset,
         attemptCount: failedAttempts,
-        maxAttempts: MAX_ATTEMPTS
+        maxAttempts: MAX_ATTEMPTS,
+        isCreatingPassword: !encryptedDataExists || !forDecryption
       });
       
       const password = typeof result === 'string' ? result : result.password;
