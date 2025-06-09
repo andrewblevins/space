@@ -32,6 +32,7 @@ import { ExpandingInput } from "./terminal/ExpandingInput";
 import { MemoizedMarkdownMessage } from "./terminal/MemoizedMarkdownMessage";
 import useClaude from "../hooks/useClaude";
 import { analyzeMetaphors, analyzeForQuestions, summarizeSession, generateSessionSummary } from "../utils/terminalHelpers";
+import { trackUsage, trackSession } from '../utils/usageTracking';
 import { worksheetQuestions, WORKSHEET_TEMPLATES } from "../utils/worksheetTemplates";
 
 
@@ -132,7 +133,7 @@ const Terminal = ({ theme, toggleTheme }) => {
 
   const [messages, setMessages] = useState([
     { type: 'system', content: 'SPACE Terminal - v0.2.2' },
-    { type: 'system', content: '🎉 New in v0.2.2:\n• Light/dark theme\n• Knowledge Dossier\n• Session summaries (@ autocomplete)\n• Advisor import/export' },
+    { type: 'system', content: '🎉 New in v0.2.2:\n• Light/dark theme\n• Knowledge Dossier\n• Session summaries (@ autocomplete)\n• Advisor import/export\n• API usage tracking (Settings → API Keys)' },
     { type: 'system', content: 'Start a conversation, add an advisor (+), or type /help for instructions.' }
   ]);
   const [input, setInput] = useState('');
@@ -300,11 +301,18 @@ const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimi
     generateSummaryForPreviousSession(prevSessionId);
     
     setCurrentSessionId(newSessionId);
-    setMessages([{ type: 'system', content: 'Started new session' }]);
+    setMessages([
+      { type: 'system', content: 'SPACE Terminal - v0.2.2' },
+      { type: 'system', content: '🎉 New in v0.2.2:\n• Light/dark theme\n• Knowledge Dossier\n• Session summaries (@ autocomplete)\n• Advisor import/export\n• API usage tracking (Settings → API Keys)' },
+      { type: 'system', content: 'Start a conversation, add an advisor (+), or type /help for instructions.' }
+    ]);
     setMetaphors([]);
     // DEPRECATED: Questions feature temporarily disabled
     // setQuestions([]);
     setAdvisorSuggestions([]);
+    
+    // Track new session
+    trackSession();
   };
 
   const handleLoadSession = (sessionId) => {
@@ -496,10 +504,18 @@ const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimi
           generateSummaryForPreviousSession(prevSessionId);
           
           setCurrentSessionId(newSessionId);
-          setMessages([{ type: 'system', content: 'Started new session' }]);
+          setMessages([
+            { type: 'system', content: 'SPACE Terminal - v0.2.2' },
+            { type: 'system', content: '🎉 New in v0.2.2:\n• Light/dark theme\n• Knowledge Dossier\n• Session summaries (@ autocomplete)\n• Advisor import/export\n• API usage tracking (Settings → API Keys)' },
+            { type: 'system', content: 'Start a conversation, add an advisor (+), or type /help for instructions.' }
+          ]);
           setMetaphors([]);
           // DEPRECATED: Questions feature temporarily disabled
           // setQuestions([]);
+          
+          // Track new session
+          trackSession();
+          
           return true;
 
         case '/load':
@@ -2195,14 +2211,7 @@ Exported on: ${timestamp}\n\n`;
       .join("\n\n");
 
     try {
-      const response = await openaiClient.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [{
-          role: "system",
-          content: "You are a helpful assistant that responds only in valid JSON format."
-        }, {
-          role: "user",
-          content: `Based on this recent conversation exchange, suggest exactly 5 specific advisors who could add valuable perspective to this discussion.
+      const promptContent = `Based on this recent conversation exchange, suggest exactly 5 specific advisors who could add valuable perspective to this discussion.
 
 Please provide a balanced mix of:
 1. Real historical figures, thinkers, or experts (living or dead)
@@ -2221,13 +2230,28 @@ Fictional: "Hermione Granger", "Gandalf", "Tyrion Lannister"
 Recent conversation:
 ${recentMessages}
 
-Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor Name 3", "Advisor Name 4", "Advisor Name 5"]}`
+Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor Name 3", "Advisor Name 4", "Advisor Name 5"]}`;
+      
+      const inputTokens = Math.ceil((100 + promptContent.length) / 4); // Estimate input tokens
+      const response = await openaiClient.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [{
+          role: "system",
+          content: "You are a helpful assistant that responds only in valid JSON format."
+        }, {
+          role: "user",
+          content: promptContent
         }],
         max_tokens: 150,
         response_format: { type: "json_object" }
       });
 
       const suggestions = JSON.parse(response.choices[0].message.content);
+      
+      // Track usage
+      const outputTokens = Math.ceil(response.choices[0].message.content.length / 4);
+      trackUsage('gpt', inputTokens, outputTokens);
+      
       setAdvisorSuggestions(suggestions.suggestions || []);
     } catch (error) {
       console.error('Error generating advisor suggestions:', error);
@@ -2254,6 +2278,7 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
         
       if (!conversationText.trim()) return null;
       
+      const inputTokens = Math.ceil((200 + conversationText.length) / 4); // Estimate input tokens
       const response = await openaiClient.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [{
@@ -2267,7 +2292,13 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
         temperature: 0.7
       });
       
-      return response.choices[0].message.content.trim();
+      const title = response.choices[0].message.content.trim();
+      
+      // Track usage
+      const outputTokens = Math.ceil(title.length / 4);
+      trackUsage('gpt', inputTokens, outputTokens);
+      
+      return title;
     } catch (error) {
       console.error('Title generation failed:', error);
       return null;

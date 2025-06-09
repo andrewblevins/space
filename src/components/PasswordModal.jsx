@@ -47,7 +47,9 @@ const PasswordModal = ({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
       <div className="bg-gray-900 border border-green-400 p-6 rounded-lg w-full max-w-md">
-        <h2 className="text-green-400 text-xl mb-4">Password Required</h2>
+        <h2 className="text-green-400 text-xl mb-4">
+          {isCreatingPassword ? 'Create Password' : 'Password Required'}
+        </h2>
         
         {error && (
           <div className="bg-red-900/50 border border-red-400 text-red-400 p-2 mb-4 rounded">

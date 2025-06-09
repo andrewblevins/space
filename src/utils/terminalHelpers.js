@@ -1,5 +1,7 @@
 /** Helper functions used by the Terminal component. */
 
+import { trackUsage } from './usageTracking';
+
 /**
  * Build a conversation context for Claude when the full history is too large.
  * @param {string} userMessage
@@ -72,6 +74,7 @@ export async function analyzeMetaphors(messages, { enabled, openaiClient, setMet
   const userMessages = messages.filter((m) => m.type === 'user').map((m) => m.content).join('\n');
   if (!userMessages.trim()) return;
   try {
+    const inputTokens = Math.ceil((userMessages.length + 200) / 4); // Estimate input tokens
     const response = await openaiClient.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
@@ -82,6 +85,11 @@ export async function analyzeMetaphors(messages, { enabled, openaiClient, setMet
       response_format: { type: 'json_object' },
     });
     const result = JSON.parse(response.choices[0].message.content);
+    
+    // Track usage
+    const outputTokens = Math.ceil(response.choices[0].message.content.length / 4);
+    trackUsage('gpt', inputTokens, outputTokens);
+    
     setMetaphors(result.metaphors || []);
   } catch (err) {
     if (debugMode && setMessages) {
@@ -101,6 +109,7 @@ export async function analyzeForQuestions(messages, { enabled, openaiClient, set
     .join('\n\n');
   if (!recentMessages.trim()) return;
   try {
+    const inputTokens = Math.ceil((recentMessages.length + 300) / 4); // Estimate input tokens
     const response = await openaiClient.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
@@ -111,6 +120,11 @@ export async function analyzeForQuestions(messages, { enabled, openaiClient, set
       response_format: { type: 'json_object' },
     });
     const result = JSON.parse(response.choices[0].message.content);
+    
+    // Track usage
+    const outputTokens = Math.ceil(response.choices[0].message.content.length / 4);
+    trackUsage('gpt', inputTokens, outputTokens);
+    
     setQuestions(result.questions || []);
   } catch (err) {
     if (debugMode && setMessages) {
@@ -158,6 +172,8 @@ export async function generateSessionSummary(session, openaiClient) {
     .join('\n\n');
 
   try {
+    const inputText = convoText.slice(0, 6000);
+    const inputTokens = Math.ceil((inputText.length + 100) / 4); // Estimate input tokens
     const response = await openaiClient.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
@@ -167,13 +183,17 @@ export async function generateSessionSummary(session, openaiClient) {
         },
         {
           role: 'user',
-          content: convoText.slice(0, 6000)
+          content: inputText
         }
       ],
       max_tokens: 150
     });
 
     const summary = response.choices[0].message.content.trim();
+    
+    // Track usage
+    const outputTokens = Math.ceil(summary.length / 4);
+    trackUsage('gpt', inputTokens, outputTokens);
     
     // Cache the summary in the session
     const updatedSession = {
