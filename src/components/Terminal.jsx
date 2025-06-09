@@ -2610,6 +2610,7 @@ ${selectedText}
             setOpenaiClient(client);
             console.log('✅ OpenAI client initialized on API key setup complete');
             setApiKeysSet(true);
+            setShowWelcome(false); // Ensure welcome screen doesn't show again
           }} 
         />
       ) : (
