@@ -200,11 +200,33 @@ const Terminal = ({ theme, toggleTheme }) => {
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [sessions, setSessions] = useState([]);
   const [sessionSelections, setSessionSelections] = useState(new Map()); // Map from title to session object
+  const [currentSessionContexts, setCurrentSessionContexts] = useState([]); // Current @ reference contexts
 
 const getSystemPrompt = () => {
+  let prompt = "";
+  
+  // Add advisor personas
   const activeAdvisors = advisors.filter(a => a.active);
-  if (activeAdvisors.length === 0) return "";
-  return `You are currently embodying the following advisors:\n${activeAdvisors.map(a => `\n${a.name}: ${a.description}`).join('\n')}\n\nWhen responding, you will adopt the distinct voice(s) of the active advisor(s) as appropriate to the context and question.`;
+  if (activeAdvisors.length > 0) {
+    prompt += `You are currently embodying the following advisors:\n${activeAdvisors.map(a => `\n${a.name}: ${a.description}`).join('\n')}\n\nWhen responding, you will adopt the distinct voice(s) of the active advisor(s) as appropriate to the context and question.`;
+  }
+  
+  // Add session context from @ references
+  if (currentSessionContexts.length > 0) {
+    if (prompt) prompt += "\n\n";
+    prompt += "## REFERENCED CONVERSATION CONTEXTS\n\n";
+    prompt += "The user has referenced the following previous conversations for context:\n\n";
+    
+    currentSessionContexts.forEach((context, index) => {
+      const date = new Date(context.timestamp).toLocaleDateString();
+      prompt += `### Context ${index + 1}: "${context.title}" (Session ${context.sessionId}, ${date})\n`;
+      prompt += `${context.summary}\n\n`;
+    });
+    
+    prompt += "Use these conversation contexts to inform your response when relevant. The user's message may reference specific details from these conversations.\n";
+  }
+  
+  return prompt;
 };
 
 const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimit, memory, debugMode, getSystemPrompt });
@@ -1814,10 +1836,11 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
     try {
       setIsLoading(true);
 
-      // Replace @ references with summaries
+      // Process @ references for context injection
       let processedInput = input;
+      let sessionContexts = [];
       
-      // Handle new format: @"Session Title"
+      // Handle new format: @"Session Title" - collect summaries for context injection
       const atTitleRegex = /@"([^"]+)"/g;
       const titleMatches = [...processedInput.matchAll(atTitleRegex)];
       for (const m of titleMatches) {
@@ -1826,17 +1849,24 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
         if (session) {
           const summary = await summarizeSession(session.id, { openaiClient });
           if (summary) {
-            processedInput = processedInput.replace(m[0], summary);
+            sessionContexts.push({
+              title,
+              sessionId: session.id,
+              summary,
+              timestamp: session.timestamp
+            });
           }
         }
       }
       
       // Still support legacy format: @1, @2, etc. for backward compatibility
       const atRegex = /@(\d+)/g;
-      const matches = [...processedInput.matchAll(atRegex)];
-      for (const m of matches) {
-        const summary = await summarizeSession(parseInt(m[1], 10), { openaiClient });
+      const legacyMatches = [...processedInput.matchAll(atRegex)];
+      for (const m of legacyMatches) {
+        const sessionId = parseInt(m[1], 10);
+        const summary = await summarizeSession(sessionId, { openaiClient });
         if (summary) {
+          // For legacy format, still replace inline for backward compatibility
           processedInput = processedInput.replace(m[0], summary);
         }
       }
@@ -1869,11 +1899,17 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
         timestamp: new Date().toISOString()
       };
 
+      // Set session contexts for system prompt
+      setCurrentSessionContexts(sessionContexts);
+
       // Add it to messages state
       await setMessages(prev => [...prev, newMessage]);
 
       // Pass the content to Claude
       await callClaude(newMessage.content);
+
+      // Clear session contexts after response
+      setCurrentSessionContexts([]);
 
     } catch (error) {
       console.error('Error in handleSubmit:', error);
@@ -1881,6 +1917,8 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
         type: 'system', 
         content: 'Error: Failed to get response from Claude' 
       }]);
+      // Clear session contexts on error
+      setCurrentSessionContexts([]);
     } finally {
       setIsLoading(false);
       setInput('');
