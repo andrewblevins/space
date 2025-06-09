@@ -37,9 +37,8 @@ const HelpModal = ({ isOpen, onClose }) => {
             <section>
               <h3 className="text-green-400 font-semibold mb-3">Getting Started</h3>
               <div className="space-y-2 text-gray-600 dark:text-gray-300">
-                <p><strong>1. Set up API keys:</strong> Use the Settings menu (⚙️) to add your Anthropic and OpenAI API keys</p>
-                <p><strong>2. Create advisors:</strong> Click the + button to add AI advisors with different perspectives</p>
-                <p><strong>3. Start chatting:</strong> Type in the terminal to have conversations with your active advisors</p>
+                <p><strong>1. Create advisors:</strong> Click the + button to add AI advisors with different perspectives</p>
+                <p><strong>2. Start chatting:</strong> Type in the terminal to have conversations with your active advisors</p>
               </div>
             </section>
 
