@@ -9,6 +9,7 @@ const ApiKeySetup = ({ onComplete }) => {
   const [openaiKey, setOpenaiKey] = useState('');
   const [error, setError] = useState('');
   const [showInfoModal, setShowInfoModal] = useState(false);
+  const [showApiKeysInfoModal, setShowApiKeysInfoModal] = useState(false);
 
   useEffect(() => {
     // Check for auth error message from previous session
@@ -67,7 +68,7 @@ const ApiKeySetup = ({ onComplete }) => {
     e.preventDefault();
     
     if (!anthropicKey || !openaiKey) {
-      setError('Both API keys are required');
+      setError('Both API keys required');
       return;
     }
 
@@ -163,6 +164,16 @@ const ApiKeySetup = ({ onComplete }) => {
         )}
 
         <div className="w-full max-w-2xl space-y-8">
+          <div className="text-center">
+            <button
+              onClick={() => setShowApiKeysInfoModal(true)}
+              className="text-green-400 hover:text-green-300 underline text-sm transition-colors"
+              title="Learn about API keys"
+            >
+              (What is this?)
+            </button>
+          </div>
+          
           {/* Instructions */}
           <div className="bg-gray-900/30 border border-green-400/10 rounded-lg p-6 backdrop-blur-sm">
             <div className="grid md:grid-cols-2 gap-6">
@@ -258,6 +269,58 @@ const ApiKeySetup = ({ onComplete }) => {
         isOpen={showInfoModal}
         onClose={() => setShowInfoModal(false)}
       />
+
+      {/* API Keys Info Modal */}
+      {showApiKeysInfoModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+          <div className="bg-gray-900 border border-green-400/20 rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-white">About API Keys</h2>
+                <button
+                  onClick={() => setShowApiKeysInfoModal(false)}
+                  className="text-gray-400 hover:text-green-400 transition-colors"
+                >
+                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              <div className="space-y-4 text-gray-300">
+                <div>
+                  <h3 className="text-green-400 font-medium mb-2">What are API keys?</h3>
+                  <p className="text-sm leading-relaxed">
+                    API keys are secure authentication tokens that allow SPACE to communicate with AI providers on your behalf. 
+                    Think of them as digital passwords that give our app permission to access AI services like Claude and GPT.
+                  </p>
+                </div>
+                
+                <div>
+                  <h3 className="text-green-400 font-medium mb-2">How SPACE uses your API keys</h3>
+                  <p className="text-sm leading-relaxed">
+                    In SPACE, Claude (Anthropic) powers the main conversations, advisor generation, and roleplay. GPT (OpenAI) analyzes conversations behind the scenes for tagging, session summaries, metaphor tracking, and advisor suggestions.
+                  </p>                 
+                </div>
+                
+                <div>
+                  <h3 className="text-green-400 font-medium mb-2">Your privacy & security</h3>
+                  <p className="text-sm leading-relaxed">
+                    Your API keys are encrypted and stored locally on your device. SPACE never sends your keys to external servers—
+                    they're only used directly between your browser and the AI providers.
+                  </p>
+                </div>
+                
+                <div className="pt-4 border-t border-green-400/20">
+                  <p className="text-xs text-gray-400">
+                    Don't have API keys yet? Follow the instructions above to get free accounts with both providers.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
