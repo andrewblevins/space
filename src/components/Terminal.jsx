@@ -11,7 +11,7 @@ import ApiKeySetup from './ApiKeySetup';
 import { getApiEndpoint } from '../utils/apiConfig';
 import { defaultPrompts } from '../lib/defaultPrompts';
 import { handleApiError } from '../utils/apiErrorHandler';
-import { getDecrypted, setEncrypted, removeEncrypted, setModalController } from '../utils/secureStorage';
+import { getDecrypted, setEncrypted, removeEncrypted, setModalController, hasEncryptedData } from '../utils/secureStorage';
 import { useModal } from '../contexts/ModalContext';
 import AccordionMenu from './AccordionMenu';
 import SessionPanel from './SessionPanel';
@@ -50,6 +50,18 @@ const Terminal = ({ theme, toggleTheme }) => {
   useEffect(() => {
     // Only check for API keys after modal controller is initialized
     const checkKeys = async () => {
+      // First check if encrypted data exists
+      if (!hasEncryptedData()) {
+        console.log('❌ No encrypted keys found, showing welcome screen');
+        const skipWelcome = localStorage.getItem('space_skip_welcome');
+        if (!skipWelcome) {
+          setShowWelcome(true);
+        }
+        return;
+      }
+
+      // If encrypted data exists, try to decrypt it (this will prompt for password if needed)
+      console.log('🔒 Encrypted keys found, attempting to decrypt...');
       try {
         const anthropicKey = await getDecrypted('space_anthropic_key');
         const openaiKey = await getDecrypted('space_openai_key');
@@ -64,16 +76,12 @@ const Terminal = ({ theme, toggleTheme }) => {
           });
           setOpenaiClient(client);
           console.log('✅ OpenAI client initialized successfully');
-        } else {
-          // Show welcome screen if no API keys are set (unless user opted to skip)
-          const skipWelcome = localStorage.getItem('space_skip_welcome');
-          if (!skipWelcome) {
-            setShowWelcome(true);
-          }
         }
       } catch (error) {
-        console.error('Error checking API keys:', error);
-        setShowWelcome(true);
+        console.error('Error decrypting API keys:', error);
+        // If decryption fails (user canceled password, wrong password, etc.), 
+        // don't show welcome screen - they have encrypted keys, just couldn't access them this time
+        console.log('🔑 Password entry was required but failed/canceled');
       }
     };
     
