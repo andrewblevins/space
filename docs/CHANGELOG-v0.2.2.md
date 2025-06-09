@@ -33,6 +33,28 @@ Version 0.2.2 represents a major comprehensive update to SPACE Terminal, integra
 - **Automatic replacement** of @ references with session summaries
 - **Comprehensive testing** with 100% pass rate on API tests
 
+### 🔍 Enhanced Session Autocomplete System
+- **Smart autocomplete dropdown** when typing `@` symbol
+- **Session title search** with real-time filtering as you type
+- **Multiple session references** support in single message (`@"Session A" @"Session B"`)
+- **Background context injection** like Cursor's @Past Chats feature
+- **Clean user messages** with session summaries as hidden system context
+- **Smart dropdown positioning** that avoids screen clipping (above/below input)
+- **Keyboard navigation** with arrow keys, Enter to select, Esc to close
+- **Session metadata display** showing message count and relative timestamps
+- **Progressive summary caching** for instant references
+- **Backward compatibility** maintaining support for legacy @1, @2 format
+
+### ⚡ Progressive Summary Caching System
+- **Smart caching strategy** generating summaries at natural breakpoints
+- **Auto-generation on session completion** when starting new sessions
+- **Long conversation summaries** generated every 20 messages
+- **Instant lookup** from cached summaries (no API delays)
+- **80% relevance threshold** for cached summary usage
+- **Background processing** that doesn't block UI interactions
+- **Fallback generation** for older sessions without cached summaries
+- **Summary metadata tracking** (timestamp, message count covered)
+
 ### 📚 Advisor Library Feature
 - **File attachment support** for advisors (PDF, TXT, MD)
 - **Browser-compatible PDF parsing** using PDF.js (replaced pdf-parse)
