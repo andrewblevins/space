@@ -30,7 +30,7 @@ import { CollapsibleSuggestionsModule } from "./terminal/CollapsibleSuggestionsM
 import { ExpandingInput } from "./terminal/ExpandingInput";
 import { MemoizedMarkdownMessage } from "./terminal/MemoizedMarkdownMessage";
 import useClaude from "../hooks/useClaude";
-import { analyzeMetaphors, analyzeForQuestions, summarizeSession } from "../utils/terminalHelpers";
+import { analyzeMetaphors, analyzeForQuestions, summarizeSession, generateSessionSummary } from "../utils/terminalHelpers";
 import { worksheetQuestions, WORKSHEET_TEMPLATES } from "../utils/worksheetTemplates";
 
 
@@ -239,7 +239,13 @@ const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimi
 
   // Session management functions for SessionPanel
   const handleNewSession = () => {
-    setCurrentSessionId(getNextSessionId());
+    const prevSessionId = currentSessionId;
+    const newSessionId = getNextSessionId();
+    
+    // Auto-generate summary for the session we're leaving
+    generateSummaryForPreviousSession(prevSessionId);
+    
+    setCurrentSessionId(newSessionId);
     setMessages([{ type: 'system', content: 'Started new session' }]);
     setMetaphors([]);
     // DEPRECATED: Questions feature temporarily disabled
@@ -429,7 +435,13 @@ const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimi
           return true;
 
         case '/new':
-          setCurrentSessionId(getNextSessionId());
+          const prevSessionId = currentSessionId;
+          const newSessionId = getNextSessionId();
+          
+          // Auto-generate summary for the session we're leaving
+          generateSummaryForPreviousSession(prevSessionId);
+          
+          setCurrentSessionId(newSessionId);
           setMessages([{ type: 'system', content: 'Started new session' }]);
           setMetaphors([]);
           // DEPRECATED: Questions feature temporarily disabled
@@ -1940,6 +1952,27 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
     setSessionSelections(prev => new Map(prev.set(title, session)));
   };
 
+  // Auto-generate summary for previous session when starting a new one
+  const generateSummaryForPreviousSession = async (prevSessionId) => {
+    if (!openaiClient || prevSessionId === currentSessionId) return;
+    
+    const sessionData = localStorage.getItem(`space_session_${prevSessionId}`);
+    if (!sessionData) return;
+    
+    const session = JSON.parse(sessionData);
+    const messageCount = session.messages.filter(m => m.type === 'user' || m.type === 'assistant').length;
+    
+    // Only generate summary for sessions with meaningful content that don't already have one
+    if (messageCount >= 4 && !session.summary) {
+      console.log(`📄 Auto-generating summary for completed session ${prevSessionId}`);
+      try {
+        await generateSessionSummary(session, openaiClient);
+      } catch (error) {
+        console.error('Error auto-generating summary:', error);
+      }
+    }
+  };
+
 
   // Prompt Library handlers
   const handleUsePrompt = (prompt) => {
@@ -2161,8 +2194,30 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
             sessionData.title = title;
           }
         } else if (hasTitle) {
-          // Preserve existing title
-          sessionData.title = JSON.parse(existingSession).title;
+          // Preserve existing title and existing summary
+          const existing = JSON.parse(existingSession);
+          sessionData.title = existing.title;
+          if (existing.summary) {
+            sessionData.summary = existing.summary;
+            sessionData.summaryTimestamp = existing.summaryTimestamp;
+            sessionData.summaryMessageCount = existing.summaryMessageCount;
+          }
+        }
+
+        // Auto-generate summary for long conversations (every 20 messages)
+        if (nonSystemMessages.length > 0 && nonSystemMessages.length % 20 === 0 && openaiClient) {
+          const existing = existingSession ? JSON.parse(existingSession) : null;
+          if (!existing?.summary || existing.summaryMessageCount < nonSystemMessages.length - 10) {
+            console.log(`📄 Auto-generating summary for long session ${currentSessionId} (${nonSystemMessages.length} messages)`);
+            try {
+              // Generate summary in background without blocking UI
+              setTimeout(async () => {
+                await generateSessionSummary(sessionData, openaiClient);
+              }, 1000);
+            } catch (error) {
+              console.error('Error auto-generating summary for long session:', error);
+            }
+          }
         }
 
         localStorage.setItem(`space_session_${currentSessionId}`, JSON.stringify(sessionData));
