@@ -122,9 +122,6 @@ const ApiKeySetup = ({ onComplete }) => {
         )}
 
         <p className="mb-4">
-          Your terminal for <a href="https://github.com/andrewblevins/insight-cascade" target="_blank" rel="noopener noreferrer" className="text-blue-400 underline">AI advisor conversations</a>.
-        </p>
-        <p className="mb-4">
           To get started, you need API keys from both Anthropic and OpenAI. Follow the instructions below to obtain your keys.
         </p>
         <div className="mb-4">
@@ -145,7 +142,7 @@ const ApiKeySetup = ({ onComplete }) => {
         </div>
 
         <p className="mb-4">
-          SPACE Terminal is very cost-effective to use. Each message exchange (your message + AI response) costs roughly 2¢ on average. Starting with $5 in each API account will give you several hours of conversation.
+          SPACE Terminal is cheap to use. Each message exchange (your message + AI response) costs roughly 2¢ on average. Starting with $5 in each API account will give you several hours of conversation.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4" data-testid="api-key-form">
