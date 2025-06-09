@@ -11,29 +11,34 @@ const WelcomeScreen = ({ onGetStarted }) => {
 
   const features = [
     {
-      icon: "🎭",
-      title: "Generate and swap high-quality advisors instantly",
-      description: "Create a constellation of advisors—each with their own expertise, viewpoint, or lineage"
+      icon: "⚡",
+      title: "Generate advisors frictionlessly",
+      description: "Create a constellation of advisors—each with distinct expertise and perspective"
     },
     {
-      icon: "💬", 
-      title: "Reference previous discussions in chat",
-      description: "Your advisors remember context across sessions, building understanding over time"
+      icon: "🔗", 
+      title: "Reference previous conversations",
+      description: "Context carries across sessions, building understanding over time"
     },
     {
-      icon: "🤖",
-      title: "Automated advisor recommendations in the side panel",
-      description: "Get intelligent suggestions for new advisors based on your conversation context"
+      icon: "🎯",
+      title: "Smart advisor recommendations",
+      description: "Get intelligent suggestions based on your conversation context"
     },
     {
       icon: "🏷️",
-      title: "Track and search based on topic with automatic knowledge tags",
-      description: "Organize and find your conversations with intelligent topic categorization"
+      title: "Automatic knowledge tags",
+      description: "Track and search conversations by topic with intelligent categorization"
     },
     {
-      icon: "🔮",
-      title: "Metaphor tracking makes the structure of thought visible",
-      description: "Discover patterns and connections in your thinking process"
+      icon: "🕸️",
+      title: "Metaphor pattern tracking",
+      description: "Make the structure of thought visible through connection mapping"
+    },
+    {
+      icon: "🔒",
+      title: "Local encrypted storage",
+      description: "Your API keys and data stay on your machine, encrypted and secure"
     }
   ];
 
@@ -81,7 +86,7 @@ const WelcomeScreen = ({ onGetStarted }) => {
           </h1>
           
           <h2 className="text-2xl md:text-3xl text-green-400 font-light mb-8 tracking-wide">
-            Change Your Minds
+            Change your minds
           </h2>
           
           <p className="text-lg md:text-xl text-gray-300 mb-8 leading-relaxed max-w-3xl mx-auto">
@@ -92,7 +97,7 @@ const WelcomeScreen = ({ onGetStarted }) => {
           
           <div className="bg-green-400/5 border border-green-400/20 rounded-lg p-4 mb-8 backdrop-blur-sm">
             <p className="text-green-300/80 text-sm font-light">
-              Currently in beta • Multiple AI advisors • Distinct perspectives • Persistent memory
+              Currently in beta
             </p>
           </div>
         </div>
@@ -102,7 +107,7 @@ const WelcomeScreen = ({ onGetStarted }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {features.map((feature, index) => (
               <div key={index} className="bg-gray-900/30 border border-green-400/10 rounded-lg p-4 backdrop-blur-sm hover:border-green-400/30 transition-colors duration-300">
-                <div className="text-left">
+                <div className="text-center">
                   <div className="text-2xl mb-2 opacity-80">{feature.icon}</div>
                   <h3 className="text-sm font-medium text-green-400 mb-2 leading-tight">
                     {feature.title}
