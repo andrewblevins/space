@@ -191,8 +191,13 @@ export function ExpandingInput({ value, onChange, onSubmit, isLoading, sessions 
         placeholder={isLoading ? 'Waiting for response...' : 'Type your message... (use @ to reference past sessions)'}
         disabled={isLoading}
         autoComplete="off"
+        autoCapitalize="off"
+        autoCorrect="off"
         spellCheck="true"
         data-role="chat-input"
+        data-form-type="other"
+        data-lpignore="true"
+        data-1p-ignore="true"
       />
       
       <SessionAutocomplete

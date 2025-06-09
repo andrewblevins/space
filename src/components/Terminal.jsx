@@ -30,6 +30,7 @@ import { CollapsibleClickableModule } from "./terminal/CollapsibleClickableModul
 import { CollapsibleSuggestionsModule } from "./terminal/CollapsibleSuggestionsModule";
 import { ExpandingInput } from "./terminal/ExpandingInput";
 import { MemoizedMarkdownMessage } from "./terminal/MemoizedMarkdownMessage";
+import { AdvisorResponseMessage } from "./terminal/AdvisorResponseMessage";
 import useClaude from "../hooks/useClaude";
 import { analyzeMetaphors, analyzeForQuestions, summarizeSession, generateSessionSummary } from "../utils/terminalHelpers";
 import { trackUsage, trackSession } from '../utils/usageTracking';
@@ -230,6 +231,10 @@ const Terminal = ({ theme, toggleTheme }) => {
   const [sessions, setSessions] = useState([]);
   const [sessionSelections, setSessionSelections] = useState(new Map()); // Map from title to session object
   const [currentSessionContexts, setCurrentSessionContexts] = useState([]); // Current @ reference contexts
+  const [paragraphSpacing, setParagraphSpacing] = useState(() => {
+    const saved = localStorage.getItem('space_paragraph_spacing');
+    return saved ? parseFloat(saved) : 0.25;
+  }); // Spacing between paragraphs
 
 const getSystemPrompt = () => {
   let prompt = "";
@@ -237,7 +242,26 @@ const getSystemPrompt = () => {
   // Add advisor personas
   const activeAdvisors = advisors.filter(a => a.active);
   if (activeAdvisors.length > 0) {
-    prompt += `You are currently embodying the following advisors:\n${activeAdvisors.map(a => `\n${a.name}: ${a.description}`).join('\n')}\n\nWhen responding, you will adopt the distinct voice(s) of the active advisor(s) as appropriate to the context and question.`;
+    prompt += `You are currently embodying the following advisors:\n${activeAdvisors.map(a => `\n${a.name}: ${a.description}`).join('\n')}\n\n`;
+    
+    prompt += `RESPONSE FORMAT: When responding, please format your response using this simple structure:
+
+[ADVISOR: Advisor Name]
+The advisor's response text flows naturally here. You can use multiple paragraphs, and the text will stream fluidly.
+
+This allows for natural paragraph breaks and continues flowing.
+
+[ADVISOR: Another Advisor Name]
+If multiple advisors are responding, each should be introduced with the [ADVISOR: Name] marker.
+
+The text after each advisor marker will stream naturally and be formatted with proper spacing and color-coded names.
+
+When responding, you will adopt the distinct voice(s) of the active advisor(s) as appropriate to the context and question. Each advisor should provide their own response section.
+
+IMPORTANT: Use single line breaks (\\n) between thoughts, not double line breaks (\\n\\n). This creates better text flow for the interface.`;
+  } else {
+    // If no advisors are active, use a standard system prompt
+    prompt += `Please respond in a helpful and informative manner.`;
   }
   
   // Add session context from @ references
@@ -259,6 +283,7 @@ const getSystemPrompt = () => {
     console.log('📄 No session contexts to add');
   }
   
+  console.log('🔍 getSystemPrompt - Final system prompt:', prompt);
   return prompt;
 };
 
@@ -1967,7 +1992,26 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
         // Add advisor personas
         const activeAdvisors = advisors.filter(a => a.active);
         if (activeAdvisors.length > 0) {
-          prompt += `You are currently embodying the following advisors:\n${activeAdvisors.map(a => `\n${a.name}: ${a.description}`).join('\n')}\n\nWhen responding, you will adopt the distinct voice(s) of the active advisor(s) as appropriate to the context and question.`;
+          prompt += `You are currently embodying the following advisors:\n${activeAdvisors.map(a => `\n${a.name}: ${a.description}`).join('\n')}\n\n`;
+          
+          prompt += `RESPONSE FORMAT: When responding, please format your response using this simple structure:
+
+[ADVISOR: Advisor Name]
+The advisor's response text flows naturally here. You can use multiple paragraphs, and the text will stream fluidly.
+
+This allows for natural paragraph breaks and continues flowing.
+
+[ADVISOR: Another Advisor Name]
+If multiple advisors are responding, each should be introduced with the [ADVISOR: Name] marker.
+
+The text after each advisor marker will stream naturally and be formatted with proper spacing and color-coded names.
+
+When responding, you will adopt the distinct voice(s) of the active advisor(s) as appropriate to the context and question. Each advisor should provide their own response section.
+
+IMPORTANT: Use single line breaks (\\n) between thoughts, not double line breaks (\\n\\n). This creates better text flow for the interface.`;
+        } else {
+          // If no advisors are active, use a standard system prompt
+          prompt += `Please respond in a helpful and informative manner.`;
         }
         
         // Add session context from @ references
@@ -2134,6 +2178,7 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
       content: `Added new prompt: "${name}"`
     }]);
     setShowAddPromptForm(false);
+    setShowPromptLibrary(true); // Reopen the prompt library after saving
   };
 
   // Add this helper function to format messages as markdown
@@ -2740,15 +2785,15 @@ ${selectedText}
                   <div 
                     key={idx}
                     id={`msg-${idx}`}
-                    className={`mb-4 whitespace-pre-wrap break-words ${
-                      msg.type === 'user' ? 'text-green-600 dark:text-green-400' : 
+                    className={`mb-4 break-words ${
+                      msg.type === 'user' ? 'text-green-600 dark:text-green-400 whitespace-pre-wrap' : 
                       msg.type === 'assistant' ? 'text-gray-800 dark:text-gray-200' : 
                       msg.type === 'system' ? 'text-gray-800 dark:text-gray-200' : 
-                      msg.type === 'debug' ? 'text-amber-600 dark:text-amber-400' : 'text-green-600 dark:text-green-400'
+                      msg.type === 'debug' ? 'text-amber-600 dark:text-amber-400 whitespace-pre-wrap' : 'text-green-600 dark:text-green-400 whitespace-pre-wrap'
                     }`}
                   >
                     {(msg.type === 'system' || msg.type === 'assistant') ? (
-                    <MemoizedMarkdownMessage content={msg.content} />
+                      <MemoizedMarkdownMessage content={msg.content} />
                     ) : (
                       msg.content
                     )}
@@ -2974,6 +3019,8 @@ ${selectedText}
         onClearApiKeys={handleClearApiKeys}
         theme={theme}
         toggleTheme={toggleTheme}
+        paragraphSpacing={paragraphSpacing}
+        setParagraphSpacing={setParagraphSpacing}
       />
 
       {/* Prompt Library Component */}

@@ -13,7 +13,9 @@ const SettingsMenu = ({
   setMaxTokens,
   onClearApiKeys,
   theme,
-  toggleTheme
+  toggleTheme,
+  paragraphSpacing,
+  setParagraphSpacing
 }) => {
   const [tempContextLimit, setTempContextLimit] = useState(contextLimit);
   const [tempMaxTokens, setTempMaxTokens] = useState(maxTokens);
@@ -71,6 +73,12 @@ const SettingsMenu = ({
     }
   };
 
+  const handleParagraphSpacingChange = (value) => {
+    const numValue = parseFloat(value);
+    setParagraphSpacing(numValue);
+    localStorage.setItem('space_paragraph_spacing', numValue.toString());
+  };
+
   const handleDebugToggle = () => {
     setDebugMode(!debugMode);
   };
@@ -91,6 +99,7 @@ const SettingsMenu = ({
     const defaultContextLimit = 150000;  // High context for rich conversations
     const defaultMaxTokens = 4096;       // Full response length
     const defaultDebugMode = false;      // Clean interface
+    const defaultParagraphSpacing = 0.25; // Default paragraph spacing
     
     setTempContextLimit(defaultContextLimit);
     setContextLimit(defaultContextLimit);
@@ -101,6 +110,9 @@ const SettingsMenu = ({
     localStorage.setItem('space_max_tokens', defaultMaxTokens.toString());
     
     setDebugMode(defaultDebugMode);
+    
+    setParagraphSpacing(defaultParagraphSpacing);
+    localStorage.setItem('space_paragraph_spacing', defaultParagraphSpacing.toString());
   };
 
   const tabs = [
@@ -187,6 +199,31 @@ const SettingsMenu = ({
                     }`}
                   />
                 </button>
+              </div>
+
+              {/* Paragraph Spacing */}
+              <div>
+                <label className="text-green-400 font-medium block mb-2">
+                  Paragraph Spacing
+                </label>
+                <p className="text-gray-400 text-sm mb-3">
+                  Control spacing between paragraphs in advisor responses
+                </p>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.05"
+                    value={paragraphSpacing}
+                    onChange={(e) => handleParagraphSpacingChange(e.target.value)}
+                    className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider"
+                  />
+                  <span className="text-gray-400 text-sm w-16">{paragraphSpacing === 0 ? 'None' : `${paragraphSpacing}rem`}</span>
+                </div>
+                <div className="text-xs text-gray-500 mt-1">
+                  0 = No spacing, 1 = Maximum spacing (0.05rem increments)
+                </div>
               </div>
 
               {/* Restore Defaults */}
