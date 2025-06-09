@@ -16,6 +16,7 @@ export const ModalProvider = ({ children }) => {
     onReset: null,
     attemptCount: 0,
     maxAttempts: 3,
+    isCreatingPassword: false,
     resolve: null,
     reject: null,
   });
@@ -30,6 +31,7 @@ export const ModalProvider = ({ children }) => {
         onReset: options.onReset || null,
         attemptCount: options.attemptCount || 0,
         maxAttempts: options.maxAttempts || 3,
+        isCreatingPassword: options.isCreatingPassword || false,
         resolve,
         reject,
       });
@@ -84,6 +86,7 @@ export const ModalProvider = ({ children }) => {
         onReset={passwordModalState.onReset}
         attemptCount={passwordModalState.attemptCount}
         maxAttempts={passwordModalState.maxAttempts}
+        isCreatingPassword={passwordModalState.isCreatingPassword}
       />
     </ModalContext.Provider>
   );
