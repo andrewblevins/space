@@ -63,6 +63,24 @@ Version 0.2.2 represents a major comprehensive update to SPACE Terminal, integra
 - **100,000 character limit** for library content per advisor
 - **File preview and management** capabilities
 
+### 🎨 Welcome Screen Redesign
+- **"See Past" tagline** replacing "Think Deeper" for more mysterious, perspectival feel
+- **Removed auto-updating carousel** in favor of clean 2x2 static feature grid
+- **Refined messaging** focused on perspectival value proposition from requirements
+- **Cleaner, more artful design** with subtle background pattern
+- **Updated features** emphasizing cognitive expansion and mental space exploration
+- **"Begin Exploration" CTA** replacing generic "Get Started"
+
+### 🔐 Remember Me Authentication
+- **7-day remember me option** for password authentication
+- **Encrypted session tokens** stored locally using user's password as encryption key
+- **Automatic session validation** on return visits to skip password re-entry
+- **Smart session management** with automatic expiration and cleanup
+- **Password manager compatibility** with proper autocomplete attributes:
+  - `autoComplete="new-password"` for password creation
+  - `autoComplete="current-password"` for password entry
+- **Improved password creation messaging** simplified for clarity
+
 ### 🔄 Advisor Sharing System
 - **File-based import/export** replacing legacy slash commands
 - **Selective export** with checkbox selection
@@ -161,6 +179,8 @@ Version 0.2.2 represents a major comprehensive update to SPACE Terminal, integra
 - **Better error handling** for API validation
 - **Clear status reporting** for key configuration
 - **Secure storage practices** with local encryption
+- **Remember me functionality** with encrypted session tokens
+- **Password manager integration** with proper autocomplete behavior
 
 ### 💾 Session Data Integrity
 - **Enhanced session saving** with metadata preservation
@@ -268,10 +288,10 @@ Version 0.2.2 represents a substantial evolution of SPACE Terminal, transforming
 The comprehensive testing framework ensures reliability, while the modular architecture supports future development and feature expansion. This release demonstrates a commitment to both user experience and technical excellence.
 
 **Total Changes:**
-- 🆕 5 major new features
-- 🔧 15+ UI/UX improvements  
-- 🛠️ 10+ technical enhancements
-- 🐛 8+ critical bug fixes
+- 🆕 7 major new features
+- 🔧 18+ UI/UX improvements  
+- 🛠️ 12+ technical enhancements
+- 🐛 10+ critical bug fixes
 - 📚 Comprehensive documentation updates
 - 🧪 100% test coverage for new features
 - 🗑️ 1 feature gracefully deprecated
