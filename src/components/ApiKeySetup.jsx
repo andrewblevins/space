@@ -196,44 +196,44 @@ const ApiKeySetup = ({ onComplete }) => {
             </div>
             
             <div className="mt-6 pt-4 border-t border-green-400/20">
-              <p className="text-gray-400 text-sm flex items-center gap-2">
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                </svg>
-                ~2¢ per message exchange • $5 per account provides hours of conversation
+              <p className="text-gray-400 text-sm text-center">
+                ~2¢ per message • $5 per account gives you hours of conversation
               </p>
             </div>
           </div>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-6" data-testid="api-key-form">
-            <div className="space-y-4">
-              <div>
-                <label className="block mb-2 text-green-400 font-medium text-sm">Anthropic API Key</label>
-                <input
-                  type="password"
-                  value={anthropicKey}
-                  onChange={handleInputChange(setAnthropicKey)}
-                  className="w-full bg-black text-green-400 border border-green-400/50 p-3 rounded focus:outline-none focus:border-green-400 transition-colors"
-                  placeholder="sk-ant-..."
-                  data-testid="anthropic-api-key"
-                  id="anthropic-api-key"
-                />
-              </div>
+                     {/* Form */}
+           <form onSubmit={handleSubmit} className="space-y-6" data-testid="api-key-form">
+             <div className="text-center mb-4">
+               <p className="text-gray-400 text-xs">* Both API keys are required</p>
+             </div>
+             <div className="space-y-4">
+               <div>
+                 <label className="block mb-2 text-green-400 font-medium text-sm">Anthropic API Key *</label>
+                 <input
+                   type="password"
+                   value={anthropicKey}
+                   onChange={handleInputChange(setAnthropicKey)}
+                   className="w-full bg-black text-green-400 border border-green-400/50 p-3 rounded focus:outline-none focus:border-green-400 transition-colors"
+                   placeholder="sk-ant-..."
+                   data-testid="anthropic-api-key"
+                   id="anthropic-api-key"
+                 />
+               </div>
 
-              <div>
-                <label className="block mb-2 text-green-400 font-medium text-sm">OpenAI API Key</label>
-                <input
-                  type="password"
-                  value={openaiKey}
-                  onChange={handleInputChange(setOpenaiKey)}
-                  className="w-full bg-black text-green-400 border border-green-400/50 p-3 rounded focus:outline-none focus:border-green-400 transition-colors"
-                  placeholder="sk-..."
-                  data-testid="openai-api-key"
-                  id="openai-api-key"
-                />
-              </div>
-            </div>
+               <div>
+                 <label className="block mb-2 text-green-400 font-medium text-sm">OpenAI API Key *</label>
+                 <input
+                   type="password"
+                   value={openaiKey}
+                   onChange={handleInputChange(setOpenaiKey)}
+                   className="w-full bg-black text-green-400 border border-green-400/50 p-3 rounded focus:outline-none focus:border-green-400 transition-colors"
+                   placeholder="sk-..."
+                   data-testid="openai-api-key"
+                   id="openai-api-key"
+                 />
+               </div>
+             </div>
 
             <button 
               type="submit"
