@@ -69,13 +69,38 @@ const AboutContent = ({ onShowChangelog }) => {
                 that build knowledge over time.
               </p>
               
-              <h4 className="text-green-400 font-medium mb-2">Features</h4>
-              <ul className="text-gray-600 dark:text-gray-300 text-sm space-y-1">
-                <li>• Generate advisors frictionlessly</li>
-                <li>• Metaphor pattern tracking</li>
-                <li>• Reference previous conversations</li>
-                <li>• Automatic knowledge tags</li>
-              </ul>
+              <h4 className="text-green-400 font-medium mb-3">Features</h4>
+              <div className="space-y-3">
+                <div>
+                  <h5 className="text-green-600 dark:text-green-400 font-medium text-sm">Generate advisors frictionlessly</h5>
+                  <p className="text-gray-600 dark:text-gray-300 text-xs mt-1">Create a constellation of advisors—each with distinct expertise and perspective</p>
+                </div>
+                
+                <div>
+                  <h5 className="text-green-600 dark:text-green-400 font-medium text-sm">Reference previous conversations</h5>
+                  <p className="text-gray-600 dark:text-gray-300 text-xs mt-1">Context carries across sessions, building understanding over time</p>
+                </div>
+                
+                <div>
+                  <h5 className="text-green-600 dark:text-green-400 font-medium text-sm">Smart advisor suggestions</h5>
+                  <p className="text-gray-600 dark:text-gray-300 text-xs mt-1">Get intelligent suggestions based on your conversation context</p>
+                </div>
+                
+                <div>
+                  <h5 className="text-green-600 dark:text-green-400 font-medium text-sm">Automatic knowledge tags</h5>
+                  <p className="text-gray-600 dark:text-gray-300 text-xs mt-1">Track and search conversations by topic with intelligent categorization</p>
+                </div>
+                
+                <div>
+                  <h5 className="text-green-600 dark:text-green-400 font-medium text-sm">Metaphor pattern tracking</h5>
+                  <p className="text-gray-600 dark:text-gray-300 text-xs mt-1">Make the structure of thought visible through connection mapping</p>
+                </div>
+                
+                <div>
+                  <h5 className="text-green-600 dark:text-green-400 font-medium text-sm">Local encrypted storage</h5>
+                  <p className="text-gray-600 dark:text-gray-300 text-xs mt-1">Your API keys and data stay on your machine, encrypted and secure</p>
+                </div>
+              </div>
               
               <div className="mt-3">
                 <button
