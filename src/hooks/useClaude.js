@@ -125,6 +125,8 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
     const outputTokens = estimateTokens(currentMessageContent);
     const cost = trackUsage('claude', inputTokens, outputTokens);
     
+    console.log('🔍 useClaude - Final response from Claude:', JSON.stringify(currentMessageContent));
+    
     if (debugMode) {
       const debugOutput = `Response complete:\nOutput tokens: ${outputTokens}\nTotal cost for this call: ${formatCost(cost)}`;
       setMessages((prev) => [...prev, { type: 'debug', content: debugOutput }]);
