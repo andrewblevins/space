@@ -70,6 +70,9 @@ const PasswordModal = ({
           className="w-full bg-black text-green-400 border border-green-400 p-2 mb-4 focus:outline-none"
           placeholder="Enter password"
           data-testid="password-input"
+          autoComplete="off"
+          data-lpignore="true"
+          data-form-type="other"
           autoFocus
         />
 
