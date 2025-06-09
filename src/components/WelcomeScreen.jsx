@@ -11,24 +11,29 @@ const WelcomeScreen = ({ onGetStarted }) => {
 
   const features = [
     {
-      icon: "👁️",
-      title: "Multiple Perspectives",
-      description: "When you're stuck between limited options, advisors offer genuinely distinct viewpoints"
+      icon: "🎭",
+      title: "Generate and swap high-quality advisors instantly",
+      description: "Create a constellation of advisors—each with their own expertise, viewpoint, or lineage"
     },
     {
-      icon: "🧠", 
-      title: "Persistent Memory",
+      icon: "💬", 
+      title: "Reference previous discussions in chat",
       description: "Your advisors remember context across sessions, building understanding over time"
     },
     {
-      icon: "🔍",
-      title: "Pattern Recognition",
-      description: "Discover possibilities and insights you wouldn't have considered alone"
+      icon: "🤖",
+      title: "Automated advisor recommendations in the side panel",
+      description: "Get intelligent suggestions for new advisors based on your conversation context"
     },
     {
-      icon: "⚡",
-      title: "Cognitive Expansion",
-      description: "Break free from mental constriction and explore the full space of solutions"
+      icon: "🏷️",
+      title: "Track and search based on topic with automatic knowledge tags",
+      description: "Organize and find your conversations with intelligent topic categorization"
+    },
+    {
+      icon: "🔮",
+      title: "Metaphor tracking makes the structure of thought visible",
+      description: "Discover patterns and connections in your thinking process"
     }
   ];
 
@@ -72,33 +77,37 @@ const WelcomeScreen = ({ onGetStarted }) => {
         {/* Hero section */}
         <div className="text-center max-w-4xl mx-auto mb-16">
           <h1 className="text-5xl md:text-7xl font-bold mb-6 tracking-tight">
-            <span className="text-white">See</span>{' '}
-            <span className="text-green-400">Past</span>
+            <span className="text-white">SPACE</span>
           </h1>
           
-          <p className="text-xl md:text-2xl text-gray-300 mb-8 leading-relaxed">
-            When you feel stuck between limited options,{' '}
-            <span className="text-green-400 font-semibold">expand your mental space</span>
+          <h2 className="text-2xl md:text-3xl text-green-400 font-light mb-8 tracking-wide">
+            Change Your Minds
+          </h2>
+          
+          <p className="text-lg md:text-xl text-gray-300 mb-8 leading-relaxed max-w-3xl mx-auto">
+            SPACE is a terminal interface for navigating complex situations with multiple AI advisors. 
+            Instead of getting one perspective from a single AI assistant, you create a{' '}
+            <span className="text-green-400 font-semibold">constellation of advisors</span>—each with their own expertise, viewpoint, or lineage.
           </p>
           
-          <div className="bg-green-400/5 border border-green-400/20 rounded-lg p-6 mb-8 backdrop-blur-sm">
-            <p className="text-green-300/80 text-lg font-light">
-              Multiple AI advisors • Distinct perspectives • Persistent memory
+          <div className="bg-green-400/5 border border-green-400/20 rounded-lg p-4 mb-8 backdrop-blur-sm">
+            <p className="text-green-300/80 text-sm font-light">
+              Currently in beta • Multiple AI advisors • Distinct perspectives • Persistent memory
             </p>
           </div>
         </div>
 
         {/* Feature showcase */}
-        <div className="w-full max-w-5xl mx-auto mb-16">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="w-full max-w-6xl mx-auto mb-16">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {features.map((feature, index) => (
-              <div key={index} className="bg-gray-900/30 border border-green-400/10 rounded-lg p-6 backdrop-blur-sm hover:border-green-400/30 transition-colors duration-300">
-                <div className="text-center">
-                  <div className="text-3xl mb-3 opacity-80">{feature.icon}</div>
-                  <h3 className="text-lg font-medium text-green-400 mb-3">
+              <div key={index} className="bg-gray-900/30 border border-green-400/10 rounded-lg p-4 backdrop-blur-sm hover:border-green-400/30 transition-colors duration-300">
+                <div className="text-left">
+                  <div className="text-2xl mb-2 opacity-80">{feature.icon}</div>
+                  <h3 className="text-sm font-medium text-green-400 mb-2 leading-tight">
                     {feature.title}
                   </h3>
-                  <p className="text-gray-300/80 text-sm leading-relaxed">
+                  <p className="text-gray-300/80 text-xs leading-relaxed">
                     {feature.description}
                   </p>
                 </div>
