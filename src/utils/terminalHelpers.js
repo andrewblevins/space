@@ -134,6 +134,24 @@ export async function summarizeSession(sessionId, { openaiClient }) {
   if (!sessionData) return null;
 
   const session = JSON.parse(sessionData);
+  
+  // Check if we have a cached summary that's still relevant
+  if (session.summary && session.summaryMessageCount) {
+    const currentMessageCount = session.messages.filter(m => m.type === 'user' || m.type === 'assistant').length;
+    // Use cached summary if it covers at least 80% of current messages
+    if (session.summaryMessageCount >= currentMessageCount * 0.8) {
+      console.log(`📄 Using cached summary for session ${sessionId}`);
+      return session.summary;
+    }
+  }
+
+  console.log(`📄 Generating fresh summary for session ${sessionId}`);
+  return await generateSessionSummary(session, openaiClient);
+}
+
+export async function generateSessionSummary(session, openaiClient) {
+  if (!openaiClient) return null;
+
   const convoText = session.messages
     .filter((m) => m.type === 'user' || m.type === 'assistant')
     .map((m) => `${m.type === 'user' ? 'User' : 'Assistant'}: ${m.content}`)
@@ -155,7 +173,20 @@ export async function summarizeSession(sessionId, { openaiClient }) {
       max_tokens: 150
     });
 
-    return response.choices[0].message.content.trim();
+    const summary = response.choices[0].message.content.trim();
+    
+    // Cache the summary in the session
+    const updatedSession = {
+      ...session,
+      summary,
+      summaryTimestamp: new Date().toISOString(),
+      summaryMessageCount: session.messages.filter(m => m.type === 'user' || m.type === 'assistant').length
+    };
+    
+    localStorage.setItem(`space_session_${session.id}`, JSON.stringify(updatedSession));
+    console.log(`📄 Cached summary for session ${session.id}`);
+    
+    return summary;
   } catch (err) {
     console.error('Error summarizing session:', err);
     return null;
