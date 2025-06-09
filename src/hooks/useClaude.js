@@ -14,10 +14,10 @@ import { buildConversationContext } from '../utils/terminalHelpers';
  * @param {import('../lib/memory').MemorySystem} params.memory
  * @param {boolean} params.debugMode
  * @param {() => string} params.getSystemPrompt
- * @returns {{ callClaude: (msg: string) => Promise<string> }}
+ * @returns {{ callClaude: (msg: string, customGetSystemPrompt?: () => string) => Promise<string> }}
  */
 export function useClaude({ messages, setMessages, maxTokens, contextLimit, memory, debugMode, getSystemPrompt }) {
-  const callClaude = useCallback(async (userMessage) => {
+  const callClaude = useCallback(async (userMessage, customGetSystemPrompt = null) => {
     const formatTimestamp = (iso) => new Date(iso).toISOString().slice(0, 16);
     if (!userMessage?.trim()) throw new Error('Empty message');
     const anthropicKey = await getDecrypted('space_anthropic_key');
@@ -37,7 +37,7 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
       if (managed?.length) contextMessages.unshift(...managed);
     }
 
-    const systemPromptText = getSystemPrompt();
+    const systemPromptText = customGetSystemPrompt ? customGetSystemPrompt() : getSystemPrompt();
     if (debugMode) {
       const currentUserMessage = [...messages].reverse().find((m) => m.type === 'user' && m.content === userMessage) || { content: userMessage, tags: [] };
       const systemTokens = estimateTokens(systemPromptText);

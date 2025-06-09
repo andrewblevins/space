@@ -212,6 +212,7 @@ const getSystemPrompt = () => {
   }
   
   // Add session context from @ references
+  console.log('📄 getSystemPrompt - currentSessionContexts:', currentSessionContexts);
   if (currentSessionContexts.length > 0) {
     if (prompt) prompt += "\n\n";
     prompt += "## REFERENCED CONVERSATION CONTEXTS\n\n";
@@ -224,6 +225,9 @@ const getSystemPrompt = () => {
     });
     
     prompt += "Use these conversation contexts to inform your response when relevant. The user's message may reference specific details from these conversations.\n";
+    console.log('📄 Added session contexts to system prompt');
+  } else {
+    console.log('📄 No session contexts to add');
   }
   
   return prompt;
@@ -1843,12 +1847,18 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
       // Handle new format: @"Session Title" - collect summaries for context injection
       const atTitleRegex = /@"([^"]+)"/g;
       const titleMatches = [...processedInput.matchAll(atTitleRegex)];
+      console.log('📄 Found @ references:', titleMatches.map(m => m[1]));
+      console.log('📄 Available session selections:', Array.from(sessionSelections.keys()));
+      
       for (const m of titleMatches) {
         const title = m[1];
         const session = sessionSelections.get(title);
+        console.log(`📄 Looking for session "${title}":`, session ? 'FOUND' : 'NOT FOUND');
+        
         if (session) {
           const summary = await summarizeSession(session.id, { openaiClient });
           if (summary) {
+            console.log(`📄 Adding context for "${title}" (Session ${session.id})`);
             sessionContexts.push({
               title,
               sessionId: session.id,
@@ -1899,14 +1909,47 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
         timestamp: new Date().toISOString()
       };
 
-      // Set session contexts for system prompt
+      // Set session contexts for system prompt (temporarily for this call)
+      console.log('📄 Setting session contexts:', sessionContexts);
       setCurrentSessionContexts(sessionContexts);
 
       // Add it to messages state
       await setMessages(prev => [...prev, newMessage]);
 
-      // Pass the content to Claude
-      await callClaude(newMessage.content);
+      // Create a temporary system prompt function with the contexts
+      const getSystemPromptWithContexts = () => {
+        let prompt = "";
+        
+        // Add advisor personas
+        const activeAdvisors = advisors.filter(a => a.active);
+        if (activeAdvisors.length > 0) {
+          prompt += `You are currently embodying the following advisors:\n${activeAdvisors.map(a => `\n${a.name}: ${a.description}`).join('\n')}\n\nWhen responding, you will adopt the distinct voice(s) of the active advisor(s) as appropriate to the context and question.`;
+        }
+        
+        // Add session context from @ references
+        console.log('📄 getSystemPromptWithContexts - sessionContexts:', sessionContexts);
+        if (sessionContexts.length > 0) {
+          if (prompt) prompt += "\n\n";
+          prompt += "## REFERENCED CONVERSATION CONTEXTS\n\n";
+          prompt += "The user has referenced the following previous conversations for context:\n\n";
+          
+          sessionContexts.forEach((context, index) => {
+            const date = new Date(context.timestamp).toLocaleDateString();
+            prompt += `### Context ${index + 1}: "${context.title}" (Session ${context.sessionId}, ${date})\n`;
+            prompt += `${context.summary}\n\n`;
+          });
+          
+          prompt += "Use these conversation contexts to inform your response when relevant. The user's message may reference specific details from these conversations.\n";
+          console.log('📄 Added session contexts to system prompt');
+        } else {
+          console.log('📄 No session contexts to add');
+        }
+        
+        return prompt;
+      };
+
+      // Pass the content to Claude with enhanced system prompt
+      await callClaude(newMessage.content, getSystemPromptWithContexts);
 
       // Clear session contexts after response
       setCurrentSessionContexts([]);
