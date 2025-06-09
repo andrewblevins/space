@@ -45,9 +45,9 @@ export const ModalProvider = ({ children }) => {
   }, [passwordModalState]);
 
   // Handle password submission
-  const handlePasswordSubmit = useCallback((password) => {
+  const handlePasswordSubmit = useCallback((password, rememberMe = false) => {
     if (passwordModalState.resolve) {
-      passwordModalState.resolve(password);
+      passwordModalState.resolve({ password, rememberMe });
     }
     setPasswordModalState(prev => ({ ...prev, isOpen: false }));
   }, [passwordModalState]);
