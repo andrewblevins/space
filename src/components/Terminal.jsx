@@ -239,6 +239,7 @@ const Terminal = ({ theme, toggleTheme }) => {
     return saved ? parseInt(saved) : 4096;
   });
   const [metaphorsExpanded, setMetaphorsExpanded] = useState(false);
+  const [lastMetaphorAnalysisContent, setLastMetaphorAnalysisContent] = useState('');
   // DEPRECATED: Questions feature temporarily disabled
   // const [questionsExpanded, setQuestionsExpanded] = useState(false);
   const [advisorSuggestionsExpanded, setAdvisorSuggestionsExpanded] = useState(false);
@@ -2190,6 +2191,31 @@ Exported on: ${timestamp}\n\n`;
   }, [advisorGroups]);
 
 
+  const analyzeMetaphorsWithDuplicatePrevention = async (messages) => {
+    if (!metaphorsExpanded || !openaiClient) return;
+
+    const userMessages = messages.filter((m) => m.type === 'user').map((m) => m.content).join('\n');
+    if (!userMessages.trim()) return;
+
+    // Prevent duplicate analysis of same content
+    if (userMessages === lastMetaphorAnalysisContent) {
+      console.log('🔍 Skipping duplicate metaphor analysis');
+      return;
+    }
+    setLastMetaphorAnalysisContent(userMessages);
+
+    console.log('🔍 Metaphor analysis starting, user message chars:', userMessages.length);
+    
+    // Call the original analyzeMetaphors function
+    await analyzeMetaphors(messages, {
+      enabled: metaphorsExpanded,
+      openaiClient,
+      setMetaphors,
+      debugMode,
+      setMessages
+    });
+  };
+
   const analyzeAdvisorSuggestions = async (messages) => {
     if (!advisorSuggestionsExpanded || !openaiClient) return;
 
@@ -2226,7 +2252,7 @@ Always assume the user is highly intelligent, well-educated, and wants the most 
 
 Focus on advisors who would bring genuinely different perspectives, challenge assumptions, or offer specialized knowledge that could deepen the exploration.
 
-When writing role-based titles, write them simply without articles. Use as much specificity as the context warrants.
+When writing role-based titles, write them simply without articles. Use as much specificity as the context warrants. Always use title case.
 
 Do NOT include parenthetical descriptions of the advisors, or anything other than a name or role.
 
@@ -2371,13 +2397,7 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
       // Only analyze after Claude responses (assistant messages)
       if (lastMessage.type === 'assistant') {
         console.log('🔍 Triggering analysis after Claude response');
-        analyzeMetaphors(messages, {
-          enabled: metaphorsExpanded,
-          openaiClient,
-          setMetaphors,
-          debugMode,
-          setMessages
-        });
+        analyzeMetaphorsWithDuplicatePrevention(messages);
         // DEPRECATED: Questions feature temporarily disabled
         // analyzeForQuestions(messages, {
         //   enabled: questionsExpanded,
@@ -2394,13 +2414,7 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
   // Trigger metaphors analysis when expanded state changes
   useEffect(() => {
     if (metaphorsExpanded && messages.length > 0 && openaiClient) {
-      analyzeMetaphors(messages, {
-        enabled: metaphorsExpanded,
-        openaiClient,
-        setMetaphors,
-        debugMode,
-        setMessages
-      });
+      analyzeMetaphorsWithDuplicatePrevention(messages);
     }
   }, [metaphorsExpanded, openaiClient]);
 
