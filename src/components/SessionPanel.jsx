@@ -21,10 +21,19 @@ const SessionPanel = ({
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       if (key.startsWith('space_session_')) {
-        const session = JSON.parse(localStorage.getItem(key));
-        if (!seenIds.has(session.id)) {
-          seenIds.add(session.id);
-          sessionList.push(session);
+        try {
+          const sessionData = localStorage.getItem(key);
+          if (sessionData) {
+            const session = JSON.parse(sessionData);
+            if (session && session.id && !seenIds.has(session.id)) {
+              seenIds.add(session.id);
+              sessionList.push(session);
+            }
+          }
+        } catch (error) {
+          console.warn(`Failed to parse session data: ${key}`, error);
+          // Optionally remove corrupted session data
+          localStorage.removeItem(key);
         }
       }
     }
@@ -47,10 +56,23 @@ const SessionPanel = ({
       // Clean up any empty sessions that might exist from before this change
       const allKeys = Object.keys(localStorage).filter(key => key.startsWith('space_session_'));
       allKeys.forEach(key => {
-        const session = JSON.parse(localStorage.getItem(key));
-        const nonSystemMessages = session.messages.filter(m => m.type !== 'system');
-        if (nonSystemMessages.length === 0) {
-          localStorage.removeItem(key);
+        const sessionData = localStorage.getItem(key);
+        if (sessionData) {
+          try {
+            const session = JSON.parse(sessionData);
+            if (session && session.messages) {
+              const nonSystemMessages = session.messages.filter(m => m.type !== 'system');
+              if (nonSystemMessages.length === 0) {
+                localStorage.removeItem(key);
+              }
+            } else {
+              // Remove corrupted session data
+              localStorage.removeItem(key);
+            }
+          } catch (error) {
+            console.warn(`Failed to parse session data for cleanup: ${key}`, error);
+            localStorage.removeItem(key);
+          }
         }
       });
       
