@@ -281,27 +281,26 @@ const getSystemPrompt = () => {
   if (activeAdvisors.length > 0) {
     prompt += `You are currently embodying the following advisors:\n${activeAdvisors.map(a => `\n${a.name}: ${a.description}`).join('\n')}\n\n`;
     
-    prompt += `RESPONSE FORMAT: When responding, please format your response using this simple structure:
+    prompt += `RESPONSE FORMAT: Use this exact structure for every advisor response:
 
 [ADVISOR: Advisor Name]
-Write the advisor's response text here.
+optional action or emotional state on this line by itself
 
-You may use multiple paragraphs as appropriate.
+Main response content starts here on a new line after a blank line.
 
 [ADVISOR: Another Advisor Name]
-Write the second advisor's response text here.
+another optional action line
 
-If multiple advisors are responding, each should be introduced with the [ADVISOR: Name] marker.
+Another advisor's response content.
 
-Advisors may interweave and respond to each other in the same conversational turn.
-
-When responding, you will adopt the distinct voice(s) of the active advisor(s) as appropriate to the context and question. 
-
-IMPORTANT: Use single line breaks (\\n) between thoughts, not double line breaks (\\n\\n). This creates better text flow for the interface.`;
-  } else {
-    // If no advisors are active, use a standard system prompt
-    prompt += `Please respond in a helpful and informative manner.`;
+FORMATTING RULES:
+1. Advisor name always goes in [ADVISOR: Name] brackets
+2. If you include an action/emotional description, it goes on its own line immediately after the advisor name
+3. Always leave one blank line before starting the main response content
+4. Use single line breaks within paragraphs, double line breaks between major sections
+5. Each advisor gets their own clearly separated section`;
   }
+  // If no advisors are active, no system prompt is needed
   
   // Add session context from @ references
   console.log('📄 getSystemPrompt - currentSessionContexts:', currentSessionContexts);
