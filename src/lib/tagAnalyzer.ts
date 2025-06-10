@@ -44,6 +44,17 @@ export default class TagAnalyzer {
     }
   }
 
+  // Public method for pre-initialization during app startup
+  async preInitialize(): Promise<void> {
+    try {
+      await this.initialize();
+      console.log('🏷️ TagAnalyzer pre-initialized successfully');
+    } catch (error) {
+      console.warn('🏷️ TagAnalyzer pre-initialization failed:', error.message);
+      // Don't throw - initialization will be retried during first analysis
+    }
+  }
+
   async analyzeTags(content: string): Promise<Tag[]> {
     try {
       await this.initialize();
@@ -93,4 +104,7 @@ export default class TagAnalyzer {
       throw error;
     }
   }
-} 
+}
+
+// Export a shared instance for use across the app
+export const sharedTagAnalyzer = new TagAnalyzer(); 
