@@ -3,7 +3,7 @@ import SessionAutocomplete from "./SessionAutocomplete";
 
 /**
  * Textarea that can be resized vertically by dragging the handle.
- * Now includes session autocomplete when user types @
+ * Now includes session autocomplete when user types @ and file upload support
  * @param {object} props
  * @param {string} props.value
  * @param {(e: React.ChangeEvent<HTMLTextAreaElement>) => void} props.onChange
@@ -11,8 +11,11 @@ import SessionAutocomplete from "./SessionAutocomplete";
  * @param {boolean} props.isLoading
  * @param {Array} props.sessions - Array of session objects for autocomplete
  * @param {(session: object) => void} props.onSessionSelect - Called when user selects a session from autocomplete
+ * @param {Array} props.attachedFiles - Currently attached files
+ * @param {(files: FileList) => void} props.onFilesAttached - Called when files are attached
+ * @param {(fileId: string) => void} props.onFileRemoved - Called when a file is removed
  */
-export function ExpandingInput({ value, onChange, onSubmit, isLoading, sessions = [], onSessionSelect }) {
+export function ExpandingInput({ value, onChange, onSubmit, isLoading, sessions = [], onSessionSelect, attachedFiles = [], onFilesAttached, onFileRemoved }) {
   const [height, setHeight] = useState('130px');
   const [showAutocomplete, setShowAutocomplete] = useState(false);
   const [autocompleteSearch, setAutocompleteSearch] = useState('');
@@ -20,6 +23,7 @@ export function ExpandingInput({ value, onChange, onSubmit, isLoading, sessions 
   const [atPosition, setAtPosition] = useState(-1); // Track where the @ symbol is
   const [isManuallyResized, setIsManuallyResized] = useState(false);
   const textareaRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   // Auto-expand/shrink textarea based on content (only when not manually resized)
   useEffect(() => {
@@ -167,6 +171,29 @@ export function ExpandingInput({ value, onChange, onSubmit, isLoading, sessions 
     }
   };
 
+  // Handle file attachment
+  const handleFileAttachment = (e) => {
+    const files = e.target.files;
+    if (files && files.length > 0 && onFilesAttached) {
+      onFilesAttached(files);
+    }
+    // Reset input so same file can be selected again
+    e.target.value = '';
+  };
+
+  // Handle drag and drop
+  const handleDrop = (e) => {
+    e.preventDefault();
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0 && onFilesAttached) {
+      onFilesAttached(files);
+    }
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
+
   // Close autocomplete when clicking outside
   useEffect(() => {
     const handleClickOutside = () => {
@@ -205,7 +232,33 @@ export function ExpandingInput({ value, onChange, onSubmit, isLoading, sessions 
           document.addEventListener('mouseup', handleMouseUp);
         }}
       />
-      <div className="relative">
+      {/* File attachments display */}
+      {attachedFiles && attachedFiles.length > 0 && (
+        <div className="mb-2 flex flex-wrap gap-2">
+          {attachedFiles.map((file, index) => (
+            <div key={index} className="flex items-center gap-2 px-3 py-2 bg-green-50 dark:bg-gray-800 border border-green-200 dark:border-gray-600 rounded-md text-sm">
+              <span className="text-green-700 dark:text-green-400">
+                {file.type?.startsWith('image/') ? '🖼️' : file.type?.includes('pdf') ? '📄' : '📎'} {file.name}
+              </span>
+              {onFileRemoved && (
+                <button
+                  onClick={() => onFileRemoved(file.id || index)}
+                  className="text-green-600 hover:text-red-600 dark:text-green-400 dark:hover:text-red-400 transition-colors"
+                  title="Remove file"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+      
+      <div 
+        className="relative"
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+      >
         <textarea
           ref={textareaRef}
           value={value}
@@ -219,6 +272,7 @@ export function ExpandingInput({ value, onChange, onSubmit, isLoading, sessions 
             font-serif
             p-4
             pr-32
+            pb-12
             border
             border-green-600
             focus:outline-none
@@ -227,7 +281,7 @@ export function ExpandingInput({ value, onChange, onSubmit, isLoading, sessions 
             bg-amber-50 text-gray-800 dark:bg-black dark:text-green-400
             ${isLoading ? 'opacity-50' : ''}
           `}
-          placeholder={isLoading ? 'Waiting for response...' : 'Type your message... (Enter for new line)'}
+          placeholder={isLoading ? 'Waiting for response...' : 'Type your message... (Enter for new line, drag files to attach)'}
           disabled={isLoading}
           autoComplete="off"
           autoCapitalize="off"
@@ -276,6 +330,43 @@ export function ExpandingInput({ value, onChange, onSubmit, isLoading, sessions 
         >
           {navigator.platform.includes('Mac') ? '⌘+Enter' : 'Ctrl+Enter'}
         </button>
+        
+        {/* File upload icon */}
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          disabled={isLoading}
+          className={`
+            absolute
+            bottom-3
+            right-28
+            p-1
+            text-green-600
+            hover:text-green-700
+            hover:bg-green-50
+            disabled:opacity-50
+            disabled:cursor-not-allowed
+            rounded
+            transition-colors
+            dark:text-green-400
+            dark:hover:text-green-300
+            dark:hover:bg-gray-800
+          `}
+          title="Attach files (images, PDFs, documents)"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+          </svg>
+        </button>
+        
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          accept="image/*,.pdf,.txt,.md,.doc,.docx,.rtf,.csv,.json,.xml,.html"
+          onChange={handleFileAttachment}
+          className="hidden"
+        />
       </div>
       
       <SessionAutocomplete
