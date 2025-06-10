@@ -121,7 +121,7 @@ export const calculateCost = (provider, inputTokens, outputTokens) => {
  */
 export const formatCost = (cost) => {
   if (cost < 0.01) {
-    return `$${(cost * 100).toFixed(3)}¢`;
+    return `${(cost * 100).toFixed(3)}¢`;
   }
   return `$${cost.toFixed(2)}`;
 };
