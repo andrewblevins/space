@@ -108,7 +108,7 @@ const WelcomeScreen = ({ onGetStarted }) => {
           </h2>
           
           <p className="text-lg md:text-xl text-gray-300 mb-8 leading-relaxed max-w-3xl mx-auto">
-            Navigate complexity with a constellation of AI advisors.
+            Navigate complexity with a board of AI advisors.
           </p>
           
           <div className="bg-green-400/5 border border-green-400/20 rounded-lg p-4 mb-8 backdrop-blur-sm">
