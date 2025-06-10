@@ -13,12 +13,36 @@ import SessionAutocomplete from "./SessionAutocomplete";
  * @param {(session: object) => void} props.onSessionSelect - Called when user selects a session from autocomplete
  */
 export function ExpandingInput({ value, onChange, onSubmit, isLoading, sessions = [], onSessionSelect }) {
-  const [height, setHeight] = useState('100px');
+  const [height, setHeight] = useState('130px');
   const [showAutocomplete, setShowAutocomplete] = useState(false);
   const [autocompleteSearch, setAutocompleteSearch] = useState('');
   const [autocompletePosition, setAutocompletePosition] = useState({ top: 0, left: 0 });
   const [atPosition, setAtPosition] = useState(-1); // Track where the @ symbol is
+  const [isManuallyResized, setIsManuallyResized] = useState(false);
   const textareaRef = useRef(null);
+
+  // Auto-expand/shrink textarea based on content (only when not manually resized)
+  useEffect(() => {
+    if (textareaRef.current && !isManuallyResized) {
+      const textarea = textareaRef.current;
+      const currentHeight = parseInt(height);
+      
+      // Temporarily set height to auto to measure scroll height
+      textarea.style.height = 'auto';
+      const scrollHeight = textarea.scrollHeight;
+      
+      // Restore current height
+      textarea.style.height = height;
+      
+      // Calculate optimal height with padding
+      const optimalHeight = Math.min(500, Math.max(130, scrollHeight + 8));
+      
+      // Update height if it's different from current
+      if (optimalHeight !== currentHeight) {
+        setHeight(`${optimalHeight}px`);
+      }
+    }
+  }, [value, isManuallyResized]);
 
   // Detect @ symbol and manage autocomplete
   const handleInputChange = (e) => {
@@ -106,6 +130,9 @@ export function ExpandingInput({ value, onChange, onSubmit, isLoading, sessions 
   const handleSubmit = () => {
     setShowAutocomplete(false);
     onSubmit({ target: textareaRef.current });
+    // Reset to default height and re-enable auto-resizing after sending message
+    setHeight('130px');
+    setIsManuallyResized(false);
   };
 
   // Handle session selection from autocomplete
@@ -157,18 +184,21 @@ export function ExpandingInput({ value, onChange, onSubmit, isLoading, sessions 
       <div
         className="w-full h-1 cursor-ns-resize bg-green-400/10 hover:bg-green-400/20 transition-colors"
         onMouseDown={(e) => {
+          e.preventDefault();
           const startY = e.clientY;
           const startHeight = parseInt(height);
 
           const handleMouseMove = (moveEvent) => {
             const deltaY = startY - moveEvent.clientY;
-            const newHeight = Math.min(400, Math.max(100, startHeight + deltaY));
+            const newHeight = Math.min(500, Math.max(130, startHeight + deltaY));
             setHeight(`${newHeight}px`);
           };
 
           const handleMouseUp = () => {
             document.removeEventListener('mousemove', handleMouseMove);
             document.removeEventListener('mouseup', handleMouseUp);
+            // Mark as manually resized to disable auto-resize
+            setIsManuallyResized(true);
           };
 
           document.addEventListener('mousemove', handleMouseMove);
@@ -184,8 +214,8 @@ export function ExpandingInput({ value, onChange, onSubmit, isLoading, sessions 
           style={{ height }}
           className={`
             w-full
-            min-h-[100px]
-            max-h-[400px]
+            min-h-[130px]
+            max-h-[500px]
             font-serif
             p-4
             pr-32
