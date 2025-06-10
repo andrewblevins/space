@@ -307,7 +307,19 @@ const generateSessionToken = (password) => {
 const validateSessionToken = (token, password) => {
   try {
     const decrypted = CryptoJS.AES.decrypt(token, password + ENCRYPTION_SALT);
-    const tokenData = JSON.parse(decrypted.toString(CryptoJS.enc.Utf8));
+    const decryptedString = decrypted.toString(CryptoJS.enc.Utf8);
+    
+    // Check if decryption actually produced valid data
+    if (!decryptedString || decryptedString.trim() === '') {
+      return null; // Invalid decryption result
+    }
+    
+    const tokenData = JSON.parse(decryptedString);
+    
+    // Validate token structure
+    if (!tokenData || typeof tokenData.timestamp !== 'number' || !tokenData.password) {
+      return null; // Invalid token structure
+    }
     
     // Check if token is expired
     const now = Date.now();
@@ -319,6 +331,7 @@ const validateSessionToken = (token, password) => {
     
     return tokenData;
   } catch (error) {
+    console.error("Session token validation error:", error);
     return null; // Invalid token
   }
 };

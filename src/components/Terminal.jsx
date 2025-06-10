@@ -333,11 +333,20 @@ const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimi
     
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      if (key.startsWith('space_session_')) {
-        const session = JSON.parse(localStorage.getItem(key));
-        if (!seenIds.has(session.id)) {
-          seenIds.add(session.id);
-          sessions.push(session);
+      if (key && key.startsWith('space_session_')) {
+        const sessionData = localStorage.getItem(key);
+        if (sessionData) {
+          try {
+            const session = JSON.parse(sessionData);
+            if (session && session.id && !seenIds.has(session.id)) {
+              seenIds.add(session.id);
+              sessions.push(session);
+            }
+          } catch (error) {
+            console.warn(`Failed to parse session data for key ${key}:`, error);
+            // Optionally remove corrupted data
+            localStorage.removeItem(key);
+          }
         }
       }
     }
