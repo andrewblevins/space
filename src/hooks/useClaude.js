@@ -5,6 +5,16 @@ import { getDecrypted } from '../utils/secureStorage';
 import { buildConversationContext } from '../utils/terminalHelpers';
 import { trackUsage, formatCost } from '../utils/usageTracking';
 
+// Helper function to convert file to base64
+const fileToBase64 = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = error => reject(error);
+  });
+};
+
 /**
  * Hook providing the callClaude function used to stream responses from the API.
  * @param {object} params
@@ -18,7 +28,7 @@ import { trackUsage, formatCost } from '../utils/usageTracking';
  * @returns {{ callClaude: (msg: string, customGetSystemPrompt?: () => string) => Promise<string> }}
  */
 export function useClaude({ messages, setMessages, maxTokens, contextLimit, memory, debugMode, getSystemPrompt }) {
-  const callClaude = useCallback(async (userMessage, customGetSystemPrompt = null) => {
+  const callClaude = useCallback(async (userMessage, customGetSystemPrompt = null, attachedFiles = []) => {
     const formatTimestamp = (iso) => new Date(iso).toISOString().slice(0, 16);
     if (!userMessage?.trim()) throw new Error('Empty message');
     const anthropicKey = await getDecrypted('space_anthropic_key');
@@ -27,7 +37,48 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
     const estimateTokens = (text) => Math.ceil(text.length / 4);
     const totalTokens = messages.reduce((sum, msg) => sum + estimateTokens(msg.content), 0);
 
-    const contextMessages = [{ role: 'user', content: userMessage }];
+    // Construct user message with potential file attachments
+    const userContent = [];
+    
+    // Add text content
+    if (userMessage?.trim()) {
+      userContent.push({ type: 'text', text: userMessage });
+    }
+    
+    // Add file attachments
+    const uploadedFiles = attachedFiles.filter(file => file.status === 'uploaded');
+    for (const file of uploadedFiles) {
+      if (file.type?.startsWith('image/')) {
+        // For images, use base64 encoding
+        const base64Data = await fileToBase64(file.file);
+        userContent.push({
+          type: 'image',
+          source: {
+            type: 'base64',
+            media_type: file.type,
+            data: base64Data.split(',')[1] // Remove data:image/...;base64, prefix
+          }
+        });
+      } else if (file.type === 'application/pdf' || file.type?.includes('text/')) {
+        // For documents, use document block
+        const base64Data = await fileToBase64(file.file);
+        userContent.push({
+          type: 'document',
+          source: {
+            type: 'base64',
+            media_type: file.type,
+            data: base64Data.split(',')[1] // Remove data:...;base64, prefix
+          }
+        });
+      }
+    }
+    
+    const contextMessages = [{ 
+      role: 'user', 
+      content: userContent.length === 1 && userContent[0].type === 'text' 
+        ? userContent[0].text  // Simple text if no files
+        : userContent          // Multi-modal content array
+    }];
     if (totalTokens < contextLimit) {
       const historical = messages
         .filter((m) => (m.type === 'user' || m.type === 'assistant') && m.content?.trim() !== '' && m.content !== userMessage)

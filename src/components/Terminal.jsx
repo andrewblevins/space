@@ -1984,7 +1984,7 @@ FORMATTING RULES:
       };
 
       // Pass the content to Claude with enhanced system prompt (this starts immediately)
-      await callClaude(newMessage.content, getSystemPromptWithContexts);
+      await callClaude(newMessage.content, getSystemPromptWithContexts, attachedFiles);
 
       // Update message with tags after tag analysis completes (in background)
       tagAnalysisPromise.then(tags => {
