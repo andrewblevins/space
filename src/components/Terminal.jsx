@@ -2093,16 +2093,26 @@ FORMATTING RULES:
         error = "Document too large (max 4.5MB)";
       }
       
-      // Check file type
+      // Check file type - comprehensive list based on Claude's capabilities
       const supportedTypes = [
+        // Images
         'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
+        // Documents
         'application/pdf',
-        'text/plain', 'text/markdown', 'text/csv',
-        'application/json', 'text/html', 'application/xml'
+        // Text files
+        'text/plain', 'text/markdown', 'text/csv', 'text/html', 'text/javascript', 'text/css',
+        // Data formats
+        'application/json', 'application/xml', 'text/xml',
+        // Code files
+        'application/javascript', 'text/x-python', 'application/x-python-code'
       ];
       
-      if (!supportedTypes.includes(file.type) && !file.type?.startsWith('image/') && !file.type?.includes('text')) {
-        error = "Unsupported file type. Please upload images, PDFs, or text documents.";
+      // Check by MIME type or file extension
+      const hasValidExtension = file.name?.match(/\.(txt|md|csv|json|xml|html|js|py|css|sql|yaml|yml|jpeg|jpg|png|gif|webp|pdf)$/i);
+      const hasValidMimeType = supportedTypes.includes(file.type) || file.type?.startsWith('image/') || file.type?.includes('text');
+      
+      if (!hasValidExtension && !hasValidMimeType) {
+        error = "Unsupported file type. Supported: images (JPEG, PNG, GIF, WebP), PDFs, and text files (TXT, MD, CSV, JSON, XML, HTML, JS, PY, CSS, etc.)";
       }
       
       if (error) {

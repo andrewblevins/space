@@ -384,7 +384,7 @@ export function ExpandingInput({ value, onChange, onSubmit, isLoading, sessions 
           ref={fileInputRef}
           type="file"
           multiple
-          accept="image/*,.pdf,.txt,.md,.doc,.docx,.rtf,.csv,.json,.xml,.html"
+          accept="image/*,.pdf,.txt,.md,.csv,.json,.xml,.html,.js,.py,.css,.sql,.yaml,.yml"
           onChange={handleFileAttachment}
           className="hidden"
         />

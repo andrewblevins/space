@@ -80,8 +80,12 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
             data: base64Data.split(',')[1] // Remove data:...;base64, prefix
           }
         });
-      } else if (file.type?.includes('text/') || file.name?.endsWith('.md') || file.name?.endsWith('.txt')) {
-        // For text files, read content and add as text block
+      } else if (
+        file.type?.includes('text/') || 
+        file.name?.match(/\.(txt|md|csv|json|xml|html|js|py|css|sql|yaml|yml)$/i) ||
+        ['application/json', 'application/xml', 'text/csv', 'text/html', 'text/javascript', 'text/css'].includes(file.type)
+      ) {
+        // For text-based files, read content and add as text block
         const textContent = await fileToText(file.file);
         userContent.push({
           type: 'text',
