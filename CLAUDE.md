@@ -199,6 +199,47 @@ The settings menu was designed to replace terminal commands with GUI controls:
 
 **State Management**: All settings changes are immediately persisted to localStorage and application state. No manual save operations required.
 
+## 📝 Documentation Writing Standards
+
+### Strunk and White Principles for SPACE Documentation
+
+**ALWAYS follow these rules when writing documentation for this project:**
+
+#### Rule 1: Omit Needless Words
+- ❌ "Comprehensive 23-color palette organized following ROYGBIV spectrum"
+- ✅ "23-color palette organized following ROYGBIV spectrum"
+
+#### Rule 2: Avoid Marketing Language
+- ❌ "Enhanced," "Improved," "Better," "Smart," "Powerful," "Comprehensive"
+- ✅ Direct descriptions of what the feature does
+
+#### Rule 3: Remove Bold Emphasis from Everything
+- ❌ "**Real-time API cost tracking** with current 2025 pricing"
+- ✅ "Real-time API cost tracking with 2025 pricing"
+
+#### Rule 4: Use Active Voice
+- ❌ "The interface has been streamlined"
+- ✅ "Interface streamlined" or "Streamlined interface"
+
+#### Rule 5: Cut Redundant Adjectives
+- ❌ "Smart autocomplete dropdown," "Automatic migration," "Seamless integration"
+- ✅ "Autocomplete dropdown," "Migration," "Integration"
+
+#### Rule 6: Make Every Word Count
+- ❌ "This represents a substantial evolution"
+- ✅ "This evolves"
+
+#### Quick Test
+If you can remove a word without changing the meaning, remove it. If you can simplify a phrase without losing information, simplify it.
+
+**Examples from CHANGELOG-v0.2.2.md revision:**
+- "Enhanced Tagging System with Knowledge Dossier" → "Tagging System with Knowledge Dossier"
+- "Comprehensive API Testing Framework" → "API Testing Framework"
+- "Progressive Summary Caching System" → "Summary Caching System"
+- "Better Information Architecture" → "Information Architecture"
+
+**Apply this to ALL documentation:** changelogs, READMEs, code comments, commit messages, and feature descriptions.
+
 ## 🔄 Git Workflow
 
 ### Branch Strategy

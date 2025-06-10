@@ -135,7 +135,7 @@ const Terminal = ({ theme, toggleTheme }) => {
 
   const [messages, setMessages] = useState([
     { type: 'system', content: 'SPACE Terminal - v0.2.2' },
-    { type: 'system', content: '🎉 New in v0.2.2:\n• Light/dark theme\n• Knowledge Dossier\n• Session summaries (@ autocomplete)\n• Advisor import/export\n• API usage tracking (Settings → API Keys)' },
+    { type: 'system', content: '🎉 New in v0.2.2:\n• Light/dark theme\n• Knowledge Dossier\n• Session summaries (@ autocomplete)\n• Advisor import/export\n• API usage tracking (Settings → API Keys)\n• Advisor color system' },
     { type: 'system', content: 'Start a conversation, add an advisor (+), draw from the Prompt Library (↙), or type /help for instructions.' }
   ]);
   const [input, setInput] = useState('');
@@ -367,7 +367,7 @@ const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimi
     setCurrentSessionId(newSessionId);
     setMessages([
       { type: 'system', content: 'SPACE Terminal - v0.2.2' },
-      { type: 'system', content: '🎉 New in v0.2.2:\n• Light/dark theme\n• Knowledge Dossier\n• Session summaries (@ autocomplete)\n• Advisor import/export\n• API usage tracking (Settings → API Keys)' },
+      { type: 'system', content: '🎉 New in v0.2.2:\n• Light/dark theme\n• Knowledge Dossier\n• Session summaries (@ autocomplete)\n• Advisor import/export\n• API usage tracking (Settings → API Keys)\n• Advisor color system' },
       { type: 'system', content: 'Start a conversation, add an advisor (+), draw from the Prompt Library (↙), or type /help for instructions.' }
     ]);
     setMetaphors([]);
@@ -558,7 +558,7 @@ const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimi
           setCurrentSessionId(newSessionId);
           setMessages([
             { type: 'system', content: 'SPACE Terminal - v0.2.2' },
-            { type: 'system', content: '🎉 New in v0.2.2:\n• Light/dark theme\n• Knowledge Dossier\n• Session summaries (@ autocomplete)\n• Advisor import/export\n• API usage tracking (Settings → API Keys)' },
+            { type: 'system', content: '🎉 New in v0.2.2:\n• Light/dark theme\n• Knowledge Dossier\n• Session summaries (@ autocomplete)\n• Advisor import/export\n• API usage tracking (Settings → API Keys)\n• Advisor color system' },
             { type: 'system', content: 'Start a conversation, add an advisor (+), draw from the Prompt Library (↙), or type /help for instructions.' }
           ]);
           setMetaphors([]);
