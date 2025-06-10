@@ -108,7 +108,6 @@ const HelpModal = ({ isOpen, onClose }) => {
                   <div>
                     <p><code className="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">/help</code> - Show this help</p>
                     <p><code className="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">/new</code> - Start a new session</p>
-                    <p><code className="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">/clear</code> - Clear the terminal</p>
                   </div>
                   <div>
                     <p><code className="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">/debug</code> - Toggle debug mode</p>
