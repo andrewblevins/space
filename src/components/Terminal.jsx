@@ -423,12 +423,6 @@ const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimi
     }
   };
 
-  const handleClearTerminal = () => {
-    setMessages([{ type: 'system', content: 'Terminal cleared' }]);
-    setMetaphors([]);
-    // DEPRECATED: Questions feature temporarily disabled
-    // setQuestions([]);
-  };
 
   const handleResetAllSessions = () => {
     // Clear all sessions from localStorage
@@ -549,12 +543,6 @@ const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimi
           }]);
           return true;
 
-        case '/clear':
-          setMessages([{ type: 'system', content: 'Terminal cleared' }]);
-          setMetaphors([]);
-          // DEPRECATED: Questions feature temporarily disabled
-          // setQuestions([]);
-          return true;
 
         case '/help':
           setShowHelpModal(true);
@@ -3071,7 +3059,6 @@ ${selectedText}
         onNewSession={handleNewSession}
         onLoadSession={handleLoadSession}
         onLoadPrevious={handleLoadPrevious}
-        onClearTerminal={handleClearTerminal}
         onResetAllSessions={handleResetAllSessions}
         onDeleteSession={handleDeleteSession}
       />
