@@ -140,13 +140,22 @@ const SessionPanel = ({
         </div>
 
         {/* Action Buttons */}
-        <div className="mb-6">
+        <div className="mb-6 space-y-3">
           <button
             onClick={handleNewSession}
             className="w-full px-4 py-2 bg-black border border-green-400 rounded text-green-400 hover:bg-green-400 hover:text-black transition-colors"
           >
             New Session
           </button>
+          
+          {sessions.length > 1 && (
+            <button
+              onClick={onLoadPrevious}
+              className="w-full px-4 py-2 bg-black border border-blue-400 rounded text-blue-400 hover:bg-blue-400 hover:text-black transition-colors"
+            >
+              Load Previous Session
+            </button>
+          )}
         </div>
 
         {/* Sessions List */}
@@ -214,16 +223,7 @@ const SessionPanel = ({
         </div>
 
         {/* Bottom Actions */}
-        <div className="mt-6 pt-4 border-t border-gray-700 space-y-3">
-          {sessions.length > 1 && (
-            <button
-              onClick={onLoadPrevious}
-              className="w-full px-4 py-2 bg-black border border-blue-400 rounded text-blue-400 hover:bg-blue-400 hover:text-black transition-colors"
-            >
-              Load Previous Session
-            </button>
-          )}
-          
+        <div className="mt-6 pt-4 border-t border-gray-700">
           {sessions.length > 0 && (
             <button
               onClick={() => setShowResetConfirmation(true)}

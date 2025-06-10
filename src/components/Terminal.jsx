@@ -357,7 +357,17 @@ const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimi
         const nonSystemMessages = session.messages.filter(m => m.type !== 'system');
         return nonSystemMessages.length > 0;
       })
-      .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))  // Changed from b - a to a - b
+      .sort((a, b) => {
+        // Sort by most recent user message timestamp for better "Load Previous" behavior
+        const getLastUserMessageTime = (session) => {
+          const userMessages = session.messages.filter(m => m.type === 'user');
+          if (userMessages.length === 0) return new Date(session.timestamp);
+          const lastUserMsg = userMessages[userMessages.length - 1];
+          return new Date(lastUserMsg.timestamp || session.timestamp);
+        };
+        
+        return getLastUserMessageTime(a) - getLastUserMessageTime(b);  // Ascending order
+      })
       .map(session => ({
         ...session,
         messageCount: session.messages.filter(m => m.type !== 'system').length,
