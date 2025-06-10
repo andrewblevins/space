@@ -11,6 +11,7 @@ import ApiKeySetup from './ApiKeySetup';
 import { getApiEndpoint } from '../utils/apiConfig';
 import { defaultPrompts } from '../lib/defaultPrompts';
 import { handleApiError } from '../utils/apiErrorHandler';
+import { getNextAvailableColor, ADVISOR_COLORS } from '../lib/advisorColors';
 import { getDecrypted, setEncrypted, removeEncrypted, setModalController, hasEncryptedData } from '../utils/secureStorage';
 import { useModal } from '../contexts/ModalContext';
 import AccordionMenu from './AccordionMenu';
@@ -145,7 +146,43 @@ const Terminal = ({ theme, toggleTheme }) => {
   const [currentSessionId, setCurrentSessionId] = useState(getNextSessionId());
   const [advisors, setAdvisors] = useState(() => {
     const saved = localStorage.getItem('space_advisors');
-    return saved ? JSON.parse(saved) : [];
+    const savedAdvisors = saved ? JSON.parse(saved) : [];
+    
+    // Auto-assign colors to advisors that don't have them
+    let hasChanges = false;
+    const updatedAdvisors = [];
+    const assignedColors = [];
+    
+    // First pass: collect all existing colors
+    savedAdvisors.forEach(advisor => {
+      if (advisor.color) {
+        assignedColors.push(advisor.color);
+      }
+    });
+    
+    // Second pass: assign colors to advisors without them
+    savedAdvisors.forEach(advisor => {
+      if (!advisor.color) {
+        hasChanges = true;
+        // Find next available color that hasn't been assigned yet
+        const availableColors = ADVISOR_COLORS.filter(color => !assignedColors.includes(color));
+        const newColor = availableColors.length > 0 ? availableColors[0] : ADVISOR_COLORS[assignedColors.length % ADVISOR_COLORS.length];
+        assignedColors.push(newColor);
+        updatedAdvisors.push({
+          ...advisor,
+          color: newColor
+        });
+      } else {
+        updatedAdvisors.push(advisor);
+      }
+    });
+    
+    // If we made changes, save them back to localStorage
+    if (hasChanges) {
+      localStorage.setItem('space_advisors', JSON.stringify(updatedAdvisors));
+    }
+    
+    return updatedAdvisors;
   });
   const [advisorGroups, setAdvisorGroups] = useState(() => {
     const saved = localStorage.getItem('space_advisor_groups');
@@ -2793,7 +2830,7 @@ ${selectedText}
                     }`}
                   >
                     {(msg.type === 'system' || msg.type === 'assistant') ? (
-                      <MemoizedMarkdownMessage content={msg.content} />
+                      <MemoizedMarkdownMessage content={msg.content} advisors={advisors} />
                     ) : (
                       msg.content
                     )}
@@ -2895,10 +2932,12 @@ ${selectedText}
           {showAdvisorForm && (
             <AdvisorForm
               initialName={suggestedAdvisorName}
-              onSubmit={({ name, description }) => {
+              existingAdvisors={advisors}
+              onSubmit={({ name, description, color }) => {
                 const newAdvisor = {
                   name,
                   description,
+                  color,
                   active: true
                 };
                 setAdvisors(prev => [...prev, newAdvisor]);
@@ -2923,10 +2962,10 @@ ${selectedText}
           {editingAdvisor && (
             <EditAdvisorForm
               advisor={editingAdvisor}
-              onSubmit={({ name, description }) => {
+              onSubmit={({ name, description, color }) => {
                 setAdvisors(prev => prev.map(a => 
                   a.name === editingAdvisor.name 
-                    ? { ...a, name, description }
+                    ? { ...a, name, description, color }
                     : a
                 ));
                 setMessages(prev => [...prev, {

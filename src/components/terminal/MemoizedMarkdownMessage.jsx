@@ -1,37 +1,30 @@
 import { memo } from "react";
 import ReactMarkdown from 'react-markdown';
-
-// Advisor colors that cycle through different advisors
-const ADVISOR_COLORS = [
-  'text-red-400',
-  'text-blue-400', 
-  'text-green-400',
-  'text-yellow-400',
-  'text-purple-400',
-  'text-pink-400',
-  'text-indigo-400',
-  'text-orange-400'
-];
+import { ADVISOR_COLORS } from '../../lib/advisorColors';
 
 /**
  * Render markdown content using ReactMarkdown with advisor name color-coding.
  * @param {object} props
  * @param {string} props.content
+ * @param {Array} props.advisors - Array of advisor objects with color information
  */
-export const MemoizedMarkdownMessage = memo(({ content }) => {
+export const MemoizedMarkdownMessage = memo(({ content, advisors = [] }) => {
   // Parse and render advisor names with colors
   const processContent = (text) => {
     const parts = text.split(/(\[ADVISOR:\s*[^\]]+\])/);
-    let advisorIndex = 0;
+    let fallbackColorIndex = 0;
     
     return parts.map((part, index) => {
       const advisorMatch = part.match(/\[ADVISOR:\s*([^\]]+)\]/);
       if (advisorMatch) {
         const advisorName = advisorMatch[1].trim();
-        const colorClass = ADVISOR_COLORS[advisorIndex % ADVISOR_COLORS.length];
-        advisorIndex++;
+        // Look up advisor in advisors array to get their specific color
+        const advisor = advisors.find(a => a.name.toLowerCase() === advisorName.toLowerCase());
+        const colorClass = advisor?.color || ADVISOR_COLORS[fallbackColorIndex % ADVISOR_COLORS.length];
+        fallbackColorIndex++;
         return (
-          <h3 key={`advisor-${index}-${advisorName}`} className={`${colorClass} font-bold font-serif text-lg mb-3 mt-6`}>
+          <h3 key={`advisor-${index}-${advisorName}`} className="font-bold font-serif text-lg mb-3 mt-6 text-gray-800 dark:text-gray-200 flex items-center">
+            <span className={`w-2 h-2 rounded-full ${colorClass} mr-3`}></span>
             {advisorName}
           </h3>
         );

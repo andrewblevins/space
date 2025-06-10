@@ -1,30 +1,17 @@
 import { memo } from "react";
 import ReactMarkdown from 'react-markdown';
-
-/**
- * Colors for advisor names - cycling through different colors
- */
-const ADVISOR_COLORS = [
-  'text-blue-600 dark:text-blue-400',
-  'text-purple-600 dark:text-purple-400', 
-  'text-emerald-600 dark:text-emerald-400',
-  'text-amber-600 dark:text-amber-400',
-  'text-rose-600 dark:text-rose-400',
-  'text-indigo-600 dark:text-indigo-400',
-  'text-teal-600 dark:text-teal-400',
-  'text-orange-600 dark:text-orange-400'
-];
+import { ADVISOR_COLORS } from '../../lib/advisorColors';
 
 /**
  * Parse content with [ADVISOR: Name] delimiters for color-coded names
  */
-const parseAdvisorContent = (content) => {
+const parseAdvisorContent = (content, advisors = []) => {
   // Split content by advisor markers, but keep the markers
   const parts = content.split(/(\[ADVISOR:\s*[^\]]+\])/);
   
   const sections = [];
   let currentAdvisor = null;
-  let advisorIndex = 0;
+  let fallbackColorIndex = 0;
   
   for (let i = 0; i < parts.length; i++) {
     const part = parts[i];
@@ -32,12 +19,17 @@ const parseAdvisorContent = (content) => {
     // Check if this part is an advisor marker
     const advisorMatch = part.match(/\[ADVISOR:\s*([^\]]+)\]/);
     if (advisorMatch) {
+      const advisorName = advisorMatch[1].trim();
+      // Look up advisor in advisors array to get their specific color
+      const advisor = advisors.find(a => a.name.toLowerCase() === advisorName.toLowerCase());
+      const colorClass = advisor?.color || ADVISOR_COLORS[fallbackColorIndex % ADVISOR_COLORS.length];
+      
       currentAdvisor = {
-        name: advisorMatch[1].trim(),
-        colorClass: ADVISOR_COLORS[advisorIndex % ADVISOR_COLORS.length],
+        name: advisorName,
+        colorClass: colorClass,
         content: ''
       };
-      advisorIndex++;
+      fallbackColorIndex++;
       sections.push(currentAdvisor);
     } else if (currentAdvisor && part.trim()) {
       // Add content to current advisor
@@ -60,10 +52,11 @@ const parseAdvisorContent = (content) => {
  * @param {object} props
  * @param {string} props.content - The response content with [ADVISOR: Name] markers
  * @param {number} props.paragraphSpacing - Spacing between paragraphs (default: 2)
+ * @param {Array} props.advisors - Array of advisor objects with color information
  */
-export const AdvisorResponseMessage = memo(({ content, paragraphSpacing = 2 }) => {
+export const AdvisorResponseMessage = memo(({ content, paragraphSpacing = 2, advisors = [] }) => {
   // Parse the content into advisor sections
-  const sections = parseAdvisorContent(content);
+  const sections = parseAdvisorContent(content, advisors);
   
   // If no advisor markers found, render as markdown
   if (sections.length === 1 && !sections[0].name) {
@@ -119,7 +112,8 @@ export const AdvisorResponseMessage = memo(({ content, paragraphSpacing = 2 }) =
       {sections.map((section, index) => (
         <div key={index} className={index > 0 ? 'mt-6' : ''}>
           {section.name && (
-            <h3 className={`${section.colorClass} font-bold font-serif text-lg mb-3`}>
+            <h3 className="font-bold font-serif text-lg mb-3 text-gray-800 dark:text-gray-200 flex items-center">
+              <span className={`w-2 h-2 rounded-full ${section.colorClass} mr-3`}></span>
               {section.name}
             </h3>
           )}
