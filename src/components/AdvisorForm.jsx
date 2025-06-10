@@ -23,7 +23,7 @@ const generateAdvisorDescription = async (advisorName, onStream) => {
         model: 'claude-3-7-sonnet-20250219',
         messages: [{
           role: 'user',
-          content: `You are generating a description of an AI advisor that will be used to summon that entity into a conversation. You will receive a name and you will write your description based on that name. Your description should be a paragraph spoken directly in the advisor's distinct voice and perspective. It should include a general self-description, any specific lineages, practices, or frameworks they embody, and how they tend to approach problems. Do not include the advisor's name in the description.
+          content: `You are generating a description of an AI advisor that will be used to summon that entity into a conversation. You will receive a name and you will write your description based on that name. Your description should be a paragraph spoken directly in the advisor's distinct voice and perspective. It should include a general self-description, any specific lineages, practices, or frameworks they embody, and how they tend to approach problems. Do not include the advisor's name in the description. Do not include action cues, stage directions, or physical descriptions.
 
 The advisor's name is ${advisorName}.`
         }],

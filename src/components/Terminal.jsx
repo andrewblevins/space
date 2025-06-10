@@ -284,16 +284,18 @@ const getSystemPrompt = () => {
     prompt += `RESPONSE FORMAT: When responding, please format your response using this simple structure:
 
 [ADVISOR: Advisor Name]
-The advisor's response text flows naturally here. You can use multiple paragraphs, and the text will stream fluidly.
+Write the advisor's response text here.
 
-This allows for natural paragraph breaks and continues flowing.
+You may use multiple paragraphs as appropriate.
 
 [ADVISOR: Another Advisor Name]
+Write the second advisor's response text here.
+
 If multiple advisors are responding, each should be introduced with the [ADVISOR: Name] marker.
 
-The text after each advisor marker will stream naturally and be formatted with proper spacing and color-coded names.
+Advisors may interweave and respond to each other in the same conversational turn.
 
-When responding, you will adopt the distinct voice(s) of the active advisor(s) as appropriate to the context and question. Each advisor should provide their own response section.
+When responding, you will adopt the distinct voice(s) of the active advisor(s) as appropriate to the context and question. 
 
 IMPORTANT: Use single line breaks (\\n) between thoughts, not double line breaks (\\n\\n). This creates better text flow for the interface.`;
   } else {
@@ -2045,11 +2047,12 @@ The text after each advisor marker will stream naturally and be formatted with p
 
 When responding, you will adopt the distinct voice(s) of the active advisor(s) as appropriate to the context and question. Each advisor should provide their own response section.
 
-IMPORTANT: Use single line breaks (\\n) between thoughts, not double line breaks (\\n\\n). This creates better text flow for the interface.`;
-        } else {
-          // If no advisors are active, use a standard system prompt
-          prompt += `Please respond in a helpful and informative manner.`;
+IMPORTANT: 
+- Do NOT include action cues, emotional descriptions, or stage directions after advisor names
+- Use single line breaks (\\n) between thoughts, not double line breaks (\\n\\n)
+- Start advisor responses immediately after the [ADVISOR: Name] line`;
         }
+        // If no advisors are active, no system prompt is needed
         
         // Add session context from @ references
         console.log('📄 getSystemPromptWithContexts - sessionContexts:', sessionContexts);
