@@ -124,8 +124,16 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
 
     if (!response.ok) {
       const errorText = await response.text();
-      await handleApiError(response);
-      throw new Error(errorText);
+      // Handle auth errors without consuming response body again
+      if (response.status === 401) {
+        const { removeEncrypted } = await import('../utils/secureStorage');
+        removeEncrypted('space_anthropic_key');
+        removeEncrypted('space_openai_key');
+        sessionStorage.setItem('auth_error', 'Your API key has expired or been deactivated. Please enter new API keys to continue.');
+        window.location.reload();
+        return;
+      }
+      throw new Error(`API Error (${response.status}): ${errorText}`);
     }
 
     const reader = response.body.getReader();
