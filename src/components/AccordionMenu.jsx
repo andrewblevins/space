@@ -164,7 +164,7 @@ const AccordionMenu = ({
     },
     {
       id: 'fullscreen',
-      label: isFullscreen ? 'Exit Fullscreen' : 'Fullscreen',
+      label: 'Fullscreen',
       onClick: onFullscreenClick,
       icon: (
         <svg 
