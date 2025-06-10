@@ -2760,31 +2760,10 @@ ${selectedText}
             scrollbarColor: '#374151 transparent'
           }}
         >
-          <button
-            onClick={toggleFullscreen}
-            className="absolute top-2 right-2 text-green-400 hover:text-green-300 z-50"
-          >
-            {isFullscreen ? (
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
-              </svg>
-            )}
-          </button>
 
           {/* Left Column */}
           <div className="w-1/4 p-4 border-r border-gray-300 dark:border-gray-800 overflow-y-auto scrollbar-terminal">
-            <CollapsibleModule 
-              title="Metaphors" 
-              items={metaphors}
-              expanded={metaphorsExpanded}
-              onToggle={() => setMetaphorsExpanded(!metaphorsExpanded)}
-            />
-            <div className="mt-4">
-              <GroupableModule
+            <GroupableModule
                 title="Advisors"
                 groups={advisorGroups}
                 items={advisors}
@@ -2800,7 +2779,6 @@ ${selectedText}
                 setAdvisors={setAdvisors}
                 setMessages={setMessages}
               />
-            </div>
           </div>
 
           {/* Middle Column */}
@@ -2914,22 +2892,21 @@ ${selectedText}
 
           {/* Right Column */}
           <div className="w-1/4 p-4 border-l border-gray-300 dark:border-gray-800 overflow-y-auto scrollbar-terminal">
-            {/* DEPRECATED: Questions feature temporarily disabled */}
-            {/*
             <CollapsibleModule 
-              title="Questions" 
-              items={questions}
-              expanded={questionsExpanded}
-              onToggle={() => setQuestionsExpanded(!questionsExpanded)}
+              title="Metaphors" 
+              items={metaphors}
+              expanded={metaphorsExpanded}
+              onToggle={() => setMetaphorsExpanded(!metaphorsExpanded)}
             />
-            */}
-            <CollapsibleSuggestionsModule
+            <div className="mt-4">
+              <CollapsibleSuggestionsModule
                 title="Suggested Advisors"
                 items={advisorSuggestions}
                 expanded={advisorSuggestionsExpanded}
                 onToggle={() => setAdvisorSuggestionsExpanded(!advisorSuggestionsExpanded)}
                 onItemClick={(item) => handleAdvisorSuggestionClick(item)}
               />
+            </div>
           </div>
 
           {showAdvisorForm && (
@@ -3018,10 +2995,13 @@ ${selectedText}
             onSettingsClick={() => setShowSettingsMenu(true)}
             onPromptLibraryClick={() => setShowPromptLibrary(true)}
             onSessionManagerClick={() => setShowSessionPanel(true)}
+            onNewSessionClick={handleNewSession}
             onExportClick={() => setShowExportMenu(true)}
             onDossierClick={() => setShowDossierModal(true)}
             onImportExportAdvisorsClick={() => setShowImportExportModal(true)}
             onHelpClick={() => setShowHelpModal(true)}
+            onFullscreenClick={toggleFullscreen}
+            isFullscreen={isFullscreen}
           />
 
           {/* Info Button - Bottom Right */}
