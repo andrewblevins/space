@@ -38,7 +38,7 @@ Version 0.2.1 enhances the advisor suggestion system with improved variety, bett
 - **Better Examples**: Enhanced prompting with category-specific examples:
   - Real People: "Carl Jung", "Marie Kondo", "Socrates", "Maya Angelou"
   - Mythic Figures: "Athena", "Thoth", "Coyote", "Quan Yin"
-  - Role-Based: "A Trauma-Informed Therapist", "A Master Craftsperson", "A Village Elder"
+  - Role-Based: "Trauma-Informed Therapist", "Master Craftsperson", "Village Elder"
   - Fictional: "Hermione Granger", "Gandalf", "Tyrion Lannister"
 
 ### Improved UI Design
