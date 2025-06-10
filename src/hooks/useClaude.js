@@ -15,6 +15,16 @@ const fileToBase64 = (file) => {
   });
 };
 
+// Helper function to read text content from file
+const fileToText = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsText(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = error => reject(error);
+  });
+};
+
 /**
  * Hook providing the callClaude function used to stream responses from the API.
  * @param {object} params
@@ -59,8 +69,8 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
             data: base64Data.split(',')[1] // Remove data:image/...;base64, prefix
           }
         });
-      } else if (file.type === 'application/pdf' || file.type?.includes('text/')) {
-        // For documents, use document block
+      } else if (file.type === 'application/pdf') {
+        // For PDFs, use document block
         const base64Data = await fileToBase64(file.file);
         userContent.push({
           type: 'document',
@@ -69,6 +79,13 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
             media_type: file.type,
             data: base64Data.split(',')[1] // Remove data:...;base64, prefix
           }
+        });
+      } else if (file.type?.includes('text/') || file.name?.endsWith('.md') || file.name?.endsWith('.txt')) {
+        // For text files, read content and add as text block
+        const textContent = await fileToText(file.file);
+        userContent.push({
+          type: 'text',
+          text: `\n\n--- Content of ${file.name} ---\n${textContent}\n--- End of ${file.name} ---\n`
         });
       }
     }
@@ -149,6 +166,8 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
             friendlyError = "PDF file is too large (maximum 100 pages allowed). Please upload a smaller PDF.";
           } else if (message.includes("maximum file size")) {
             friendlyError = "File is too large. Images must be under 3.75MB, documents under 4.5MB.";
+          } else if (message.includes("Input should be 'application/pdf'")) {
+            friendlyError = "Only PDF files are supported for document uploads. Text files are embedded as text content.";
           } else if (message.includes("unsupported file type")) {
             friendlyError = "Unsupported file type. Please upload images (JPEG, PNG, GIF, WebP) or documents (PDF, TXT).";
           } else {
