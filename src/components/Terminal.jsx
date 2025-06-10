@@ -136,7 +136,7 @@ const Terminal = ({ theme, toggleTheme }) => {
   const [messages, setMessages] = useState([
     { type: 'system', content: 'SPACE Terminal - v0.2.2' },
     { type: 'system', content: '🎉 New in v0.2.2:\n• Light/dark theme\n• Knowledge Dossier\n• Session summaries (@ autocomplete)\n• Advisor import/export\n• API usage tracking (Settings → API Keys)' },
-    { type: 'system', content: 'Start a conversation, add an advisor (+), or type /help for instructions.' }
+    { type: 'system', content: 'Start a conversation, add an advisor (+), draw from the Prompt Library (↙), or type /help for instructions.' }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -368,7 +368,7 @@ const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimi
     setMessages([
       { type: 'system', content: 'SPACE Terminal - v0.2.2' },
       { type: 'system', content: '🎉 New in v0.2.2:\n• Light/dark theme\n• Knowledge Dossier\n• Session summaries (@ autocomplete)\n• Advisor import/export\n• API usage tracking (Settings → API Keys)' },
-      { type: 'system', content: 'Start a conversation, add an advisor (+), or type /help for instructions.' }
+      { type: 'system', content: 'Start a conversation, add an advisor (+), draw from the Prompt Library (↙), or type /help for instructions.' }
     ]);
     setMetaphors([]);
     // DEPRECATED: Questions feature temporarily disabled
@@ -571,7 +571,7 @@ const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimi
           setMessages([
             { type: 'system', content: 'SPACE Terminal - v0.2.2' },
             { type: 'system', content: '🎉 New in v0.2.2:\n• Light/dark theme\n• Knowledge Dossier\n• Session summaries (@ autocomplete)\n• Advisor import/export\n• API usage tracking (Settings → API Keys)' },
-            { type: 'system', content: 'Start a conversation, add an advisor (+), or type /help for instructions.' }
+            { type: 'system', content: 'Start a conversation, add an advisor (+), draw from the Prompt Library (↙), or type /help for instructions.' }
           ]);
           setMetaphors([]);
           // DEPRECATED: Questions feature temporarily disabled
