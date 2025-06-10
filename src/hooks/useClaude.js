@@ -112,6 +112,7 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
     if (uploadedFiles.length > 0) {
       console.log('📎 Sending files to Claude:', uploadedFiles.map(f => ({ name: f.name, type: f.type, status: f.status })));
       console.log('📎 User content structure:', userContent);
+      console.log('📎 Final context messages:', contextMessages);
     }
     
     // Calculate input tokens for tracking
@@ -133,6 +134,11 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
       max_tokens: maxTokens,
       stream: true,
     };
+
+    // Debug logging for file uploads - show full request
+    if (uploadedFiles.length > 0) {
+      console.log('📎 Full API request body:', JSON.stringify(requestBody, null, 2));
+    }
 
     const response = await fetch(`${getApiEndpoint()}/v1/messages`, {
       method: 'POST',
