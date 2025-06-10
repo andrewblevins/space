@@ -2291,7 +2291,9 @@ You may provide advisors in any of these categories:
 3. Professional roles or archetypal figures that bring useful frameworks
 4. Fictional characters whose wisdom or approach would be illuminating
 
-Choose the categories most appropriate, tonally and practically, for the conversation.
+Choose the categories most appropriate, tonally and practically, for the conversation. *When in doubt,* focus on professional roles.
+
+Be sensitive to the content and tone of the conversation. If the conversation is a serious discussion of a difficult situation, make serious, practical suggestions. If the conversation is playful or humorous, make playful, original advisor suggestions.
 
 Focus on advisors who would bring genuinely different perspectives, challenge assumptions, or offer specialized knowledge that could deepen the exploration.
 
