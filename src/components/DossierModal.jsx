@@ -119,7 +119,7 @@ const DossierModal = ({ isOpen, onClose, onJumpToSession }) => {
       >
         {/* Header */}
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-green-400 text-xl font-semibold">Knowledge Dossier</h2>
+          <h2 className="text-green-400 text-xl font-semibold">Knowledge Dossier (Beta)</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-green-400 text-xl">✕</button>
         </div>
 
