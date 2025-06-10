@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 const AccordionMenu = ({ 
   onSettingsClick,
@@ -13,6 +13,24 @@ const AccordionMenu = ({
   isFullscreen
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const menuRef = useRef(null);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setIsExpanded(false);
+      }
+    };
+
+    if (isExpanded) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isExpanded]);
 
   const menuItems = [
     {
@@ -210,7 +228,7 @@ const AccordionMenu = ({
   };
 
   return (
-    <div className="fixed bottom-4 left-4 z-50">
+    <div ref={menuRef} className="fixed bottom-4 left-4 z-50">
       {/* Expanded Menu Items */}
       {isExpanded && (
         <div className="absolute bottom-full mb-2 bg-black border border-green-400 rounded-lg shadow-lg">
