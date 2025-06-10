@@ -6,7 +6,7 @@ import EditAdvisorForm from './EditAdvisorForm';
 import EditPromptForm from './EditPromptForm';
 import SettingsMenu from './SettingsMenu';
 import '@fontsource/vollkorn';
-import TagAnalyzer from '../lib/tagAnalyzer';
+import TagAnalyzer, { sharedTagAnalyzer } from '../lib/tagAnalyzer';
 import ApiKeySetup from './ApiKeySetup';
 import { getApiEndpoint } from '../utils/apiConfig';
 import { defaultPrompts } from '../lib/defaultPrompts';
@@ -1945,7 +1945,12 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
       console.log('📄 Found @ references:', titleMatches.map(m => m[1]));
       console.log('📄 Available session selections:', Array.from(sessionSelections.keys()));
       
-      for (const m of titleMatches) {
+      // Handle legacy format: @1, @2, etc. for backward compatibility
+      const atRegex = /@(\d+)/g;
+      const legacyMatches = [...processedInput.matchAll(atRegex)];
+
+      // Process session references in parallel instead of sequential
+      const sessionPromises = titleMatches.map(async (m) => {
         const title = m[1];
         const session = sessionSelections.get(title);
         console.log(`📄 Looking for session "${title}":`, session ? 'FOUND' : 'NOT FOUND');
@@ -1954,53 +1959,68 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
           const summary = await summarizeSession(session.id, { openaiClient });
           if (summary) {
             console.log(`📄 Adding context for "${title}" (Session ${session.id})`);
-            sessionContexts.push({
+            return {
               title,
               sessionId: session.id,
               summary,
               timestamp: session.timestamp
-            });
+            };
           }
         }
-      }
-      
-      // Still support legacy format: @1, @2, etc. for backward compatibility
-      const atRegex = /@(\d+)/g;
-      const legacyMatches = [...processedInput.matchAll(atRegex)];
-      for (const m of legacyMatches) {
+        return null;
+      });
+
+      // Process legacy format in parallel too
+      const legacyPromises = legacyMatches.map(async (m) => {
         const sessionId = parseInt(m[1], 10);
         const summary = await summarizeSession(sessionId, { openaiClient });
         if (summary) {
-          // For legacy format, still replace inline for backward compatibility
-          processedInput = processedInput.replace(m[0], summary);
+          return { match: m[0], summary };
         }
+        return null;
+      });
+
+      // Wait for all session processing to complete in parallel
+      const [sessionResults, legacyResults] = await Promise.all([
+        Promise.all(sessionPromises),
+        Promise.all(legacyPromises)
+      ]);
+
+      // Add valid session contexts
+      sessionContexts = sessionResults.filter(Boolean);
+
+      // Apply legacy replacements
+      for (const result of legacyResults.filter(Boolean)) {
+        processedInput = processedInput.replace(result.match, result.summary);
       }
 
-      // Analyze tags for user message
-      const analyzer = new TagAnalyzer();
-      let tags = [];
-      try {
-        console.log('🏷️ Starting tag analysis for:', processedInput.substring(0, 100) + '...');
-        tags = await analyzer.analyzeTags(processedInput);
-        console.log('🏷️ Tags generated:', tags);
-        if (debugMode) {
-          console.log('🏷️ Debug mode active, tags:', tags);
+      // Start tag analysis in parallel with Claude response using shared instance
+      const tagAnalysisPromise = (async () => {
+        try {
+          console.log('🏷️ Starting tag analysis for:', processedInput.substring(0, 100) + '...');
+          const tags = await sharedTagAnalyzer.analyzeTags(processedInput);
+          console.log('🏷️ Tags generated:', tags);
+          if (debugMode) {
+            console.log('🏷️ Debug mode active, tags:', tags);
+          }
+          return tags;
+        } catch (error) {
+          console.error('🏷️ Tag analysis error:', error);
+          if (debugMode) {
+            setMessages(prev => [...prev, {
+              type: 'system',
+              content: `❌ Tag Analysis Error:\n${error.message}`
+            }]);
+          }
+          return [];
         }
-      } catch (error) {
-        console.error('🏷️ Tag analysis error:', error);
-        if (debugMode) {
-          setMessages(prev => [...prev, {
-            type: 'system',
-            content: `❌ Tag Analysis Error:\n${error.message}`
-          }]);
-        }
-      }
+      })();
       
-      // Create the new message object with timestamp and tags
+      // Create the new message object without tags initially (will be updated)
       const newMessage = {
         type: 'user',
         content: processedInput,
-        tags,
+        tags: [], // Will be updated after tag analysis completes
         timestamp: new Date().toISOString()
       };
 
@@ -2063,8 +2083,15 @@ FORMATTING RULES:
         return prompt;
       };
 
-      // Pass the content to Claude with enhanced system prompt
+      // Pass the content to Claude with enhanced system prompt (this starts immediately)
       await callClaude(newMessage.content, getSystemPromptWithContexts);
+
+      // Update message with tags after tag analysis completes (in background)
+      tagAnalysisPromise.then(tags => {
+        setMessages(prev => prev.map(msg => 
+          msg === newMessage ? { ...msg, tags } : msg
+        ));
+      });
 
       // Clear session contexts after response
       setCurrentSessionContexts([]);
@@ -2620,6 +2647,9 @@ ${selectedText}
   };
 
   useEffect(() => {
+    // Pre-initialize TagAnalyzer to avoid delays during first analysis
+    sharedTagAnalyzer.preInitialize();
+    
     // Check URL parameters on load
     const params = new URLSearchParams(window.location.search);
     const sessionId = params.get('session');
