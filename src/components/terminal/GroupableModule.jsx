@@ -134,7 +134,12 @@ export function GroupableModule({
                         }
                       }}
                     >
-                      {advisor.name}
+                      <div className="flex items-center space-x-2">
+                        {advisor.color && (
+                          <span className={`w-3 h-3 rounded-full ${advisor.color}`}></span>
+                        )}
+                        <span>{advisor.name}</span>
+                      </div>
                     </li>
                   );
                 })}
@@ -196,7 +201,12 @@ export function GroupableModule({
                 }
               }}
             >
-              {item.name}
+              <div className="flex items-center space-x-2">
+                {item.color && (
+                  <span className={`w-3 h-3 rounded-full ${item.color}`}></span>
+                )}
+                <span>{item.name}</span>
+              </div>
             </li>
           ))}
       </ul>

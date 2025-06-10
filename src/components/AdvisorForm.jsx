@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { getApiEndpoint } from '../utils/apiConfig';
 import { handleApiError } from '../utils/apiErrorHandler';
 import { getDecrypted } from '../utils/secureStorage';
+import { ADVISOR_COLORS, getNextAvailableColor } from '../lib/advisorColors';
 
 const generateAdvisorDescription = async (advisorName, onStream) => {
   try {
@@ -72,14 +73,23 @@ The advisor's name is ${advisorName}.`
   }
 };
 
-const AdvisorForm = ({ onSubmit, onCancel, initialName = '' }) => {
+const AdvisorForm = ({ onSubmit, onCancel, initialName = '', existingAdvisors = [] }) => {
   const [name, setName] = useState(initialName);
   const [description, setDescription] = useState('');
   const [error, setError] = useState('');
+  const [selectedColor, setSelectedColor] = useState('');
 
   useEffect(() => {
     setName(initialName);
   }, [initialName]);
+
+  useEffect(() => {
+    // Auto-assign color when form opens
+    if (!selectedColor && existingAdvisors) {
+      const nextColor = getNextAvailableColor(existingAdvisors);
+      setSelectedColor(nextColor);
+    }
+  }, [existingAdvisors, selectedColor]);
 
   const handleGenerate = async () => {
     if (!name.trim()) {
@@ -128,6 +138,43 @@ const AdvisorForm = ({ onSubmit, onCancel, initialName = '' }) => {
           spellCheck="true"
           data-role="advisor-description"
         />
+        
+        {/* Color Selection */}
+        <div className="mb-4">
+          <div className="space-y-2">
+            {/* First row - 11 colors */}
+            <div className="flex justify-between">
+              {ADVISOR_COLORS.slice(0, 11).map((color) => (
+                <button
+                  key={color}
+                  type="button"
+                  onClick={() => setSelectedColor(color)}
+                  className={`w-7 h-7 rounded-full ${color} border-2 ${
+                    selectedColor === color 
+                      ? 'border-green-400 ring-2 ring-green-400 ring-opacity-50' 
+                      : 'border-gray-300 dark:border-gray-600'
+                  } hover:border-green-400 transition-all duration-200 hover:scale-110`}
+                />
+              ))}
+            </div>
+            {/* Second row - 11 colors with same justify-between spacing */}
+            <div className="flex justify-between">
+              {ADVISOR_COLORS.slice(11, 22).map((color) => (
+                <button
+                  key={color}
+                  type="button"
+                  onClick={() => setSelectedColor(color)}
+                  className={`w-7 h-7 rounded-full ${color} border-2 ${
+                    selectedColor === color 
+                      ? 'border-green-400 ring-2 ring-green-400 ring-opacity-50' 
+                      : 'border-gray-300 dark:border-gray-600'
+                  } hover:border-green-400 transition-all duration-200 hover:scale-110`}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+        
         <div className="flex justify-between">
           <button
             onClick={onCancel}
@@ -142,7 +189,7 @@ const AdvisorForm = ({ onSubmit, onCancel, initialName = '' }) => {
             Generate Description
           </button>
           <button
-            onClick={() => onSubmit({ name, description })}
+            onClick={() => onSubmit({ name, description, color: selectedColor })}
             className="px-4 py-2 text-green-600 border border-green-600 rounded hover:bg-green-600 hover:text-white dark:text-green-400 dark:border-green-400 dark:hover:bg-green-400 dark:hover:text-black"
           >
             Add Advisor

@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
+import { ADVISOR_COLORS } from '../lib/advisorColors';
 
 const EditAdvisorForm = ({ advisor, onSubmit, onCancel }) => {
   const [name, setName] = useState(advisor.name);
   const [description, setDescription] = useState(advisor.description);
+  const [selectedColor, setSelectedColor] = useState(advisor.color || ADVISOR_COLORS[0]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit({ name, description });
+    onSubmit({ name, description, color: selectedColor });
   };
 
   return (
@@ -38,6 +40,43 @@ const EditAdvisorForm = ({ advisor, onSubmit, onCancel }) => {
               data-role="advisor-description"
             />
           </div>
+          
+          {/* Color Selection */}
+          <div className="mb-4">
+            <div className="space-y-2">
+              {/* First row - 11 colors */}
+              <div className="flex justify-between">
+                {ADVISOR_COLORS.slice(0, 11).map((color) => (
+                  <button
+                    key={color}
+                    type="button"
+                    onClick={() => setSelectedColor(color)}
+                    className={`w-7 h-7 rounded-full ${color} border-2 ${
+                      selectedColor === color 
+                        ? 'border-green-400 ring-2 ring-green-400 ring-opacity-50' 
+                        : 'border-gray-300 dark:border-gray-600'
+                    } hover:border-green-400 transition-all duration-200 hover:scale-110`}
+                  />
+                ))}
+              </div>
+              {/* Second row - 11 colors with same justify-between spacing */}
+              <div className="flex justify-between">
+                {ADVISOR_COLORS.slice(11, 22).map((color) => (
+                  <button
+                    key={color}
+                    type="button"
+                    onClick={() => setSelectedColor(color)}
+                    className={`w-7 h-7 rounded-full ${color} border-2 ${
+                      selectedColor === color 
+                        ? 'border-green-400 ring-2 ring-green-400 ring-opacity-50' 
+                        : 'border-gray-300 dark:border-gray-600'
+                    } hover:border-green-400 transition-all duration-200 hover:scale-110`}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+          
           <div className="flex justify-end space-x-4">
             <button
               type="button"
