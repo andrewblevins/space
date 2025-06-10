@@ -94,11 +94,18 @@ export function ExpandingInput({ value, onChange, onSubmit, isLoading, sessions 
       return;
     }
     
-    if (e.key === 'Enter' && !e.shiftKey) {
+    // Cmd/Ctrl + Enter to submit
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
       setShowAutocomplete(false); // Close autocomplete on submit
       onSubmit(e);
     }
+    // Regular Enter just adds new line (default behavior)
+  };
+
+  const handleSubmit = () => {
+    setShowAutocomplete(false);
+    onSubmit({ target: textareaRef.current });
   };
 
   // Handle session selection from autocomplete
@@ -168,37 +175,78 @@ export function ExpandingInput({ value, onChange, onSubmit, isLoading, sessions 
           document.addEventListener('mouseup', handleMouseUp);
         }}
       />
-      <textarea
-        ref={textareaRef}
-        value={value}
-        onChange={handleInputChange}
-        onKeyDown={handleKeyDown}
-        style={{ height }}
-        className={`
-          w-full
-          min-h-[100px]
-          max-h-[400px]
-          font-serif
-          p-4
-          border
-          border-green-600
-          focus:outline-none
-          rounded-md
-          resize-none
-          bg-amber-50 text-gray-800 dark:bg-black dark:text-green-400
-          ${isLoading ? 'opacity-50' : ''}
-        `}
-        placeholder={isLoading ? 'Waiting for response...' : 'Type your message... (use @ to reference past sessions)'}
-        disabled={isLoading}
-        autoComplete="off"
-        autoCapitalize="off"
-        autoCorrect="off"
-        spellCheck="true"
-        data-role="chat-input"
-        data-form-type="other"
-        data-lpignore="true"
-        data-1p-ignore="true"
-      />
+      <div className="relative">
+        <textarea
+          ref={textareaRef}
+          value={value}
+          onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
+          style={{ height }}
+          className={`
+            w-full
+            min-h-[100px]
+            max-h-[400px]
+            font-serif
+            p-4
+            pr-32
+            border
+            border-green-600
+            focus:outline-none
+            rounded-md
+            resize-none
+            bg-amber-50 text-gray-800 dark:bg-black dark:text-green-400
+            ${isLoading ? 'opacity-50' : ''}
+          `}
+          placeholder={isLoading ? 'Waiting for response...' : 'Type your message... (Enter for new line)'}
+          disabled={isLoading}
+          autoComplete="off"
+          autoCapitalize="off"
+          autoCorrect="off"
+          spellCheck="true"
+          data-role="chat-input"
+          data-form-type="other"
+          data-lpignore="true"
+          data-1p-ignore="true"
+        />
+        <button
+          onClick={() => {
+            if (!isLoading && value.trim()) {
+              handleSubmit();
+            }
+          }}
+          className={`
+            absolute
+            bottom-3
+            right-3
+            px-4
+            py-2
+            font-serif
+            text-sm
+            font-medium
+            rounded-md
+            border-2
+            border-green-600
+            bg-amber-50
+            text-green-700
+            hover:bg-green-50
+            hover:border-green-700
+            active:bg-green-100
+            active:scale-95
+            focus:outline-none
+            focus:ring-2
+            focus:ring-green-500
+            transition-all
+            duration-150
+            dark:bg-black
+            dark:text-green-400
+            dark:hover:bg-gray-900
+            dark:hover:border-green-500
+            dark:active:bg-gray-800
+          `}
+        >
+          {navigator.platform.includes('Mac') ? '⌘+Enter' : 'Ctrl+Enter'}
+        </button>
+      </div>
       
       <SessionAutocomplete
         show={showAutocomplete}
