@@ -2285,19 +2285,23 @@ Exported on: ${timestamp}\n\n`;
     try {
       const promptContent = `Based on this recent conversation exchange, suggest exactly 5 specific advisors who could add valuable perspective to this discussion.
 
-Please provide a balanced mix of:
+You may provide advisors in any of these categories:
 1. Real historical figures, thinkers, or experts (living or dead)
 2. Mythic figures, gods/goddesses, or legendary characters from various cultures
 3. Professional roles or archetypal figures that bring useful frameworks
 4. Fictional characters whose wisdom or approach would be illuminating
+
+Choose the categories most appropriate, tonally and practically, for the conversation.
 
 Focus on advisors who would bring genuinely different perspectives, challenge assumptions, or offer specialized knowledge that could deepen the exploration.
 
 Examples of good suggestions by category:
 Real People: "Carl Jung", "Marie Kondo", "Socrates", "Maya Angelou"
 Mythic Figures: "Athena", "Thoth", "Coyote", "Quan Yin"
-Role-Based: "A Trauma-Informed Therapist", "A Master Craftsperson", "A Village Elder"
+Role-Based: "Somatic Therapist", "Cracked Front-End Engineer", "Village Elder"
 Fictional: "Hermione Granger", "Gandalf", "Tyrion Lannister"
+
+Do NOT include parenthetical descriptions of the advisors, or anything other than a name or role.
 
 Recent conversation:
 ${recentMessages}
