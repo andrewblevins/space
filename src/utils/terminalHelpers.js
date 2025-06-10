@@ -69,12 +69,20 @@ export function buildConversationContext(userMessage, messages, memory) {
 /**
  * Analyze messages for metaphors and update state.
  */
-export async function analyzeMetaphors(messages, { enabled, openaiClient, setMetaphors, debugMode, setMessages }) {
-  if (!enabled || !openaiClient) return;
+export async function analyzeMetaphors(messages, { enabled, openaiClient, setMetaphors, debugMode, setMessages, onComplete }) {
+  if (!enabled || !openaiClient) {
+    if (onComplete) onComplete();
+    return;
+  }
   const userMessages = messages.filter((m) => m.type === 'user').map((m) => m.content).join('\n');
-  if (!userMessages.trim()) return;
+  if (!userMessages.trim()) {
+    if (onComplete) onComplete();
+    return;
+  }
   try {
     const inputTokens = Math.ceil((userMessages.length + 200) / 4); // Estimate input tokens
+    console.log('🔍 Metaphors analysis starting, input tokens:', inputTokens, 'chars:', userMessages.length);
+    const startTime = Date.now();
     const response = await openaiClient.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
@@ -84,6 +92,8 @@ export async function analyzeMetaphors(messages, { enabled, openaiClient, setMet
       max_tokens: 150,
       response_format: { type: 'json_object' },
     });
+    const endTime = Date.now();
+    console.log('🔍 Metaphors analysis completed in', endTime - startTime, 'ms');
     const result = JSON.parse(response.choices[0].message.content);
     
     // Track usage
@@ -91,11 +101,13 @@ export async function analyzeMetaphors(messages, { enabled, openaiClient, setMet
     trackUsage('gpt', inputTokens, outputTokens);
     
     setMetaphors(result.metaphors || []);
+    if (onComplete) onComplete();
   } catch (err) {
     if (debugMode && setMessages) {
       setMessages((prev) => [...prev, { type: 'system', content: `❌ Metaphor Analysis Error:\n${err.message}` }]);
     }
     console.error('Error analyzing metaphors:', err);
+    if (onComplete) onComplete();
   }
 }
 

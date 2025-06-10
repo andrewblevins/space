@@ -239,9 +239,11 @@ const Terminal = ({ theme, toggleTheme }) => {
     return saved ? parseInt(saved) : 4096;
   });
   const [metaphorsExpanded, setMetaphorsExpanded] = useState(false);
+  const [metaphorsLoading, setMetaphorsLoading] = useState(false);
   // DEPRECATED: Questions feature temporarily disabled
   // const [questionsExpanded, setQuestionsExpanded] = useState(false);
   const [advisorSuggestionsExpanded, setAdvisorSuggestionsExpanded] = useState(false);
+  const [advisorSuggestionsLoading, setAdvisorSuggestionsLoading] = useState(false);
   const [advisorSuggestions, setAdvisorSuggestions] = useState([]);
   const [suggestedAdvisorName, setSuggestedAdvisorName] = useState('');
   const [contextLimit, setContextLimit] = useState(150000);
@@ -2190,7 +2192,14 @@ Exported on: ${timestamp}\n\n`;
 
 
   const analyzeAdvisorSuggestions = async (messages) => {
-    if (!advisorSuggestionsExpanded || !openaiClient) return;
+    if (!openaiClient) {
+      setAdvisorSuggestionsLoading(false);
+      return;
+    }
+    if (!advisorSuggestionsExpanded) {
+      setAdvisorSuggestionsLoading(false);
+      return;
+    }
 
     const recentMessages = messages
       .slice(-3)
@@ -2198,7 +2207,14 @@ Exported on: ${timestamp}\n\n`;
       .map(msg => `${msg.type === 'user' ? 'User' : 'Assistant'}: ${msg.content}`)
       .join("\n\n");
 
+    if (!recentMessages.trim()) {
+      setAdvisorSuggestionsLoading(false);
+      return;
+    }
+
     try {
+      console.log('🔍 Advisor suggestions analysis starting, recent messages chars:', recentMessages.length);
+      const startTime = Date.now();
       const promptContent = `Based on this recent conversation exchange, suggest exactly 5 specific advisors who could add valuable perspective to this discussion.
 
 You may provide advisors in any of these categories:
@@ -2239,6 +2255,8 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
         max_tokens: 150,
         response_format: { type: "json_object" }
       });
+      const endTime = Date.now();
+      console.log('🔍 Advisor suggestions analysis completed in', endTime - startTime, 'ms');
 
       const suggestions = JSON.parse(response.choices[0].message.content);
       
@@ -2247,8 +2265,10 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
       trackUsage('gpt', inputTokens, outputTokens);
       
       setAdvisorSuggestions(suggestions.suggestions || []);
+      setAdvisorSuggestionsLoading(false);
     } catch (error) {
       console.error('Error generating advisor suggestions:', error);
+      setAdvisorSuggestionsLoading(false);
     }
   };
 
@@ -2362,38 +2382,51 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
       // Only analyze after Claude responses (assistant messages)
       if (lastMessage.type === 'assistant') {
         console.log('🔍 Triggering analysis after Claude response');
+        // Check current expansion states at time of execution
+        const currentMetaphorsExpanded = metaphorsExpanded;
+        const currentAdvisorExpanded = advisorSuggestionsExpanded;
+        
+        if (currentMetaphorsExpanded) {
+          analyzeMetaphors(messages, {
+            enabled: true,
+            openaiClient,
+            setMetaphors,
+            debugMode,
+            setMessages,
+            onComplete: () => setMetaphorsLoading(false)
+          });
+        }
+        
+        if (currentAdvisorExpanded) {
+          analyzeAdvisorSuggestions(messages);
+        }
+      }
+    }
+  }, [messages, isLoading, openaiClient]);
+
+  // Show loading indicator when expanding but only if we don't have results yet
+  useEffect(() => {
+    if (metaphorsExpanded && messages.length > 0 && metaphors.length === 0 && !isLoading) {
+      setMetaphorsLoading(true);
+      // If analysis hasn't run yet, trigger it
+      if (openaiClient) {
         analyzeMetaphors(messages, {
           enabled: metaphorsExpanded,
           openaiClient,
           setMetaphors,
           debugMode,
-          setMessages
+          setMessages,
+          onComplete: () => setMetaphorsLoading(false)
         });
-        // DEPRECATED: Questions feature temporarily disabled
-        // analyzeForQuestions(messages, {
-        //   enabled: questionsExpanded,
-        //   openaiClient,
-        //   setQuestions,
-        //   debugMode,
-        //   setMessages
-        // });
-        analyzeAdvisorSuggestions(messages);
       }
+    } else if (metaphorsExpanded && messages.length === 0) {
+      // No conversation to analyze yet
+      setMetaphorsLoading(false);
+    } else if (metaphorsExpanded && isLoading && metaphors.length === 0) {
+      // Show loading indicator while streaming, analysis will happen after
+      setMetaphorsLoading(true);
     }
-  }, [messages, isLoading, metaphorsExpanded, /* questionsExpanded, */ advisorSuggestionsExpanded, openaiClient]);
-
-  // Trigger metaphors analysis when expanded state changes
-  useEffect(() => {
-    if (metaphorsExpanded && messages.length > 0 && openaiClient) {
-      analyzeMetaphors(messages, {
-        enabled: metaphorsExpanded,
-        openaiClient,
-        setMetaphors,
-        debugMode,
-        setMessages
-      });
-    }
-  }, [metaphorsExpanded, openaiClient]);
+  }, [metaphorsExpanded, isLoading]);
 
   // DEPRECATED: Questions feature temporarily disabled
   // // Trigger questions analysis when expanded state changes
@@ -2409,12 +2442,22 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
   //   }
   // }, [questionsExpanded, openaiClient]);
 
-  // Trigger advisor suggestions analysis when expanded state changes
+  // Show loading indicator when expanding but only if we don't have results yet
   useEffect(() => {
-    if (advisorSuggestionsExpanded && messages.length > 0 && openaiClient) {
-      analyzeAdvisorSuggestions(messages);
+    if (advisorSuggestionsExpanded && messages.length > 0 && advisorSuggestions.length === 0 && !isLoading) {
+      setAdvisorSuggestionsLoading(true);
+      // If analysis hasn't run yet, trigger it
+      if (openaiClient) {
+        analyzeAdvisorSuggestions(messages);
+      }
+    } else if (advisorSuggestionsExpanded && messages.length === 0) {
+      // No conversation to analyze yet
+      setAdvisorSuggestionsLoading(false);
+    } else if (advisorSuggestionsExpanded && isLoading && advisorSuggestions.length === 0) {
+      // Show loading indicator while streaming, analysis will happen after
+      setAdvisorSuggestionsLoading(true);
     }
-  }, [advisorSuggestionsExpanded, openaiClient]);
+  }, [advisorSuggestionsExpanded, isLoading]);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -2794,6 +2837,8 @@ ${selectedText}
               title="Metaphors" 
               items={metaphors}
               expanded={metaphorsExpanded}
+              loading={metaphorsLoading}
+              emptyMessage="Start a conversation to discover underlying patterns and metaphors"
               onToggle={() => setMetaphorsExpanded(!metaphorsExpanded)}
             />
             <div className="mt-4">
@@ -2801,6 +2846,8 @@ ${selectedText}
                 title="Suggested Advisors"
                 items={advisorSuggestions}
                 expanded={advisorSuggestionsExpanded}
+                loading={advisorSuggestionsLoading}
+                emptyMessage="Begin a conversation to get personalized advisor suggestions"
                 onToggle={() => setAdvisorSuggestionsExpanded(!advisorSuggestionsExpanded)}
                 onItemClick={(item) => handleAdvisorSuggestionClick(item)}
               />
