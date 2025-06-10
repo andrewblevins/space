@@ -1,5 +1,7 @@
 /** Helper functions used by the Terminal component. */
 
+import { trackUsage } from './usageTracking';
+
 /**
  * Build a conversation context for Claude when the full history is too large.
  * @param {string} userMessage
@@ -72,6 +74,7 @@ export async function analyzeMetaphors(messages, { enabled, openaiClient, setMet
   const userMessages = messages.filter((m) => m.type === 'user').map((m) => m.content).join('\n');
   if (!userMessages.trim()) return;
   try {
+    const inputTokens = Math.ceil((userMessages.length + 200) / 4); // Estimate input tokens
     const response = await openaiClient.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
@@ -82,6 +85,11 @@ export async function analyzeMetaphors(messages, { enabled, openaiClient, setMet
       response_format: { type: 'json_object' },
     });
     const result = JSON.parse(response.choices[0].message.content);
+    
+    // Track usage
+    const outputTokens = Math.ceil(response.choices[0].message.content.length / 4);
+    trackUsage('gpt', inputTokens, outputTokens);
+    
     setMetaphors(result.metaphors || []);
   } catch (err) {
     if (debugMode && setMessages) {
@@ -101,6 +109,7 @@ export async function analyzeForQuestions(messages, { enabled, openaiClient, set
     .join('\n\n');
   if (!recentMessages.trim()) return;
   try {
+    const inputTokens = Math.ceil((recentMessages.length + 300) / 4); // Estimate input tokens
     const response = await openaiClient.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
@@ -111,11 +120,95 @@ export async function analyzeForQuestions(messages, { enabled, openaiClient, set
       response_format: { type: 'json_object' },
     });
     const result = JSON.parse(response.choices[0].message.content);
+    
+    // Track usage
+    const outputTokens = Math.ceil(response.choices[0].message.content.length / 4);
+    trackUsage('gpt', inputTokens, outputTokens);
+    
     setQuestions(result.questions || []);
   } catch (err) {
     if (debugMode && setMessages) {
       setMessages((prev) => [...prev, { type: 'system', content: `❌ Question Analysis Error:\n${err.message}` }]);
     }
     console.error('Error analyzing for questions:', err);
+  }
+}
+
+/**
+ * Summarize a previously saved session.
+ * @param {number} sessionId
+ * @param {object} options
+ * @param {import('openai').OpenAI} options.openaiClient
+ * @returns {Promise<string|null>}
+ */
+export async function summarizeSession(sessionId, { openaiClient }) {
+  if (!openaiClient) return null;
+
+  const sessionData = localStorage.getItem(`space_session_${sessionId}`);
+  if (!sessionData) return null;
+
+  const session = JSON.parse(sessionData);
+  
+  // Check if we have a cached summary that's still relevant
+  if (session.summary && session.summaryMessageCount) {
+    const currentMessageCount = session.messages.filter(m => m.type === 'user' || m.type === 'assistant').length;
+    // Use cached summary if it covers at least 80% of current messages
+    if (session.summaryMessageCount >= currentMessageCount * 0.8) {
+      console.log(`📄 Using cached summary for session ${sessionId}`);
+      return session.summary;
+    }
+  }
+
+  console.log(`📄 Generating fresh summary for session ${sessionId}`);
+  return await generateSessionSummary(session, openaiClient);
+}
+
+export async function generateSessionSummary(session, openaiClient) {
+  if (!openaiClient) return null;
+
+  const convoText = session.messages
+    .filter((m) => m.type === 'user' || m.type === 'assistant')
+    .map((m) => `${m.type === 'user' ? 'User' : 'Assistant'}: ${m.content}`)
+    .join('\n\n');
+
+  try {
+    const inputText = convoText.slice(0, 6000);
+    const inputTokens = Math.ceil((inputText.length + 100) / 4); // Estimate input tokens
+    const response = await openaiClient.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: 'Summarize the key points of the following conversation in 3-5 short bullet points.'
+        },
+        {
+          role: 'user',
+          content: inputText
+        }
+      ],
+      max_tokens: 150
+    });
+
+    const summary = response.choices[0].message.content.trim();
+    
+    // Track usage
+    const outputTokens = Math.ceil(summary.length / 4);
+    trackUsage('gpt', inputTokens, outputTokens);
+    
+    // Cache the summary in the session
+    const updatedSession = {
+      ...session,
+      summary,
+      summaryTimestamp: new Date().toISOString(),
+      summaryMessageCount: session.messages.filter(m => m.type === 'user' || m.type === 'assistant').length
+    };
+    
+    localStorage.setItem(`space_session_${session.id}`, JSON.stringify(updatedSession));
+    console.log(`📄 Cached summary for session ${session.id}`);
+    
+    return summary;
+  } catch (err) {
+    console.error('Error summarizing session:', err);
+    return null;
   }
 }

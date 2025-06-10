@@ -7,7 +7,6 @@ const SessionPanel = ({
   onNewSession,
   onLoadSession,
   onLoadPrevious,
-  onClearTerminal,
   onResetAllSessions,
   onDeleteSession
 }) => {
@@ -119,18 +118,12 @@ const SessionPanel = ({
         </div>
 
         {/* Action Buttons */}
-        <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="mb-6">
           <button
             onClick={handleNewSession}
-            className="px-4 py-2 bg-black border border-green-400 rounded text-green-400 hover:bg-green-400 hover:text-black transition-colors"
+            className="w-full px-4 py-2 bg-black border border-green-400 rounded text-green-400 hover:bg-green-400 hover:text-black transition-colors"
           >
             New Session
-          </button>
-          <button
-            onClick={onClearTerminal}
-            className="px-4 py-2 bg-black border border-blue-400 rounded text-blue-400 hover:bg-blue-400 hover:text-black transition-colors"
-          >
-            Clear Terminal
           </button>
         </div>
 

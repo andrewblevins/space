@@ -22,6 +22,9 @@ const EditPromptForm = ({ prompt, onSubmit, onCancel }) => {
               onChange={(e) => setName(e.target.value)}
               className="w-full bg-black text-green-400 border border-green-400 p-2 focus:outline-none"
               autoFocus
+              autoComplete="off"
+              spellCheck="true"
+              data-role="prompt-name"
             />
           </div>
           <div className="mb-4">
@@ -30,6 +33,9 @@ const EditPromptForm = ({ prompt, onSubmit, onCancel }) => {
               value={text}
               onChange={(e) => setText(e.target.value)}
               className="w-full bg-black text-green-400 border border-green-400 p-2 h-32 focus:outline-none resize-none"
+              autoComplete="off"
+              spellCheck="true"
+              data-role="prompt-text"
             />
           </div>
           <div className="flex justify-end space-x-4">

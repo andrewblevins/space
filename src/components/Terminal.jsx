@@ -11,13 +11,19 @@ import ApiKeySetup from './ApiKeySetup';
 import { getApiEndpoint } from '../utils/apiConfig';
 import { defaultPrompts } from '../lib/defaultPrompts';
 import { handleApiError } from '../utils/apiErrorHandler';
-import { getDecrypted, setEncrypted, removeEncrypted, setModalController } from '../utils/secureStorage';
+import { getNextAvailableColor, ADVISOR_COLORS } from '../lib/advisorColors';
+import { getDecrypted, setEncrypted, removeEncrypted, setModalController, hasEncryptedData } from '../utils/secureStorage';
 import { useModal } from '../contexts/ModalContext';
 import AccordionMenu from './AccordionMenu';
 import SessionPanel from './SessionPanel';
 import PromptLibrary from './PromptLibrary';
 import AddPromptForm from './AddPromptForm';
 import ExportMenu from './ExportMenu';
+import DossierModal from './DossierModal';
+import ImportExportModal from './ImportExportModal';
+import HelpModal from './HelpModal';
+import InfoModal from './InfoModal';
+import WelcomeScreen from './WelcomeScreen';
 import { Module } from "./terminal/Module";
 import { GroupableModule } from "./terminal/GroupableModule";
 import { CollapsibleModule } from "./terminal/CollapsibleModule";
@@ -25,23 +31,41 @@ import { CollapsibleClickableModule } from "./terminal/CollapsibleClickableModul
 import { CollapsibleSuggestionsModule } from "./terminal/CollapsibleSuggestionsModule";
 import { ExpandingInput } from "./terminal/ExpandingInput";
 import { MemoizedMarkdownMessage } from "./terminal/MemoizedMarkdownMessage";
+import { AdvisorResponseMessage } from "./terminal/AdvisorResponseMessage";
 import useClaude from "../hooks/useClaude";
-import { analyzeMetaphors, analyzeForQuestions } from "../utils/terminalHelpers";
+import { analyzeMetaphors, analyzeForQuestions, summarizeSession, generateSessionSummary } from "../utils/terminalHelpers";
+import { trackUsage, trackSession } from '../utils/usageTracking';
 import { worksheetQuestions, WORKSHEET_TEMPLATES } from "../utils/worksheetTemplates";
 
 
 
 
-const Terminal = () => {
+const Terminal = ({ theme, toggleTheme }) => {
   const modalController = useModal();
   
   // Initialize the modal controller for secureStorage
   useEffect(() => {
     if (modalController) {
       setModalController(modalController);
-      
-      // Only check for API keys after modal controller is initialized
-      const checkKeys = async () => {
+    }
+  }, [modalController]);
+
+  useEffect(() => {
+    // Only check for API keys after modal controller is initialized
+    const checkKeys = async () => {
+      try {
+        // First check if encrypted data exists
+        if (!hasEncryptedData()) {
+          console.log('❌ No encrypted keys found, showing welcome screen');
+          const skipWelcome = localStorage.getItem('space_skip_welcome');
+          if (!skipWelcome) {
+            setShowWelcome(true);
+          }
+          return;
+        }
+
+        // If encrypted data exists, try to decrypt it (this will prompt for password if needed)
+        console.log('🔒 Encrypted keys found, attempting to decrypt...');
         try {
           const anthropicKey = await getDecrypted('space_anthropic_key');
           const openaiKey = await getDecrypted('space_openai_key');
@@ -58,10 +82,18 @@ const Terminal = () => {
             console.log('✅ OpenAI client initialized successfully');
           }
         } catch (error) {
-          console.error('Error checking API keys:', error);
+          console.error('Error decrypting API keys:', error);
+          // If decryption fails (user canceled password, wrong password, etc.), 
+          // don't show welcome screen - they have encrypted keys, just couldn't access them this time
+          console.log('🔑 Password entry was required but failed/canceled');
         }
-      };
-      
+      } finally {
+        // Always stop the loading state once initialization is complete
+        setIsInitializing(false);
+      }
+    };
+    
+    if (modalController) {
       checkKeys();
     }
   }, [modalController]);
@@ -74,18 +106,83 @@ const Terminal = () => {
     return Math.max(...ids) + 1;
   };
 
+  const handleAdvisorImport = (importedAdvisors, mode) => {
+    if (mode === 'replace') {
+      setAdvisors(importedAdvisors);
+      setMessages(prev => [...prev, {
+        type: 'system',
+        content: `Replaced all advisors with ${importedAdvisors.length} imported advisors.`
+      }]);
+    } else {
+      // Add mode - append to existing advisors, avoiding duplicates
+      const existingNames = new Set(advisors.map(a => a.name.toLowerCase()));
+      const newAdvisors = importedAdvisors.filter(a => !existingNames.has(a.name.toLowerCase()));
+      const duplicates = importedAdvisors.length - newAdvisors.length;
+      
+      setAdvisors(prev => [...prev, ...newAdvisors]);
+      
+      let message = `Added ${newAdvisors.length} new advisors.`;
+      if (duplicates > 0) {
+        message += ` Skipped ${duplicates} duplicate${duplicates > 1 ? 's' : ''}.`;
+      }
+      
+      setMessages(prev => [...prev, {
+        type: 'system',
+        content: message
+      }]);
+    }
+  };
+
   const [messages, setMessages] = useState([
-    { type: 'system', content: 'SPACE Terminal - v0.2' },
-    { type: 'system', content: 'Start a conversation, add an advisor (+), or explore features in the bottom-left menu.' }
+    { type: 'system', content: 'SPACE Terminal - v0.2.2' },
+    { type: 'system', content: '🎉 New in v0.2.2:\n• Light/dark theme\n• Knowledge Dossier\n• Session summaries (@ autocomplete)\n• Advisor import/export\n• API usage tracking (Settings → API Keys)\n• Advisor color system' },
+    { type: 'system', content: 'Start a conversation, add an advisor (+), draw from the Prompt Library (↙), or type /help for instructions.' }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [metaphors, setMetaphors] = useState([]);
-  const [questions, setQuestions] = useState([]);
+  // DEPRECATED: Questions feature temporarily disabled - can be reactivated by uncommenting
+  // const [questions, setQuestions] = useState([]);
   const [currentSessionId, setCurrentSessionId] = useState(getNextSessionId());
   const [advisors, setAdvisors] = useState(() => {
     const saved = localStorage.getItem('space_advisors');
-    return saved ? JSON.parse(saved) : [];
+    const savedAdvisors = saved ? JSON.parse(saved) : [];
+    
+    // Auto-assign colors to advisors that don't have them
+    let hasChanges = false;
+    const updatedAdvisors = [];
+    const assignedColors = [];
+    
+    // First pass: collect all existing colors
+    savedAdvisors.forEach(advisor => {
+      if (advisor.color) {
+        assignedColors.push(advisor.color);
+      }
+    });
+    
+    // Second pass: assign colors to advisors without them
+    savedAdvisors.forEach(advisor => {
+      if (!advisor.color) {
+        hasChanges = true;
+        // Find next available color that hasn't been assigned yet
+        const availableColors = ADVISOR_COLORS.filter(color => !assignedColors.includes(color));
+        const newColor = availableColors.length > 0 ? availableColors[0] : ADVISOR_COLORS[assignedColors.length % ADVISOR_COLORS.length];
+        assignedColors.push(newColor);
+        updatedAdvisors.push({
+          ...advisor,
+          color: newColor
+        });
+      } else {
+        updatedAdvisors.push(advisor);
+      }
+    });
+    
+    // If we made changes, save them back to localStorage
+    if (hasChanges) {
+      localStorage.setItem('space_advisors', JSON.stringify(updatedAdvisors));
+    }
+    
+    return updatedAdvisors;
   });
   const [advisorGroups, setAdvisorGroups] = useState(() => {
     const saved = localStorage.getItem('space_advisor_groups');
@@ -142,12 +239,20 @@ const Terminal = () => {
     return saved ? parseInt(saved) : 4096;
   });
   const [metaphorsExpanded, setMetaphorsExpanded] = useState(false);
-  const [questionsExpanded, setQuestionsExpanded] = useState(false);
+  // DEPRECATED: Questions feature temporarily disabled
+  // const [questionsExpanded, setQuestionsExpanded] = useState(false);
   const [advisorSuggestionsExpanded, setAdvisorSuggestionsExpanded] = useState(false);
   const [advisorSuggestions, setAdvisorSuggestions] = useState([]);
   const [suggestedAdvisorName, setSuggestedAdvisorName] = useState('');
   const [contextLimit, setContextLimit] = useState(150000);
   const [apiKeysSet, setApiKeysSet] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
+  
+  // Handler to reset to welcome screen
+  const resetToWelcome = () => {
+    setShowWelcome(true);
+  };
   const [openaiClient, setOpenaiClient] = useState(null);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [showPromptLibrary, setShowPromptLibrary] = useState(false);
@@ -156,11 +261,68 @@ const Terminal = () => {
 
   const [showAddPromptForm, setShowAddPromptForm] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [showDossierModal, setShowDossierModal] = useState(false);
+  const [showImportExportModal, setShowImportExportModal] = useState(false);
+  const [showHelpModal, setShowHelpModal] = useState(false);
+  const [showInfoModal, setShowInfoModal] = useState(false);
+  const [sessions, setSessions] = useState([]);
+  const [sessionSelections, setSessionSelections] = useState(new Map()); // Map from title to session object
+  const [currentSessionContexts, setCurrentSessionContexts] = useState([]); // Current @ reference contexts
+  const [paragraphSpacing, setParagraphSpacing] = useState(() => {
+    const saved = localStorage.getItem('space_paragraph_spacing');
+    return saved ? parseFloat(saved) : 0.25;
+  }); // Spacing between paragraphs
 
 const getSystemPrompt = () => {
+  let prompt = "";
+  
+  // Add advisor personas
   const activeAdvisors = advisors.filter(a => a.active);
-  if (activeAdvisors.length === 0) return "";
-  return `You are currently embodying the following advisors:\n${activeAdvisors.map(a => `\n${a.name}: ${a.description}`).join('\n')}\n\nWhen responding, you will adopt the distinct voice(s) of the active advisor(s) as appropriate to the context and question.`;
+  if (activeAdvisors.length > 0) {
+    prompt += `You are currently embodying the following advisors:\n${activeAdvisors.map(a => `\n${a.name}: ${a.description}`).join('\n')}\n\n`;
+    
+    prompt += `RESPONSE FORMAT: Use this exact structure for every advisor response:
+
+[ADVISOR: Advisor Name]
+optional action or emotional state on this line by itself
+
+Main response content starts here on a new line after a blank line.
+
+[ADVISOR: Another Advisor Name]
+another optional action line
+
+Another advisor's response content.
+
+FORMATTING RULES:
+1. Advisor name always goes in [ADVISOR: Name] brackets
+2. If you include an action/emotional description, it goes on its own line immediately after the advisor name
+3. Always leave one blank line before starting the main response content
+4. Use single line breaks within paragraphs, double line breaks between major sections
+5. Each advisor gets their own clearly separated section`;
+  }
+  // If no advisors are active, no system prompt is needed
+  
+  // Add session context from @ references
+  console.log('📄 getSystemPrompt - currentSessionContexts:', currentSessionContexts);
+  if (currentSessionContexts.length > 0) {
+    if (prompt) prompt += "\n\n";
+    prompt += "## REFERENCED CONVERSATION CONTEXTS\n\n";
+    prompt += "The user has referenced the following previous conversations for context:\n\n";
+    
+    currentSessionContexts.forEach((context, index) => {
+      const date = new Date(context.timestamp).toLocaleDateString();
+      prompt += `### Context ${index + 1}: "${context.title}" (Session ${context.sessionId}, ${date})\n`;
+      prompt += `${context.summary}\n\n`;
+    });
+    
+    prompt += "Use these conversation contexts to inform your response when relevant. The user's message may reference specific details from these conversations.\n";
+    console.log('📄 Added session contexts to system prompt');
+  } else {
+    console.log('📄 No session contexts to add');
+  }
+  
+  console.log('🔍 getSystemPrompt - Final system prompt:', prompt);
+  return prompt;
 };
 
 const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimit, memory, debugMode, getSystemPrompt });
@@ -195,11 +357,25 @@ const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimi
 
   // Session management functions for SessionPanel
   const handleNewSession = () => {
-    setCurrentSessionId(getNextSessionId());
-    setMessages([{ type: 'system', content: 'Started new session' }]);
+    const prevSessionId = currentSessionId;
+    const newSessionId = getNextSessionId();
+    
+    // Auto-generate summary for the session we're leaving
+    generateSummaryForPreviousSession(prevSessionId);
+    
+    setCurrentSessionId(newSessionId);
+    setMessages([
+      { type: 'system', content: 'SPACE Terminal - v0.2.2' },
+      { type: 'system', content: '🎉 New in v0.2.2:\n• Light/dark theme\n• Knowledge Dossier\n• Session summaries (@ autocomplete)\n• Advisor import/export\n• API usage tracking (Settings → API Keys)\n• Advisor color system' },
+      { type: 'system', content: 'Start a conversation, add an advisor (+), draw from the Prompt Library (↙), or type /help for instructions.' }
+    ]);
     setMetaphors([]);
-    setQuestions([]);
+    // DEPRECATED: Questions feature temporarily disabled
+    // setQuestions([]);
     setAdvisorSuggestions([]);
+    
+    // Track new session
+    trackSession();
   };
 
   const handleLoadSession = (sessionId) => {
@@ -213,7 +389,8 @@ const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimi
         content: `Loaded "${displayName}" from ${new Date(session.timestamp).toLocaleString()}`
       }]);
       setMetaphors(session.metaphors || []);
-      setQuestions(session.questions || []);
+      // DEPRECATED: Questions feature temporarily disabled
+      // setQuestions(session.questions || []);
       setAdvisorSuggestions(session.advisorSuggestions || []);
     } else {
       setMessages(prev => [...prev, {
@@ -234,7 +411,8 @@ const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimi
         content: `Loaded previous "${displayName}" from ${new Date(penultimate.timestamp).toLocaleString()}`
       }]);
       setMetaphors(penultimate.metaphors || []);
-      setQuestions(penultimate.questions || []);
+      // DEPRECATED: Questions feature temporarily disabled
+      // setQuestions(penultimate.questions || []);
       setAdvisorSuggestions(penultimate.advisorSuggestions || []);
     } else {
       setMessages(prev => [...prev, {
@@ -244,11 +422,6 @@ const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimi
     }
   };
 
-  const handleClearTerminal = () => {
-    setMessages([{ type: 'system', content: 'Terminal cleared' }]);
-    setMetaphors([]);
-    setQuestions([]);
-  };
 
   const handleResetAllSessions = () => {
     // Clear all sessions from localStorage
@@ -261,7 +434,8 @@ const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimi
     setCurrentSessionId(1);
     setMessages([{ type: 'system', content: 'All sessions cleared. Starting fresh with Session 1' }]);
     setMetaphors([]);
-    setQuestions([]);
+    // DEPRECATED: Questions feature temporarily disabled
+    // setQuestions([]);
     setAdvisorSuggestions([]);
   };
 
@@ -348,7 +522,7 @@ const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimi
                 const tags = new Set();
                 s.messages.forEach(msg => {
                   if (msg.tags) {
-                    msg.tags.forEach(tag => tags.add(tag));
+                    msg.tags.forEach(tag => tags.add(tag.value));
                   }
                 });
                 const tagList = Array.from(tags);
@@ -368,34 +542,31 @@ const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimi
           }]);
           return true;
 
-        case '/clear':
-          setMessages([{ type: 'system', content: 'Terminal cleared' }]);
-          setMetaphors([]);
-          setQuestions([]);
-          return true;
 
         case '/help':
-          setMessages(prev => [...prev, {
-            type: 'system',
-            content: `⚠️ The /help command has been deprecated.
-
-All functionality is now available through the graphical interface:
-
-🔧 **Settings & API Keys**: Click the gear icon (⚙️) in the bottom-left menu
-📂 **Session Management**: Click "Session Manager" in the bottom-left menu  
-📤 **Export Options**: Click "Export" in the bottom-left menu
-📝 **Prompts**: Click "Prompt Library" in the bottom-left menu
-👥 **Advisors**: Use the advisor panel on the left sidebar
-
-The interface is now fully discoverable - no commands needed!`
-          }]);
+          setShowHelpModal(true);
           return true;
 
         case '/new':
-          setCurrentSessionId(getNextSessionId());
-          setMessages([{ type: 'system', content: 'Started new session' }]);
+          const prevSessionId = currentSessionId;
+          const newSessionId = getNextSessionId();
+          
+          // Auto-generate summary for the session we're leaving
+          generateSummaryForPreviousSession(prevSessionId);
+          
+          setCurrentSessionId(newSessionId);
+          setMessages([
+            { type: 'system', content: 'SPACE Terminal - v0.2.2' },
+            { type: 'system', content: '🎉 New in v0.2.2:\n• Light/dark theme\n• Knowledge Dossier\n• Session summaries (@ autocomplete)\n• Advisor import/export\n• API usage tracking (Settings → API Keys)\n• Advisor color system' },
+            { type: 'system', content: 'Start a conversation, add an advisor (+), draw from the Prompt Library (↙), or type /help for instructions.' }
+          ]);
           setMetaphors([]);
-          setQuestions([]);
+          // DEPRECATED: Questions feature temporarily disabled
+          // setQuestions([]);
+          
+          // Track new session
+          trackSession();
+          
           return true;
 
         case '/load':
@@ -406,7 +577,8 @@ The interface is now fully discoverable - no commands needed!`
               setCurrentSessionId(penultimate.id);
               setMessages(penultimate.messages);
               setMetaphors(penultimate.metaphors || []);
-              setQuestions(penultimate.questions || []);
+              // DEPRECATED: Questions feature temporarily disabled
+              // setQuestions(penultimate.questions || []);
               setAdvisorSuggestions(penultimate.advisorSuggestions || []);
               setMessages(prev => [...prev, {
                 type: 'system',
@@ -435,7 +607,8 @@ The interface is now fully discoverable - no commands needed!`
             setCurrentSessionId(session.id);
             setMessages(session.messages);
             setMetaphors(session.metaphors || []);
-            setQuestions(session.questions || []);
+            // DEPRECATED: Questions feature temporarily disabled
+            // setQuestions(session.questions || []);
             setAdvisorSuggestions(session.advisorSuggestions || []);
           } else {
             setMessages(prev => [...prev, {
@@ -463,7 +636,8 @@ The interface is now fully discoverable - no commands needed!`
           setCurrentSessionId(1);
           setMessages([{ type: 'system', content: 'All sessions cleared. Starting fresh with Session 1' }]);
           setMetaphors([]);
-          setQuestions([]);
+          // DEPRECATED: Questions feature temporarily disabled
+          // setQuestions([]);
           return true;
 
         case '/advisor':
@@ -473,10 +647,12 @@ The interface is now fully discoverable - no commands needed!`
               content: `Available advisor commands:
 /advisor add      - Add a new advisor
 /advisor edit     - Edit an advisor
-/advisor remove   - Remove an advisor
+/advisor delete   - Delete an advisor
 /advisor list     - List all advisors
 /advisor generate - Generate advisor suggestions from worksheet
-/advisor finalize - Get detailed profiles for chosen advisors`
+/advisor finalize - Get detailed profiles for chosen advisors
+
+Note: Advisor sharing is now available through the GUI menu (bottom-left → Import/Export Advisors)`
             }]);
             return true;  // Add this to prevent fall-through to debug command
           }
@@ -769,7 +945,7 @@ Now, I'd like to generate the final output. Please include the following aspects
                 return true;
               }
 
-              setAdvisors(prev => prev.filter(a => 
+              setAdvisors(prev => prev.filter(a =>
                 a.name.toLowerCase() !== nameToDelete.toLowerCase()
               ));
               setMessages(prev => [...prev, {
@@ -777,6 +953,7 @@ Now, I'd like to generate the final output. Please include the following aspects
                 content: `Deleted advisor: ${advisorToDelete.name}`
               }]);
               return true;
+
           }
 
         case '/debug':
@@ -1206,6 +1383,22 @@ Now, I'd like to generate the final output. Please include the following aspects
               }]);
               return true;
           }
+
+        case '/dossier':
+          if (!args[0]) {
+            setMessages(prev => [...prev, {
+              type: 'system',
+              content: 'Usage: /dossier <subject>'
+            }]);
+            return true;
+          }
+          const subject = args.join(' ');
+          const dossierMsgs = memory.compileDossier(subject);
+          setMessages(prev => [...prev, {
+            type: 'system',
+            content: `Dossier for "${subject}" contains ${dossierMsgs.length} messages.`
+          }]);
+          return true;
 
         case '/memory':
           switch(args[0]) {
@@ -1741,13 +1934,54 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
     console.log('No command handled, proceeding to Claude response');
     try {
       setIsLoading(true);
+
+      // Process @ references for context injection
+      let processedInput = input;
+      let sessionContexts = [];
       
+      // Handle new format: @"Session Title" - collect summaries for context injection
+      const atTitleRegex = /@"([^"]+)"/g;
+      const titleMatches = [...processedInput.matchAll(atTitleRegex)];
+      console.log('📄 Found @ references:', titleMatches.map(m => m[1]));
+      console.log('📄 Available session selections:', Array.from(sessionSelections.keys()));
+      
+      for (const m of titleMatches) {
+        const title = m[1];
+        const session = sessionSelections.get(title);
+        console.log(`📄 Looking for session "${title}":`, session ? 'FOUND' : 'NOT FOUND');
+        
+        if (session) {
+          const summary = await summarizeSession(session.id, { openaiClient });
+          if (summary) {
+            console.log(`📄 Adding context for "${title}" (Session ${session.id})`);
+            sessionContexts.push({
+              title,
+              sessionId: session.id,
+              summary,
+              timestamp: session.timestamp
+            });
+          }
+        }
+      }
+      
+      // Still support legacy format: @1, @2, etc. for backward compatibility
+      const atRegex = /@(\d+)/g;
+      const legacyMatches = [...processedInput.matchAll(atRegex)];
+      for (const m of legacyMatches) {
+        const sessionId = parseInt(m[1], 10);
+        const summary = await summarizeSession(sessionId, { openaiClient });
+        if (summary) {
+          // For legacy format, still replace inline for backward compatibility
+          processedInput = processedInput.replace(m[0], summary);
+        }
+      }
+
       // Analyze tags for user message
       const analyzer = new TagAnalyzer();
       let tags = [];
       try {
-        console.log('🏷️ Starting tag analysis for:', input.substring(0, 100) + '...');
-        tags = await analyzer.analyzeTags(input);
+        console.log('🏷️ Starting tag analysis for:', processedInput.substring(0, 100) + '...');
+        tags = await analyzer.analyzeTags(processedInput);
         console.log('🏷️ Tags generated:', tags);
         if (debugMode) {
           console.log('🏷️ Debug mode active, tags:', tags);
@@ -1763,18 +1997,77 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
       }
       
       // Create the new message object with timestamp and tags
-      const newMessage = { 
-        type: 'user', 
-        content: input,
+      const newMessage = {
+        type: 'user',
+        content: processedInput,
         tags,
         timestamp: new Date().toISOString()
       };
 
+      // Set session contexts for system prompt (temporarily for this call)
+      console.log('📄 Setting session contexts:', sessionContexts);
+      setCurrentSessionContexts(sessionContexts);
+
       // Add it to messages state
       await setMessages(prev => [...prev, newMessage]);
 
-      // Pass the content to Claude
-      await callClaude(newMessage.content);
+      // Create a temporary system prompt function with the contexts
+      const getSystemPromptWithContexts = () => {
+        let prompt = "";
+        
+        // Add advisor personas
+        const activeAdvisors = advisors.filter(a => a.active);
+        if (activeAdvisors.length > 0) {
+          prompt += `You are currently embodying the following advisors:\n${activeAdvisors.map(a => `\n${a.name}: ${a.description}`).join('\n')}\n\n`;
+          
+          prompt += `RESPONSE FORMAT: Use this exact structure for every advisor response:
+
+[ADVISOR: Advisor Name]
+optional action or emotional state on this line by itself
+
+Main response content starts here on a new line after a blank line.
+
+[ADVISOR: Another Advisor Name]
+another optional action line
+
+Another advisor's response content.
+
+FORMATTING RULES:
+1. Advisor name always goes in [ADVISOR: Name] brackets
+2. If you include an action/emotional description, it goes on its own line immediately after the advisor name
+3. Always leave one blank line before starting the main response content
+4. Use single line breaks within paragraphs, double line breaks between major sections
+5. Each advisor gets their own clearly separated section`;
+        }
+        // If no advisors are active, no system prompt is needed
+        
+        // Add session context from @ references
+        console.log('📄 getSystemPromptWithContexts - sessionContexts:', sessionContexts);
+        if (sessionContexts.length > 0) {
+          if (prompt) prompt += "\n\n";
+          prompt += "## REFERENCED CONVERSATION CONTEXTS\n\n";
+          prompt += "The user has referenced the following previous conversations for context:\n\n";
+          
+          sessionContexts.forEach((context, index) => {
+            const date = new Date(context.timestamp).toLocaleDateString();
+            prompt += `### Context ${index + 1}: "${context.title}" (Session ${context.sessionId}, ${date})\n`;
+            prompt += `${context.summary}\n\n`;
+          });
+          
+          prompt += "Use these conversation contexts to inform your response when relevant. The user's message may reference specific details from these conversations.\n";
+          console.log('📄 Added session contexts to system prompt');
+        } else {
+          console.log('📄 No session contexts to add');
+        }
+        
+        return prompt;
+      };
+
+      // Pass the content to Claude with enhanced system prompt
+      await callClaude(newMessage.content, getSystemPromptWithContexts);
+
+      // Clear session contexts after response
+      setCurrentSessionContexts([]);
 
     } catch (error) {
       console.error('Error in handleSubmit:', error);
@@ -1782,6 +2075,8 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
         type: 'system', 
         content: 'Error: Failed to get response from Claude' 
       }]);
+      // Clear session contexts on error
+      setCurrentSessionContexts([]);
     } finally {
       setIsLoading(false);
       setInput('');
@@ -1801,6 +2096,12 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
   useEffect(() => {
     focusInput();
   }, [messages, isLoading]);
+
+  // Load sessions for autocomplete
+  useEffect(() => {
+    const loadedSessions = loadSessions();
+    setSessions(loadedSessions);
+  }, [currentSessionId]); // Reload when session changes
 
   useEffect(() => {
     if (savedPrompts.length > 0) {
@@ -1842,23 +2143,32 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
     }]);
   };
 
-  const handleShowApiKeyStatus = async () => {
-    try {
-      const anthropicKey = await getDecrypted('space_anthropic_key');
-      const openaiKey = await getDecrypted('space_openai_key');
-      setMessages(prev => [...prev, {
-        type: 'system',
-        content: `API Keys Status:
-Anthropic: ${anthropicKey ? '✓ Set' : '✗ Not Set'}
-OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
-      }]);
-    } catch (error) {
-      setMessages(prev => [...prev, {
-        type: 'system',
-        content: `Error checking API keys: ${error.message}`
-      }]);
+  // Handle session selection from autocomplete
+  const handleSessionSelect = (session, title) => {
+    setSessionSelections(prev => new Map(prev.set(title, session)));
+  };
+
+  // Auto-generate summary for previous session when starting a new one
+  const generateSummaryForPreviousSession = async (prevSessionId) => {
+    if (!openaiClient || prevSessionId === currentSessionId) return;
+    
+    const sessionData = localStorage.getItem(`space_session_${prevSessionId}`);
+    if (!sessionData) return;
+    
+    const session = JSON.parse(sessionData);
+    const messageCount = session.messages.filter(m => m.type === 'user' || m.type === 'assistant').length;
+    
+    // Only generate summary for sessions with meaningful content that don't already have one
+    if (messageCount >= 4 && !session.summary) {
+      console.log(`📄 Auto-generating summary for completed session ${prevSessionId}`);
+      try {
+        await generateSessionSummary(session, openaiClient);
+      } catch (error) {
+        console.error('Error auto-generating summary:', error);
+      }
     }
   };
+
 
   // Prompt Library handlers
   const handleUsePrompt = (prompt) => {
@@ -1895,6 +2205,7 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
       content: `Added new prompt: "${name}"`
     }]);
     setShowAddPromptForm(false);
+    setShowPromptLibrary(true); // Reopen the prompt library after saving
   };
 
   // Add this helper function to format messages as markdown
@@ -1972,14 +2283,7 @@ Exported on: ${timestamp}\n\n`;
       .join("\n\n");
 
     try {
-      const response = await openaiClient.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [{
-          role: "system",
-          content: "You are a helpful assistant that responds only in valid JSON format."
-        }, {
-          role: "user",
-          content: `Based on this recent conversation exchange, suggest exactly 5 specific advisors who could add valuable perspective to this discussion.
+      const promptContent = `Based on this recent conversation exchange, suggest exactly 5 specific advisors who could add valuable perspective to this discussion.
 
 Please provide a balanced mix of:
 1. Real historical figures, thinkers, or experts (living or dead)
@@ -1998,13 +2302,28 @@ Fictional: "Hermione Granger", "Gandalf", "Tyrion Lannister"
 Recent conversation:
 ${recentMessages}
 
-Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor Name 3", "Advisor Name 4", "Advisor Name 5"]}`
+Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor Name 3", "Advisor Name 4", "Advisor Name 5"]}`;
+      
+      const inputTokens = Math.ceil((100 + promptContent.length) / 4); // Estimate input tokens
+      const response = await openaiClient.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [{
+          role: "system",
+          content: "You are a helpful assistant that responds only in valid JSON format."
+        }, {
+          role: "user",
+          content: promptContent
         }],
         max_tokens: 150,
         response_format: { type: "json_object" }
       });
 
       const suggestions = JSON.parse(response.choices[0].message.content);
+      
+      // Track usage
+      const outputTokens = Math.ceil(response.choices[0].message.content.length / 4);
+      trackUsage('gpt', inputTokens, outputTokens);
+      
       setAdvisorSuggestions(suggestions.suggestions || []);
     } catch (error) {
       console.error('Error generating advisor suggestions:', error);
@@ -2031,6 +2350,7 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
         
       if (!conversationText.trim()) return null;
       
+      const inputTokens = Math.ceil((200 + conversationText.length) / 4); // Estimate input tokens
       const response = await openaiClient.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [{
@@ -2044,7 +2364,13 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
         temperature: 0.7
       });
       
-      return response.choices[0].message.content.trim();
+      const title = response.choices[0].message.content.trim();
+      
+      // Track usage
+      const outputTokens = Math.ceil(title.length / 4);
+      trackUsage('gpt', inputTokens, outputTokens);
+      
+      return title;
     } catch (error) {
       console.error('Title generation failed:', error);
       return null;
@@ -2064,7 +2390,8 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
             tags: msg.tags || [] // Ensure tags are preserved
           })),
           metaphors,
-          questions,
+          // DEPRECATED: Questions feature temporarily disabled
+          // questions,
           advisorSuggestions
         };
 
@@ -2079,8 +2406,30 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
             sessionData.title = title;
           }
         } else if (hasTitle) {
-          // Preserve existing title
-          sessionData.title = JSON.parse(existingSession).title;
+          // Preserve existing title and existing summary
+          const existing = JSON.parse(existingSession);
+          sessionData.title = existing.title;
+          if (existing.summary) {
+            sessionData.summary = existing.summary;
+            sessionData.summaryTimestamp = existing.summaryTimestamp;
+            sessionData.summaryMessageCount = existing.summaryMessageCount;
+          }
+        }
+
+        // Auto-generate summary for long conversations (every 20 messages)
+        if (nonSystemMessages.length > 0 && nonSystemMessages.length % 20 === 0 && openaiClient) {
+          const existing = existingSession ? JSON.parse(existingSession) : null;
+          if (!existing?.summary || existing.summaryMessageCount < nonSystemMessages.length - 10) {
+            console.log(`📄 Auto-generating summary for long session ${currentSessionId} (${nonSystemMessages.length} messages)`);
+            try {
+              // Generate summary in background without blocking UI
+              setTimeout(async () => {
+                await generateSessionSummary(sessionData, openaiClient);
+              }, 1000);
+            } catch (error) {
+              console.error('Error auto-generating summary for long session:', error);
+            }
+          }
         }
 
         localStorage.setItem(`space_session_${currentSessionId}`, JSON.stringify(sessionData));
@@ -2088,7 +2437,7 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
 
       saveSession();
     }
-  }, [messages, metaphors, questions, advisorSuggestions, currentSessionId, openaiClient]);
+  }, [messages, metaphors, /* questions, */ advisorSuggestions, currentSessionId, openaiClient]);
 
   // Trigger analysis when messages change and we have a Claude response
   useEffect(() => {
@@ -2104,17 +2453,52 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
           debugMode,
           setMessages
         });
-        analyzeForQuestions(messages, {
-          enabled: questionsExpanded,
-          openaiClient,
-          setQuestions,
-          debugMode,
-          setMessages
-        });
+        // DEPRECATED: Questions feature temporarily disabled
+        // analyzeForQuestions(messages, {
+        //   enabled: questionsExpanded,
+        //   openaiClient,
+        //   setQuestions,
+        //   debugMode,
+        //   setMessages
+        // });
         analyzeAdvisorSuggestions(messages);
       }
     }
-  }, [messages, isLoading, metaphorsExpanded, questionsExpanded, advisorSuggestionsExpanded, openaiClient]);
+  }, [messages, isLoading, metaphorsExpanded, /* questionsExpanded, */ advisorSuggestionsExpanded, openaiClient]);
+
+  // Trigger metaphors analysis when expanded state changes
+  useEffect(() => {
+    if (metaphorsExpanded && messages.length > 0 && openaiClient) {
+      analyzeMetaphors(messages, {
+        enabled: metaphorsExpanded,
+        openaiClient,
+        setMetaphors,
+        debugMode,
+        setMessages
+      });
+    }
+  }, [metaphorsExpanded, openaiClient]);
+
+  // DEPRECATED: Questions feature temporarily disabled
+  // // Trigger questions analysis when expanded state changes
+  // useEffect(() => {
+  //   if (questionsExpanded && messages.length > 0 && openaiClient) {
+  //     analyzeForQuestions(messages, {
+  //       enabled: questionsExpanded,
+  //       openaiClient,
+  //       setQuestions,
+  //       debugMode,
+  //       setMessages
+  //     });
+  //   }
+  // }, [questionsExpanded, openaiClient]);
+
+  // Trigger advisor suggestions analysis when expanded state changes
+  useEffect(() => {
+    if (advisorSuggestionsExpanded && messages.length > 0 && openaiClient) {
+      analyzeAdvisorSuggestions(messages);
+    }
+  }, [advisorSuggestionsExpanded, openaiClient]);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -2300,12 +2684,6 @@ ${selectedText}
     return template.sections[currentSection].questions[currentQuestion].id;
   };
 
-  useEffect(() => {
-    setMessages([
-      { type: 'system', content: 'Welcome to SPACE - v0.2.1' },
-      { type: 'system', content: 'Start a conversation, add an advisor (+), or explore features in the bottom-left menu.' }
-    ]);
-  }, []);
 
   const exportAllSessions = () => {
     const sessions = [];
@@ -2335,7 +2713,16 @@ ${selectedText}
 
   return (
     <>
-      {!apiKeysSet ? (
+      {isInitializing ? (
+        // Loading state to prevent flash of wrong screen
+        <div className="w-full h-screen bg-black flex items-center justify-center">
+          <div className="text-green-400 animate-pulse">Loading SPACE Terminal...</div>
+        </div>
+      ) : showWelcome ? (
+        <WelcomeScreen 
+          onGetStarted={() => setShowWelcome(false)}
+        />
+      ) : !apiKeysSet ? (
         <ApiKeySetup 
           onComplete={({ anthropicKey, openaiKey }) => {
             const client = new OpenAI({
@@ -2345,13 +2732,14 @@ ${selectedText}
             setOpenaiClient(client);
             console.log('✅ OpenAI client initialized on API key setup complete');
             setApiKeysSet(true);
+            setShowWelcome(false); // Ensure welcome screen doesn't show again
           }} 
         />
       ) : (
         // Regular terminal UI
-        <div 
-          ref={terminalRef} 
-          className="w-full h-screen bg-gradient-to-b from-gray-900 to-black text-green-400 font-serif flex relative"
+        <div
+          ref={terminalRef}
+          className="w-full h-screen font-serif flex relative bg-gradient-to-b from-amber-50 to-amber-100 text-gray-800 dark:bg-gradient-to-b dark:from-gray-900 dark:to-black dark:text-green-400"
           onContextMenu={handleContextMenu}
           style={{
             /* Custom scrollbar styling for webkit browsers */
@@ -2359,56 +2747,10 @@ ${selectedText}
             scrollbarColor: '#374151 transparent'
           }}
         >
-          <style jsx>{`
-            /* Webkit scrollbar styling */
-            .scrollbar-terminal::-webkit-scrollbar {
-              width: 8px;
-              height: 8px;
-            }
-            
-            .scrollbar-terminal::-webkit-scrollbar-track {
-              background: transparent;
-            }
-            
-            .scrollbar-terminal::-webkit-scrollbar-thumb {
-              background: #374151;
-              border-radius: 4px;
-              border: none;
-            }
-            
-            .scrollbar-terminal::-webkit-scrollbar-thumb:hover {
-              background: #4b5563;
-            }
-            
-            .scrollbar-terminal::-webkit-scrollbar-corner {
-              background: transparent;
-            }
-          `}</style>
-          <button 
-            onClick={toggleFullscreen}
-            className="absolute top-2 right-2 text-green-400 hover:text-green-300 z-50"
-          >
-            {isFullscreen ? (
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
-              </svg>
-            )}
-          </button>
 
           {/* Left Column */}
-          <div className="w-1/4 p-4 border-r border-gray-800 overflow-y-auto scrollbar-terminal">
-            <CollapsibleModule 
-              title="Metaphors" 
-              items={metaphors}
-              expanded={metaphorsExpanded}
-              onToggle={() => setMetaphorsExpanded(!metaphorsExpanded)}
-            />
-            <div className="mt-4">
-              <GroupableModule
+          <div className="w-1/4 p-4 border-r border-gray-300 dark:border-gray-800 overflow-y-auto scrollbar-terminal">
+            <GroupableModule
                 title="Advisors"
                 groups={advisorGroups}
                 items={advisors}
@@ -2424,7 +2766,6 @@ ${selectedText}
                 setAdvisors={setAdvisors}
                 setMessages={setMessages}
               />
-            </div>
           </div>
 
           {/* Middle Column */}
@@ -2449,23 +2790,21 @@ ${selectedText}
                   <div 
                     key={idx}
                     id={`msg-${idx}`}
-                    className={(() => {
-                      const className = msg.type === 'debug' ? 'text-yellow-400 mb-4 whitespace-pre-wrap break-words' :
-                        msg.type === 'user' ? 'text-green-400 mb-4 whitespace-pre-wrap break-words' :
-                        msg.type === 'assistant' ? 'text-white mb-4 break-words' : 
-                        msg.type === 'system' ? 'text-green-400 mb-4 break-words' :
-                        'text-green-400 mb-4 break-words';
-                      return className;
-                    })()}
+                    className={`mb-4 break-words ${
+                      msg.type === 'user' ? 'text-green-600 dark:text-green-400 whitespace-pre-wrap' : 
+                      msg.type === 'assistant' ? 'text-gray-800 dark:text-gray-200' : 
+                      msg.type === 'system' ? 'text-gray-800 dark:text-gray-200' : 
+                      msg.type === 'debug' ? 'text-amber-600 dark:text-amber-400 whitespace-pre-wrap' : 'text-green-600 dark:text-green-400 whitespace-pre-wrap'
+                    }`}
                   >
                     {(msg.type === 'system' || msg.type === 'assistant') ? (
-                    <MemoizedMarkdownMessage content={msg.content} />
+                      <MemoizedMarkdownMessage content={msg.content} advisors={advisors} />
                     ) : (
                       msg.content
                     )}
                   </div>
               ))}
-              {isLoading && <div className="text-yellow-400">Loading...</div>}
+              {isLoading && <div className="text-amber-600 dark:text-amber-400">Loading...</div>}
             </div>
 
             <div className="mt-auto">
@@ -2477,9 +2816,12 @@ ${selectedText}
                         value={editText}
                         onChange={(e) => setEditText(e.target.value)}
                         onKeyDown={handleEditKeyDown}
-                        className="w-full h-40 bg-black text-green-400 font-serif p-2 border border-green-400 focus:outline-none resize-none"
+                        className="w-full h-40 bg-white text-gray-800 font-serif p-2 border border-gray-300 focus:outline-none resize-none dark:bg-black dark:text-green-400 dark:border-green-400"
                         placeholder="Edit your prompt..."
                         autoFocus
+                        autoComplete="off"
+                        spellCheck="true"
+                        data-role="text-editor"
                       />
                     </div>
                   ) : editingAdvisor ? (
@@ -2509,9 +2851,12 @@ ${selectedText}
                             }]);
                           }
                         }}
-                        className="w-full h-40 bg-black text-green-400 font-serif p-2 border border-green-400 focus:outline-none resize-none"
+                        className="w-full h-40 bg-white text-gray-800 font-serif p-2 border border-gray-300 focus:outline-none resize-none dark:bg-black dark:text-green-400 dark:border-green-400"
                         placeholder="Edit advisor description..."
                         autoFocus
+                        autoComplete="off"
+                        spellCheck="true"
+                        data-role="text-editor"
                       />
                     </div>
                   ) : (
@@ -2522,6 +2867,8 @@ ${selectedText}
                         onChange={(e) => setInput(e.target.value)}
                         onSubmit={handleSubmit}
                         isLoading={isLoading}
+                        sessions={sessions}
+                        onSessionSelect={handleSessionSelect}
                       />
                     </>
                   )}
@@ -2531,12 +2878,12 @@ ${selectedText}
           </div>
 
           {/* Right Column */}
-          <div className="w-1/4 p-4 border-l border-gray-800 overflow-y-auto scrollbar-terminal">
+          <div className="w-1/4 p-4 border-l border-gray-300 dark:border-gray-800 overflow-y-auto scrollbar-terminal">
             <CollapsibleModule 
-              title="Questions" 
-              items={questions}
-              expanded={questionsExpanded}
-              onToggle={() => setQuestionsExpanded(!questionsExpanded)}
+              title="Metaphors" 
+              items={metaphors}
+              expanded={metaphorsExpanded}
+              onToggle={() => setMetaphorsExpanded(!metaphorsExpanded)}
             />
             <div className="mt-4">
               <CollapsibleSuggestionsModule
@@ -2552,10 +2899,12 @@ ${selectedText}
           {showAdvisorForm && (
             <AdvisorForm
               initialName={suggestedAdvisorName}
-              onSubmit={({ name, description }) => {
+              existingAdvisors={advisors}
+              onSubmit={({ name, description, color }) => {
                 const newAdvisor = {
                   name,
                   description,
+                  color,
                   active: true
                 };
                 setAdvisors(prev => [...prev, newAdvisor]);
@@ -2580,10 +2929,10 @@ ${selectedText}
           {editingAdvisor && (
             <EditAdvisorForm
               advisor={editingAdvisor}
-              onSubmit={({ name, description }) => {
+              onSubmit={({ name, description, color }) => {
                 setAdvisors(prev => prev.map(a => 
                   a.name === editingAdvisor.name 
-                    ? { ...a, name, description }
+                    ? { ...a, name, description, color }
                     : a
                 ));
                 setMessages(prev => [...prev, {
@@ -2628,6 +2977,41 @@ ${selectedText}
               }}
             />
           )}
+          {/* Accordion Menu - Bottom Left */}
+          <AccordionMenu
+            onSettingsClick={() => setShowSettingsMenu(true)}
+            onPromptLibraryClick={() => setShowPromptLibrary(true)}
+            onSessionManagerClick={() => setShowSessionPanel(true)}
+            onNewSessionClick={handleNewSession}
+            onExportClick={() => setShowExportMenu(true)}
+            onDossierClick={() => setShowDossierModal(true)}
+            onImportExportAdvisorsClick={() => setShowImportExportModal(true)}
+            onHelpClick={() => setShowHelpModal(true)}
+            onFullscreenClick={toggleFullscreen}
+            isFullscreen={isFullscreen}
+          />
+
+          {/* Info Button - Bottom Right */}
+          <div className="fixed bottom-4 right-4 z-50">
+            <button
+              className="flex items-center justify-center w-8 h-8 rounded-full bg-black border border-green-400 text-green-400 hover:bg-green-400 hover:text-black transition-colors"
+              title="About SPACE Terminal"
+              onClick={() => setShowInfoModal(true)}
+            >
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                className="h-5 w-5" 
+                viewBox="0 0 20 20" 
+                fill="currentColor"
+              >
+                <path 
+                  fillRule="evenodd" 
+                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" 
+                  clipRule="evenodd" 
+                />
+              </svg>
+            </button>
+          </div>
         </div>
       )}
 
@@ -2642,7 +3026,10 @@ ${selectedText}
         maxTokens={maxTokens}
         setMaxTokens={setMaxTokens}
         onClearApiKeys={handleClearApiKeys}
-        onShowApiKeyStatus={handleShowApiKeyStatus}
+        theme={theme}
+        toggleTheme={toggleTheme}
+        paragraphSpacing={paragraphSpacing}
+        setParagraphSpacing={setParagraphSpacing}
       />
 
       {/* Prompt Library Component */}
@@ -2671,7 +3058,6 @@ ${selectedText}
         onNewSession={handleNewSession}
         onLoadSession={handleLoadSession}
         onLoadPrevious={handleLoadPrevious}
-        onClearTerminal={handleClearTerminal}
         onResetAllSessions={handleResetAllSessions}
         onDeleteSession={handleDeleteSession}
       />
@@ -2693,40 +3079,31 @@ ${selectedText}
         })()}
       />
 
-      {/* Accordion Menu - Bottom Left */}
-      <AccordionMenu
-        onSettingsClick={() => setShowSettingsMenu(true)}
-        onPromptLibraryClick={() => setShowPromptLibrary(true)}
-        onSessionManagerClick={() => setShowSessionPanel(true)}
-        onExportClick={() => setShowExportMenu(true)}
+      <DossierModal
+        isOpen={showDossierModal}
+        onClose={() => setShowDossierModal(false)}
+        onJumpToSession={(sessionId) => {
+          setShowDossierModal(false);
+          handleLoadSession(sessionId);
+        }}
       />
 
-      {/* Info Button - Bottom Right */}
-      <div className="fixed bottom-4 right-4 z-50">
-        <button
-          className="flex items-center justify-center w-8 h-8 rounded-full bg-black border border-green-400 text-green-400 hover:bg-green-400 hover:text-black transition-colors"
-          title="About SPACE Terminal"
-          onClick={() => {
-            setMessages(prev => [...prev, {
-              type: 'system',
-              content: 'SPACE Terminal v0.2.1 - An experimental interface for conversations with AI advisors.'
-            }]);
-          }}
-        >
-          <svg 
-            xmlns="http://www.w3.org/2000/svg" 
-            className="h-5 w-5" 
-            viewBox="0 0 20 20" 
-            fill="currentColor"
-          >
-            <path 
-              fillRule="evenodd" 
-              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" 
-              clipRule="evenodd" 
-            />
-          </svg>
-        </button>
-      </div>
+      <ImportExportModal
+        isOpen={showImportExportModal}
+        onClose={() => setShowImportExportModal(false)}
+        advisors={advisors}
+        onImport={handleAdvisorImport}
+      />
+
+      <HelpModal
+        isOpen={showHelpModal}
+        onClose={() => setShowHelpModal(false)}
+      />
+
+      <InfoModal
+        isOpen={showInfoModal}
+        onClose={() => setShowInfoModal(false)}
+      />
     </>
   );
 }
