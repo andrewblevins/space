@@ -149,7 +149,7 @@ const WelcomeScreen = ({ onGetStarted }) => {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
-                <span>~2¢ per chat</span>
+                <span>~3-4¢ per message</span>
               </div>
             </div>
           </div>
