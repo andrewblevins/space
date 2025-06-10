@@ -168,8 +168,8 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
         const errorObj = JSON.parse(errorText);
         if (errorObj.error?.message) {
           const message = errorObj.error.message;
-          if (message.includes("maximum of 100 PDF pages")) {
-            friendlyError = "PDF file is too large (maximum 100 pages allowed). Please upload a smaller PDF.";
+          if (message.includes("maximum of 100 PDF pages") || message.includes("100 PDF pages may be provided")) {
+            friendlyError = "PDF has too many pages (maximum 100 pages allowed). Please upload a shorter PDF or split it into smaller sections.";
           } else if (message.includes("maximum file size")) {
             friendlyError = "File is too large. Images must be under 3.75MB, documents under 4.5MB.";
           } else if (message.includes("Input should be 'application/pdf'")) {

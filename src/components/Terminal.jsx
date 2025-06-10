@@ -2085,7 +2085,10 @@ FORMATTING RULES:
       if (file.type?.startsWith('image/') && file.size > 3.75 * 1024 * 1024) {
         error = "Image too large (max 3.75MB)";
       } else if (file.type === 'application/pdf' && file.size > 4.5 * 1024 * 1024) {
-        error = "PDF too large (max 4.5MB)";
+        error = "PDF too large (max 4.5MB and 100 pages)";
+      } else if (file.type === 'application/pdf' && file.size > 2 * 1024 * 1024) {
+        // Warn for PDFs over 2MB as they might exceed 100 pages
+        console.warn('⚠️ Large PDF detected. Note: PDFs are limited to 100 pages regardless of file size.');
       } else if (!file.type?.startsWith('image/') && file.type !== 'application/pdf' && !file.type?.includes('text') && file.size > 4.5 * 1024 * 1024) {
         error = "Document too large (max 4.5MB)";
       }
