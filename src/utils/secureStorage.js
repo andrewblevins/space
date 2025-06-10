@@ -77,31 +77,23 @@ const getEncryptionPassword = async (forDecryption = false) => {
   // If we already have the password in memory, use it
   if (encryptionPassword) return encryptionPassword;
   
-  // Check for valid session first (only for decryption)
-  if (forDecryption && hasValidSession()) {
-    // Try to use session - if user has a valid session, prompt for session validation
-    const sessionMessage = "🔓 Session found. Enter your password to continue.";
+  // Check for valid session first (only for decryption) and try to restore silently
+  if (forDecryption && hasSessionToken()) {
+    console.log('🔓 Session token found, attempting silent restoration...');
     
     try {
-      if (modalController) {
-        const result = await modalController.requestPassword({
-          message: sessionMessage,
-          showResetOption: false,
-          isSessionValidation: true
-        });
-        
-        const password = typeof result === 'string' ? result : result.password;
-        
-        if (password && validateSession(password)) {
-          encryptionPassword = password;
-          return password;
-        } else {
-          // Invalid session password, clear session and continue with normal flow
-          clearSession();
-        }
+      const restoredPassword = tryRestoreSession();
+      if (restoredPassword) {
+        console.log('✅ Session restored successfully');
+        encryptionPassword = restoredPassword;
+        return restoredPassword;
+      } else {
+        console.log('❌ Session restoration failed, prompting for password');
+        // Clear invalid session
+        clearSession();
       }
     } catch (error) {
-      // If session validation fails, clear session and continue
+      console.error('Session restoration error:', error);
       clearSession();
     }
   }
@@ -288,25 +280,70 @@ export const removeEncrypted = (key) => {
 };
 
 /**
- * Generates a simple session token based on password and timestamp
- * @param {string} password - The user's password
- * @returns {string} Session token
+ * Generates a session key for encrypting session data independently of user password
+ * @returns {string} Random session key
  */
-const generateSessionToken = (password) => {
-  const timestamp = Date.now();
-  const tokenData = JSON.stringify({ password, timestamp });
-  return CryptoJS.AES.encrypt(tokenData, password + ENCRYPTION_SALT).toString();
+const generateSessionKey = () => {
+  return CryptoJS.lib.WordArray.random(32).toString();
 };
 
 /**
- * Validates and extracts data from a session token
- * @param {string} token - The session token to validate
- * @param {string} password - The password to decrypt with
- * @returns {Object|null} Token data if valid, null if invalid or expired
+ * Generates a session token with timestamp for expiration checking
+ * @param {string} password - The user's password
+ * @returns {string} Session token with format: timestamp.sessionKey.encryptedData
  */
-const validateSessionToken = (token, password) => {
+const generateSessionToken = (password) => {
+  const timestamp = Date.now();
+  const sessionKey = generateSessionKey();
+  const tokenData = JSON.stringify({ password, timestamp });
+  const encrypted = CryptoJS.AES.encrypt(tokenData, sessionKey + ENCRYPTION_SALT).toString();
+  
+  // Store timestamp and sessionKey separately for validation without password
+  return `${timestamp}.${sessionKey}.${encrypted}`;
+};
+
+/**
+ * Checks if a session token is expired without requiring password
+ * @param {string} token - The session token in format: timestamp.sessionKey.encryptedData
+ * @returns {boolean} True if token is not expired
+ */
+const isSessionTokenExpired = (token) => {
   try {
-    const decrypted = CryptoJS.AES.decrypt(token, password + ENCRYPTION_SALT);
+    const parts = token.split('.');
+    if (parts.length < 3) return true; // Invalid format (need timestamp, sessionKey, encryptedData)
+    
+    const timestamp = parseInt(parts[0]);
+    if (isNaN(timestamp)) return true; // Invalid timestamp
+    
+    const now = Date.now();
+    const tokenAge = now - timestamp;
+    
+    return tokenAge > SESSION_DURATION;
+  } catch (error) {
+    return true; // Consider invalid tokens as expired
+  }
+};
+
+/**
+ * Extracts the password from a session token without requiring the password
+ * @param {string} token - The session token in format: timestamp.sessionKey.encryptedData
+ * @returns {string|null} The stored password if token is valid, null otherwise
+ */
+export const extractPasswordFromSession = (token) => {
+  try {
+    // Check expiration first without decryption
+    if (isSessionTokenExpired(token)) {
+      return null; // Token expired
+    }
+    
+    const parts = token.split('.');
+    if (parts.length < 3) return null; // Invalid format
+    
+    const timestamp = parts[0];
+    const sessionKey = parts[1];
+    const encryptedData = parts.slice(2).join('.'); // Rejoin in case there are dots in encrypted data
+    
+    const decrypted = CryptoJS.AES.decrypt(encryptedData, sessionKey + ENCRYPTION_SALT);
     const decryptedString = decrypted.toString(CryptoJS.enc.Utf8);
     
     // Check if decryption actually produced valid data
@@ -321,15 +358,39 @@ const validateSessionToken = (token, password) => {
       return null; // Invalid token structure
     }
     
-    // Check if token is expired
-    const now = Date.now();
-    const tokenAge = now - tokenData.timestamp;
-    
-    if (tokenAge > SESSION_DURATION) {
-      return null; // Token expired
+    return tokenData.password;
+  } catch (error) {
+    console.error("Session password extraction error:", error);
+    return null; // Invalid token
+  }
+};
+
+/**
+ * Validates and extracts data from a session token (legacy function for compatibility)
+ * @param {string} token - The session token to validate
+ * @param {string} password - The password to validate against (now optional)
+ * @returns {Object|null} Token data if valid, null if invalid or expired
+ */
+const validateSessionToken = (token, password = null) => {
+  try {
+    const extractedPassword = extractPasswordFromSession(token);
+    if (!extractedPassword) {
+      return null;
     }
     
-    return tokenData;
+    // If password is provided, verify it matches
+    if (password && extractedPassword !== password) {
+      return null;
+    }
+    
+    // Parse timestamp from token
+    const parts = token.split('.');
+    const timestamp = parseInt(parts[0]);
+    
+    return {
+      password: extractedPassword,
+      timestamp: timestamp
+    };
   } catch (error) {
     console.error("Session token validation error:", error);
     return null; // Invalid token
@@ -346,24 +407,86 @@ export const createSession = (password) => {
 };
 
 /**
- * Checks if there's a valid session token
- * @returns {boolean} True if a session token exists (doesn't validate password)
+ * Checks if there's a valid (non-expired) session token
+ * @returns {boolean} True if a session token exists and is not expired
  */
-export const hasValidSession = () => {
+export const hasSessionToken = () => {
   const token = localStorage.getItem(SESSION_STORAGE_KEY);
   if (!token) return false;
   
   try {
-    // Parse token metadata to check expiration without decrypting
-    const tokenParts = token.split('.');
-    if (tokenParts.length < 2) return false;
+    // Check if token exists and has the expected format (timestamp.sessionKey.encryptedData)
+    const parts = token.split('.');
+    if (parts.length < 3 || token.length <= 20) return false;
     
-    // For now, just check if token exists and isn't obviously corrupted
-    return token.length > 10;
+    // Check expiration without requiring password
+    if (isSessionTokenExpired(token)) {
+      localStorage.removeItem(SESSION_STORAGE_KEY); // Clean up expired token
+      return false;
+    }
+    
+    return true;
   } catch (error) {
     localStorage.removeItem(SESSION_STORAGE_KEY);
     return false;
   }
+};
+
+/**
+ * Checks if there's a valid session token (deprecated - use hasSessionToken instead)
+ * @returns {boolean} True if a session token exists (doesn't validate password)
+ * @deprecated Use hasSessionToken instead for clarity
+ */
+export const hasValidSession = hasSessionToken;
+
+/**
+ * Attempts to restore a session by extracting the password from a valid session token
+ * @returns {string|null} The password if session is valid, null otherwise
+ */
+export const tryRestoreSession = () => {
+  if (!hasSessionToken()) {
+    return null;
+  }
+  
+  try {
+    const token = localStorage.getItem(SESSION_STORAGE_KEY);
+    const password = extractPasswordFromSession(token);
+    
+    if (password) {
+      // Set the password in memory so subsequent operations can use it
+      encryptionPassword = password;
+      return password;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error("Session restoration failed:", error);
+    clearSession();
+    return null;
+  }
+};
+
+/**
+ * Attempts to validate the current session silently using any password already in memory
+ * @returns {boolean} True if session is valid and not expired
+ */
+export const canUseExistingSession = () => {
+  if (!encryptionPassword || !hasSessionToken()) {
+    return false;
+  }
+  
+  try {
+    const token = localStorage.getItem(SESSION_STORAGE_KEY);
+    const tokenData = validateSessionToken(token, encryptionPassword);
+    
+    if (tokenData && tokenData.password === encryptionPassword) {
+      return true;
+    }
+  } catch (error) {
+    console.error("Silent session validation failed:", error);
+  }
+  
+  return false;
 };
 
 /**
