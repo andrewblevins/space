@@ -91,6 +91,12 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
 
     const systemPromptText = customGetSystemPrompt ? customGetSystemPrompt() : getSystemPrompt();
     
+    // Debug logging for file uploads
+    if (uploadedFiles.length > 0) {
+      console.log('📎 Sending files to Claude:', uploadedFiles.map(f => ({ name: f.name, type: f.type, status: f.status })));
+      console.log('📎 User content structure:', userContent);
+    }
+    
     // Calculate input tokens for tracking
     const systemTokens = estimateTokens(systemPromptText);
     const contextTokens = contextMessages.reduce((s, m) => s + estimateTokens(m.content), 0);
@@ -133,7 +139,26 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
         window.location.reload();
         return;
       }
-      throw new Error(`API Error (${response.status}): ${errorText}`);
+      // Parse and improve file upload error messages
+      let friendlyError = errorText;
+      try {
+        const errorObj = JSON.parse(errorText);
+        if (errorObj.error?.message) {
+          const message = errorObj.error.message;
+          if (message.includes("maximum of 100 PDF pages")) {
+            friendlyError = "PDF file is too large (maximum 100 pages allowed). Please upload a smaller PDF.";
+          } else if (message.includes("maximum file size")) {
+            friendlyError = "File is too large. Images must be under 3.75MB, documents under 4.5MB.";
+          } else if (message.includes("unsupported file type")) {
+            friendlyError = "Unsupported file type. Please upload images (JPEG, PNG, GIF, WebP) or documents (PDF, TXT).";
+          } else {
+            friendlyError = message;
+          }
+        }
+      } catch (parseError) {
+        // If JSON parsing fails, use original error
+      }
+      throw new Error(`File Upload Error: ${friendlyError}`);
     }
 
     const reader = response.body.getReader();

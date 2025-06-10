@@ -2065,29 +2065,67 @@ FORMATTING RULES:
 
   // File upload handlers
   const handleFilesAttached = async (files) => {
-    const newFiles = Array.from(files).map((file, index) => ({
-      id: `temp_${Date.now()}_${index}`,
-      name: file.name,
-      type: file.type,
-      size: file.size,
-      file: file,
-      status: 'uploading'
-    }));
+    const newFiles = [];
     
-    // Add files to state with uploading status
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const fileObj = {
+        id: `temp_${Date.now()}_${i}`,
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        file: file,
+        status: 'uploading'
+      };
+      
+      // Client-side validation
+      let error = null;
+      
+      // Check file size limits
+      if (file.type?.startsWith('image/') && file.size > 3.75 * 1024 * 1024) {
+        error = "Image too large (max 3.75MB)";
+      } else if (file.type === 'application/pdf' && file.size > 4.5 * 1024 * 1024) {
+        error = "PDF too large (max 4.5MB)";
+      } else if (!file.type?.startsWith('image/') && file.type !== 'application/pdf' && !file.type?.includes('text') && file.size > 4.5 * 1024 * 1024) {
+        error = "Document too large (max 4.5MB)";
+      }
+      
+      // Check file type
+      const supportedTypes = [
+        'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
+        'application/pdf',
+        'text/plain', 'text/markdown', 'text/csv',
+        'application/json', 'text/html', 'application/xml'
+      ];
+      
+      if (!supportedTypes.includes(file.type) && !file.type?.startsWith('image/') && !file.type?.includes('text')) {
+        error = "Unsupported file type. Please upload images, PDFs, or text documents.";
+      }
+      
+      if (error) {
+        fileObj.status = 'error';
+        fileObj.error = error;
+      }
+      
+      newFiles.push(fileObj);
+    }
+    
+    // Add files to state with uploading or error status
     setAttachedFiles(prev => [...prev, ...newFiles]);
     
-    // TODO: Implement Claude Files API upload
-    // For now, just simulate upload success after 2 seconds
-    setTimeout(() => {
-      setAttachedFiles(prev => 
-        prev.map(f => 
-          newFiles.some(nf => nf.id === f.id) 
-            ? { ...f, status: 'uploaded', id: `file_${f.id}` }
-            : f
-        )
-      );
-    }, 2000);
+    // Simulate upload for valid files
+    const validFiles = newFiles.filter(f => f.status === 'uploading');
+    if (validFiles.length > 0) {
+      setTimeout(() => {
+        setAttachedFiles(prev => 
+          prev.map(f => 
+            validFiles.some(vf => vf.id === f.id) 
+              ? { ...f, status: 'uploaded', id: `file_${f.id}` }
+              : f
+          )
+        );
+      }, 2000);
+    }
   };
 
   const handleFileRemoved = (fileId) => {
