@@ -2211,13 +2211,11 @@ Choose the categories most appropriate, tonally and practically, for the convers
 
 Be sensitive to the content and tone of the conversation. If the conversation is a serious discussion of a difficult situation, make serious, practical suggestions. If the conversation is playful or humorous, make playful, original advisor suggestions.
 
+Always assume the user is highly intelligent, well-educated, and wants the most targeted and effective advisor for their situation.
+
 Focus on advisors who would bring genuinely different perspectives, challenge assumptions, or offer specialized knowledge that could deepen the exploration.
 
-Examples of good suggestions by category:
-Real People: "Carl Jung", "Marie Kondo", "Socrates", "Maya Angelou"
-Mythic Figures: "Athena", "Thoth", "Coyote", "Quan Yin"
-Role-Based: "Somatic Therapist", "Cracked Front-End Engineer", "Village Elder"
-Fictional: "Hermione Granger", "Gandalf", "Tyrion Lannister"
+When writing role-based titles, write them simply without articles. Use as much specificity as the context warrants.
 
 Do NOT include parenthetical descriptions of the advisors, or anything other than a name or role.
 
