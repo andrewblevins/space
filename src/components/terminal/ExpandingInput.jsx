@@ -240,7 +240,28 @@ export function ExpandingInput({ value, onChange, onSubmit, isLoading, sessions 
               <span className="text-green-700 dark:text-green-400">
                 {file.type?.startsWith('image/') ? '🖼️' : file.type?.includes('pdf') ? '📄' : '📎'} {file.name}
               </span>
-              {onFileRemoved && (
+              
+              {/* Upload status indicator */}
+              {file.status === 'uploading' && (
+                <div className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
+                  <div className="animate-spin rounded-full h-3 w-3 border-b border-amber-600 dark:border-amber-400"></div>
+                  <span className="text-xs">Uploading...</span>
+                </div>
+              )}
+              
+              {file.status === 'uploaded' && (
+                <span className="text-green-600 dark:text-green-400 text-xs" title="Successfully uploaded">
+                  ✓
+                </span>
+              )}
+              
+              {file.status === 'error' && (
+                <span className="text-red-600 dark:text-red-400 text-xs" title={file.error || "Upload failed"}>
+                  ⚠️
+                </span>
+              )}
+              
+              {onFileRemoved && file.status !== 'uploading' && (
                 <button
                   onClick={() => onFileRemoved(file.id || index)}
                   className="text-green-600 hover:text-red-600 dark:text-green-400 dark:hover:text-red-400 transition-colors"

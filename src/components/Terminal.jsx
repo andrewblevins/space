@@ -141,6 +141,7 @@ const Terminal = ({ theme, toggleTheme }) => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [metaphors, setMetaphors] = useState([]);
+  const [attachedFiles, setAttachedFiles] = useState([]);
   // DEPRECATED: Questions feature temporarily disabled - can be reactivated by uncommenting
   // const [questions, setQuestions] = useState([]);
   const [currentSessionId, setCurrentSessionId] = useState(getNextSessionId());
@@ -2006,6 +2007,7 @@ FORMATTING RULES:
     } finally {
       setIsLoading(false);
       setInput('');
+      setAttachedFiles([]);
       focusInput();
     }
   };
@@ -2059,6 +2061,37 @@ FORMATTING RULES:
       type: 'system',
       content: 'API keys cleared. Please restart the terminal.'
     }]);
+  };
+
+  // File upload handlers
+  const handleFilesAttached = async (files) => {
+    const newFiles = Array.from(files).map((file, index) => ({
+      id: `temp_${Date.now()}_${index}`,
+      name: file.name,
+      type: file.type,
+      size: file.size,
+      file: file,
+      status: 'uploading'
+    }));
+    
+    // Add files to state with uploading status
+    setAttachedFiles(prev => [...prev, ...newFiles]);
+    
+    // TODO: Implement Claude Files API upload
+    // For now, just simulate upload success after 2 seconds
+    setTimeout(() => {
+      setAttachedFiles(prev => 
+        prev.map(f => 
+          newFiles.some(nf => nf.id === f.id) 
+            ? { ...f, status: 'uploaded', id: `file_${f.id}` }
+            : f
+        )
+      );
+    }, 2000);
+  };
+
+  const handleFileRemoved = (fileId) => {
+    setAttachedFiles(prev => prev.filter(f => f.id !== fileId));
   };
 
   // Handle session selection from autocomplete
@@ -2803,6 +2836,9 @@ ${selectedText}
                         isLoading={isLoading}
                         sessions={sessions}
                         onSessionSelect={handleSessionSelect}
+                        attachedFiles={attachedFiles}
+                        onFilesAttached={handleFilesAttached}
+                        onFileRemoved={handleFileRemoved}
                       />
                     </>
                   )}
