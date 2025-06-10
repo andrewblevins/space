@@ -72,42 +72,27 @@ This will send a basic starting prompt for the conversation.
 - **Prompts Library**: A library of prompts you can add to, edit, and delete. Also includes a handful of default suggestions
 
 - **Capture**: Right click selected text to capture and save to a Markdown file
+- **@ References**: Use `@<session_id>` in a message to insert a brief summary of that past session
+- **Debug**: Use the settings menu (gear icon, bottom-left) to toggle debug mode and see what's being sent to Claude plus estimated costs.
 
-- **Debug**: Activate `/debug` to see what's being sent to Claude as well as the estimated cost of each message.
+## Interface
 
-## Available Commands
+SPACE has moved to a **fully GUI-based interface** for ease of use. All functionality is accessible through:
 
-Enter `/help` anytime to see this list of commands in the terminal.
+- **Settings Menu**: Click the gear icon (bottom-left) for debug mode, token limits, API key management
+- **Advisors Panel**: Left sidebar for creating, editing, and selecting AI advisors  
+- **Conversation**: Main terminal area for natural conversation
+- **Export Menu**: Click export icon for saving conversations in markdown format
+- **Prompts Library**: Access saved prompts through the interface
 
-### Session Management
-- `/new` - Start a new session
-- `/sessions` - List all sessions and their numbers
-- `/load <id>` - Load a specific session (id = session number)
-- `/load previous` - Load the most recent session
+### Legacy Commands
 
-### Advisor Management
-- `/advisor` - Show available advisor commands
-- `/advisor add` - Add a new advisor
-- `/advisor edit` - Edit an advisor
-- `/advisor remove` - Remove an advisor
-- `/advisor list` - List all advisors
+Some terminal commands are still available for power users:
+- `/new` - Start a new session  
+- `/debug` - Toggle debug mode
+- `/help` - Show available commands
 
-### Group Management
-- `/group create <group_name>` - Create a new advisor group (e.g. `/group create Psychologists`)
-- `/group add <group_name> <advisor>` - Add an advisor to a group (e.g. `/group add Psychologists Carl Jung`)
-- `/group remove <group_name> <advisor>` - Remove an advisor from a group
-- `/group list` - List all advisor groups and their members
-
-### Save and Use Prompts
-- `/prompt add "name" <text>` - Save a new prompt
-- `/prompt list` - Show all saved prompts
-- `/prompt use "name"` - Use a saved prompt
-- `/prompt edit "name"` - Edit an existing prompt
-- `/prompt delete "name"` - Delete a saved prompt
-
-### Settings
-- `/context limit <number>` - Set token limit for context management (default: 150,000)
-- `/response length <number>` - Set maximum length for Claude responses (default: 4,096, max: 8,192)
+*Note: Advisor sharing, group management, and most other features are now handled through the graphical interface rather than slash commands.*
 
 ## Roadmap
 
@@ -115,11 +100,11 @@ Enter `/help` anytime to see this list of commands in the terminal.
 - [ ] Model selection and configuration 
 - [ ] Better memory / context management system
 - [ ] More conversation analysis tools (interpersonal patterns, Kegan stages, etc.?)
-- [ ] Ways to share advisors with your friends
+- [x] Advisor sharing through file import/export
 
 ## Cost Expectations
 
-SPACE Terminal is very cost-effective to use. For instance, an hour-long deep discussion may run about $0.25-30 (possibly up to a dollar if you send messages very fast). Each message exchange (your message + AI response) costs roughly 2¢ on average. Starting with $5 in each API account will easily give you several hours of conversation. Use the '/debug' command to monitor estimated costs in real-time.
+SPACE Terminal is very cost-effective to use. For instance, an hour-long deep discussion may run about $0.25-30 (possibly up to a dollar if you send messages very fast). Each message exchange (your message + AI response) costs roughly 2¢ on average. Starting with $5 in each API account will easily give you several hours of conversation. Use debug mode in the settings menu to monitor estimated costs in real-time.
 
 ## Support
 

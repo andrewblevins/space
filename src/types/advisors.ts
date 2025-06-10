@@ -3,6 +3,7 @@ type Advisor = {
   description: string;
   active: boolean;
   groups?: string[];
+  color?: string;
 };
 
 type AdvisorGroup = {

@@ -11,16 +11,19 @@ const PasswordModal = ({
   showResetOption = false,
   onReset = null,
   attemptCount = 0,
-  maxAttempts = 3
+  maxAttempts = 3,
+  isCreatingPassword = false
 }) => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
 
   // Clear password when modal closes
   useEffect(() => {
     if (!isOpen) {
       setPassword('');
       setError('');
+      setRememberMe(false);
     }
   }, [isOpen]);
 
@@ -36,7 +39,7 @@ const PasswordModal = ({
       setError('Password is required');
       return;
     }
-    onSubmit(password);
+    onSubmit(password, rememberMe);
   };
 
   if (!isOpen) return null;
@@ -44,7 +47,9 @@ const PasswordModal = ({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
       <div className="bg-gray-900 border border-green-400 p-6 rounded-lg w-full max-w-md">
-        <h2 className="text-green-400 text-xl mb-4">Password Required</h2>
+        <h2 className="text-green-400 text-xl mb-4">
+          {isCreatingPassword ? 'Create Password' : 'Password Required'}
+        </h2>
         
         {error && (
           <div className="bg-red-900/50 border border-red-400 text-red-400 p-2 mb-4 rounded">
@@ -68,8 +73,22 @@ const PasswordModal = ({
           className="w-full bg-black text-green-400 border border-green-400 p-2 mb-4 focus:outline-none"
           placeholder="Enter password"
           data-testid="password-input"
+          autoComplete={isCreatingPassword ? "new-password" : "current-password"}
           autoFocus
         />
+
+        <div className="flex items-center mb-4">
+          <input
+            type="checkbox"
+            id="remember-me"
+            checked={rememberMe}
+            onChange={(e) => setRememberMe(e.target.checked)}
+            className="mr-2 rounded border-green-400 text-green-400 focus:ring-green-400"
+          />
+          <label htmlFor="remember-me" className="text-green-400 text-sm">
+            Remember me for 7 days
+          </label>
+        </div>
 
         <div className="flex justify-end space-x-4">
           {showResetOption && onReset && (

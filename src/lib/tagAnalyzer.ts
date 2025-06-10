@@ -1,45 +1,19 @@
 import { OpenAI } from 'openai';
 import { getDecrypted } from '../utils/secureStorage';
+import { Tag } from '../types/tags';
+import { trackUsage } from '../utils/usageTracking';
 
-// Improved prompt for better entity and topic extraction
-const TAGGING_PROMPT = `Extract key information as tags to help identify this message's relevance in future conversations.
 
-Focus on these categories:
-1. Named Entities:
-   - People (e.g. 'steve jobs', 'marie curie')
-   - Places (e.g. 'silicon valley', 'new york')
-   - Organizations (e.g. 'google', 'united nations')
-   
-2. Topics and Concepts:
-   - Main themes (e.g. 'artificial intelligence', 'psychology')
-   - Specific techniques or methods (e.g. 'machine learning', 'cognitive therapy')
-   - Fields or domains (e.g. 'technology', 'mental health')
+// Overhauled prompt for structured tagging with categories
+const TAGGING_PROMPT = `Identify important people, places, organizations, topics and activities mentioned in the user's message. Return them as JSON objects with "value" and "category" fields. Categories may be: person, place, organization, topic, activity, state, or other. Use lowercase for the value and provide 5-15 items when possible.
 
-3. Activities and States:
-   - Actions or processes (e.g. 'career transition', 'learning')
-   - Projects or initiatives (e.g. 'startup launch', 'book writing')
-   - States or conditions (e.g. 'job search', 'grief')
-
-Guidelines:
-- Keep proper nouns as natural multi-word phrases
-- Include both specific and general concepts
-- Preserve important compound terms
-- Use lowercase for all tags
-- Aim for 5-15 relevant tags
-
-Respond with only a JSON array of tags.
-Example: {
+Example response:
+{
   "tags": [
-    "steve jobs",
-    "apple",
-    "product design",
-    "leadership",
-    "technology innovation",
-    "startup culture",
-    "silicon valley"
+    { "value": "steve jobs", "category": "person" },
+    { "value": "apple", "category": "organization" }
   ]
-}`
-
+}`;
 export default class TagAnalyzer {
   private openai: OpenAI | null;
   private initialized: boolean = false;
@@ -70,7 +44,7 @@ export default class TagAnalyzer {
     }
   }
 
-  async analyzeTags(content: string): Promise<string[]> {
+  async analyzeTags(content: string): Promise<Tag[]> {
     try {
       await this.initialize();
       
@@ -83,6 +57,7 @@ export default class TagAnalyzer {
         contentLength: content.length
       });
       
+      const inputTokens = Math.ceil((TAGGING_PROMPT.length + content.length) / 4); // Estimate input tokens
       const response = await this.openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [{
@@ -99,6 +74,10 @@ export default class TagAnalyzer {
       console.log('🔍 TagAnalyzer - Raw OpenAI response:', response.choices[0].message.content);
 
       const result = JSON.parse(response.choices[0].message.content || '{}');
+      
+      // Track usage
+      const outputTokens = Math.ceil((response.choices[0].message.content || '').length / 4);
+      trackUsage('gpt', inputTokens, outputTokens);
       console.log('🔍 TagAnalyzer - Parsed result:', {
         content: content.substring(0, 50) + '...',
         tags: result.tags,
