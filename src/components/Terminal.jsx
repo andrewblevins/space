@@ -243,6 +243,7 @@ const Terminal = ({ theme, toggleTheme }) => {
   // const [questionsExpanded, setQuestionsExpanded] = useState(false);
   const [advisorSuggestionsExpanded, setAdvisorSuggestionsExpanded] = useState(false);
   const [advisorSuggestions, setAdvisorSuggestions] = useState([]);
+  const [lastAdvisorAnalysisContent, setLastAdvisorAnalysisContent] = useState('');
   const [suggestedAdvisorName, setSuggestedAdvisorName] = useState('');
   const [contextLimit, setContextLimit] = useState(150000);
   const [apiKeysSet, setApiKeysSet] = useState(false);
@@ -2198,7 +2199,17 @@ Exported on: ${timestamp}\n\n`;
       .map(msg => `${msg.type === 'user' ? 'User' : 'Assistant'}: ${msg.content}`)
       .join("\n\n");
 
+    if (!recentMessages.trim()) return;
+
+    // Prevent duplicate analysis of same content
+    if (recentMessages === lastAdvisorAnalysisContent) {
+      console.log('🔍 Skipping duplicate advisor analysis');
+      return;
+    }
+    setLastAdvisorAnalysisContent(recentMessages);
+
     try {
+      console.log('🔍 Advisor suggestions analysis starting, recent messages chars:', recentMessages.length);
       const promptContent = `Based on this recent conversation exchange, suggest exactly 5 specific advisors who could add valuable perspective to this discussion.
 
 You may provide advisors in any of these categories:
