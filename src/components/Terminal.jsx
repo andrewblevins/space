@@ -402,11 +402,7 @@ const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimi
     if (sessionData) {
       const session = JSON.parse(sessionData);
       setCurrentSessionId(session.id);
-      const displayName = session.title || `Session ${session.id}`;
-      setMessages([...session.messages, {
-        type: 'system',
-        content: `Loaded "${displayName}" from ${new Date(session.timestamp).toLocaleString()}`
-      }]);
+      setMessages(session.messages);
       setMetaphors(session.metaphors || []);
       // DEPRECATED: Questions feature temporarily disabled
       // setQuestions(session.questions || []);
@@ -424,11 +420,7 @@ const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimi
     if (sessions.length > 1) {
       const penultimate = sessions[sessions.length - 2];
       setCurrentSessionId(penultimate.id);
-      const displayName = penultimate.title || `Session ${penultimate.id}`;
-      setMessages([...penultimate.messages, {
-        type: 'system',
-        content: `Loaded previous "${displayName}" from ${new Date(penultimate.timestamp).toLocaleString()}`
-      }]);
+      setMessages(penultimate.messages);
       setMetaphors(penultimate.metaphors || []);
       // DEPRECATED: Questions feature temporarily disabled
       // setQuestions(penultimate.questions || []);
@@ -679,16 +671,6 @@ Note: Advisor sharing is now available through the GUI menu (bottom-left → Imp
           switch(args[0]) {
             case 'generate':
               if (!args[1]) {
-                setMessages(prev => [...prev, {
-                  type: 'system',
-                  content: `Usage: /advisor generate <worksheet_id>
-
-This starts a guided process to generate your advisor panel:
-1. First, Claude will analyze your worksheet and suggest 10 potential advisors
-2. You can discuss and refine these suggestions with Claude
-3. Once you've identified your preferred three, use "/advisor finalize" to get detailed profiles
-4. Finally, you can add each advisor using the regular "/advisor add" command`
-                }]);
                 return true;
               }
 
@@ -790,10 +772,6 @@ Now, I'd like to generate the final output. Please include the following aspects
 
             case 'activate':
               if (!args[1]) {
-                setMessages(prev => [...prev, {
-                  type: 'system',
-                  content: 'Usage: /advisor activate "name"'
-                }]);
                 return true;
               }
               
@@ -802,10 +780,6 @@ Now, I'd like to generate the final output. Please include the following aspects
               const lastQuoteActivate = fullTextActivate.indexOf('"', firstQuoteActivate + 1);
               
               if (firstQuoteActivate === -1 || lastQuoteActivate === -1) {
-                setMessages(prev => [...prev, {
-                  type: 'system',
-                  content: 'Error: Advisor name must be enclosed in quotes'
-                }]);
                 return true;
               }
 
@@ -825,18 +799,10 @@ Now, I'd like to generate the final output. Please include the following aspects
               setAdvisors(prev => prev.map(a => 
                 a.name.toLowerCase() === nameToActivate.toLowerCase() ? { ...a, active: true } : a
               ));
-              setMessages(prev => [...prev, {
-                type: 'system',
-                content: `Activated advisor: ${advisorToActivate.name}`
-              }]);
               return true;
 
             case 'deactivate':
               if (!args[1]) {
-                setMessages(prev => [...prev, {
-                  type: 'system',
-                  content: 'Usage: /advisor deactivate "name"'
-                }]);
                 return true;
               }
               
@@ -845,10 +811,6 @@ Now, I'd like to generate the final output. Please include the following aspects
               const lastQuoteDeactivate = fullTextDeactivate.indexOf('"', firstQuoteDeactivate + 1);
               
               if (firstQuoteDeactivate === -1 || lastQuoteDeactivate === -1) {
-                setMessages(prev => [...prev, {
-                  type: 'system',
-                  content: 'Error: Advisor name must be enclosed in quotes'
-                }]);
                 return true;
               }
 
@@ -876,29 +838,14 @@ Now, I'd like to generate the final output. Please include the following aspects
               setAdvisors(prev => prev.map(a => 
                 a.name.toLowerCase() === nameToDeactivate.toLowerCase() ? { ...a, active: false } : a
               ));
-              setMessages(prev => [...prev, {
-                type: 'system',
-                content: `Deactivated advisor: ${advisorToDeactivate.name}`
-              }]);
               return true;
 
             case 'list':
-              setMessages(prev => [...prev, {
-                type: 'system',
-                content: advisors.length ? 
-                  '# Advisors\n\n' + advisors.map(a => 
-                    `## ${a.name}${a.active ? ' (active)' : ''}\n${a.description}`
-                  ).join('\n\n') :
-                  'No advisors configured'
-              }]);
+              // Advisor list now available in GUI sidebar
               return true;
 
             case 'edit':
               if (!args[1]) {
-                setMessages(prev => [...prev, {
-                  type: 'system',
-                  content: 'Usage: /advisor edit "name"'
-                }]);
                 return true;
               }
               
@@ -907,10 +854,6 @@ Now, I'd like to generate the final output. Please include the following aspects
               const lastQuoteEdit = fullTextEdit.indexOf('"', firstQuoteEdit + 1);
               
               if (firstQuoteEdit === -1 || lastQuoteEdit === -1) {
-                setMessages(prev => [...prev, {
-                  type: 'system',
-                  content: 'Error: Advisor name must be enclosed in quotes'
-                }]);
                 return true;
               }
 
@@ -932,10 +875,6 @@ Now, I'd like to generate the final output. Please include the following aspects
 
             case 'delete':
               if (!args[1]) {
-                setMessages(prev => [...prev, {
-                  type: 'system',
-                  content: 'Usage: /advisor delete "name"'
-                }]);
                 return true;
               }
               
@@ -944,10 +883,6 @@ Now, I'd like to generate the final output. Please include the following aspects
               const lastQuoteDelete = fullTextDelete.indexOf('"', firstQuoteDelete + 1);
               
               if (firstQuoteDelete === -1 || lastQuoteDelete === -1) {
-                setMessages(prev => [...prev, {
-                  type: 'system',
-                  content: 'Error: Advisor name must be enclosed in quotes'
-                }]);
                 return true;
               }
 
@@ -979,12 +914,9 @@ Now, I'd like to generate the final output. Please include the following aspects
           console.log('Debug command received');
           const newDebugMode = !debugMode;
           setDebugMode(newDebugMode);
-          
           setMessages(prev => [...prev, {
             type: 'system',
-            content: newDebugMode ? 
-              'Debug mode enabled. You will now see detailed information about Claude API calls.' :
-              'Debug mode disabled'
+            content: `Debug mode ${newDebugMode ? 'enabled' : 'disabled'}`
           }]);
           return true;
 
@@ -1191,14 +1123,7 @@ Now, I'd like to generate the final output. Please include the following aspects
               return true;
 
             case 'list':
-              setMessages(prev => [...prev, {
-                type: 'system',
-                content: savedPrompts.length ? 
-                  '# Available Prompts\n\n' + savedPrompts.map(p => 
-                    `## ${p.name}\n${p.content || p.text || 'No content available'}\n`
-                  ).join('\n') :
-                  'No saved prompts'
-              }]);
+              // Prompt list now available in Prompt Library
               return true;
 
             default:
@@ -1253,34 +1178,7 @@ Now, I'd like to generate the final output. Please include the following aspects
 
           switch(args[0]) {
             case 'list':
-              // Show available worksheet templates
-              const templateList = Object.entries(WORKSHEET_TEMPLATES)
-                .map(([id, t]) => `${id}: ${t.name}\n   ${t.description}`).join('\n\n');
-              
-              // Show completed worksheets from localStorage
-              const completedWorksheets = [];
-              for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key.startsWith('space_worksheet_')) {
-                  const worksheet = JSON.parse(localStorage.getItem(key));
-                  completedWorksheets.push({
-                    id: key.replace('space_worksheet_', ''),
-                    timestamp: worksheet.timestamp
-                  });
-                }
-              }
-              
-              setMessages(prev => [...prev, {
-                type: 'system',
-                content: '📝 Available worksheet templates:\n' + 
-                  templateList +
-                  '\n\n✅ Completed worksheets:\n' + 
-                  (completedWorksheets.length ? 
-                    completedWorksheets.map(w => 
-                      `${w.id} (completed ${new Date(w.timestamp).toLocaleString()})`
-                    ).join('\n') :
-                    'None')
-              }]);
+              // Worksheet list data available through worksheet commands
               return true;
 
             case 'view':
@@ -1463,7 +1361,6 @@ ${relevant.map((msg, i) => {
               setMessages(prev => [...prev, {
                 type: 'system',
                 content: 'Available memory commands:\n' +
-                  '/memory status - Show memory statistics\n' +
                   '/memory search <query> - Test memory retrieval'
               }]);
               return true;
@@ -1722,20 +1619,7 @@ Examples:
               return true;
 
             case 'list':
-              if (advisorGroups.length === 0) {
-                setMessages(prev => [...prev, {
-                  type: 'system',
-                  content: 'No advisor groups created yet'
-                }]);
-                return true;
-              }
-              const groupList = advisorGroups.map(g => 
-                `${g.name}:\n${g.advisors.length ? g.advisors.map(a => `  - ${a}`).join('\n') : '  (empty)'}`
-              ).join('\n\n');
-              setMessages(prev => [...prev, {
-                type: 'system',
-                content: groupList
-              }]);
+              // Advisor groups now managed through GUI
               return true;
           }
 
@@ -2025,12 +1909,6 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
           return tags;
         } catch (error) {
           console.error('🏷️ Tag analysis error:', error);
-          if (debugMode) {
-            setMessages(prev => [...prev, {
-              type: 'system',
-              content: `❌ Tag Analysis Error:\n${error.message}`
-            }]);
-          }
           return [];
         }
       })();
@@ -2161,20 +2039,12 @@ FORMATTING RULES:
       setSavedPrompts(prev => prev.map(p => 
         p.name === editingPrompt.name ? { ...p, text: editText } : p
       ));
-      setMessages(prev => [...prev, {
-        type: 'system',
-        content: `Updated prompt "${editingPrompt.name}"`
-      }]);
       setEditingPrompt(null);
       setEditText('');
     } else if (e.key === 'Escape') {
       // Cancel editing
       setEditingPrompt(null);
       setEditText('');
-      setMessages(prev => [...prev, {
-        type: 'system',
-        content: 'Edit cancelled'
-      }]);
     }
   };
 
@@ -2379,12 +2249,6 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
       setAdvisorSuggestions(suggestions.suggestions || []);
     } catch (error) {
       console.error('Error generating advisor suggestions:', error);
-      if (debugMode) {
-        setMessages(prev => [...prev, {
-          type: 'system',
-          content: `❌ Advisor Suggestion Error:\n${error.message}`
-        }]);
-      }
     }
   };
 
@@ -2890,20 +2754,12 @@ ${selectedText}
                             setAdvisors(prev => prev.map(a => 
                               a.name === editingAdvisor.name ? { ...a, description: editAdvisorText } : a
                             ));
-                            setMessages(prev => [...prev, {
-                              type: 'system',
-                              content: `Updated advisor "${editingAdvisor}"`
-                            }]);
                             setEditingAdvisor(null);
                             setEditAdvisorText('');
                           } else if (e.key === 'Escape') {
                             // Cancel editing
                             setEditingAdvisor(null);
                             setEditAdvisorText('');
-                            setMessages(prev => [...prev, {
-                              type: 'system',
-                              content: 'Edit cancelled'
-                            }]);
                           }
                         }}
                         className="w-full h-40 bg-white text-gray-800 font-serif p-2 border border-gray-300 focus:outline-none resize-none dark:bg-black dark:text-green-400 dark:border-green-400"
@@ -2963,20 +2819,12 @@ ${selectedText}
                   active: true
                 };
                 setAdvisors(prev => [...prev, newAdvisor]);
-                setMessages(prev => [...prev, {
-                  type: 'system',
-                  content: `Added advisor: ${newAdvisor.name}`
-                }]);
                 setShowAdvisorForm(false);
                 setSuggestedAdvisorName('');
               }}
               onCancel={() => {
                 setShowAdvisorForm(false);
                 setSuggestedAdvisorName('');
-                setMessages(prev => [...prev, {
-                  type: 'system',
-                  content: 'Cancelled adding advisor'
-                }]);
               }}
             />
           )}
@@ -2990,18 +2838,10 @@ ${selectedText}
                     ? { ...a, name, description, color }
                     : a
                 ));
-                setMessages(prev => [...prev, {
-                  type: 'system',
-                  content: `Updated advisor: ${name}`
-                }]);
                 setEditingAdvisor(null);
               }}
               onCancel={() => {
                 setEditingAdvisor(null);
-                setMessages(prev => [...prev, {
-                  type: 'system',
-                  content: 'Edit cancelled'
-                }]);
               }}
             />
           )}
@@ -3015,20 +2855,12 @@ ${selectedText}
                     ? { ...p, name, text }
                     : p
                 ));
-                setMessages(prev => [...prev, {
-                  type: 'system',
-                  content: `Updated prompt: ${name}`
-                }]);
                 setEditingPrompt(null);
                 setEditText('');
               }}
               onCancel={() => {
                 setEditingPrompt(null);
                 setEditText('');
-                setMessages(prev => [...prev, {
-                  type: 'system',
-                  content: 'Edit cancelled'
-                }]);
               }}
             />
           )}
