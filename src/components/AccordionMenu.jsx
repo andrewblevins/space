@@ -4,14 +4,38 @@ const AccordionMenu = ({
   onSettingsClick,
   onPromptLibraryClick,
   onSessionManagerClick,
+  onNewSessionClick,
   onExportClick,
   onDossierClick,
   onImportExportAdvisorsClick,
-  onHelpClick
+  onHelpClick,
+  onFullscreenClick,
+  isFullscreen
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const menuItems = [
+    {
+      id: 'new-session',
+      label: 'New Session',
+      onClick: onNewSessionClick,
+      icon: (
+        <svg 
+          xmlns="http://www.w3.org/2000/svg" 
+          className="h-4 w-4" 
+          fill="none" 
+          viewBox="0 0 24 24" 
+          stroke="currentColor"
+        >
+          <path 
+            strokeLinecap="round" 
+            strokeLinejoin="round" 
+            strokeWidth={2} 
+            d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+          />
+        </svg>
+      )
+    },
     {
       id: 'sessions',
       label: 'Session Manager',
@@ -56,7 +80,7 @@ const AccordionMenu = ({
     },
     {
       id: 'dossier',
-      label: 'View Dossier',
+      label: 'Knowledge',
       onClick: onDossierClick,
       icon: (
         <svg 
@@ -134,6 +158,27 @@ const AccordionMenu = ({
             strokeLinejoin="round" 
             strokeWidth={2} 
             d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" 
+          />
+        </svg>
+      )
+    },
+    {
+      id: 'fullscreen',
+      label: isFullscreen ? 'Exit Fullscreen' : 'Fullscreen',
+      onClick: onFullscreenClick,
+      icon: (
+        <svg 
+          xmlns="http://www.w3.org/2000/svg" 
+          className="h-4 w-4" 
+          fill="none" 
+          viewBox="0 0 24 24" 
+          stroke="currentColor"
+        >
+          <path 
+            strokeLinecap="round" 
+            strokeLinejoin="round" 
+            strokeWidth={2} 
+            d={isFullscreen ? "M6 18L18 6M6 6l12 12" : "M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5"}
           />
         </svg>
       )
