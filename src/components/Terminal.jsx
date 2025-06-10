@@ -2033,24 +2033,24 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
         if (activeAdvisors.length > 0) {
           prompt += `You are currently embodying the following advisors:\n${activeAdvisors.map(a => `\n${a.name}: ${a.description}`).join('\n')}\n\n`;
           
-          prompt += `RESPONSE FORMAT: When responding, please format your response using this simple structure:
+          prompt += `RESPONSE FORMAT: Use this exact structure for every advisor response:
 
 [ADVISOR: Advisor Name]
-The advisor's response text flows naturally here. You can use multiple paragraphs, and the text will stream fluidly.
+optional action or emotional state on this line by itself
 
-This allows for natural paragraph breaks and continues flowing.
+Main response content starts here on a new line after a blank line.
 
 [ADVISOR: Another Advisor Name]
-If multiple advisors are responding, each should be introduced with the [ADVISOR: Name] marker.
+another optional action line
 
-The text after each advisor marker will stream naturally and be formatted with proper spacing and color-coded names.
+Another advisor's response content.
 
-When responding, you will adopt the distinct voice(s) of the active advisor(s) as appropriate to the context and question. Each advisor should provide their own response section.
-
-IMPORTANT: 
-- Do NOT include action cues, emotional descriptions, or stage directions after advisor names
-- Use single line breaks (\\n) between thoughts, not double line breaks (\\n\\n)
-- Start advisor responses immediately after the [ADVISOR: Name] line`;
+FORMATTING RULES:
+1. Advisor name always goes in [ADVISOR: Name] brackets
+2. If you include an action/emotional description, it goes on its own line immediately after the advisor name
+3. Always leave one blank line before starting the main response content
+4. Use single line breaks within paragraphs, double line breaks between major sections
+5. Each advisor gets their own clearly separated section`;
         }
         // If no advisors are active, no system prompt is needed
         
