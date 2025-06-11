@@ -13,7 +13,7 @@ const EditAdvisorForm = ({ advisor, onSubmit, onCancel }) => {
 
   return (
     <div className="fixed inset-0 bg-white/70 dark:bg-black/50 flex items-center justify-center">
-      <div className="bg-gray-100 p-6 rounded-lg border border-green-600 w-96 dark:bg-gray-900 dark:border-green-400">
+      <div className="bg-gray-100 p-6 rounded-lg border border-green-600 w-96 max-h-[80vh] overflow-y-auto overflow-x-hidden dark:bg-gray-900 dark:border-green-400">
         <h2 className="text-green-400 text-xl mb-4">Edit Advisor</h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
