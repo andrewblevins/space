@@ -50,7 +50,7 @@ const AddPromptForm = ({ isOpen, onSubmit, onCancel }) => {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter prompt name..."
-              className="w-full bg-white text-gray-800 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-green-600 dark:bg-black dark:text-green-400 dark:border-green-400"
+              className="w-full bg-black text-green-400 border border-green-400 rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-green-600"
               autoFocus
               autoComplete="off"
               spellCheck="true"
@@ -66,7 +66,7 @@ const AddPromptForm = ({ isOpen, onSubmit, onCancel }) => {
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder="Enter your prompt text..."
-              className="w-full h-40 bg-white text-gray-800 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-green-600 resize-none dark:bg-black dark:text-green-400 dark:border-green-400"
+              className="w-full h-40 bg-black text-green-400 border border-green-400 rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-green-600 resize-none"
               autoComplete="off"
               spellCheck="true"
               data-role="prompt-text"
@@ -77,14 +77,14 @@ const AddPromptForm = ({ isOpen, onSubmit, onCancel }) => {
             <button
               type="button"
               onClick={handleCancel}
-              className="px-4 py-2 bg-white border border-gray-400 rounded text-gray-600 hover:bg-gray-200 transition-colors dark:bg-black dark:text-gray-400 dark:hover:bg-gray-400"
+              className="px-4 py-2 bg-black border border-gray-400 rounded text-gray-400 hover:bg-gray-800 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!name.trim() || !text.trim()}
-              className="px-4 py-2 bg-white border border-green-600 rounded text-green-600 hover:bg-green-600 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed dark:bg-black dark:border-green-400 dark:text-green-400 dark:hover:bg-green-400 dark:hover:text-black"
+              className="px-4 py-2 bg-black border border-green-400 rounded text-green-400 hover:bg-green-400 hover:text-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Add Prompt
             </button>

@@ -124,7 +124,7 @@ const AdvisorForm = ({ onSubmit, onCancel, initialName = '', existingAdvisors = 
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Advisor name"
-          className="w-full bg-white text-gray-800 p-2 mb-4 border border-gray-300 focus:outline-none dark:bg-black dark:text-green-400 dark:border-green-400"
+          className="w-full bg-black text-green-400 p-2 mb-4 border border-green-400 focus:outline-none"
           autoComplete="off"
           spellCheck="true"
           data-role="advisor-name"
@@ -133,7 +133,7 @@ const AdvisorForm = ({ onSubmit, onCancel, initialName = '', existingAdvisors = 
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Advisor description"
-          className="w-full h-40 bg-white text-gray-800 p-2 mb-4 border border-gray-300 focus:outline-none resize-none dark:bg-black dark:text-green-400 dark:border-green-400"
+          className="w-full h-40 bg-black text-green-400 p-2 mb-4 border border-green-400 focus:outline-none resize-none"
           autoComplete="off"
           spellCheck="true"
           data-role="advisor-description"
@@ -152,7 +152,7 @@ const AdvisorForm = ({ onSubmit, onCancel, initialName = '', existingAdvisors = 
                   className={`w-7 h-7 rounded-full ${color} border-2 ${
                     selectedColor === color 
                       ? 'border-green-400 ring-2 ring-green-400 ring-opacity-50' 
-                      : 'border-gray-300 dark:border-gray-600'
+                      : 'border-gray-600'
                   } hover:border-green-400 transition-all duration-200 hover:scale-110`}
                 />
               ))}
@@ -167,7 +167,7 @@ const AdvisorForm = ({ onSubmit, onCancel, initialName = '', existingAdvisors = 
                   className={`w-7 h-7 rounded-full ${color} border-2 ${
                     selectedColor === color 
                       ? 'border-green-400 ring-2 ring-green-400 ring-opacity-50' 
-                      : 'border-gray-300 dark:border-gray-600'
+                      : 'border-gray-600'
                   } hover:border-green-400 transition-all duration-200 hover:scale-110`}
                 />
               ))}
@@ -178,19 +178,19 @@ const AdvisorForm = ({ onSubmit, onCancel, initialName = '', existingAdvisors = 
         <div className="flex justify-between">
           <button
             onClick={onCancel}
-            className="px-4 py-2 text-green-600 border border-green-600 rounded hover:bg-green-600 hover:text-white dark:text-green-400 dark:border-green-400 dark:hover:bg-green-400 dark:hover:text-black"
+            className="px-4 py-2 text-green-400 border border-green-400 rounded hover:bg-green-400 hover:text-black"
           >
             Cancel
           </button>
           <button
             onClick={handleGenerate}
-            className="px-4 py-2 mx-2 text-yellow-600 border border-yellow-600 rounded hover:bg-yellow-600 hover:text-white dark:text-yellow-400 dark:border-yellow-400 dark:hover:bg-yellow-400 dark:hover:text-black"
+            className="px-4 py-2 mx-2 text-yellow-400 border border-yellow-400 rounded hover:bg-yellow-400 hover:text-black"
           >
             Generate Description
           </button>
           <button
             onClick={() => onSubmit({ name, description, color: selectedColor })}
-            className="px-4 py-2 text-green-600 border border-green-600 rounded hover:bg-green-600 hover:text-white dark:text-green-400 dark:border-green-400 dark:hover:bg-green-400 dark:hover:text-black"
+            className="px-4 py-2 text-green-400 border border-green-400 rounded hover:bg-green-400 hover:text-black"
           >
             Add Advisor
           </button>

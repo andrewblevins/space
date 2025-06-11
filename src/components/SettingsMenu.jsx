@@ -153,7 +153,7 @@ const SettingsMenu = ({
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex border-b border-gray-300 dark:border-gray-600 px-6">
+        <div className="flex border-b border-gray-600 px-6">
           {tabs.map((tab) => (
             <button
               key={tab.id}
@@ -249,7 +249,7 @@ const SettingsMenu = ({
                     step="0.05"
                     value={paragraphSpacing}
                     onChange={(e) => handleParagraphSpacingChange(e.target.value)}
-                    className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider"
+                    className="flex-1 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
                   />
                   <span className="text-gray-400 text-sm w-16">{paragraphSpacing === 0 ? 'None' : `${paragraphSpacing}rem`}</span>
                 </div>
@@ -259,10 +259,10 @@ const SettingsMenu = ({
               </div>
 
               {/* Restore Defaults */}
-              <div className="pt-4 border-t border-gray-300 dark:border-gray-600">
+              <div className="pt-4 border-t border-gray-600">
                 <button
                   onClick={handleRestoreDefaults}
-                  className="w-full px-4 py-2 bg-stone-50 border border-blue-600 rounded text-blue-600 hover:bg-blue-600 hover:text-white transition-colors dark:bg-black dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-400 dark:hover:text-black"
+                  className="w-full px-4 py-2 bg-black border border-blue-400 rounded text-blue-400 hover:bg-blue-400 hover:text-black transition-colors"
                 >
                   Restore Defaults
                 </button>
@@ -289,7 +289,7 @@ const SettingsMenu = ({
                     value={tempContextLimit}
                     onChange={(e) => setTempContextLimit(e.target.value)}
                     onBlur={(e) => handleContextLimitChange(e.target.value)}
-                    className="bg-stone-50 text-gray-800 border border-stone-300 rounded px-3 py-1 w-24 focus:outline-none focus:ring-1 focus:ring-green-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none dark:bg-black dark:text-green-400 dark:border-green-400"
+                    className="bg-black text-green-400 border border-green-400 rounded px-3 py-1 w-24 focus:outline-none focus:ring-1 focus:ring-green-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     min="1000"
                     max="200000"
                     step="1000"
@@ -315,7 +315,7 @@ const SettingsMenu = ({
                     value={tempMaxTokens}
                     onChange={(e) => setTempMaxTokens(e.target.value)}
                     onBlur={(e) => handleMaxTokensChange(e.target.value)}
-                    className="bg-stone-50 text-gray-800 border border-stone-300 rounded px-3 py-1 w-20 focus:outline-none focus:ring-1 focus:ring-green-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none dark:bg-black dark:text-green-400 dark:border-green-400"
+                    className="bg-black text-green-400 border border-green-400 rounded px-3 py-1 w-20 focus:outline-none focus:ring-1 focus:ring-green-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     min="1"
                     max="8192"
                   />
@@ -339,15 +339,15 @@ const SettingsMenu = ({
                   <div className="text-gray-400 text-sm">Checking API keys...</div>
                 ) : (
                   <div className="space-y-2 mb-4">
-                    <div className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-800 rounded">
-                      <span className="text-gray-600 dark:text-gray-300 text-sm">Anthropic (Claude)</span>
-                      <span className={`text-sm font-medium ${apiKeyStatus.anthropic ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                    <div className="flex items-center justify-between p-3 bg-gray-800 rounded">
+                      <span className="text-gray-300 text-sm">Anthropic (Claude)</span>
+                      <span className={`text-sm font-medium ${apiKeyStatus.anthropic ? 'text-green-400' : 'text-red-400'}`}>
                         {apiKeyStatus.anthropic ? '✓ Set' : '✗ Not Set'}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-800 rounded">
-                      <span className="text-gray-600 dark:text-gray-300 text-sm">OpenAI (GPT)</span>
-                      <span className={`text-sm font-medium ${apiKeyStatus.openai ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                    <div className="flex items-center justify-between p-3 bg-gray-800 rounded">
+                      <span className="text-gray-300 text-sm">OpenAI (GPT)</span>
+                      <span className={`text-sm font-medium ${apiKeyStatus.openai ? 'text-green-400' : 'text-red-400'}`}>
                         {apiKeyStatus.openai ? '✓ Set' : '✗ Not Set'}
                       </span>
                     </div>
@@ -367,24 +367,24 @@ const SettingsMenu = ({
                   <button
                     onClick={checkApiKeys}
                     disabled={isCheckingKeys}
-                    className="w-full text-left px-3 py-2 bg-stone-50 border border-green-600 rounded text-green-600 hover:bg-green-600 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed dark:bg-black dark:border-green-400 dark:text-green-400 dark:hover:bg-green-400 dark:hover:text-black"
+                    className="w-full text-left px-3 py-2 bg-black border border-green-400 rounded text-green-400 hover:bg-green-400 hover:text-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isCheckingKeys ? 'Checking...' : 'Refresh Status'}
                   </button>
                   <button
                     onClick={handleClearApiKeysClick}
-                    className="w-full text-left px-3 py-2 bg-stone-50 border border-red-600 rounded text-red-600 hover:bg-red-600 hover:text-white transition-colors dark:bg-black dark:border-red-400 dark:text-red-400 dark:hover:bg-red-400 dark:hover:text-black"
+                    className="w-full text-left px-3 py-2 bg-black border border-red-400 rounded text-red-400 hover:bg-red-400 hover:text-black transition-colors"
                   >
                     Clear API Keys
                   </button>
                 </div>
-                <div className="mt-4 p-3 bg-gray-100 dark:bg-gray-800 rounded text-xs text-gray-600 dark:text-gray-400">
+                <div className="mt-4 p-3 bg-gray-800 rounded text-xs text-gray-400">
                   <p>API keys are encrypted and stored locally in your browser. They are never sent to SPACE servers.</p>
                 </div>
               </div>
 
               {/* Usage Statistics */}
-              <div className="border-t border-gray-300 dark:border-gray-600 pt-6">
+              <div className="border-t border-gray-600 pt-6">
                 <UsageDisplay />
               </div>
             </div>
@@ -395,11 +395,11 @@ const SettingsMenu = ({
       {/* Confirmation Dialog for Clear API Keys */}
       {showClearConfirmation && (
         <div
-          className="fixed inset-0 bg-white/70 dark:bg-black/75 flex items-center justify-center z-60"
+          className="fixed inset-0 bg-black/75 flex items-center justify-center z-60"
           onClick={(e) => e.stopPropagation()}
         >
           <div
-            className="bg-gray-100 border border-red-600 rounded-lg p-6 w-full max-w-sm mx-4 dark:bg-gray-900 dark:border-red-400"
+            className="bg-gray-900 border border-red-400 rounded-lg p-6 w-full max-w-sm mx-4"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-4">
@@ -414,13 +414,13 @@ const SettingsMenu = ({
             <div className="flex space-x-3">
               <button
                 onClick={() => setShowClearConfirmation(false)}
-                className="flex-1 px-4 py-2 bg-stone-50 border border-stone-400 rounded text-gray-600 hover:bg-stone-200 transition-colors dark:bg-black dark:text-gray-400 dark:hover:bg-gray-400"
+                className="flex-1 px-4 py-2 bg-black border border-gray-400 rounded text-gray-400 hover:bg-gray-800 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmClearApiKeys}
-                className="flex-1 px-4 py-2 bg-stone-50 border border-red-600 rounded text-red-600 hover:bg-red-600 hover:text-white transition-colors dark:bg-black dark:border-red-400 dark:text-red-400 dark:hover:bg-red-400 dark:hover:text-black"
+                className="flex-1 px-4 py-2 bg-black border border-red-400 rounded text-red-400 hover:bg-red-400 hover:text-black transition-colors"
               >
                 Clear Keys
               </button>
