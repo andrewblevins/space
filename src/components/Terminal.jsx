@@ -339,10 +339,79 @@ FORMATTING RULES:
 
 const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimit, memory, debugMode, reasoningMode, getSystemPrompt });
 
+  // Generate a creative starting prompt for new conversations
+  const generateStartingPrompt = async () => {
+    try {
+      const anthropicKey = await getDecrypted('space_anthropic_key');
+      if (!anthropicKey) return;
+
+      const response = await fetch(`${getApiEndpoint()}/v1/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': anthropicKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          messages: [{
+            role: 'user',
+            content: "Generate an interesting, thought-provoking question or scenario that would make for a great conversation starter. Something that would benefit from multiple perspectives and deep thinking."
+          }],
+          system: `You are generating conversation starters for SPACE Terminal - a system where users experiencing cognitive or emotional constriction can talk to multiple AI advisors about complex, high-stakes problems.
+
+Users come to SPACE when they feel stuck between limited options, overwhelmed by complexity, or unable to integrate conflicting perspectives. Generate prompts that represent someone with:
+
+- A specific high-stakes decision or situation (not abstract questions)
+- Multiple stakeholders, complex tradeoffs, or conflicting priorities
+- Real consequences that matter to the person
+- Need for diverse perspectives they can't access alone
+- Some details but not overwhelming background
+
+Examples of good prompts:
+- "I'm considering leaving my stable job to start a company, but I have a mortgage and two kids. My co-founder is pushing for a decision next week."
+- "My elderly parent needs more care but refuses to move from their home. My siblings disagree on what to do and it's tearing our family apart."
+- "We're launching our product next month but discovered a potential safety issue. Fixing it means delaying 6 months and possibly losing our lead investor."
+
+Generate ONLY the user's message describing their situation, nothing else. Include specific details but keep it concise.`,
+          max_tokens: 150,
+          stream: false
+        }),
+      });
+
+      if (!response.ok) return;
+
+      const data = await response.json();
+      const generatedPrompt = data.content[0].text.trim().replace(/^["']|["']$/g, '');
+      
+      setInput(generatedPrompt);
+      inputRef.current?.focus();
+    } catch (error) {
+      // Fallback to SPACE-appropriate prompts
+      const fallbackPrompts = [
+        "I'm being offered a promotion that would double my salary but require relocating my family across the country. My spouse loves their current job and my kids are thriving in their schools. The decision deadline is next Friday.",
+        "My startup's lead developer just quit right before our Series A pitch next month. I could try to hire someone quickly, delay the fundraising, or attempt to handle the technical presentation myself despite limited coding experience.",
+        "My business partner wants to pivot our successful but niche company into a crowded market with bigger potential. I think we should double down on what's working. We need to decide before our investor meeting next week.",
+        "I discovered my teenage daughter has been lying about where she goes after school. When I confronted her, she broke down and said she's been seeing a therapist because she didn't want to worry me. I don't know how to handle this.",
+        "My aging mother fell last week and the doctor says she shouldn't live alone anymore. She's refusing assisted living and wants me to move in with her, but I have my own family and demanding career. My brother lives across the country and thinks I'm overreacting.",
+        "I've been offered my dream job at a startup, but it requires leaving my current company right as we're about to launch a major project I've led for two years. My team is counting on me, but this opportunity might not come again.",
+        "My co-founder and I disagree on whether to accept an acquisition offer that would secure our futures but likely mean the end of our original vision. The buyer wants an answer by Monday.",
+        "I need to choose between an experimental treatment for my chronic condition that could help significantly but has serious risks, or staying with my current management plan that's sustainable but limiting my quality of life."
+      ];
+      const randomPrompt = fallbackPrompts[Math.floor(Math.random() * fallbackPrompts.length)];
+      setInput(randomPrompt);
+      inputRef.current?.focus();
+    }
+  };
+
   // Generate contextual test prompt using Claude
   const generateTestPrompt = async () => {
-    if (!messages.length || messages.every(m => m.type === 'system')) {
-      setInput("What's on your mind today?");
+    const hasConversation = messages.length > 0 && !messages.every(m => m.type === 'system');
+    
+    if (!hasConversation) {
+      // Generate a creative starting prompt for new conversations
+      await generateStartingPrompt();
       return;
     }
 
