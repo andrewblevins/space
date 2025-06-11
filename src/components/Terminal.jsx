@@ -398,8 +398,35 @@ const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimi
       return;
     }
 
-    // Create a special system prompt for generating test prompts
-    const testPromptSystemPrompt = `You are helping test a conversational AI system. Based on the conversation history, generate a natural follow-up message that a user would likely say next. 
+    try {
+      const anthropicKey = await getDecrypted('space_anthropic_key');
+      if (!anthropicKey) return;
+
+      // Build conversation context
+      const contextMessages = messages
+        .filter((m) => (m.type === 'user' || m.type === 'assistant') && m.content?.trim() !== '')
+        .slice(-10) // Last 10 messages for context
+        .map((m) => ({ role: m.type, content: m.content }));
+
+      // Add the prompt request
+      contextMessages.push({
+        role: 'user',
+        content: "Based on our conversation so far, what would be a natural and interesting follow-up question or comment from the user? Generate only the user's message, nothing else."
+      });
+
+      // Make direct API call without going through useClaude hook
+      const response = await fetch(`${getApiEndpoint()}/v1/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': anthropicKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          messages: contextMessages,
+          system: `You are helping test a conversational AI system. Based on the conversation history, generate a natural follow-up message that a user would likely say next. 
 
 Consider:
 - The topic and flow of conversation so far
@@ -408,36 +435,22 @@ Consider:
 - Deeper exploration of themes already discussed
 - Challenging or probing questions that test the advisors' perspectives
 
-Generate ONLY the user's next message, nothing else. Make it feel authentic and conversational.`;
+Generate ONLY the user's next message, nothing else. Make it feel authentic and conversational.`,
+          max_tokens: 200,
+          stream: false
+        }),
+      });
 
-    try {
-      setMessages(prev => [...prev, {
-        type: 'system',
-        content: '🧪 Generating contextual test prompt...'
-      }]);
+      if (!response.ok) return;
 
-      const response = await callClaude(
-        "Based on our conversation so far, what would be a natural and interesting follow-up question or comment from the user? Generate only the user's message, nothing else.",
-        () => testPromptSystemPrompt
-      );
-
-      // Extract just the generated prompt (remove any explanatory text)
-      const cleanPrompt = response.trim().replace(/^["']|["']$/g, ''); // Remove quotes if wrapped
+      const data = await response.json();
+      const generatedPrompt = data.content[0].text.trim().replace(/^["']|["']$/g, '');
       
-      setInput(cleanPrompt);
+      setInput(generatedPrompt);
       inputRef.current?.focus();
-      
-      // Update the system message
-      setMessages(prev => prev.map((msg, idx) => 
-        idx === prev.length - 1 && msg.content === '🧪 Generating contextual test prompt...'
-          ? { ...msg, content: '🧪 Test prompt generated (Ctrl+T to generate another)' }
-          : msg
-      ));
     } catch (error) {
-      setMessages(prev => [...prev, {
-        type: 'system',
-        content: `🧪 Error generating test prompt: ${error.message}`
-      }]);
+      // Silently fail
+      console.error('Test prompt generation failed:', error);
     }
   };
 
