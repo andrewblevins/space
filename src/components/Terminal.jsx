@@ -52,53 +52,6 @@ const Terminal = ({ theme, toggleTheme }) => {
     }
   }, [modalController]);
 
-  useEffect(() => {
-    // Only check for API keys after modal controller is initialized
-    const checkKeys = async () => {
-      try {
-        // First check if encrypted data exists
-        if (!hasEncryptedData()) {
-          console.log('❌ No encrypted keys found, showing welcome screen');
-          const skipWelcome = localStorage.getItem('space_skip_welcome');
-          if (!skipWelcome) {
-            setShowWelcome(true);
-          }
-          return;
-        }
-
-        // If encrypted data exists, try to decrypt it (this will prompt for password if needed)
-        console.log('🔒 Encrypted keys found, attempting to decrypt...');
-        try {
-          const anthropicKey = await getDecrypted('space_anthropic_key');
-          const openaiKey = await getDecrypted('space_openai_key');
-          
-          if (anthropicKey && openaiKey) {
-            setApiKeysSet(true);
-            
-            // Initialize OpenAI client if keys are available
-            const client = new OpenAI({
-              apiKey: openaiKey,
-              dangerouslyAllowBrowser: true
-            });
-            setOpenaiClient(client);
-            console.log('✅ OpenAI client initialized successfully');
-          }
-        } catch (error) {
-          console.error('Error decrypting API keys:', error);
-          // If decryption fails (user canceled password, wrong password, etc.), 
-          // don't show welcome screen - they have encrypted keys, just couldn't access them this time
-          console.log('🔑 Password entry was required but failed/canceled');
-        }
-      } finally {
-        // Always stop the loading state once initialization is complete
-        setIsInitializing(false);
-      }
-    };
-    
-    if (modalController) {
-      checkKeys();
-    }
-  }, [modalController]);
 
   const getNextSessionId = () => {
     const keys = Object.keys(localStorage).filter(key => key.startsWith('space_session_'));
@@ -303,6 +256,7 @@ const Terminal = ({ theme, toggleTheme }) => {
   const [apiKeysSet, setApiKeysSet] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
+  const [hasCheckedKeys, setHasCheckedKeys] = useState(false);
   
   // Handler to reset to welcome screen
   const resetToWelcome = () => {
@@ -331,6 +285,55 @@ const Terminal = ({ theme, toggleTheme }) => {
   const [agentMode, setAgentMode] = useState(() => {
     return localStorage.getItem('space_agent_mode') === 'true';
   });
+
+  // Check for API keys after modal controller is initialized
+  useEffect(() => {
+    const checkKeys = async () => {
+      try {
+        // First check if encrypted data exists
+        if (!hasEncryptedData()) {
+          console.log('❌ No encrypted keys found, showing welcome screen');
+          const skipWelcome = localStorage.getItem('space_skip_welcome');
+          if (!skipWelcome) {
+            setShowWelcome(true);
+          }
+          return;
+        }
+
+        // If encrypted data exists, try to decrypt it (this will prompt for password if needed)
+        console.log('🔒 Encrypted keys found, attempting to decrypt...');
+        try {
+          const anthropicKey = await getDecrypted('space_anthropic_key');
+          const openaiKey = await getDecrypted('space_openai_key');
+          
+          if (anthropicKey && openaiKey) {
+            setApiKeysSet(true);
+            
+            // Initialize OpenAI client if keys are available
+            const client = new OpenAI({
+              apiKey: openaiKey,
+              dangerouslyAllowBrowser: true
+            });
+            setOpenaiClient(client);
+            console.log('✅ OpenAI client initialized successfully');
+          }
+        } catch (error) {
+          console.error('Error decrypting API keys:', error);
+          // If decryption fails (user canceled password, wrong password, etc.), 
+          // don't show welcome screen - they have encrypted keys, just couldn't access them this time
+          console.log('🔑 Password entry was required but failed/canceled');
+        }
+      } finally {
+        // Always stop the loading state once initialization is complete
+        setIsInitializing(false);
+        setHasCheckedKeys(true);
+      }
+    };
+    
+    if (modalController && !hasCheckedKeys) {
+      checkKeys();
+    }
+  }, [modalController, hasCheckedKeys]);
 
 const buildSystemPrompt = (advisorList, contexts = []) => {
   let prompt = "";
