@@ -40,6 +40,14 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
 
     const systemPromptText = customGetSystemPrompt ? customGetSystemPrompt() : getSystemPrompt();
     
+    // Debug logging for High Council mode
+    if (systemPromptText.includes('HIGH COUNCIL MODE')) {
+      console.log('🏛️ DEBUG: System prompt contains High Council instructions');
+      console.log('🏛️ DEBUG: System prompt preview:', systemPromptText.substring(systemPromptText.indexOf('HIGH COUNCIL MODE'), systemPromptText.indexOf('HIGH COUNCIL MODE') + 200));
+    } else {
+      console.log('🏛️ DEBUG: System prompt does NOT contain High Council instructions');
+    }
+    
     // Calculate input tokens for tracking
     const systemTokens = estimateTokens(systemPromptText);
     const contextTokens = contextMessages.reduce((s, m) => s + estimateTokens(m.content), 0);

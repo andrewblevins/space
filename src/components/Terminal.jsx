@@ -28,6 +28,7 @@ import { Module } from "./terminal/Module";
 import { GroupableModule } from "./terminal/GroupableModule";
 import { CollapsibleModule } from "./terminal/CollapsibleModule";
 import { CollapsibleClickableModule } from "./terminal/CollapsibleClickableModule";
+import DebateBlock from './DebateBlock';
 import { CollapsibleSuggestionsModule } from "./terminal/CollapsibleSuggestionsModule";
 import { ExpandingInput } from "./terminal/ExpandingInput";
 import { MemoizedMarkdownMessage } from "./terminal/MemoizedMarkdownMessage";
@@ -131,6 +132,51 @@ const Terminal = ({ theme, toggleTheme }) => {
         content: message
       }]);
     }
+  };
+
+  // Process council debate sections for streaming-friendly collapsible display
+  const processCouncilDebates = (content) => {
+    // Check if content starts with High Council debate format
+    if (content.startsWith('<COUNCIL_DEBATE>')) {
+      console.log('🏛️ High Council debate detected (streaming mode)');
+      
+      // Find where summary starts
+      const summaryMatch = content.match(/## Council Summary/i);
+      
+      if (summaryMatch) {
+        // Split at summary
+        const debateEnd = summaryMatch.index;
+        const debateContent = content.substring('<COUNCIL_DEBATE>'.length, debateEnd);
+        const summaryContent = content.substring(debateEnd);
+        
+        console.log('🏛️ Split debate and summary for streaming display');
+        return { 
+          processedContent: summaryContent, 
+          debates: [debateContent] 
+        };
+      } else {
+        // No summary yet (still streaming), treat everything after opening tag as debate
+        const debateContent = content.substring('<COUNCIL_DEBATE>'.length);
+        return { 
+          processedContent: '', 
+          debates: [debateContent] 
+        };
+      }
+    }
+    
+    // Fallback to original regex approach for completed responses
+    const debateRegex = /<COUNCIL_DEBATE>([\s\S]*?)<\/COUNCIL_DEBATE>/g;
+    const debates = [];
+    let processedContent = content;
+    let match;
+
+    while ((match = debateRegex.exec(content)) !== null) {
+      const debateContent = match[1].trim();
+      debates.push(debateContent);
+      processedContent = processedContent.replace(match[0], `__DEBATE_PLACEHOLDER_${debates.length - 1}__`);
+    }
+
+    return { processedContent, debates };
   };
 
   const [messages, setMessages] = useState([
@@ -1802,6 +1848,10 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
           exportAllSessions();
           return true;
 
+        case '/council':
+          // Let council mode detection handle this in normal message processing
+          return false;
+
         default:
           setMessages(prev => [...prev, {
             type: 'system',
@@ -1843,6 +1893,17 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
       // Process @ references for context injection
       let processedInput = input;
       let sessionContexts = [];
+
+      // Detect High Council mode marker and remove it from the input
+      console.log('🏛️ DEBUG: Checking for High Council mode in:', processedInput);
+      const councilRegex = /\/council\b/i;
+      const councilMode = councilRegex.test(processedInput);
+      console.log('🏛️ DEBUG: Council mode detected?', councilMode);
+      if (councilMode) {
+        console.log('🏛️ High Council mode detected!', { originalInput: processedInput });
+        processedInput = processedInput.replace(councilRegex, '').trim();
+        console.log('🏛️ Processed input after removing /council:', processedInput);
+      }
       
       // Handle new format: @"Session Title" - collect summaries for context injection
       const atTitleRegex = /@"([^"]+)"/g;
@@ -1931,7 +1992,7 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
       await setMessages(prev => [...prev, newMessage]);
 
       // Create a temporary system prompt function with the contexts
-      const getSystemPromptWithContexts = () => {
+      const getSystemPromptWithContexts = ({ councilMode } = {}) => {
         let prompt = "";
         
         // Add advisor personas
@@ -1939,7 +2000,71 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
         if (activeAdvisors.length > 0) {
           prompt += `You are currently embodying the following advisors:\n${activeAdvisors.map(a => `\n${a.name}: ${a.description}`).join('\n')}\n\n`;
           
-          prompt += `RESPONSE FORMAT: Use this exact structure for every advisor response:
+          if (councilMode) {
+            console.log('🏛️ Adding High Council mode instructions to system prompt');
+            prompt += `\n\n## HIGH COUNCIL MODE
+IMPORTANT: Start your response with the exact text "<COUNCIL_DEBATE>" (this is required for the interface to work properly).
+
+The advisors will engage in a structured debate, each maintaining their unique perspective throughout. Each advisor should:
+
+- Stay true to their core philosophy and worldview
+- Respond authentically from their own perspective 
+- Challenge other advisors when they genuinely disagree
+- Build on points that align with their own thinking
+- Never abandon their perspective just to reach agreement
+
+CRITICAL: This must be a true DEBATE where advisors directly engage with each other's arguments, not separate speeches.
+
+Structure the debate exactly as follows:
+
+## ROUND 1: Initial Positions
+Each advisor states their position on the question.
+
+## ROUND 2: Direct Responses
+Each advisor must directly address the other advisors by name, responding to specific points from Round 1:
+- "Elon, you're wrong about X because..."
+- "I agree with you, Sarah, but you're missing..."
+- "That's complete nonsense, Marcus. Here's why..."
+
+## ROUND 3: Final Positions
+Each advisor directly challenges or supports the others' Round 2 arguments, speaking TO each other, not about them.
+
+CRITICAL: Use ## for round headers (not **bold**). Always add a blank line before each round header. Example:
+
+[ADVISOR: Name] Final sentence of previous round.
+
+## ROUND 2: Direct Responses
+
+[ADVISOR: Next Name] First response...
+
+REQUIREMENTS:
+- Advisors must reference each other by name and quote/paraphrase specific arguments
+- No advisor can ignore what others have said
+- Each response must build on the conversation, not restart it
+- Use transition phrases that show you're responding: "But as [Name] just pointed out..." or "That contradicts [Name]'s argument that..."
+
+MANDATORY: You MUST wrap the entire debate in these exact tags:
+
+<COUNCIL_DEBATE>
+**ROUND 1: Initial Positions**
+[ADVISOR: Name] content...
+
+**ROUND 2: Direct Responses** 
+[ADVISOR: Name] responds to [Other Advisor]...
+
+**ROUND 3: Final Positions**
+[ADVISOR: Name] presents final stance...
+</COUNCIL_DEBATE>
+
+DO NOT FORGET THE <COUNCIL_DEBATE> TAGS. Without these tags, the debate will not display properly.
+
+## Council Summary
+
+After the debate section, provide:
+- One sentence per advisor summarizing their final position
+- Synthesis: 1-2 sentences on the overall outcome or remaining tensions`;
+          } else {
+            prompt += `RESPONSE FORMAT: Use this exact structure for every advisor response:
 
 [ADVISOR: Advisor Name]
 optional action or emotional state on this line by itself
@@ -1957,6 +2082,7 @@ FORMATTING RULES:
 3. Always leave one blank line before starting the main response content
 4. Use single line breaks within paragraphs, double line breaks between major sections
 5. Each advisor gets their own clearly separated section`;
+          }
         }
         // If no advisors are active, no system prompt is needed
         
@@ -1983,7 +2109,8 @@ FORMATTING RULES:
       };
 
       // Pass the content to Claude with enhanced system prompt (this starts immediately)
-      await callClaude(newMessage.content, getSystemPromptWithContexts);
+      console.log('🏛️ Calling Claude with councilMode:', councilMode);
+      await callClaude(newMessage.content, () => getSystemPromptWithContexts({ councilMode }));
 
       // Update message with tags after tag analysis completes (in background)
       tagAnalysisPromise.then(tags => {
@@ -2739,8 +2866,23 @@ ${selectedText}
                       msg.type === 'debug' ? 'text-amber-600 dark:text-amber-400 whitespace-pre-wrap' : 'text-green-600 dark:text-green-400 whitespace-pre-wrap'
                     }`}
                   >
-                    {(msg.type === 'system' || msg.type === 'assistant') ? (
+                    {msg.type === 'system' ? (
                       <MemoizedMarkdownMessage content={msg.content} advisors={advisors} />
+                    ) : msg.type === 'assistant' ? (
+                      (() => {
+                        const { processedContent, debates } = processCouncilDebates(msg.content);
+                        return (
+                          <div>
+                            {debates.map((debate, debateIdx) => (
+                              <DebateBlock key={debateIdx} content={debate} advisors={advisors} />
+                            ))}
+                            <MemoizedMarkdownMessage 
+                              content={processedContent.replace(/__DEBATE_PLACEHOLDER_\d+__/g, '')} 
+                              advisors={advisors} 
+                            />
+                          </div>
+                        );
+                      })()
                     ) : (
                       msg.content
                     )}
