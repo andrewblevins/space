@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
+import { AdvisorResponseMessage } from './terminal/AdvisorResponseMessage';
 
-const DebateBlock = ({ content }) => {
+const DebateBlock = ({ content, advisors = [] }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   if (!content || content.trim() === '') return null;
+
+  // Clean the content by removing any closing tags
+  const cleanedContent = content.replace(/<\/COUNCIL_DEBATE>/g, '').trim();
 
   return (
     <div className="my-4 border border-purple-400/30 dark:border-purple-400 rounded-lg bg-purple-900/10 dark:bg-purple-900/20 bg-purple-100">
@@ -33,8 +37,12 @@ const DebateBlock = ({ content }) => {
       
       {isExpanded && (
         <div className="px-3 pb-3">
-          <div className="bg-purple-200 dark:bg-purple-900/20 rounded p-3 text-sm text-purple-900 dark:text-purple-100 whitespace-pre-wrap">
-            {content}
+          <div className="bg-purple-50/50 dark:bg-purple-900/10 rounded p-4 text-sm text-purple-900 dark:text-purple-100 [&_*]:!text-purple-900 [&_*]:dark:!text-purple-100">
+            <AdvisorResponseMessage 
+              content={cleanedContent} 
+              advisors={advisors}
+              paragraphSpacing={2}
+            />
           </div>
         </div>
       )}
