@@ -376,16 +376,52 @@ Examples of good prompts:
 
 Generate ONLY the user's message describing their situation, nothing else. Include specific details but keep it concise.`,
           max_tokens: 150,
-          stream: false
+          stream: true
         }),
       });
 
       if (!response.ok) return;
 
-      const data = await response.json();
-      const generatedPrompt = data.content[0].text.trim().replace(/^["']|["']$/g, '');
-      
-      setInput(generatedPrompt);
+      // Stream the response into the input field
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let generatedText = '';
+
+      const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        buffer += decoder.decode(value, { stream: true });
+        const events = buffer.split('\n\n');
+        buffer = events.pop() || '';
+
+        for (const event of events) {
+          const dataMatch = event.match(/^data: (.+)$/m);
+          if (!dataMatch) continue;
+          
+          try {
+            const data = JSON.parse(dataMatch[1]);
+            if (data.type === 'content_block_delta' && data.delta.type === 'text_delta') {
+              const text = data.delta.text;
+              for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                generatedText += char;
+                setInput(generatedText);
+                await sleep(Math.random() * 20 + 10); // 10-30ms delay per character
+              }
+            }
+          } catch (e) {
+            console.error('Error parsing streaming event:', e);
+          }
+        }
+      }
+
+      // Clean up the generated prompt
+      const cleanPrompt = generatedText.trim().replace(/^["']|["']$/g, '');
+      setInput(cleanPrompt);
       inputRef.current?.focus();
     } catch (error) {
       // Fallback to SPACE-appropriate prompts
@@ -454,16 +490,52 @@ Consider:
 
 Generate ONLY the user's next message, nothing else. Make it feel authentic and conversational.`,
           max_tokens: 200,
-          stream: false
+          stream: true
         }),
       });
 
       if (!response.ok) return;
 
-      const data = await response.json();
-      const generatedPrompt = data.content[0].text.trim().replace(/^["']|["']$/g, '');
-      
-      setInput(generatedPrompt);
+      // Stream the response into the input field
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let generatedText = '';
+
+      const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        buffer += decoder.decode(value, { stream: true });
+        const events = buffer.split('\n\n');
+        buffer = events.pop() || '';
+
+        for (const event of events) {
+          const dataMatch = event.match(/^data: (.+)$/m);
+          if (!dataMatch) continue;
+          
+          try {
+            const data = JSON.parse(dataMatch[1]);
+            if (data.type === 'content_block_delta' && data.delta.type === 'text_delta') {
+              const text = data.delta.text;
+              for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                generatedText += char;
+                setInput(generatedText);
+                await sleep(Math.random() * 20 + 10); // 10-30ms delay per character
+              }
+            }
+          } catch (e) {
+            console.error('Error parsing streaming event:', e);
+          }
+        }
+      }
+
+      // Clean up the generated prompt
+      const cleanPrompt = generatedText.trim().replace(/^["']|["']$/g, '');
+      setInput(cleanPrompt);
       inputRef.current?.focus();
     } catch (error) {
       // Silently fail
