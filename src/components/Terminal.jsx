@@ -471,10 +471,10 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
     }
   };
 
-  // Keyboard shortcut for test prompts (Ctrl+T in debug mode)
+  // Keyboard shortcut for test prompts (Ctrl+T)
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (debugMode && e.ctrlKey && e.key === 't') {
+      if (e.ctrlKey && e.key === 't') {
         e.preventDefault();
         generateTestPrompt();
       }
@@ -482,7 +482,7 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [debugMode, generateTestPrompt]);
+  }, [generateTestPrompt]);
 
   const loadSessions = () => {
     const sessions = [];
