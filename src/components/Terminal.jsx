@@ -2038,7 +2038,9 @@ Format the debate by wrapping it in special markers:
 [ADVISOR: Name] addresses [Other Advisor]'s criticism...
 </COUNCIL_DEBATE>
 
-After the debate section, each advisor should give their final position.`;
+## Council Summary
+
+After the debate section, provide a clear summary of where each advisor stands and any key points of agreement or disagreement. Each advisor should state their final position in 1-2 sentences.`;
           }
         }
         // If no advisors are active, no system prompt is needed
