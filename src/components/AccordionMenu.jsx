@@ -8,6 +8,7 @@ const AccordionMenu = ({
   onExportClick,
   onDossierClick,
   onImportExportAdvisorsClick,
+  onVotingClick,
   onHelpClick,
   onFullscreenClick,
   isFullscreen
@@ -155,6 +156,27 @@ const AccordionMenu = ({
             strokeLinejoin="round" 
             strokeWidth={2} 
             d="M8 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-2m-4-1v8m0 0l3-3m-3 3L9 8"
+          />
+        </svg>
+      )
+    },
+    {
+      id: 'voting',
+      label: 'Call a Vote',
+      onClick: onVotingClick,
+      icon: (
+        <svg 
+          xmlns="http://www.w3.org/2000/svg" 
+          className="h-4 w-4" 
+          fill="none" 
+          viewBox="0 0 24 24" 
+          stroke="currentColor"
+        >
+          <path 
+            strokeLinecap="round" 
+            strokeLinejoin="round" 
+            strokeWidth={2} 
+            d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 8l2 2 4-4"
           />
         </svg>
       )
