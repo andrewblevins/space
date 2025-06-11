@@ -28,6 +28,7 @@ import { Module } from "./terminal/Module";
 import { GroupableModule } from "./terminal/GroupableModule";
 import { CollapsibleModule } from "./terminal/CollapsibleModule";
 import { CollapsibleClickableModule } from "./terminal/CollapsibleClickableModule";
+import DebateBlock from './DebateBlock';
 import { CollapsibleSuggestionsModule } from "./terminal/CollapsibleSuggestionsModule";
 import { ExpandingInput } from "./terminal/ExpandingInput";
 import { MemoizedMarkdownMessage } from "./terminal/MemoizedMarkdownMessage";
@@ -131,6 +132,23 @@ const Terminal = ({ theme, toggleTheme }) => {
         content: message
       }]);
     }
+  };
+
+  // Process council debate sections for collapsible display
+  const processCouncilDebates = (content) => {
+    const debateRegex = /<COUNCIL_DEBATE>([\s\S]*?)<\/COUNCIL_DEBATE>/g;
+    const debates = [];
+    let processedContent = content;
+    let match;
+
+    while ((match = debateRegex.exec(content)) !== null) {
+      const debateContent = match[1].trim();
+      debates.push(debateContent);
+      // Replace the debate section with a placeholder
+      processedContent = processedContent.replace(match[0], `__DEBATE_PLACEHOLDER_${debates.length - 1}__`);
+    }
+
+    return { processedContent, debates };
   };
 
   const [messages, setMessages] = useState([
@@ -1979,7 +1997,12 @@ FORMATTING RULES:
 
 Produce at least three rounds of back-and-forth debate using the [ADVISOR: Name] format. Let natural disagreements emerge and persist. The debate may end in consensus, partial agreement, or continued disagreement - all outcomes are valid.
 
-After the debate, each advisor should give their final position, clearly stated from their own perspective.`;
+Format the debate by wrapping it in special markers:
+<COUNCIL_DEBATE>
+[ADVISOR: Name] responses here...
+</COUNCIL_DEBATE>
+
+After the debate section, each advisor should give their final position, clearly stated from their own perspective.`;
           }
         }
         // If no advisors are active, no system prompt is needed
@@ -2763,8 +2786,23 @@ ${selectedText}
                       msg.type === 'debug' ? 'text-amber-600 dark:text-amber-400 whitespace-pre-wrap' : 'text-green-600 dark:text-green-400 whitespace-pre-wrap'
                     }`}
                   >
-                    {(msg.type === 'system' || msg.type === 'assistant') ? (
+                    {msg.type === 'system' ? (
                       <MemoizedMarkdownMessage content={msg.content} advisors={advisors} />
+                    ) : msg.type === 'assistant' ? (
+                      (() => {
+                        const { processedContent, debates } = processCouncilDebates(msg.content);
+                        return (
+                          <div>
+                            {debates.map((debate, debateIdx) => (
+                              <DebateBlock key={debateIdx} content={debate} />
+                            ))}
+                            <MemoizedMarkdownMessage 
+                              content={processedContent.replace(/__DEBATE_PLACEHOLDER_\d+__/g, '')} 
+                              advisors={advisors} 
+                            />
+                          </div>
+                        );
+                      })()
                     ) : (
                       msg.content
                     )}
