@@ -122,13 +122,13 @@ export function ExpandingInput({ value, onChange, onSubmit, isLoading, sessions 
       return;
     }
     
-    // Cmd/Ctrl + Enter to submit
-    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+    // Enter to submit (unless Shift is held)
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       setShowAutocomplete(false); // Close autocomplete on submit
       onSubmit(e);
     }
-    // Regular Enter just adds new line (default behavior)
+    // Shift + Enter adds new line (default behavior)
   };
 
   const handleSubmit = () => {
@@ -302,7 +302,7 @@ export function ExpandingInput({ value, onChange, onSubmit, isLoading, sessions 
             bg-amber-50 text-gray-800 dark:bg-black dark:text-green-400
             ${isLoading ? 'opacity-50' : ''}
           `}
-          placeholder={isLoading ? 'Waiting for response...' : 'Type your message... (Enter for new line, drag files to attach)'}
+          placeholder={isLoading ? 'Waiting for response...' : 'Type your message... (Shift+Enter for new line, drag files to attach)'}
           disabled={isLoading}
           autoComplete="off"
           autoCapitalize="off"
@@ -349,7 +349,7 @@ export function ExpandingInput({ value, onChange, onSubmit, isLoading, sessions 
             dark:active:bg-gray-800
           `}
         >
-          {navigator.platform.includes('Mac') ? '⌘+Enter' : 'Ctrl+Enter'}
+          Enter
         </button>
         
         {/* File upload icon */}
