@@ -2001,7 +2001,13 @@ FORMATTING RULES:
 - Build on points that align with their own thinking
 - Never abandon their perspective just to reach agreement
 
-Produce at least three rounds of back-and-forth debate using the [ADVISOR: Name] format. Let natural disagreements emerge and persist. The debate may end in consensus, partial agreement, or continued disagreement - all outcomes are valid.
+Structure the debate as follows:
+1. ROUND 1: Each advisor gives their initial position on the question
+2. ROUND 2: Each advisor responds to at least one other advisor's position  
+3. ROUND 3: Each advisor addresses counterarguments or builds on others' points
+4. Continue additional rounds if natural disagreements persist
+
+Each round should have ALL active advisors participating. A complete debate should have each advisor speaking at least 3 times total.
 
 Format the debate by wrapping it in special markers:
 <COUNCIL_DEBATE>
