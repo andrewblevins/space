@@ -24,6 +24,7 @@ import ImportExportModal from './ImportExportModal';
 import HelpModal from './HelpModal';
 import InfoModal from './InfoModal';
 import WelcomeScreen from './WelcomeScreen';
+import ThinkingBlock from './ThinkingBlock';
 import { Module } from "./terminal/Module";
 import { GroupableModule } from "./terminal/GroupableModule";
 import { CollapsibleModule } from "./terminal/CollapsibleModule";
@@ -50,53 +51,6 @@ const Terminal = ({ theme, toggleTheme }) => {
     }
   }, [modalController]);
 
-  useEffect(() => {
-    // Only check for API keys after modal controller is initialized
-    const checkKeys = async () => {
-      try {
-        // First check if encrypted data exists
-        if (!hasEncryptedData()) {
-          console.log('❌ No encrypted keys found, showing welcome screen');
-          const skipWelcome = localStorage.getItem('space_skip_welcome');
-          if (!skipWelcome) {
-            setShowWelcome(true);
-          }
-          return;
-        }
-
-        // If encrypted data exists, try to decrypt it (this will prompt for password if needed)
-        console.log('🔒 Encrypted keys found, attempting to decrypt...');
-        try {
-          const anthropicKey = await getDecrypted('space_anthropic_key');
-          const openaiKey = await getDecrypted('space_openai_key');
-          
-          if (anthropicKey && openaiKey) {
-            setApiKeysSet(true);
-            
-            // Initialize OpenAI client if keys are available
-            const client = new OpenAI({
-              apiKey: openaiKey,
-              dangerouslyAllowBrowser: true
-            });
-            setOpenaiClient(client);
-            console.log('✅ OpenAI client initialized successfully');
-          }
-        } catch (error) {
-          console.error('Error decrypting API keys:', error);
-          // If decryption fails (user canceled password, wrong password, etc.), 
-          // don't show welcome screen - they have encrypted keys, just couldn't access them this time
-          console.log('🔑 Password entry was required but failed/canceled');
-        }
-      } finally {
-        // Always stop the loading state once initialization is complete
-        setIsInitializing(false);
-      }
-    };
-    
-    if (modalController) {
-      checkKeys();
-    }
-  }, [modalController]);
 
   const getNextSessionId = () => {
     const keys = Object.keys(localStorage).filter(key => key.startsWith('space_session_'));
@@ -190,6 +144,10 @@ const Terminal = ({ theme, toggleTheme }) => {
   });
   const [activeGroups, setActiveGroups] = useState([]);
   const [debugMode, setDebugMode] = useState(false);
+  const [reasoningMode, setReasoningMode] = useState(() => {
+    const saved = localStorage.getItem('space_reasoning_mode');
+    return saved ? saved === 'true' : false;
+  });
   const inputRef = useRef(null);
   const [savedPrompts, setSavedPrompts] = useState(() => {
     const saved = localStorage.getItem('space_prompts');
@@ -250,6 +208,7 @@ const Terminal = ({ theme, toggleTheme }) => {
   const [apiKeysSet, setApiKeysSet] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
+  const [hasCheckedKeys, setHasCheckedKeys] = useState(false);
   
   // Handler to reset to welcome screen
   const resetToWelcome = () => {
@@ -274,6 +233,57 @@ const Terminal = ({ theme, toggleTheme }) => {
     const saved = localStorage.getItem('space_paragraph_spacing');
     return saved ? parseFloat(saved) : 0.25;
   }); // Spacing between paragraphs
+
+
+
+  // Check for API keys after modal controller is initialized
+  useEffect(() => {
+    const checkKeys = async () => {
+      try {
+        // First check if encrypted data exists
+        if (!hasEncryptedData()) {
+          console.log('❌ No encrypted keys found, showing welcome screen');
+          const skipWelcome = localStorage.getItem('space_skip_welcome');
+          if (!skipWelcome) {
+            setShowWelcome(true);
+          }
+          return;
+        }
+
+        // If encrypted data exists, try to decrypt it (this will prompt for password if needed)
+        console.log('🔒 Encrypted keys found, attempting to decrypt...');
+        try {
+          const anthropicKey = await getDecrypted('space_anthropic_key');
+          const openaiKey = await getDecrypted('space_openai_key');
+          
+          if (anthropicKey && openaiKey) {
+            setApiKeysSet(true);
+            
+            // Initialize OpenAI client if keys are available
+            const client = new OpenAI({
+              apiKey: openaiKey,
+              dangerouslyAllowBrowser: true
+            });
+            setOpenaiClient(client);
+            console.log('✅ OpenAI client initialized successfully');
+          }
+        } catch (error) {
+          console.error('Error decrypting API keys:', error);
+          // If decryption fails (user canceled password, wrong password, etc.), 
+          // don't show welcome screen - they have encrypted keys, just couldn't access them this time
+          console.log('🔑 Password entry was required but failed/canceled');
+        }
+      } finally {
+        // Always stop the loading state once initialization is complete
+        setIsInitializing(false);
+        setHasCheckedKeys(true);
+      }
+    };
+    
+    if (modalController && !hasCheckedKeys) {
+      checkKeys();
+    }
+  }, [modalController, hasCheckedKeys]);
 
 const getSystemPrompt = () => {
   let prompt = "";
@@ -327,7 +337,224 @@ FORMATTING RULES:
   return prompt;
 };
 
-const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimit, memory, debugMode, getSystemPrompt });
+const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimit, memory, debugMode, reasoningMode, getSystemPrompt });
+
+  // Generate a creative starting prompt for new conversations
+  const generateStartingPrompt = async () => {
+    try {
+      const anthropicKey = await getDecrypted('space_anthropic_key');
+      if (!anthropicKey) return;
+
+      const response = await fetch(`${getApiEndpoint()}/v1/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': anthropicKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          messages: [{
+            role: 'user',
+            content: "Generate an interesting, thought-provoking question or scenario that would make for a great conversation starter. Something that would benefit from multiple perspectives and deep thinking."
+          }],
+          system: `You are generating conversation starters for SPACE Terminal - a system where users experiencing cognitive or emotional constriction can talk to multiple AI advisors about complex, high-stakes problems.
+
+Users come to SPACE when they feel stuck between limited options, overwhelmed by complexity, or unable to integrate conflicting perspectives. Generate prompts that represent someone with:
+
+- A specific high-stakes decision or situation (not abstract questions)
+- Multiple stakeholders, complex tradeoffs, or conflicting priorities
+- Real consequences that matter to the person
+- Need for diverse perspectives they can't access alone
+- Some details but not overwhelming background
+
+Examples of good prompts:
+- "I'm considering leaving my stable job to start a company, but I have a mortgage and two kids. My co-founder is pushing for a decision next week."
+- "My elderly parent needs more care but refuses to move from their home. My siblings disagree on what to do and it's tearing our family apart."
+- "We're launching our product next month but discovered a potential safety issue. Fixing it means delaying 6 months and possibly losing our lead investor."
+
+Generate ONLY the user's message describing their situation, nothing else. Include specific details but keep it concise.`,
+          max_tokens: 150,
+          stream: true
+        }),
+      });
+
+      if (!response.ok) return;
+
+      // Stream the response into the input field
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let generatedText = '';
+
+      const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        buffer += decoder.decode(value, { stream: true });
+        const events = buffer.split('\n\n');
+        buffer = events.pop() || '';
+
+        for (const event of events) {
+          const dataMatch = event.match(/^data: (.+)$/m);
+          if (!dataMatch) continue;
+          
+          try {
+            const data = JSON.parse(dataMatch[1]);
+            if (data.type === 'content_block_delta' && data.delta.type === 'text_delta') {
+              const text = data.delta.text;
+              for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                generatedText += char;
+                setInput(generatedText);
+                await sleep(Math.random() * 20 + 10); // 10-30ms delay per character
+              }
+            }
+          } catch (e) {
+            console.error('Error parsing streaming event:', e);
+          }
+        }
+      }
+
+      // Clean up the generated prompt
+      const cleanPrompt = generatedText.trim().replace(/^["']|["']$/g, '');
+      setInput(cleanPrompt);
+      inputRef.current?.focus();
+    } catch (error) {
+      // Fallback to SPACE-appropriate prompts
+      const fallbackPrompts = [
+        "I'm being offered a promotion that would double my salary but require relocating my family across the country. My spouse loves their current job and my kids are thriving in their schools. The decision deadline is next Friday.",
+        "My startup's lead developer just quit right before our Series A pitch next month. I could try to hire someone quickly, delay the fundraising, or attempt to handle the technical presentation myself despite limited coding experience.",
+        "My business partner wants to pivot our successful but niche company into a crowded market with bigger potential. I think we should double down on what's working. We need to decide before our investor meeting next week.",
+        "I discovered my teenage daughter has been lying about where she goes after school. When I confronted her, she broke down and said she's been seeing a therapist because she didn't want to worry me. I don't know how to handle this.",
+        "My aging mother fell last week and the doctor says she shouldn't live alone anymore. She's refusing assisted living and wants me to move in with her, but I have my own family and demanding career. My brother lives across the country and thinks I'm overreacting.",
+        "I've been offered my dream job at a startup, but it requires leaving my current company right as we're about to launch a major project I've led for two years. My team is counting on me, but this opportunity might not come again.",
+        "My co-founder and I disagree on whether to accept an acquisition offer that would secure our futures but likely mean the end of our original vision. The buyer wants an answer by Monday.",
+        "I need to choose between an experimental treatment for my chronic condition that could help significantly but has serious risks, or staying with my current management plan that's sustainable but limiting my quality of life."
+      ];
+      const randomPrompt = fallbackPrompts[Math.floor(Math.random() * fallbackPrompts.length)];
+      setInput(randomPrompt);
+      inputRef.current?.focus();
+    }
+  };
+
+  // Generate contextual test prompt using Claude
+  const generateTestPrompt = async () => {
+    const hasConversation = messages.length > 0 && !messages.every(m => m.type === 'system');
+    
+    if (!hasConversation) {
+      // Generate a creative starting prompt for new conversations
+      await generateStartingPrompt();
+      return;
+    }
+
+    try {
+      const anthropicKey = await getDecrypted('space_anthropic_key');
+      if (!anthropicKey) return;
+
+      // Build conversation context
+      const contextMessages = messages
+        .filter((m) => (m.type === 'user' || m.type === 'assistant') && m.content?.trim() !== '')
+        .slice(-10) // Last 10 messages for context
+        .map((m) => ({ role: m.type, content: m.content }));
+
+      // Add the prompt request
+      contextMessages.push({
+        role: 'user',
+        content: "Based on our conversation so far, what would be a natural and interesting follow-up question or comment from the user? Generate only the user's message, nothing else."
+      });
+
+      // Make direct API call without going through useClaude hook
+      const response = await fetch(`${getApiEndpoint()}/v1/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': anthropicKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          messages: contextMessages,
+          system: `You are helping test a conversational AI system. Based on the conversation history, generate a natural follow-up message that a user would likely say next. 
+
+Consider:
+- The topic and flow of conversation so far
+- Any questions that were raised but not fully explored
+- Natural follow-up questions or requests for clarification
+- Deeper exploration of themes already discussed
+- Challenging or probing questions that test the advisors' perspectives
+
+Generate ONLY the user's next message, nothing else. Make it feel authentic and conversational.`,
+          max_tokens: 200,
+          stream: true
+        }),
+      });
+
+      if (!response.ok) return;
+
+      // Stream the response into the input field
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let generatedText = '';
+
+      const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        buffer += decoder.decode(value, { stream: true });
+        const events = buffer.split('\n\n');
+        buffer = events.pop() || '';
+
+        for (const event of events) {
+          const dataMatch = event.match(/^data: (.+)$/m);
+          if (!dataMatch) continue;
+          
+          try {
+            const data = JSON.parse(dataMatch[1]);
+            if (data.type === 'content_block_delta' && data.delta.type === 'text_delta') {
+              const text = data.delta.text;
+              for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                generatedText += char;
+                setInput(generatedText);
+                await sleep(Math.random() * 20 + 10); // 10-30ms delay per character
+              }
+            }
+          } catch (e) {
+            console.error('Error parsing streaming event:', e);
+          }
+        }
+      }
+
+      // Clean up the generated prompt
+      const cleanPrompt = generatedText.trim().replace(/^["']|["']$/g, '');
+      setInput(cleanPrompt);
+      inputRef.current?.focus();
+    } catch (error) {
+      // Silently fail
+      console.error('Test prompt generation failed:', error);
+    }
+  };
+
+  // Keyboard shortcut for test prompts (Ctrl+T)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.ctrlKey && e.key === 't') {
+        e.preventDefault();
+        generateTestPrompt();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [generateTestPrompt]);
 
   const loadSessions = () => {
     const sessions = [];
@@ -919,6 +1146,17 @@ Now, I'd like to generate the final output. Please include the following aspects
           setMessages(prev => [...prev, {
             type: 'system',
             content: `Debug mode ${newDebugMode ? 'enabled' : 'disabled'}`
+          }]);
+          return true;
+
+        case '/reasoning':
+        case '/think':
+          const newReasoningMode = !reasoningMode;
+          setReasoningMode(newReasoningMode);
+          localStorage.setItem('space_reasoning_mode', newReasoningMode.toString());
+          setMessages(prev => [...prev, {
+            type: 'system',
+            content: `Reasoning mode ${newReasoningMode ? 'enabled' : 'disabled'}`
           }]);
           return true;
 
@@ -2740,7 +2978,10 @@ ${selectedText}
                     }`}
                   >
                     {(msg.type === 'system' || msg.type === 'assistant') ? (
-                      <MemoizedMarkdownMessage content={msg.content} advisors={advisors} />
+                      <>
+                        {msg.thinking && <ThinkingBlock content={msg.thinking} />}
+                        <MemoizedMarkdownMessage content={msg.content} advisors={advisors} />
+                      </>
                     ) : (
                       msg.content
                     )}
@@ -2931,6 +3172,8 @@ ${selectedText}
         onClose={() => setShowSettingsMenu(false)}
         debugMode={debugMode}
         setDebugMode={setDebugMode}
+        reasoningMode={reasoningMode}
+        setReasoningMode={setReasoningMode}
         contextLimit={contextLimit}
         setContextLimit={setContextLimit}
         maxTokens={maxTokens}

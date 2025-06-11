@@ -7,6 +7,8 @@ const SettingsMenu = ({
   onClose,
   debugMode,
   setDebugMode,
+  reasoningMode,
+  setReasoningMode,
   contextLimit,
   setContextLimit,
   maxTokens,
@@ -83,6 +85,12 @@ const SettingsMenu = ({
     setDebugMode(!debugMode);
   };
 
+  const handleReasoningToggle = () => {
+    const newMode = !reasoningMode;
+    setReasoningMode(newMode);
+    localStorage.setItem('space_reasoning_mode', newMode.toString());
+  };
+
   const handleClearApiKeysClick = () => {
     setShowClearConfirmation(true);
   };
@@ -99,6 +107,7 @@ const SettingsMenu = ({
     const defaultContextLimit = 150000;  // High context for rich conversations
     const defaultMaxTokens = 4096;       // Full response length
     const defaultDebugMode = false;      // Clean interface
+    const defaultReasoningMode = false;  // No step-by-step reasoning
     const defaultParagraphSpacing = 0.25; // Default paragraph spacing
     
     setTempContextLimit(defaultContextLimit);
@@ -108,8 +117,11 @@ const SettingsMenu = ({
     setTempMaxTokens(defaultMaxTokens);
     setMaxTokens(defaultMaxTokens);
     localStorage.setItem('space_max_tokens', defaultMaxTokens.toString());
-    
+
     setDebugMode(defaultDebugMode);
+    setReasoningMode(defaultReasoningMode);
+
+    localStorage.setItem('space_reasoning_mode', defaultReasoningMode.toString());
     
     setParagraphSpacing(defaultParagraphSpacing);
     localStorage.setItem('space_paragraph_spacing', defaultParagraphSpacing.toString());
@@ -176,6 +188,26 @@ const SettingsMenu = ({
                   <span
                     className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
                       debugMode ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* Reasoning Mode */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <label className="text-green-400 font-medium">Reasoning Mode</label>
+                  <p className="text-gray-400 text-sm">Model explains its reasoning step-by-step</p>
+                </div>
+                <button
+                  onClick={handleReasoningToggle}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    reasoningMode ? 'bg-green-400' : 'bg-gray-600'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      reasoningMode ? 'translate-x-6' : 'translate-x-1'
                     }`}
                   />
                 </button>
