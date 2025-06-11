@@ -1969,7 +1969,17 @@ FORMATTING RULES:
 4. Use single line breaks within paragraphs, double line breaks between major sections
 5. Each advisor gets their own clearly separated section`;
           if (councilMode) {
-            prompt += `\n\n## HIGH COUNCIL MODE\nThe advisors must debate each other before giving the final answer. Produce at least three rounds of back-and-forth using the [ADVISOR: Name] format. Encourage disagreement and questioning. Wrap the entire debate transcript in <details><summary>High Council Debate</summary>\n\n...transcript...\n\n</details> followed by a clear conclusion.`;
+            prompt += `\n\n## HIGH COUNCIL MODE\nThe advisors will engage in a structured debate, each maintaining their unique perspective throughout. Each advisor should:
+
+- Stay true to their core philosophy and worldview
+- Respond authentically from their own perspective 
+- Challenge other advisors when they genuinely disagree
+- Build on points that align with their own thinking
+- Never abandon their perspective just to reach agreement
+
+Produce at least three rounds of back-and-forth debate using the [ADVISOR: Name] format. Let natural disagreements emerge and persist. The debate may end in consensus, partial agreement, or continued disagreement - all outcomes are valid.
+
+After the debate, each advisor should give their final position, clearly stated from their own perspective.`;
           }
         }
         // If no advisors are active, no system prompt is needed
