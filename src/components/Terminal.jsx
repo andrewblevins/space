@@ -29,6 +29,7 @@ import { GroupableModule } from "./terminal/GroupableModule";
 import { CollapsibleModule } from "./terminal/CollapsibleModule";
 import { CollapsibleClickableModule } from "./terminal/CollapsibleClickableModule";
 import { CollapsibleSuggestionsModule } from "./terminal/CollapsibleSuggestionsModule";
+import VotingModal from './VotingModal';
 import { ExpandingInput } from "./terminal/ExpandingInput";
 import { MemoizedMarkdownMessage } from "./terminal/MemoizedMarkdownMessage";
 import { AdvisorResponseMessage } from "./terminal/AdvisorResponseMessage";
@@ -244,6 +245,8 @@ const Terminal = ({ theme, toggleTheme }) => {
   // const [questionsExpanded, setQuestionsExpanded] = useState(false);
   const [advisorSuggestionsExpanded, setAdvisorSuggestionsExpanded] = useState(false);
   const [advisorSuggestions, setAdvisorSuggestions] = useState([]);
+  const [voteHistory, setVoteHistory] = useState([]);
+  const [showVotingModal, setShowVotingModal] = useState(false);
   const [lastAdvisorAnalysisContent, setLastAdvisorAnalysisContent] = useState('');
   const [suggestedAdvisorName, setSuggestedAdvisorName] = useState('');
   const [contextLimit, setContextLimit] = useState(150000);
@@ -394,6 +397,7 @@ const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimi
     // DEPRECATED: Questions feature temporarily disabled
     // setQuestions([]);
     setAdvisorSuggestions([]);
+    setVoteHistory([]);
     
     // Track new session
     trackSession();
@@ -409,6 +413,7 @@ const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimi
       // DEPRECATED: Questions feature temporarily disabled
       // setQuestions(session.questions || []);
       setAdvisorSuggestions(session.advisorSuggestions || []);
+      setVoteHistory(session.voteHistory || []);
     } else {
       setMessages(prev => [...prev, {
         type: 'system',
@@ -427,6 +432,7 @@ const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimi
       // DEPRECATED: Questions feature temporarily disabled
       // setQuestions(penultimate.questions || []);
       setAdvisorSuggestions(penultimate.advisorSuggestions || []);
+      setVoteHistory(penultimate.voteHistory || []);
     } else {
       setMessages(prev => [...prev, {
         type: 'system',
@@ -450,6 +456,7 @@ const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimi
     // DEPRECATED: Questions feature temporarily disabled
     // setQuestions([]);
     setAdvisorSuggestions([]);
+    setVoteHistory([]);
   };
 
   const handleDeleteSession = (sessionId) => {
@@ -901,16 +908,17 @@ Now, I'd like to generate the final output. Please include the following aspects
                 return true;
               }
 
-              setAdvisors(prev => prev.filter(a =>
-                a.name.toLowerCase() !== nameToDelete.toLowerCase()
-              ));
-              setMessages(prev => [...prev, {
-                type: 'system',
-                content: `Deleted advisor: ${advisorToDelete.name}`
-              }]);
-              return true;
+          setAdvisors(prev => prev.filter(a =>
+            a.name.toLowerCase() !== nameToDelete.toLowerCase()
+          ));
+          setMessages(prev => [...prev, {
+            type: 'system',
+            content: `Deleted advisor: ${advisorToDelete.name}`
+          }]);
+          return true;
 
-          }
+        }
+
 
         case '/debug':
           console.log('Debug command received');
@@ -2328,6 +2336,110 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
     }
   };
 
+  const generateAdvisorVote = async (advisor, question, options) => {
+    if (!openaiClient) return { position: 'abstain', confidence: 0, reasoning: 'No API connection' };
+    try {
+      const optionsList = options.map((opt, i) => `${i + 1}. ${opt}`).join('\n');
+      
+      const prompt = `As ${advisor.name}, vote on this question from your perspective: "${question}"
+
+Your persona: ${advisor.description}
+
+Available options:
+${optionsList}
+
+Choose one of the numbered options above and respond with a JSON object containing:
+- "position": The exact text of your chosen option (not the number)
+- "confidence": Your confidence level (0-100)
+- "reasoning": A brief explanation in your voice (1-2 sentences)
+
+Example: {"position": "Option 2 text here", "confidence": 75, "reasoning": "This aligns with my philosophical understanding of human nature."}`;
+
+      const inputTokens = Math.ceil((100 + prompt.length) / 4);
+      const response = await openaiClient.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: 'You are a voting advisor. Choose from the provided options only. Respond in valid JSON format with the exact fields requested.' },
+          { role: 'user', content: prompt }
+        ],
+        max_tokens: 200,
+        response_format: { type: 'json_object' }
+      });
+      
+      const vote = JSON.parse(response.choices[0].message.content);
+      const outputTokens = Math.ceil(response.choices[0].message.content.length / 4);
+      trackUsage('gpt', inputTokens, outputTokens);
+      
+      // Validate that the position matches one of the options
+      let validPosition = vote.position;
+      if (!options.some(opt => opt.toLowerCase().includes(validPosition.toLowerCase()) || validPosition.toLowerCase().includes(opt.toLowerCase()))) {
+        // If no match found, default to first option
+        validPosition = options[0];
+      }
+      
+      const sanitizedVote = {
+        position: validPosition,
+        confidence: Math.max(0, Math.min(100, parseInt(vote.confidence) || 0)),
+        reasoning: vote.reasoning || 'No reasoning provided'
+      };
+      
+      return sanitizedVote;
+    } catch (e) {
+      console.error('Vote generation failed for', advisor.name, e);
+      return { position: options[0] || 'abstain', confidence: 0, reasoning: 'Vote generation failed' };
+    }
+  };
+
+  const handleModalVote = async (question, options) => {
+    const active = advisors.filter(a => a.active);
+    if (active.length === 0) {
+      setMessages(prev => [...prev, {
+        type: 'system',
+        content: 'No active advisors to vote. Please activate advisors first.'
+      }]);
+      return;
+    }
+
+    // Add "starting vote" message
+    setMessages(prev => [...prev, {
+      type: 'system',
+      content: `**Starting Vote:** "${question}"\n**Options:** ${options.map((opt, i) => `${i + 1}. ${opt}`).join(', ')}`
+    }]);
+
+    const votes = [];
+    for (const adv of active) {
+      const vote = await generateAdvisorVote(adv, question, options);
+      votes.push({ advisor: adv.name, ...vote });
+    }
+    
+    setVoteHistory(prev => [...prev, { question, options, votes }]);
+    
+    // Create voting results message
+    const tally = {};
+    let totalConf = 0;
+    votes.forEach(v => {
+      tally[v.position] = (tally[v.position] || 0) + 1;
+      totalConf += v.confidence;
+    });
+    const recommended = Object.entries(tally).sort((a,b)=>b[1]-a[1])[0][0];
+    const avgConfidence = Math.round(totalConf / votes.length);
+    
+    let voteResults = `**Voting Results**\n\n`;
+    votes.forEach(vote => {
+      voteResults += `**${vote.advisor}:** ${vote.position} (${vote.confidence}% confidence)\n`;
+      if (vote.reasoning) {
+        voteResults += `  *"${vote.reasoning}"*\n`;
+      }
+      voteResults += `\n`;
+    });
+    voteResults += `**Summary:** ${tally[recommended]}/${active.length} advisors chose **${recommended}** (avg confidence: ${avgConfidence}%)`;
+    
+    setMessages(prev => [...prev, { 
+      type: 'system', 
+      content: voteResults
+    }]);
+  };
+
   useEffect(() => {
     // Only save sessions that have actual user/assistant messages (not just system messages)
     const nonSystemMessages = messages.filter(msg => msg.type !== 'system');
@@ -2338,12 +2450,13 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
           timestamp: new Date().toISOString(),
           messages: messages.map(msg => ({
             ...msg,
-            tags: msg.tags || [] // Ensure tags are preserved
+            tags: msg.tags || []
           })),
           metaphors,
           // DEPRECATED: Questions feature temporarily disabled
           // questions,
-          advisorSuggestions
+          advisorSuggestions,
+          voteHistory
         };
 
         // Generate title if this is a new session with enough content and no title yet
@@ -2388,7 +2501,7 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
 
       saveSession();
     }
-  }, [messages, metaphors, /* questions, */ advisorSuggestions, currentSessionId, openaiClient]);
+  }, [messages, metaphors, /* questions, */ advisorSuggestions, voteHistory, currentSessionId, openaiClient]);
 
   // Trigger analysis when messages change and we have a Claude response
   useEffect(() => {
@@ -2896,6 +3009,7 @@ ${selectedText}
             onExportClick={() => setShowExportMenu(true)}
             onDossierClick={() => setShowDossierModal(true)}
             onImportExportAdvisorsClick={() => setShowImportExportModal(true)}
+            onVotingClick={() => setShowVotingModal(true)}
             onHelpClick={() => setShowHelpModal(true)}
             onFullscreenClick={toggleFullscreen}
             isFullscreen={isFullscreen}
@@ -2951,6 +3065,14 @@ ${selectedText}
         onEditPrompt={handleEditPrompt}
         onDeletePrompt={handleDeletePrompt}
         onAddNewPrompt={handleAddNewPrompt}
+      />
+
+      {/* Voting Modal Component */}
+      <VotingModal
+        isOpen={showVotingModal}
+        onClose={() => setShowVotingModal(false)}
+        advisors={advisors}
+        onSubmitVote={handleModalVote}
       />
 
       {/* Add Prompt Form Component */}
