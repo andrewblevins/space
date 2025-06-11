@@ -17,7 +17,7 @@ import { trackUsage, formatCost } from '../utils/usageTracking';
  * @param {() => string} params.getSystemPrompt
  * @returns {{ callClaude: (msg: string, customGetSystemPrompt?: () => string) => Promise<string> }}
  */
-export function useClaude({ messages, setMessages, maxTokens, contextLimit, memory, debugMode, getSystemPrompt }) {
+export function useClaude({ messages, setMessages, maxTokens, contextLimit, memory, debugMode, reasoningMode, getSystemPrompt }) {
   const callClaude = useCallback(async (userMessage, customGetSystemPrompt = null) => {
     const formatTimestamp = (iso) => new Date(iso).toISOString().slice(0, 16);
     if (!userMessage?.trim()) throw new Error('Empty message');
@@ -38,7 +38,10 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
       if (managed?.length) contextMessages.unshift(...managed);
     }
 
-    const systemPromptText = customGetSystemPrompt ? customGetSystemPrompt() : getSystemPrompt();
+    const baseSystemPrompt = customGetSystemPrompt ? customGetSystemPrompt() : getSystemPrompt();
+    const systemPromptText = reasoningMode
+      ? `${baseSystemPrompt}\n\nREASONING MODE ACTIVE: Provide step-by-step reasoning before your final answer.`
+      : baseSystemPrompt;
     
     // Calculate input tokens for tracking
     const systemTokens = estimateTokens(systemPromptText);
@@ -133,7 +136,7 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
     }
     
     return currentMessageContent;
-  }, [messages, setMessages, maxTokens, contextLimit, memory, debugMode, getSystemPrompt]);
+  }, [messages, setMessages, maxTokens, contextLimit, memory, debugMode, reasoningMode, getSystemPrompt]);
 
   return { callClaude };
 }
