@@ -6,7 +6,7 @@ const HelpModal = ({ isOpen, onClose }) => {
   return (
     <div className="fixed inset-0 bg-stone-100/70 dark:bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
       <div
-        className="bg-stone-50 border border-green-600 rounded-lg w-full max-w-2xl mx-4 dark:bg-gray-900 dark:border-green-400 max-h-[90vh] overflow-hidden flex flex-col"
+        className="bg-stone-50 border border-green-600 rounded-lg w-full max-w-2xl mx-4 dark:bg-gray-900 dark:border-green-400 max-h-[90vh] overflow-y-auto overflow-x-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-6 pb-4">
