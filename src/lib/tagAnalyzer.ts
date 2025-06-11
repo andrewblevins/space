@@ -4,8 +4,12 @@ import { Tag } from '../types/tags';
 import { trackUsage } from '../utils/usageTracking';
 
 
-// Overhauled prompt for structured tagging with categories
-const TAGGING_PROMPT = `Identify important people, places, organizations, topics and activities mentioned in the user's message. Return them as JSON objects with "value" and "category" fields. Categories may be: person, place, organization, topic, activity, state, or other. Use lowercase for the value and provide 5-15 items when possible.
+// Prompt for extracting concise tags useful for later retrieval
+const TAGGING_PROMPT = `Extract short tags that would help a user search for this
+message later. Focus on notable people, places, organizations, key topics, and
+major actions. Ignore filler details or generic words. Return 5-10 tags as JSON
+objects with "value" (lowercase) and "category". Categories: person, place,
+organization, topic, activity, state, other.
 
 Example response:
 {
