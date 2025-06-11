@@ -24,6 +24,7 @@ import ImportExportModal from './ImportExportModal';
 import HelpModal from './HelpModal';
 import InfoModal from './InfoModal';
 import WelcomeScreen from './WelcomeScreen';
+import ThinkingBlock from './ThinkingBlock';
 import { Module } from "./terminal/Module";
 import { GroupableModule } from "./terminal/GroupableModule";
 import { CollapsibleModule } from "./terminal/CollapsibleModule";
@@ -3018,6 +3019,7 @@ ${selectedText}
                         const { processedContent, debates } = processCouncilDebates(msg.content);
                         return (
                           <div>
+                            {msg.thinking && <ThinkingBlock content={msg.thinking} />}
                             {debates.map((debate, debateIdx) => (
                               <DebateBlock key={debateIdx} content={debate} advisors={advisors} />
                             ))}
