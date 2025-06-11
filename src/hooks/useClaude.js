@@ -39,7 +39,11 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
     }
 
     const baseSystemPrompt = customGetSystemPrompt ? customGetSystemPrompt() : getSystemPrompt();
-    const systemPromptText = baseSystemPrompt;
+    
+    // Add reasoning guidance when Extended Thinking is enabled
+    const systemPromptText = reasoningMode && baseSystemPrompt
+      ? `${baseSystemPrompt}\n\n## REASONING GUIDANCE\n\nWhen thinking through this problem, focus on the actual substance of the user's question rather than predicting what advisors would say. Use your thinking space to:\n\n1. **Analyze the core problem or question** - Break down what's really being asked\n2. **Consider multiple perspectives and approaches** - Explore different angles and potential solutions\n3. **Evaluate evidence and reasoning** - Think through the logic, assumptions, and implications\n4. **Synthesize insights** - Connect ideas and draw meaningful conclusions\n\nOnly after this substantive analysis should you consider how the advisors would present these insights to the user.`
+      : baseSystemPrompt;
     
     // Debug logging for High Council mode
     if (systemPromptText.includes('HIGH COUNCIL MODE')) {
