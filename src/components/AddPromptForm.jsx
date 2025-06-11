@@ -24,7 +24,7 @@ const AddPromptForm = ({ isOpen, onSubmit, onCancel }) => {
   return (
     <div className="fixed inset-0 bg-white/70 dark:bg-black/50 flex items-center justify-center z-50" onClick={handleCancel}>
       <div
-        className="bg-gray-100 border border-green-600 rounded-lg p-6 w-full max-w-2xl mx-4 dark:bg-gray-900 dark:border-green-400"
+        className="bg-gray-100 border border-green-600 rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[80vh] overflow-y-auto overflow-x-hidden dark:bg-gray-900 dark:border-green-400"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-6">
