@@ -136,6 +136,7 @@ const Terminal = ({ theme, toggleTheme }) => {
 
   // Process council debate sections for collapsible display
   const processCouncilDebates = (content) => {
+    console.log('🏛️ Processing content for council debates:', { contentLength: content.length, hasCouncilDebate: content.includes('<COUNCIL_DEBATE>') });
     const debateRegex = /<COUNCIL_DEBATE>([\s\S]*?)<\/COUNCIL_DEBATE>/g;
     const debates = [];
     let processedContent = content;
@@ -143,11 +144,13 @@ const Terminal = ({ theme, toggleTheme }) => {
 
     while ((match = debateRegex.exec(content)) !== null) {
       const debateContent = match[1].trim();
+      console.log('🏛️ Found debate section:', { debateLength: debateContent.length });
       debates.push(debateContent);
       // Replace the debate section with a placeholder
       processedContent = processedContent.replace(match[0], `__DEBATE_PLACEHOLDER_${debates.length - 1}__`);
     }
 
+    console.log('🏛️ Debate processing complete:', { debatesFound: debates.length });
     return { processedContent, debates };
   };
 
@@ -1870,7 +1873,9 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
       const councilRegex = /\/council\b/i;
       const councilMode = councilRegex.test(processedInput);
       if (councilMode) {
+        console.log('🏛️ High Council mode detected!', { originalInput: processedInput });
         processedInput = processedInput.replace(councilRegex, '').trim();
+        console.log('🏛️ Processed input after removing /council:', processedInput);
       }
       
       // Handle new format: @"Session Title" - collect summaries for context injection
@@ -1987,6 +1992,7 @@ FORMATTING RULES:
 4. Use single line breaks within paragraphs, double line breaks between major sections
 5. Each advisor gets their own clearly separated section`;
           if (councilMode) {
+            console.log('🏛️ Adding High Council mode instructions to system prompt');
             prompt += `\n\n## HIGH COUNCIL MODE\nThe advisors will engage in a structured debate, each maintaining their unique perspective throughout. Each advisor should:
 
 - Stay true to their core philosophy and worldview
@@ -2030,6 +2036,7 @@ After the debate section, each advisor should give their final position, clearly
       };
 
       // Pass the content to Claude with enhanced system prompt (this starts immediately)
+      console.log('🏛️ Calling Claude with councilMode:', councilMode);
       await callClaude(newMessage.content, () => getSystemPromptWithContexts({ councilMode }));
 
       // Update message with tags after tag analysis completes (in background)
