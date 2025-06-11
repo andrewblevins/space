@@ -79,7 +79,7 @@ This will send a basic starting prompt for the conversation.
 
 SPACE has moved to a **fully GUI-based interface** for ease of use. All functionality is accessible through:
 
-- **Settings Menu**: Click the gear icon (bottom-left) for debug mode, token limits, API key management
+- **Settings Menu**: Click the gear icon (bottom-left) for debug mode, token limits, API key management, and optional Agent Mode (higher cost)
 - **Advisors Panel**: Left sidebar for creating, editing, and selecting AI advisors  
 - **Conversation**: Main terminal area for natural conversation
 - **Export Menu**: Click export icon for saving conversations in markdown format

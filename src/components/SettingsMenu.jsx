@@ -15,7 +15,9 @@ const SettingsMenu = ({
   theme,
   toggleTheme,
   paragraphSpacing,
-  setParagraphSpacing
+  setParagraphSpacing,
+  agentMode,
+  setAgentMode
 }) => {
   const [tempContextLimit, setTempContextLimit] = useState(contextLimit);
   const [tempMaxTokens, setTempMaxTokens] = useState(maxTokens);
@@ -81,6 +83,12 @@ const SettingsMenu = ({
 
   const handleDebugToggle = () => {
     setDebugMode(!debugMode);
+  };
+
+  const handleAgentModeToggle = () => {
+    const newValue = !agentMode;
+    setAgentMode(newValue);
+    localStorage.setItem('space_agent_mode', JSON.stringify(newValue));
   };
 
   const handleClearApiKeysClick = () => {
@@ -292,6 +300,26 @@ const SettingsMenu = ({
                 <div className="text-xs text-gray-500 mt-1">
                   Range: 1-8192, Current: {maxTokens}
                 </div>
+              </div>
+
+              {/* Agent Mode */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <label className="text-green-400 font-medium">Agent Mode</label>
+                  <p className="text-gray-400 text-sm">Each advisor uses a separate Claude call (higher cost)</p>
+                </div>
+                <button
+                  onClick={handleAgentModeToggle}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    agentMode ? 'bg-green-400' : 'bg-gray-600'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      agentMode ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
               </div>
             </div>
           )}
