@@ -1843,6 +1843,13 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
       // Process @ references for context injection
       let processedInput = input;
       let sessionContexts = [];
+
+      // Detect High Council mode marker and remove it from the input
+      const councilRegex = /\/council\b/i;
+      const councilMode = councilRegex.test(processedInput);
+      if (councilMode) {
+        processedInput = processedInput.replace(councilRegex, '').trim();
+      }
       
       // Handle new format: @"Session Title" - collect summaries for context injection
       const atTitleRegex = /@"([^"]+)"/g;
@@ -1931,7 +1938,7 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
       await setMessages(prev => [...prev, newMessage]);
 
       // Create a temporary system prompt function with the contexts
-      const getSystemPromptWithContexts = () => {
+      const getSystemPromptWithContexts = ({ councilMode } = {}) => {
         let prompt = "";
         
         // Add advisor personas
@@ -1957,6 +1964,9 @@ FORMATTING RULES:
 3. Always leave one blank line before starting the main response content
 4. Use single line breaks within paragraphs, double line breaks between major sections
 5. Each advisor gets their own clearly separated section`;
+          if (councilMode) {
+            prompt += `\n\n## HIGH COUNCIL MODE\nThe advisors must debate each other before giving the final answer. Produce at least three rounds of back-and-forth using the [ADVISOR: Name] format. Encourage disagreement and questioning. Wrap the entire debate transcript in <details><summary>High Council Debate</summary>\n\n...transcript...\n\n</details> followed by a clear conclusion.`;
+          }
         }
         // If no advisors are active, no system prompt is needed
         
@@ -1983,7 +1993,7 @@ FORMATTING RULES:
       };
 
       // Pass the content to Claude with enhanced system prompt (this starts immediately)
-      await callClaude(newMessage.content, getSystemPromptWithContexts);
+      await callClaude(newMessage.content, () => getSystemPromptWithContexts({ councilMode }));
 
       // Update message with tags after tag analysis completes (in background)
       tagAnalysisPromise.then(tags => {
