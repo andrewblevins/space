@@ -234,40 +234,7 @@ const Terminal = ({ theme, toggleTheme }) => {
     return saved ? parseFloat(saved) : 0.25;
   }); // Spacing between paragraphs
 
-  // Test prompts for debugging
-  const testPrompts = [
-    "I'm a software engineer who's been offered a role as a technical lead at my current company. It's a 30% pay increase, but I'd have to give up most of my coding time for meetings, mentoring, and project planning. I love writing code and solving technical problems, but I also want to grow my career and have more influence on product decisions. I'm worried I might lose my technical edge or become one of those managers who's out of touch with the actual work. How should I think about this decision? What are the deeper implications I might be missing?",
-    "Think about the Fermi paradox. Why haven't we encountered any signs of extraterrestrial civilizations despite the vast number of potentially habitable planets? Explore the various proposed solutions and their implications for humanity's future.",
-    "What is consciousness? Is it an emergent property of complex information processing, or something more fundamental? How might we determine if an artificial system is truly conscious?",
-    "Should I prioritize paying off my student loans aggressively or investing in index funds? I have $50k in loans at 6% interest and can save about $2k per month after expenses.",
-    "I've been meditating daily for six months but feel like I've hit a plateau. I'm not experiencing the profound insights or peace that advanced practitioners describe. Am I doing something wrong, or is this normal?",
-    "How should we think about the ethics of genetic engineering in humans? Where should we draw the line between therapeutic interventions and enhancement?",
-    "My startup has been offered an acquisition deal that would make me financially comfortable but would likely kill the product we've been building. The alternative is to keep grinding with uncertain outcomes. How do I weigh personal security against the mission we set out to accomplish?",
-    "Explain the relationship between entropy, information, and the arrow of time. Why does the second law of thermodynamics seem to conflict with the reversibility of fundamental physics?",
-    "I'm torn between pursuing a PhD in philosophy or taking a well-paying job in tech. The PhD would let me explore questions I'm passionate about, but I'm worried about job prospects and financial stability. The tech job is secure but feels like giving up on my intellectual interests.",
-    "What would happen to human society if we discovered definitive proof that we're living in a simulation? How should this change our behavior and priorities?"
-  ];
 
-  // Keyboard shortcut for test prompts (Ctrl+T in debug mode)
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (debugMode && e.ctrlKey && e.key === 't') {
-        e.preventDefault();
-        const randomPrompt = testPrompts[Math.floor(Math.random() * testPrompts.length)];
-        setInput(randomPrompt);
-        inputRef.current?.focus();
-        
-        // Show a system message about the test prompt
-        setMessages(prev => [...prev, {
-          type: 'system',
-          content: `🧪 Test prompt loaded (Ctrl+T to load another)`
-        }]);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [debugMode]);
 
   // Check for API keys after modal controller is initialized
   useEffect(() => {
@@ -371,6 +338,69 @@ FORMATTING RULES:
 };
 
 const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimit, memory, debugMode, reasoningMode, getSystemPrompt });
+
+  // Generate contextual test prompt using Claude
+  const generateTestPrompt = async () => {
+    if (!messages.length || messages.every(m => m.type === 'system')) {
+      setInput("What's on your mind today?");
+      return;
+    }
+
+    // Create a special system prompt for generating test prompts
+    const testPromptSystemPrompt = `You are helping test a conversational AI system. Based on the conversation history, generate a natural follow-up message that a user would likely say next. 
+
+Consider:
+- The topic and flow of conversation so far
+- Any questions that were raised but not fully explored
+- Natural follow-up questions or requests for clarification
+- Deeper exploration of themes already discussed
+- Challenging or probing questions that test the advisors' perspectives
+
+Generate ONLY the user's next message, nothing else. Make it feel authentic and conversational.`;
+
+    try {
+      setMessages(prev => [...prev, {
+        type: 'system',
+        content: '🧪 Generating contextual test prompt...'
+      }]);
+
+      const response = await callClaude(
+        "Based on our conversation so far, what would be a natural and interesting follow-up question or comment from the user? Generate only the user's message, nothing else.",
+        () => testPromptSystemPrompt
+      );
+
+      // Extract just the generated prompt (remove any explanatory text)
+      const cleanPrompt = response.trim().replace(/^["']|["']$/g, ''); // Remove quotes if wrapped
+      
+      setInput(cleanPrompt);
+      inputRef.current?.focus();
+      
+      // Update the system message
+      setMessages(prev => prev.map((msg, idx) => 
+        idx === prev.length - 1 && msg.content === '🧪 Generating contextual test prompt...'
+          ? { ...msg, content: '🧪 Test prompt generated (Ctrl+T to generate another)' }
+          : msg
+      ));
+    } catch (error) {
+      setMessages(prev => [...prev, {
+        type: 'system',
+        content: `🧪 Error generating test prompt: ${error.message}`
+      }]);
+    }
+  };
+
+  // Keyboard shortcut for test prompts (Ctrl+T in debug mode)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (debugMode && e.ctrlKey && e.key === 't') {
+        e.preventDefault();
+        generateTestPrompt();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [debugMode, generateTestPrompt]);
 
   const loadSessions = () => {
     const sessions = [];
