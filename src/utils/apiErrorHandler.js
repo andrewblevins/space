@@ -1,6 +1,6 @@
 import { removeEncrypted } from './secureStorage';
 
-export const handleApiError = async (response) => {
+export const handleApiError = async (response, errorText = null) => {
   if (response.status === 401) {
     // Clear stored API keys
     removeEncrypted('space_anthropic_key');
@@ -16,6 +16,6 @@ export const handleApiError = async (response) => {
   }
   
   // Handle other errors
-  const errorText = await response.text();
-  throw new Error(`API Error (${response.status}): ${errorText}`);
+  const finalErrorText = errorText || await response.text();
+  throw new Error(`API Error (${response.status}): ${finalErrorText}`);
 }; 

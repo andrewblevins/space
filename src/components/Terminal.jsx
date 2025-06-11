@@ -24,6 +24,7 @@ import ImportExportModal from './ImportExportModal';
 import HelpModal from './HelpModal';
 import InfoModal from './InfoModal';
 import WelcomeScreen from './WelcomeScreen';
+import ThinkingBlock from './ThinkingBlock';
 import { Module } from "./terminal/Module";
 import { GroupableModule } from "./terminal/GroupableModule";
 import { CollapsibleModule } from "./terminal/CollapsibleModule";
@@ -2758,7 +2759,10 @@ ${selectedText}
                     }`}
                   >
                     {(msg.type === 'system' || msg.type === 'assistant') ? (
-                      <MemoizedMarkdownMessage content={msg.content} advisors={advisors} />
+                      <>
+                        {msg.thinking && <ThinkingBlock content={msg.thinking} />}
+                        <MemoizedMarkdownMessage content={msg.content} advisors={advisors} />
+                      </>
                     ) : (
                       msg.content
                     )}
