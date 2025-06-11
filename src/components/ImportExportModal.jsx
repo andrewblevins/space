@@ -107,9 +107,9 @@ const ImportExportModal = ({ isOpen, onClose, advisors, onImport }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-stone-100/70 dark:bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
       <div 
-        className="bg-amber-50 dark:bg-gray-900 border border-green-600 dark:border-green-400 rounded-lg p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto" 
+        className="bg-gray-900 border border-green-400 rounded-lg p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto" 
         onClick={e => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-6">

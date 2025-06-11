@@ -121,9 +121,9 @@ const SessionPanel = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-stone-100/70 dark:bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
       <div 
-        className="bg-amber-50 dark:bg-gray-900 border border-green-600 dark:border-green-400 rounded-lg p-6 w-full max-w-md mx-4 max-h-[80vh] overflow-y-auto overflow-x-hidden flex flex-col"
+        className="bg-gray-900 border border-green-400 rounded-lg p-6 w-full max-w-md mx-4 max-h-[80vh] overflow-y-auto overflow-x-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-6">
