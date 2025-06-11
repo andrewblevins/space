@@ -190,6 +190,10 @@ const Terminal = ({ theme, toggleTheme }) => {
   });
   const [activeGroups, setActiveGroups] = useState([]);
   const [debugMode, setDebugMode] = useState(false);
+  const [reasoningMode, setReasoningMode] = useState(() => {
+    const saved = localStorage.getItem('space_reasoning_mode');
+    return saved ? saved === 'true' : false;
+  });
   const inputRef = useRef(null);
   const [savedPrompts, setSavedPrompts] = useState(() => {
     const saved = localStorage.getItem('space_prompts');
@@ -327,7 +331,7 @@ FORMATTING RULES:
   return prompt;
 };
 
-const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimit, memory, debugMode, getSystemPrompt });
+const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimit, memory, debugMode, reasoningMode, getSystemPrompt });
 
   const loadSessions = () => {
     const sessions = [];
@@ -919,6 +923,17 @@ Now, I'd like to generate the final output. Please include the following aspects
           setMessages(prev => [...prev, {
             type: 'system',
             content: `Debug mode ${newDebugMode ? 'enabled' : 'disabled'}`
+          }]);
+          return true;
+
+        case '/reasoning':
+        case '/think':
+          const newReasoningMode = !reasoningMode;
+          setReasoningMode(newReasoningMode);
+          localStorage.setItem('space_reasoning_mode', newReasoningMode.toString());
+          setMessages(prev => [...prev, {
+            type: 'system',
+            content: `Reasoning mode ${newReasoningMode ? 'enabled' : 'disabled'}`
           }]);
           return true;
 
@@ -2931,6 +2946,8 @@ ${selectedText}
         onClose={() => setShowSettingsMenu(false)}
         debugMode={debugMode}
         setDebugMode={setDebugMode}
+        reasoningMode={reasoningMode}
+        setReasoningMode={setReasoningMode}
         contextLimit={contextLimit}
         setContextLimit={setContextLimit}
         maxTokens={maxTokens}
