@@ -30,6 +30,7 @@ import { CollapsibleModule } from "./terminal/CollapsibleModule";
 import { CollapsibleClickableModule } from "./terminal/CollapsibleClickableModule";
 import DebateBlock from './DebateBlock';
 import { CollapsibleSuggestionsModule } from "./terminal/CollapsibleSuggestionsModule";
+import VotingSummary from './VotingSummary';
 import { ExpandingInput } from "./terminal/ExpandingInput";
 import { MemoizedMarkdownMessage } from "./terminal/MemoizedMarkdownMessage";
 import { AdvisorResponseMessage } from "./terminal/AdvisorResponseMessage";
@@ -294,6 +295,7 @@ const Terminal = ({ theme, toggleTheme }) => {
   // const [questionsExpanded, setQuestionsExpanded] = useState(false);
   const [advisorSuggestionsExpanded, setAdvisorSuggestionsExpanded] = useState(false);
   const [advisorSuggestions, setAdvisorSuggestions] = useState([]);
+  const [voteHistory, setVoteHistory] = useState([]);
   const [lastAdvisorAnalysisContent, setLastAdvisorAnalysisContent] = useState('');
   const [suggestedAdvisorName, setSuggestedAdvisorName] = useState('');
   const [contextLimit, setContextLimit] = useState(150000);
@@ -444,6 +446,7 @@ const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimi
     // DEPRECATED: Questions feature temporarily disabled
     // setQuestions([]);
     setAdvisorSuggestions([]);
+    setVoteHistory([]);
     
     // Track new session
     trackSession();
@@ -459,6 +462,7 @@ const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimi
       // DEPRECATED: Questions feature temporarily disabled
       // setQuestions(session.questions || []);
       setAdvisorSuggestions(session.advisorSuggestions || []);
+      setVoteHistory(session.voteHistory || []);
     } else {
       setMessages(prev => [...prev, {
         type: 'system',
@@ -477,6 +481,7 @@ const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimi
       // DEPRECATED: Questions feature temporarily disabled
       // setQuestions(penultimate.questions || []);
       setAdvisorSuggestions(penultimate.advisorSuggestions || []);
+      setVoteHistory(penultimate.voteHistory || []);
     } else {
       setMessages(prev => [...prev, {
         type: 'system',
@@ -500,6 +505,7 @@ const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimi
     // DEPRECATED: Questions feature temporarily disabled
     // setQuestions([]);
     setAdvisorSuggestions([]);
+    setVoteHistory([]);
   };
 
   const handleDeleteSession = (sessionId) => {
@@ -951,16 +957,47 @@ Now, I'd like to generate the final output. Please include the following aspects
                 return true;
               }
 
-              setAdvisors(prev => prev.filter(a =>
-                a.name.toLowerCase() !== nameToDelete.toLowerCase()
-              ));
-              setMessages(prev => [...prev, {
-                type: 'system',
-                content: `Deleted advisor: ${advisorToDelete.name}`
-              }]);
-              return true;
+          setAdvisors(prev => prev.filter(a =>
+            a.name.toLowerCase() !== nameToDelete.toLowerCase()
+          ));
+          setMessages(prev => [...prev, {
+            type: 'system',
+            content: `Deleted advisor: ${advisorToDelete.name}`
+          }]);
+          return true;
 
+        }
+
+        case '/vote': {
+          const question = args.join(' ');
+          if (!question) {
+            setMessages(prev => [...prev, {
+              type: 'system',
+              content: 'Usage: /vote <question>'
+            }]);
+            return true;
           }
+
+          (async () => {
+            const active = advisors.filter(a => a.active);
+            const votes = [];
+            for (const adv of active) {
+              const vote = adv.vote ? await adv.vote(question) : await generateAdvisorVote(adv, question);
+              votes.push({ advisor: adv.name, ...vote });
+            }
+            setVoteHistory(prev => [...prev, { question, votes }]);
+            const tally = {};
+            let totalConf = 0;
+            votes.forEach(v => {
+              tally[v.position] = (tally[v.position] || 0) + 1;
+              totalConf += v.confidence;
+            });
+            const recommended = Object.entries(tally).sort((a,b)=>b[1]-a[1])[0][0];
+            const summary = `${tally[recommended]}/${active.length} advisors recommend ${recommended} (confidence: ${Math.round(totalConf / votes.length)}%)`;
+            setMessages(prev => [...prev, { type: 'system', content: summary }]);
+          })();
+          return true;
+        }
 
         case '/debug':
           console.log('Debug command received');
@@ -2470,6 +2507,30 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
     }
   };
 
+  const generateAdvisorVote = async (advisor, question) => {
+    if (!openaiClient) return { position: 'abstain', confidence: 0 };
+    try {
+      const prompt = `Advisor persona: ${advisor.description}\n\nQuestion: ${question}\nRespond in JSON {"position": "your stance", "confidence": 0-100}`;
+      const inputTokens = Math.ceil((100 + prompt.length) / 4);
+      const response = await openaiClient.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: 'You answer only in JSON.' },
+          { role: 'user', content: prompt }
+        ],
+        max_tokens: 60,
+        response_format: { type: 'json_object' }
+      });
+      const vote = JSON.parse(response.choices[0].message.content);
+      const outputTokens = Math.ceil(response.choices[0].message.content.length / 4);
+      trackUsage('gpt', inputTokens, outputTokens);
+      return vote;
+    } catch (e) {
+      console.error('Vote generation failed for', advisor.name, e);
+      return { position: 'abstain', confidence: 0 };
+    }
+  };
+
   useEffect(() => {
     // Only save sessions that have actual user/assistant messages (not just system messages)
     const nonSystemMessages = messages.filter(msg => msg.type !== 'system');
@@ -2480,12 +2541,13 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
           timestamp: new Date().toISOString(),
           messages: messages.map(msg => ({
             ...msg,
-            tags: msg.tags || [] // Ensure tags are preserved
+            tags: msg.tags || []
           })),
           metaphors,
           // DEPRECATED: Questions feature temporarily disabled
           // questions,
-          advisorSuggestions
+          advisorSuggestions,
+          voteHistory
         };
 
         // Generate title if this is a new session with enough content and no title yet
@@ -2530,7 +2592,7 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
 
       saveSession();
     }
-  }, [messages, metaphors, /* questions, */ advisorSuggestions, currentSessionId, openaiClient]);
+  }, [messages, metaphors, /* questions, */ advisorSuggestions, voteHistory, currentSessionId, openaiClient]);
 
   // Trigger analysis when messages change and we have a Claude response
   useEffect(() => {
@@ -2984,6 +3046,9 @@ ${selectedText}
                 onToggle={() => setAdvisorSuggestionsExpanded(!advisorSuggestionsExpanded)}
                 onItemClick={(item) => handleAdvisorSuggestionClick(item)}
               />
+              {voteHistory.length > 0 && (
+                <VotingSummary votes={voteHistory[voteHistory.length - 1].votes} />
+              )}
             </div>
           </div>
 
