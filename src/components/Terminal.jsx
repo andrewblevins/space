@@ -2001,20 +2001,44 @@ FORMATTING RULES:
 - Build on points that align with their own thinking
 - Never abandon their perspective just to reach agreement
 
-Structure the debate as follows:
-1. ROUND 1: Each advisor gives their initial position on the question
-2. ROUND 2: Each advisor responds to at least one other advisor's position  
-3. ROUND 3: Each advisor addresses counterarguments or builds on others' points
-4. Continue additional rounds if natural disagreements persist
+CRITICAL: This must be a true DEBATE where advisors directly engage with each other's arguments, not separate speeches.
 
-Each round should have ALL active advisors participating. A complete debate should have each advisor speaking at least 3 times total.
+Structure the debate exactly as follows:
+
+**ROUND 1: Initial Positions**
+Each advisor states their position on the question.
+
+**ROUND 2: Direct Responses** 
+Each advisor must respond to specific points made by other advisors in Round 1. Start with phrases like:
+- "[Advisor Name] argues that X, but I think..."
+- "I agree with [Advisor Name] about Y, however..."
+- "[Advisor Name]'s point about Z misses the fact that..."
+
+**ROUND 3: Counter-Arguments**
+Each advisor responds to how others challenged their Round 1 position. Address the criticism directly.
+
+**ROUND 4 (if needed): Synthesis or Continued Disagreement**
+Advisors either find common ground or entrench in their differences.
+
+REQUIREMENTS:
+- Advisors must reference each other by name and quote/paraphrase specific arguments
+- No advisor can ignore what others have said
+- Each response must build on the conversation, not restart it
+- Use transition phrases that show you're responding: "But as [Name] just pointed out..." or "That contradicts [Name]'s argument that..."
 
 Format the debate by wrapping it in special markers:
 <COUNCIL_DEBATE>
-[ADVISOR: Name] responses here...
+**ROUND 1: Initial Positions**
+[ADVISOR: Name] content...
+
+**ROUND 2: Direct Responses** 
+[ADVISOR: Name] responds to [Other Advisor]...
+
+**ROUND 3: Counter-Arguments**
+[ADVISOR: Name] addresses [Other Advisor]'s criticism...
 </COUNCIL_DEBATE>
 
-After the debate section, each advisor should give their final position, clearly stated from their own perspective.`;
+After the debate section, each advisor should give their final position.`;
           }
         }
         // If no advisors are active, no system prompt is needed
