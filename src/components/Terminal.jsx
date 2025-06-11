@@ -1802,6 +1802,10 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
           exportAllSessions();
           return true;
 
+        case '/council':
+          // Let council mode detection handle this in normal message processing
+          return false;
+
         default:
           setMessages(prev => [...prev, {
             type: 'system',
