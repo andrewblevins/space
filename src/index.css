@@ -1,8 +1,3 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* Force all modals to dark mode for consistency and elegance */
-.fixed.inset-0 {
-  @apply dark;
-}
