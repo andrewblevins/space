@@ -3413,6 +3413,7 @@ ${selectedText}
             onDossierClick={() => setShowDossierModal(true)}
             onImportExportAdvisorsClick={() => setShowImportExportModal(true)}
             onVotingClick={() => setShowVotingModal(true)}
+            onHighCouncilClick={() => setShowHighCouncilModal(true)}
             onHelpClick={() => setShowHelpModal(true)}
             onFullscreenClick={toggleFullscreen}
             isFullscreen={isFullscreen}
@@ -3459,7 +3460,6 @@ ${selectedText}
         toggleTheme={toggleTheme}
         paragraphSpacing={paragraphSpacing}
         setParagraphSpacing={setParagraphSpacing}
-        onOpenHighCouncil={() => setShowHighCouncilModal(true)}
       />
 
       {/* Prompt Library Component */}

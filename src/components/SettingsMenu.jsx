@@ -17,8 +17,7 @@ const SettingsMenu = ({
   theme,
   toggleTheme,
   paragraphSpacing,
-  setParagraphSpacing,
-  onOpenHighCouncil
+  setParagraphSpacing
 }) => {
   const [tempContextLimit, setTempContextLimit] = useState(contextLimit);
   const [tempMaxTokens, setTempMaxTokens] = useState(maxTokens);
@@ -231,20 +230,6 @@ const SettingsMenu = ({
                       theme === 'dark' ? 'translate-x-6' : 'translate-x-1'
                     }`}
                   />
-                </button>
-              </div>
-
-              {/* High Council Mode */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <label className="text-green-400 font-medium">High Council</label>
-                  <p className="text-gray-400 text-sm">Start a structured advisor debate</p>
-                </div>
-                <button
-                  onClick={onOpenHighCouncil}
-                  className="px-4 py-2 bg-green-400 text-black rounded hover:bg-green-300 transition-colors font-medium"
-                >
-                  Start Debate
                 </button>
               </div>
 
