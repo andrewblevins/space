@@ -139,7 +139,7 @@ const Terminal = ({ theme, toggleTheme }) => {
 
   const [messages, setMessages] = useState([
     { type: 'system', content: 'SPACE Terminal - v0.2.3' },
-    { type: 'system', content: '🎉 New in v0.2.3:\n• Extended Thinking mode\n• Call a Vote\n• Improved tag analyzer' },
+    { type: 'system', content: '🎉 New in v0.2.3:\n• Extended Thinking mode\n• High Council debate mode\n• Call a Vote\n• Improved tag analyzer' },
     { type: 'system', content: 'Start a conversation, add an advisor (+), draw from the Prompt Library (↙), or type /help for instructions.' }
   ]);
   const [input, setInput] = useState('');
@@ -664,7 +664,7 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
     setCurrentSessionId(newSessionId);
     setMessages([
       { type: 'system', content: 'SPACE Terminal - v0.2.3' },
-      { type: 'system', content: '🎉 New in v0.2.3:\n• Extended Thinking mode\n• Call a Vote\n• Improved tag analyzer' },
+      { type: 'system', content: '🎉 New in v0.2.3:\n• Extended Thinking mode\n• High Council debate mode\n• Call a Vote\n• Improved tag analyzer' },
       { type: 'system', content: 'Start a conversation, add an advisor (+), draw from the Prompt Library (↙), or type /help for instructions.' }
     ]);
     setMetaphors([]);
