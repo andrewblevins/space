@@ -95,6 +95,12 @@ npm run build
 npm run preview  # Preview production build
 ```
 
+### Build Verification Best Practices
+- **Always run `npm run build`** after refactoring or major changes
+- **Catch syntax errors** before committing (especially after prop changes)
+- **Test builds** after component updates or interface modifications
+- **Verify production** builds work with `npm run preview`
+
 ### Environment Variables Required
 ```bash
 ANTHROPIC_API_KEY=sk-ant-...
@@ -120,6 +126,27 @@ VITE_DEV_PASSWORD=development123   # Optional
 - **Setup flow**: Auto-fills from environment variables
 - **Password modal**: Can be persistent, use multiple selector approaches
 - **Status checking**: Adds system messages to terminal
+
+## 💬 Message Sending Patterns
+
+### How Messages Are Sent in SPACE
+- **Correct**: Use existing form submission mechanism via `handleSubmit`
+- **Incorrect**: Don't call non-existent `handleSendMessage()` or create custom sending functions
+- **Pattern**: Set input with `setInput(message)` then trigger form submission programmatically
+
+```javascript
+// ✅ Correct pattern for programmatic message sending
+const sendMessage = (messageText) => {
+  setInput(messageText);
+  setTimeout(() => {
+    const form = document.querySelector('form');
+    if (form) {
+      const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
+      form.dispatchEvent(submitEvent);
+    }
+  }, 100);
+};
+```
 
 ## 🔧 Browser Testing Guidelines
 
@@ -202,6 +229,35 @@ The settings menu was designed to replace terminal commands with GUI controls:
 - `/keys clear` → "Clear API Keys" button
 
 **State Management**: All settings changes are immediately persisted to localStorage and application state. No manual save operations required.
+
+## 🎯 UI Component Organization
+
+### Where Functionality Belongs
+- **Settings Menu** (`SettingsMenu.jsx`): User preferences, configuration options, toggles
+- **Accordion Menu** (`AccordionMenu.jsx`): Action buttons, operations, modal triggers
+- **Terminal Interface**: Core conversation and advisor management
+
+### Component Purpose Guidelines
+- **Settings** = Configuration (debug mode, tokens, themes)
+- **Accordion** = Actions (vote, debate, export, new session)
+- **Don't mix** actions with settings
+
+### Console Logging Strategy
+- **Essential Logging**: System prompts being sent to AI, critical state changes
+- **Remove Noise**: Intermediate processing steps, streaming updates, debug traces
+- **Pattern**: Use meaningful prefixes like `🏛️` for specific features
+- **Focus**: Log what developers need to understand behavior, not every step
+
+```javascript
+// ✅ Essential for debugging
+if (councilMode) {
+  console.log('🏛️ High Council System Prompt:', systemPrompt);
+}
+
+// ❌ Too noisy - remove these
+console.log('DEBUG: Processing input step 1...');
+console.log('DEBUG: Checking condition X...');
+```
 
 ## 📝 Documentation Writing Standards
 
