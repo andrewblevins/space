@@ -94,8 +94,6 @@ const Terminal = ({ theme, toggleTheme }) => {
   const processCouncilDebates = (content) => {
     // Check if content starts with High Council debate format
     if (content.startsWith('<COUNCIL_DEBATE>')) {
-      console.log('🏛️ High Council debate detected (streaming mode)');
-      
       // Find where summary starts
       const summaryMatch = content.match(/## Council Summary/i);
       
@@ -104,17 +102,12 @@ const Terminal = ({ theme, toggleTheme }) => {
         const debateEnd = summaryMatch.index;
         const debateContent = content.substring('<COUNCIL_DEBATE>'.length, debateEnd);
         const summaryContent = content.substring(debateEnd);
-        
-        console.log('🏛️ Split debate and summary for streaming display');
-        console.log('🏛️ DEBUG: Summary content found:', summaryContent.substring(0, 200) + '...');
         return { 
           processedContent: summaryContent, 
           debates: [debateContent] 
         };
       } else {
         // No summary yet (still streaming), treat everything after opening tag as debate
-        console.log('🏛️ No summary detected yet, showing debate only');
-        console.log('🏛️ DEBUG: Content being searched for summary:', content.substring(Math.max(0, content.length - 200)));
         const debateContent = content.substring('<COUNCIL_DEBATE>'.length);
         return { 
           processedContent: '', 
@@ -2144,14 +2137,10 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
       let sessionContexts = [];
 
       // Detect High Council mode marker and remove it from the input
-      console.log('🏛️ DEBUG: Checking for High Council mode in:', processedInput);
       const councilRegex = /\/council\b/i;
       const councilMode = councilRegex.test(processedInput);
-      console.log('🏛️ DEBUG: Council mode detected?', councilMode);
       if (councilMode) {
-        console.log('🏛️ High Council mode detected!', { originalInput: processedInput });
         processedInput = processedInput.replace(councilRegex, '').trim();
-        console.log('🏛️ Processed input after removing /council:', processedInput);
       }
       
       // Handle new format: @"Session Title" - collect summaries for context injection
@@ -2250,7 +2239,6 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
           prompt += `You are currently embodying the following advisors:\n${activeAdvisors.map(a => `\n${a.name}: ${a.description}`).join('\n')}\n\n`;
           
           if (councilMode) {
-            console.log('🏛️ Adding High Council mode instructions to system prompt');
             prompt += `\n\n## HIGH COUNCIL MODE
 IMPORTANT: Start your response with the exact text "<COUNCIL_DEBATE>" (this is required for the interface to work properly).
 
@@ -2363,7 +2351,10 @@ FORMATTING RULES:
       };
 
       // Pass the content to Claude with enhanced system prompt (this starts immediately)
-      console.log('🏛️ Calling Claude with councilMode:', councilMode);
+      if (councilMode) {
+        const systemPrompt = getSystemPromptWithContexts({ councilMode });
+        console.log('🏛️ High Council System Prompt:', systemPrompt);
+      }
       await callClaude(newMessage.content, () => getSystemPromptWithContexts({ councilMode }));
 
       // Update message with tags after tag analysis completes (in background)
