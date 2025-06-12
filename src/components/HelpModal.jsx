@@ -120,7 +120,7 @@ const HelpModal = ({ isOpen, onClose }) => {
             {/* Footer */}
             <section className="pt-4 border-t border-gray-300 dark:border-gray-600">
               <p className="text-center text-xs text-gray-500">
-                SPACE Terminal v0.2.2 • All features accessible through GUI menus
+                SPACE Terminal v0.2.3 • All features accessible through GUI menus
               </p>
             </section>
           </div>
