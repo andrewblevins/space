@@ -24,11 +24,15 @@ import ImportExportModal from './ImportExportModal';
 import HelpModal from './HelpModal';
 import InfoModal from './InfoModal';
 import WelcomeScreen from './WelcomeScreen';
+import ThinkingBlock from './ThinkingBlock';
 import { Module } from "./terminal/Module";
 import { GroupableModule } from "./terminal/GroupableModule";
 import { CollapsibleModule } from "./terminal/CollapsibleModule";
 import { CollapsibleClickableModule } from "./terminal/CollapsibleClickableModule";
+import DebateBlock from './DebateBlock';
 import { CollapsibleSuggestionsModule } from "./terminal/CollapsibleSuggestionsModule";
+import VotingModal from './VotingModal';
+import HighCouncilModal from './HighCouncilModal';
 import { ExpandingInput } from "./terminal/ExpandingInput";
 import { MemoizedMarkdownMessage } from "./terminal/MemoizedMarkdownMessage";
 import { AdvisorResponseMessage } from "./terminal/AdvisorResponseMessage";
@@ -50,53 +54,6 @@ const Terminal = ({ theme, toggleTheme }) => {
     }
   }, [modalController]);
 
-  useEffect(() => {
-    // Only check for API keys after modal controller is initialized
-    const checkKeys = async () => {
-      try {
-        // First check if encrypted data exists
-        if (!hasEncryptedData()) {
-          console.log('❌ No encrypted keys found, showing welcome screen');
-          const skipWelcome = localStorage.getItem('space_skip_welcome');
-          if (!skipWelcome) {
-            setShowWelcome(true);
-          }
-          return;
-        }
-
-        // If encrypted data exists, try to decrypt it (this will prompt for password if needed)
-        console.log('🔒 Encrypted keys found, attempting to decrypt...');
-        try {
-          const anthropicKey = await getDecrypted('space_anthropic_key');
-          const openaiKey = await getDecrypted('space_openai_key');
-          
-          if (anthropicKey && openaiKey) {
-            setApiKeysSet(true);
-            
-            // Initialize OpenAI client if keys are available
-            const client = new OpenAI({
-              apiKey: openaiKey,
-              dangerouslyAllowBrowser: true
-            });
-            setOpenaiClient(client);
-            console.log('✅ OpenAI client initialized successfully');
-          }
-        } catch (error) {
-          console.error('Error decrypting API keys:', error);
-          // If decryption fails (user canceled password, wrong password, etc.), 
-          // don't show welcome screen - they have encrypted keys, just couldn't access them this time
-          console.log('🔑 Password entry was required but failed/canceled');
-        }
-      } finally {
-        // Always stop the loading state once initialization is complete
-        setIsInitializing(false);
-      }
-    };
-    
-    if (modalController) {
-      checkKeys();
-    }
-  }, [modalController]);
 
   const getNextSessionId = () => {
     const keys = Object.keys(localStorage).filter(key => key.startsWith('space_session_'));
@@ -133,9 +90,50 @@ const Terminal = ({ theme, toggleTheme }) => {
     }
   };
 
+  // Process council debate sections for streaming-friendly collapsible display
+  const processCouncilDebates = (content) => {
+    // Check if content starts with High Council debate format
+    if (content.startsWith('<COUNCIL_DEBATE>')) {
+      // Find where summary starts
+      const summaryMatch = content.match(/## Council Summary/i);
+      
+      if (summaryMatch) {
+        // Split at summary
+        const debateEnd = summaryMatch.index;
+        const debateContent = content.substring('<COUNCIL_DEBATE>'.length, debateEnd);
+        const summaryContent = content.substring(debateEnd);
+        return { 
+          processedContent: summaryContent, 
+          debates: [debateContent] 
+        };
+      } else {
+        // No summary yet (still streaming), treat everything after opening tag as debate
+        const debateContent = content.substring('<COUNCIL_DEBATE>'.length);
+        return { 
+          processedContent: '', 
+          debates: [debateContent] 
+        };
+      }
+    }
+    
+    // Fallback to original regex approach for completed responses
+    const debateRegex = /<COUNCIL_DEBATE>([\s\S]*?)<\/COUNCIL_DEBATE>/g;
+    const debates = [];
+    let processedContent = content;
+    let match;
+
+    while ((match = debateRegex.exec(content)) !== null) {
+      const debateContent = match[1].trim();
+      debates.push(debateContent);
+      processedContent = processedContent.replace(match[0], `__DEBATE_PLACEHOLDER_${debates.length - 1}__`);
+    }
+
+    return { processedContent, debates };
+  };
+
   const [messages, setMessages] = useState([
-    { type: 'system', content: 'SPACE Terminal - v0.2.2' },
-    { type: 'system', content: '🎉 New in v0.2.2:\n• Light/dark theme\n• Knowledge Dossier\n• Session summaries (@ autocomplete)\n• Advisor import/export\n• API usage tracking (Settings → API Keys)\n• Advisor color system' },
+    { type: 'system', content: 'SPACE Terminal - v0.2.3' },
+    { type: 'system', content: '🎉 New in v0.2.3:\n• Extended Thinking mode\n• High Council debate mode\n• Call a Vote\n• Improved tag analyzer' },
     { type: 'system', content: 'Start a conversation, add an advisor (+), draw from the Prompt Library (↙), or type /help for instructions.' }
   ]);
   const [input, setInput] = useState('');
@@ -190,6 +188,10 @@ const Terminal = ({ theme, toggleTheme }) => {
   });
   const [activeGroups, setActiveGroups] = useState([]);
   const [debugMode, setDebugMode] = useState(false);
+  const [reasoningMode, setReasoningMode] = useState(() => {
+    const saved = localStorage.getItem('space_reasoning_mode');
+    return saved ? saved === 'true' : false;
+  });
   const inputRef = useRef(null);
   const [savedPrompts, setSavedPrompts] = useState(() => {
     const saved = localStorage.getItem('space_prompts');
@@ -244,12 +246,16 @@ const Terminal = ({ theme, toggleTheme }) => {
   // const [questionsExpanded, setQuestionsExpanded] = useState(false);
   const [advisorSuggestionsExpanded, setAdvisorSuggestionsExpanded] = useState(false);
   const [advisorSuggestions, setAdvisorSuggestions] = useState([]);
+  const [voteHistory, setVoteHistory] = useState([]);
+  const [showVotingModal, setShowVotingModal] = useState(false);
+  const [showHighCouncilModal, setShowHighCouncilModal] = useState(false);
   const [lastAdvisorAnalysisContent, setLastAdvisorAnalysisContent] = useState('');
   const [suggestedAdvisorName, setSuggestedAdvisorName] = useState('');
   const [contextLimit, setContextLimit] = useState(150000);
   const [apiKeysSet, setApiKeysSet] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
+  const [hasCheckedKeys, setHasCheckedKeys] = useState(false);
   
   // Handler to reset to welcome screen
   const resetToWelcome = () => {
@@ -274,6 +280,55 @@ const Terminal = ({ theme, toggleTheme }) => {
     const saved = localStorage.getItem('space_paragraph_spacing');
     return saved ? parseFloat(saved) : 0.25;
   }); // Spacing between paragraphs
+
+  // Check for API keys after modal controller is initialized
+  useEffect(() => {
+    const checkKeys = async () => {
+      try {
+        // First check if encrypted data exists
+        if (!hasEncryptedData()) {
+          console.log('❌ No encrypted keys found, showing welcome screen');
+          const skipWelcome = localStorage.getItem('space_skip_welcome');
+          if (!skipWelcome) {
+            setShowWelcome(true);
+          }
+          return;
+        }
+
+        // If encrypted data exists, try to decrypt it (this will prompt for password if needed)
+        console.log('🔒 Encrypted keys found, attempting to decrypt...');
+        try {
+          const anthropicKey = await getDecrypted('space_anthropic_key');
+          const openaiKey = await getDecrypted('space_openai_key');
+          
+          if (anthropicKey && openaiKey) {
+            setApiKeysSet(true);
+            
+            // Initialize OpenAI client if keys are available
+            const client = new OpenAI({
+              apiKey: openaiKey,
+              dangerouslyAllowBrowser: true
+            });
+            setOpenaiClient(client);
+            console.log('✅ OpenAI client initialized successfully');
+          }
+        } catch (error) {
+          console.error('Error decrypting API keys:', error);
+          // If decryption fails (user canceled password, wrong password, etc.), 
+          // don't show welcome screen - they have encrypted keys, just couldn't access them this time
+          console.log('🔑 Password entry was required but failed/canceled');
+        }
+      } finally {
+        // Always stop the loading state once initialization is complete
+        setIsInitializing(false);
+        setHasCheckedKeys(true);
+      }
+    };
+    
+    if (modalController && !hasCheckedKeys) {
+      checkKeys();
+    }
+  }, [modalController, hasCheckedKeys]);
 
 const getSystemPrompt = () => {
   let prompt = "";
@@ -327,7 +382,224 @@ FORMATTING RULES:
   return prompt;
 };
 
-const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimit, memory, debugMode, getSystemPrompt });
+const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimit, memory, debugMode, reasoningMode, getSystemPrompt });
+
+  // Generate a creative starting prompt for new conversations
+  const generateStartingPrompt = async () => {
+    try {
+      const anthropicKey = await getDecrypted('space_anthropic_key');
+      if (!anthropicKey) return;
+
+      const response = await fetch(`${getApiEndpoint()}/v1/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': anthropicKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          messages: [{
+            role: 'user',
+            content: "Generate an interesting, thought-provoking question or scenario that would make for a great conversation starter. Something that would benefit from multiple perspectives and deep thinking."
+          }],
+          system: `You are generating conversation starters for SPACE Terminal - a system where users experiencing cognitive or emotional constriction can talk to multiple AI advisors about complex, high-stakes problems.
+
+Users come to SPACE when they feel stuck between limited options, overwhelmed by complexity, or unable to integrate conflicting perspectives. Generate prompts that represent someone with:
+
+- A specific high-stakes decision or situation (not abstract questions)
+- Multiple stakeholders, complex tradeoffs, or conflicting priorities
+- Real consequences that matter to the person
+- Need for diverse perspectives they can't access alone
+- Some details but not overwhelming background
+
+Examples of good prompts:
+- "I'm considering leaving my stable job to start a company, but I have a mortgage and two kids. My co-founder is pushing for a decision next week."
+- "My elderly parent needs more care but refuses to move from their home. My siblings disagree on what to do and it's tearing our family apart."
+- "We're launching our product next month but discovered a potential safety issue. Fixing it means delaying 6 months and possibly losing our lead investor."
+
+Generate ONLY the user's message describing their situation, nothing else. Include specific details but keep it concise.`,
+          max_tokens: 150,
+          stream: true
+        }),
+      });
+
+      if (!response.ok) return;
+
+      // Stream the response into the input field
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let generatedText = '';
+
+      const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        buffer += decoder.decode(value, { stream: true });
+        const events = buffer.split('\n\n');
+        buffer = events.pop() || '';
+
+        for (const event of events) {
+          const dataMatch = event.match(/^data: (.+)$/m);
+          if (!dataMatch) continue;
+          
+          try {
+            const data = JSON.parse(dataMatch[1]);
+            if (data.type === 'content_block_delta' && data.delta.type === 'text_delta') {
+              const text = data.delta.text;
+              for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                generatedText += char;
+                setInput(generatedText);
+                await sleep(Math.random() * 20 + 10); // 10-30ms delay per character
+              }
+            }
+          } catch (e) {
+            console.error('Error parsing streaming event:', e);
+          }
+        }
+      }
+
+      // Clean up the generated prompt
+      const cleanPrompt = generatedText.trim().replace(/^["']|["']$/g, '');
+      setInput(cleanPrompt);
+      inputRef.current?.focus();
+    } catch (error) {
+      // Fallback to SPACE-appropriate prompts
+      const fallbackPrompts = [
+        "I'm being offered a promotion that would double my salary but require relocating my family across the country. My spouse loves their current job and my kids are thriving in their schools. The decision deadline is next Friday.",
+        "My startup's lead developer just quit right before our Series A pitch next month. I could try to hire someone quickly, delay the fundraising, or attempt to handle the technical presentation myself despite limited coding experience.",
+        "My business partner wants to pivot our successful but niche company into a crowded market with bigger potential. I think we should double down on what's working. We need to decide before our investor meeting next week.",
+        "I discovered my teenage daughter has been lying about where she goes after school. When I confronted her, she broke down and said she's been seeing a therapist because she didn't want to worry me. I don't know how to handle this.",
+        "My aging mother fell last week and the doctor says she shouldn't live alone anymore. She's refusing assisted living and wants me to move in with her, but I have my own family and demanding career. My brother lives across the country and thinks I'm overreacting.",
+        "I've been offered my dream job at a startup, but it requires leaving my current company right as we're about to launch a major project I've led for two years. My team is counting on me, but this opportunity might not come again.",
+        "My co-founder and I disagree on whether to accept an acquisition offer that would secure our futures but likely mean the end of our original vision. The buyer wants an answer by Monday.",
+        "I need to choose between an experimental treatment for my chronic condition that could help significantly but has serious risks, or staying with my current management plan that's sustainable but limiting my quality of life."
+      ];
+      const randomPrompt = fallbackPrompts[Math.floor(Math.random() * fallbackPrompts.length)];
+      setInput(randomPrompt);
+      inputRef.current?.focus();
+    }
+  };
+
+  // Generate contextual test prompt using Claude
+  const generateTestPrompt = async () => {
+    const hasConversation = messages.length > 0 && !messages.every(m => m.type === 'system');
+    
+    if (!hasConversation) {
+      // Generate a creative starting prompt for new conversations
+      await generateStartingPrompt();
+      return;
+    }
+
+    try {
+      const anthropicKey = await getDecrypted('space_anthropic_key');
+      if (!anthropicKey) return;
+
+      // Build conversation context
+      const contextMessages = messages
+        .filter((m) => (m.type === 'user' || m.type === 'assistant') && m.content?.trim() !== '')
+        .slice(-10) // Last 10 messages for context
+        .map((m) => ({ role: m.type, content: m.content }));
+
+      // Add the prompt request
+      contextMessages.push({
+        role: 'user',
+        content: "Based on our conversation so far, what would be a natural and interesting follow-up question or comment from the user? Generate only the user's message, nothing else."
+      });
+
+      // Make direct API call without going through useClaude hook
+      const response = await fetch(`${getApiEndpoint()}/v1/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': anthropicKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          messages: contextMessages,
+          system: `You are helping test a conversational AI system. Based on the conversation history, generate a natural follow-up message that a user would likely say next. 
+
+Consider:
+- The topic and flow of conversation so far
+- Any questions that were raised but not fully explored
+- Natural follow-up questions or requests for clarification
+- Deeper exploration of themes already discussed
+- Challenging or probing questions that test the advisors' perspectives
+
+Generate ONLY the user's next message, nothing else. Make it feel authentic and conversational.`,
+          max_tokens: 200,
+          stream: true
+        }),
+      });
+
+      if (!response.ok) return;
+
+      // Stream the response into the input field
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let generatedText = '';
+
+      const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        buffer += decoder.decode(value, { stream: true });
+        const events = buffer.split('\n\n');
+        buffer = events.pop() || '';
+
+        for (const event of events) {
+          const dataMatch = event.match(/^data: (.+)$/m);
+          if (!dataMatch) continue;
+          
+          try {
+            const data = JSON.parse(dataMatch[1]);
+            if (data.type === 'content_block_delta' && data.delta.type === 'text_delta') {
+              const text = data.delta.text;
+              for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                generatedText += char;
+                setInput(generatedText);
+                await sleep(Math.random() * 20 + 10); // 10-30ms delay per character
+              }
+            }
+          } catch (e) {
+            console.error('Error parsing streaming event:', e);
+          }
+        }
+      }
+
+      // Clean up the generated prompt
+      const cleanPrompt = generatedText.trim().replace(/^["']|["']$/g, '');
+      setInput(cleanPrompt);
+      inputRef.current?.focus();
+    } catch (error) {
+      // Silently fail
+      console.error('Test prompt generation failed:', error);
+    }
+  };
+
+  // Keyboard shortcut for test prompts (Ctrl+T)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.ctrlKey && e.key === 't') {
+        e.preventDefault();
+        generateTestPrompt();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [generateTestPrompt]);
 
   const loadSessions = () => {
     const sessions = [];
@@ -386,14 +658,15 @@ const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimi
     
     setCurrentSessionId(newSessionId);
     setMessages([
-      { type: 'system', content: 'SPACE Terminal - v0.2.2' },
-      { type: 'system', content: '🎉 New in v0.2.2:\n• Light/dark theme\n• Knowledge Dossier\n• Session summaries (@ autocomplete)\n• Advisor import/export\n• API usage tracking (Settings → API Keys)\n• Advisor color system' },
+      { type: 'system', content: 'SPACE Terminal - v0.2.3' },
+      { type: 'system', content: '🎉 New in v0.2.3:\n• Extended Thinking mode\n• High Council debate mode\n• Call a Vote\n• Improved tag analyzer' },
       { type: 'system', content: 'Start a conversation, add an advisor (+), draw from the Prompt Library (↙), or type /help for instructions.' }
     ]);
     setMetaphors([]);
     // DEPRECATED: Questions feature temporarily disabled
     // setQuestions([]);
     setAdvisorSuggestions([]);
+    setVoteHistory([]);
     
     // Track new session
     trackSession();
@@ -409,6 +682,7 @@ const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimi
       // DEPRECATED: Questions feature temporarily disabled
       // setQuestions(session.questions || []);
       setAdvisorSuggestions(session.advisorSuggestions || []);
+      setVoteHistory(session.voteHistory || []);
     } else {
       setMessages(prev => [...prev, {
         type: 'system',
@@ -427,6 +701,7 @@ const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimi
       // DEPRECATED: Questions feature temporarily disabled
       // setQuestions(penultimate.questions || []);
       setAdvisorSuggestions(penultimate.advisorSuggestions || []);
+      setVoteHistory(penultimate.voteHistory || []);
     } else {
       setMessages(prev => [...prev, {
         type: 'system',
@@ -450,6 +725,7 @@ const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimi
     // DEPRECATED: Questions feature temporarily disabled
     // setQuestions([]);
     setAdvisorSuggestions([]);
+    setVoteHistory([]);
   };
 
   const handleDeleteSession = (sessionId) => {
@@ -901,16 +1177,17 @@ Now, I'd like to generate the final output. Please include the following aspects
                 return true;
               }
 
-              setAdvisors(prev => prev.filter(a =>
-                a.name.toLowerCase() !== nameToDelete.toLowerCase()
-              ));
-              setMessages(prev => [...prev, {
-                type: 'system',
-                content: `Deleted advisor: ${advisorToDelete.name}`
-              }]);
-              return true;
+          setAdvisors(prev => prev.filter(a =>
+            a.name.toLowerCase() !== nameToDelete.toLowerCase()
+          ));
+          setMessages(prev => [...prev, {
+            type: 'system',
+            content: `Deleted advisor: ${advisorToDelete.name}`
+          }]);
+          return true;
 
-          }
+        }
+
 
         case '/debug':
           console.log('Debug command received');
@@ -919,6 +1196,17 @@ Now, I'd like to generate the final output. Please include the following aspects
           setMessages(prev => [...prev, {
             type: 'system',
             content: `Debug mode ${newDebugMode ? 'enabled' : 'disabled'}`
+          }]);
+          return true;
+
+        case '/reasoning':
+        case '/think':
+          const newReasoningMode = !reasoningMode;
+          setReasoningMode(newReasoningMode);
+          localStorage.setItem('space_reasoning_mode', newReasoningMode.toString());
+          setMessages(prev => [...prev, {
+            type: 'system',
+            content: `Reasoning mode ${newReasoningMode ? 'enabled' : 'disabled'}`
           }]);
           return true;
 
@@ -1802,6 +2090,10 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
           exportAllSessions();
           return true;
 
+        case '/council':
+          // Let council mode detection handle this in normal message processing
+          return false;
+
         default:
           setMessages(prev => [...prev, {
             type: 'system',
@@ -1843,6 +2135,13 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
       // Process @ references for context injection
       let processedInput = input;
       let sessionContexts = [];
+
+      // Detect High Council mode marker and remove it from the input
+      const councilRegex = /\/council\b/i;
+      const councilMode = councilRegex.test(processedInput);
+      if (councilMode) {
+        processedInput = processedInput.replace(councilRegex, '').trim();
+      }
       
       // Handle new format: @"Session Title" - collect summaries for context injection
       const atTitleRegex = /@"([^"]+)"/g;
@@ -1931,7 +2230,7 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
       await setMessages(prev => [...prev, newMessage]);
 
       // Create a temporary system prompt function with the contexts
-      const getSystemPromptWithContexts = () => {
+      const getSystemPromptWithContexts = ({ councilMode } = {}) => {
         let prompt = "";
         
         // Add advisor personas
@@ -1939,7 +2238,75 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
         if (activeAdvisors.length > 0) {
           prompt += `You are currently embodying the following advisors:\n${activeAdvisors.map(a => `\n${a.name}: ${a.description}`).join('\n')}\n\n`;
           
-          prompt += `RESPONSE FORMAT: Use this exact structure for every advisor response:
+          if (councilMode) {
+            prompt += `\n\n## HIGH COUNCIL MODE
+IMPORTANT: Start your response with the exact text "<COUNCIL_DEBATE>" (this is required for the interface to work properly).
+
+The advisors will engage in a structured debate, each maintaining their unique perspective throughout. Each advisor should:
+
+- Stay true to their core philosophy and worldview
+- Respond authentically from their own perspective
+- Keep responses concise: 2-3 sentences maximum per turn
+- Be direct and punchy - avoid lengthy explanations 
+- Challenge other advisors when they genuinely disagree
+- Build on points that align with their own thinking
+- Never abandon their perspective just to reach agreement
+
+CRITICAL: This must be a true DEBATE where advisors directly engage with each other's arguments, not separate speeches.
+
+Structure the debate exactly as follows:
+
+## ROUND 1: Initial Positions
+Each advisor states their position on the question.
+
+## ROUND 2: Direct Responses
+Each advisor must directly address the other advisors by name, responding to specific points from Round 1:
+- "Elon, you're wrong about X because..."
+- "I agree with you, Sarah, but you're missing..."
+- "That's complete nonsense, Marcus. Here's why..."
+
+## ROUND 3: Final Positions
+Each advisor directly challenges or supports the others' Round 2 arguments, speaking TO each other, not about them.
+
+CRITICAL: Use ## for round headers (not **bold**). Always add a blank line before each round header. Example:
+
+[ADVISOR: Name] Final sentence of previous round.
+
+## ROUND 2: Direct Responses
+
+[ADVISOR: Next Name] First response...
+
+REQUIREMENTS:
+- Advisors must reference each other by name and quote/paraphrase specific arguments
+- No advisor can ignore what others have said
+- Each response must build on the conversation, not restart it
+- Use transition phrases that show you're responding: "But as [Name] just pointed out..." or "That contradicts [Name]'s argument that..."
+
+MANDATORY FORMAT REQUIREMENTS:
+- Each advisor speaks for 2-3 sentences maximum per turn
+- Be concise and impactful, not verbose
+- You MUST wrap the entire debate in these exact tags:
+
+<COUNCIL_DEBATE>
+**ROUND 1: Initial Positions**
+[ADVISOR: Name] content...
+
+**ROUND 2: Direct Responses** 
+[ADVISOR: Name] responds to [Other Advisor]...
+
+**ROUND 3: Final Positions**
+[ADVISOR: Name] presents final stance...
+</COUNCIL_DEBATE>
+
+DO NOT FORGET THE <COUNCIL_DEBATE> TAGS. Without these tags, the debate will not display properly.
+
+## Council Summary
+
+After the debate section, provide:
+- One sentence per advisor summarizing their final position
+- Synthesis: 1-2 sentences on the overall outcome or remaining tensions`;
+          } else {
+            prompt += `RESPONSE FORMAT: Use this exact structure for every advisor response:
 
 [ADVISOR: Advisor Name]
 optional action or emotional state on this line by itself
@@ -1957,6 +2324,7 @@ FORMATTING RULES:
 3. Always leave one blank line before starting the main response content
 4. Use single line breaks within paragraphs, double line breaks between major sections
 5. Each advisor gets their own clearly separated section`;
+          }
         }
         // If no advisors are active, no system prompt is needed
         
@@ -1983,7 +2351,11 @@ FORMATTING RULES:
       };
 
       // Pass the content to Claude with enhanced system prompt (this starts immediately)
-      await callClaude(newMessage.content, getSystemPromptWithContexts);
+      if (councilMode) {
+        const systemPrompt = getSystemPromptWithContexts({ councilMode });
+        console.log('🏛️ High Council System Prompt:', systemPrompt);
+      }
+      await callClaude(newMessage.content, () => getSystemPromptWithContexts({ councilMode }));
 
       // Update message with tags after tag analysis completes (in background)
       tagAnalysisPromise.then(tags => {
@@ -2328,6 +2700,134 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
     }
   };
 
+  const generateAdvisorVote = async (advisor, question, options) => {
+    if (!openaiClient) return { position: 'abstain', confidence: 0, reasoning: 'No API connection' };
+    try {
+      const optionsList = options.map((opt, i) => `${i + 1}. ${opt}`).join('\n');
+      
+      const prompt = `As ${advisor.name}, vote on this question from your perspective: "${question}"
+
+Your persona: ${advisor.description}
+
+Available options:
+${optionsList}
+
+Choose one of the numbered options above and respond with a JSON object containing:
+- "position": The exact text of your chosen option (not the number)
+- "confidence": Your confidence level (0-100)
+- "reasoning": A brief explanation in your voice (1-2 sentences)
+
+Example: {"position": "Option 2 text here", "confidence": 75, "reasoning": "This aligns with my philosophical understanding of human nature."}`;
+
+      const inputTokens = Math.ceil((100 + prompt.length) / 4);
+      const response = await openaiClient.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: 'You are a voting advisor. Choose from the provided options only. Respond in valid JSON format with the exact fields requested.' },
+          { role: 'user', content: prompt }
+        ],
+        max_tokens: 200,
+        response_format: { type: 'json_object' }
+      });
+      
+      const vote = JSON.parse(response.choices[0].message.content);
+      const outputTokens = Math.ceil(response.choices[0].message.content.length / 4);
+      trackUsage('gpt', inputTokens, outputTokens);
+      
+      // Validate that the position matches one of the options
+      let validPosition = vote.position;
+      if (!options.some(opt => opt.toLowerCase().includes(validPosition.toLowerCase()) || validPosition.toLowerCase().includes(opt.toLowerCase()))) {
+        // If no match found, default to first option
+        validPosition = options[0];
+      }
+      
+      const sanitizedVote = {
+        position: validPosition,
+        confidence: Math.max(0, Math.min(100, parseInt(vote.confidence) || 0)),
+        reasoning: vote.reasoning || 'No reasoning provided'
+      };
+      
+      return sanitizedVote;
+    } catch (e) {
+      console.error('Vote generation failed for', advisor.name, e);
+      return { position: options[0] || 'abstain', confidence: 0, reasoning: 'Vote generation failed' };
+    }
+  };
+
+  const handleModalVote = async (question, options) => {
+    const active = advisors.filter(a => a.active);
+    if (active.length === 0) {
+      setMessages(prev => [...prev, {
+        type: 'system',
+        content: 'No active advisors to vote. Please activate advisors first.'
+      }]);
+      return;
+    }
+
+    // Add "starting vote" message
+    setMessages(prev => [...prev, {
+      type: 'system',
+      content: `**Starting Vote:** "${question}"\n**Options:** ${options.map((opt, i) => `${i + 1}. ${opt}`).join(', ')}`
+    }]);
+
+    const votes = [];
+    for (const adv of active) {
+      const vote = await generateAdvisorVote(adv, question, options);
+      votes.push({ advisor: adv.name, ...vote });
+    }
+    
+    setVoteHistory(prev => [...prev, { question, options, votes }]);
+    
+    // Create voting results message
+    const tally = {};
+    let totalConf = 0;
+    votes.forEach(v => {
+      tally[v.position] = (tally[v.position] || 0) + 1;
+      totalConf += v.confidence;
+    });
+    const recommended = Object.entries(tally).sort((a,b)=>b[1]-a[1])[0][0];
+    const avgConfidence = Math.round(totalConf / votes.length);
+    
+    let voteResults = `**Voting Results**\n\n`;
+    votes.forEach(vote => {
+      voteResults += `**${vote.advisor}:** ${vote.position} (${vote.confidence}% confidence)\n`;
+      if (vote.reasoning) {
+        voteResults += `  *"${vote.reasoning}"*\n`;
+      }
+      voteResults += `\n`;
+    });
+    voteResults += `**Summary:** ${tally[recommended]}/${active.length} advisors chose **${recommended}** (avg confidence: ${avgConfidence}%)`;
+    
+    setMessages(prev => [...prev, { 
+      type: 'system', 
+      content: voteResults
+    }]);
+  };
+
+  const handleStartHighCouncil = async (topic) => {
+    const active = advisors.filter(a => a.active);
+    if (active.length === 0) {
+      setMessages(prev => [...prev, {
+        type: 'system',
+        content: 'No active advisors for High Council debate. Please activate advisors first.'
+      }]);
+      return;
+    }
+
+    // Set the input and trigger form submission
+    const councilMessage = `/council ${topic}`;
+    setInput(councilMessage);
+    
+    // Trigger the form submission programmatically
+    setTimeout(() => {
+      const form = document.querySelector('form');
+      if (form) {
+        const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
+        form.dispatchEvent(submitEvent);
+      }
+    }, 100);
+  };
+
   useEffect(() => {
     // Only save sessions that have actual user/assistant messages (not just system messages)
     const nonSystemMessages = messages.filter(msg => msg.type !== 'system');
@@ -2338,12 +2838,13 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
           timestamp: new Date().toISOString(),
           messages: messages.map(msg => ({
             ...msg,
-            tags: msg.tags || [] // Ensure tags are preserved
+            tags: msg.tags || []
           })),
           metaphors,
           // DEPRECATED: Questions feature temporarily disabled
           // questions,
-          advisorSuggestions
+          advisorSuggestions,
+          voteHistory
         };
 
         // Generate title if this is a new session with enough content and no title yet
@@ -2388,7 +2889,7 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
 
       saveSession();
     }
-  }, [messages, metaphors, /* questions, */ advisorSuggestions, currentSessionId, openaiClient]);
+  }, [messages, metaphors, /* questions, */ advisorSuggestions, voteHistory, currentSessionId, openaiClient]);
 
   // Trigger analysis when messages change and we have a Claude response
   useEffect(() => {
@@ -2739,8 +3240,24 @@ ${selectedText}
                       msg.type === 'debug' ? 'text-amber-600 dark:text-amber-400 whitespace-pre-wrap' : 'text-green-600 dark:text-green-400 whitespace-pre-wrap'
                     }`}
                   >
-                    {(msg.type === 'system' || msg.type === 'assistant') ? (
+                    {msg.type === 'system' ? (
                       <MemoizedMarkdownMessage content={msg.content} advisors={advisors} />
+                    ) : msg.type === 'assistant' ? (
+                      (() => {
+                        const { processedContent, debates } = processCouncilDebates(msg.content);
+                        return (
+                          <div>
+                            {msg.thinking && <ThinkingBlock content={msg.thinking} />}
+                            {debates.map((debate, debateIdx) => (
+                              <DebateBlock key={debateIdx} content={debate} advisors={advisors} />
+                            ))}
+                            <MemoizedMarkdownMessage 
+                              content={processedContent.replace(/__DEBATE_PLACEHOLDER_\d+__/g, '')} 
+                              advisors={advisors} 
+                            />
+                          </div>
+                        );
+                      })()
                     ) : (
                       msg.content
                     )}
@@ -2896,6 +3413,8 @@ ${selectedText}
             onExportClick={() => setShowExportMenu(true)}
             onDossierClick={() => setShowDossierModal(true)}
             onImportExportAdvisorsClick={() => setShowImportExportModal(true)}
+            onVotingClick={() => setShowVotingModal(true)}
+            onHighCouncilClick={() => setShowHighCouncilModal(true)}
             onHelpClick={() => setShowHelpModal(true)}
             onFullscreenClick={toggleFullscreen}
             isFullscreen={isFullscreen}
@@ -2931,6 +3450,8 @@ ${selectedText}
         onClose={() => setShowSettingsMenu(false)}
         debugMode={debugMode}
         setDebugMode={setDebugMode}
+        reasoningMode={reasoningMode}
+        setReasoningMode={setReasoningMode}
         contextLimit={contextLimit}
         setContextLimit={setContextLimit}
         maxTokens={maxTokens}
@@ -2951,6 +3472,21 @@ ${selectedText}
         onEditPrompt={handleEditPrompt}
         onDeletePrompt={handleDeletePrompt}
         onAddNewPrompt={handleAddNewPrompt}
+      />
+
+      {/* Voting Modal Component */}
+      <VotingModal
+        isOpen={showVotingModal}
+        onClose={() => setShowVotingModal(false)}
+        advisors={advisors}
+        onSubmitVote={handleModalVote}
+      />
+
+      {/* High Council Modal Component */}
+      <HighCouncilModal
+        isOpen={showHighCouncilModal}
+        onClose={() => setShowHighCouncilModal(false)}
+        onStartCouncil={handleStartHighCouncil}
       />
 
       {/* Add Prompt Form Component */}

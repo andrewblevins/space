@@ -69,7 +69,7 @@ export const AdvisorResponseMessage = memo(({ content, paragraphSpacing = 2, adv
           className="text-left font-serif w-full"
           components={{
           h1: ({ children }) => <h1 className="text-blue-600 dark:text-blue-400 font-bold font-serif">{children}</h1>,
-          h2: ({ children }) => <h2 className="text-green-600 dark:text-green-400 font-bold font-serif">{children}</h2>,
+          h2: ({ children }) => <h2 className="text-green-600 dark:text-green-400 font-bold font-serif" style={{ marginTop: `${paragraphSpacing}rem`, marginBottom: `${paragraphSpacing * 0.5}rem` }}>{children}</h2>,
           code: ({ node, inline, className, children, ...props }) => {
             const match = /language-(\w+)/.exec(className || '');
             return !inline ? (
@@ -126,7 +126,7 @@ export const AdvisorResponseMessage = memo(({ content, paragraphSpacing = 2, adv
               className="text-left font-serif w-full"
               components={{
                 h1: ({ children }) => <h1 className="text-blue-600 dark:text-blue-400 font-bold font-serif">{children}</h1>,
-                h2: ({ children }) => <h2 className="text-green-600 dark:text-green-400 font-bold font-serif">{children}</h2>,
+                h2: ({ children }) => <h2 className="text-green-600 dark:text-green-400 font-bold font-serif" style={{ marginTop: `${paragraphSpacing}rem`, marginBottom: `${paragraphSpacing * 0.5}rem` }}>{children}</h2>,
                 code: ({ node, inline, className, children, ...props }) => {
                   const match = /language-(\w+)/.exec(className || '');
                   return !inline ? (

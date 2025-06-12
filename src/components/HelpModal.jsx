@@ -6,7 +6,7 @@ const HelpModal = ({ isOpen, onClose }) => {
   return (
     <div className="fixed inset-0 bg-stone-100/70 dark:bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
       <div
-        className="bg-stone-50 border border-green-600 rounded-lg w-full max-w-2xl mx-4 dark:bg-gray-900 dark:border-green-400 max-h-[90vh] overflow-hidden flex flex-col"
+        className="bg-stone-50 border border-green-600 rounded-lg w-full max-w-2xl mx-4 dark:bg-gray-900 dark:border-green-400 max-h-[90vh] overflow-y-auto overflow-x-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-6 pb-4">
@@ -120,7 +120,7 @@ const HelpModal = ({ isOpen, onClose }) => {
             {/* Footer */}
             <section className="pt-4 border-t border-gray-300 dark:border-gray-600">
               <p className="text-center text-xs text-gray-500">
-                SPACE Terminal v0.2.2 • All features accessible through GUI menus
+                SPACE Terminal v0.2.3 • All features accessible through GUI menus
               </p>
             </section>
           </div>
