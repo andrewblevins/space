@@ -32,6 +32,7 @@ import { CollapsibleClickableModule } from "./terminal/CollapsibleClickableModul
 import DebateBlock from './DebateBlock';
 import { CollapsibleSuggestionsModule } from "./terminal/CollapsibleSuggestionsModule";
 import VotingModal from './VotingModal';
+import HighCouncilModal from './HighCouncilModal';
 import { ExpandingInput } from "./terminal/ExpandingInput";
 import { MemoizedMarkdownMessage } from "./terminal/MemoizedMarkdownMessage";
 import { AdvisorResponseMessage } from "./terminal/AdvisorResponseMessage";
@@ -254,6 +255,7 @@ const Terminal = ({ theme, toggleTheme }) => {
   const [advisorSuggestions, setAdvisorSuggestions] = useState([]);
   const [voteHistory, setVoteHistory] = useState([]);
   const [showVotingModal, setShowVotingModal] = useState(false);
+  const [showHighCouncilModal, setShowHighCouncilModal] = useState(false);
   const [lastAdvisorAnalysisContent, setLastAdvisorAnalysisContent] = useState('');
   const [suggestedAdvisorName, setSuggestedAdvisorName] = useState('');
   const [contextLimit, setContextLimit] = useState(150000);
@@ -2806,6 +2808,25 @@ Example: {"position": "Option 2 text here", "confidence": 75, "reasoning": "This
     }]);
   };
 
+  const handleStartHighCouncil = async (topic) => {
+    const active = advisors.filter(a => a.active);
+    if (active.length === 0) {
+      setMessages(prev => [...prev, {
+        type: 'system',
+        content: 'No active advisors for High Council debate. Please activate advisors first.'
+      }]);
+      return;
+    }
+
+    // Add the High Council command to start the debate
+    const councilMessage = `/council ${topic}`;
+    setInput('');
+    setMessages(prev => [...prev, { type: 'user', content: councilMessage }]);
+    
+    // Process the council command
+    await handleSendMessage(councilMessage);
+  };
+
   useEffect(() => {
     // Only save sessions that have actual user/assistant messages (not just system messages)
     const nonSystemMessages = messages.filter(msg => msg.type !== 'system');
@@ -3438,6 +3459,7 @@ ${selectedText}
         toggleTheme={toggleTheme}
         paragraphSpacing={paragraphSpacing}
         setParagraphSpacing={setParagraphSpacing}
+        onOpenHighCouncil={() => setShowHighCouncilModal(true)}
       />
 
       {/* Prompt Library Component */}
@@ -3457,6 +3479,13 @@ ${selectedText}
         onClose={() => setShowVotingModal(false)}
         advisors={advisors}
         onSubmitVote={handleModalVote}
+      />
+
+      {/* High Council Modal Component */}
+      <HighCouncilModal
+        isOpen={showHighCouncilModal}
+        onClose={() => setShowHighCouncilModal(false)}
+        onStartCouncil={handleStartHighCouncil}
       />
 
       {/* Add Prompt Form Component */}
