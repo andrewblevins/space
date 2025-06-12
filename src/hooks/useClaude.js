@@ -17,7 +17,7 @@ import { trackUsage, formatCost } from '../utils/usageTracking';
  * @param {() => string} params.getSystemPrompt
  * @returns {{ callClaude: (msg: string, customGetSystemPrompt?: () => string) => Promise<string> }}
  */
-export function useClaude({ messages, setMessages, maxTokens, contextLimit, memory, debugMode, getSystemPrompt }) {
+export function useClaude({ messages, setMessages, maxTokens, contextLimit, memory, debugMode, reasoningMode, getSystemPrompt }) {
   const callClaude = useCallback(async (userMessage, customGetSystemPrompt = null) => {
     const formatTimestamp = (iso) => new Date(iso).toISOString().slice(0, 16);
     if (!userMessage?.trim()) throw new Error('Empty message');
@@ -38,7 +38,20 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
       if (managed?.length) contextMessages.unshift(...managed);
     }
 
-    const systemPromptText = customGetSystemPrompt ? customGetSystemPrompt() : getSystemPrompt();
+    const baseSystemPrompt = customGetSystemPrompt ? customGetSystemPrompt() : getSystemPrompt();
+    
+    // Add reasoning guidance when Extended Thinking is enabled
+    const systemPromptText = reasoningMode && baseSystemPrompt
+      ? `${baseSystemPrompt}\n\n## REASONING GUIDANCE\n\nWhen thinking through this problem, focus on the actual substance of the user's question rather than predicting what advisors would say. Use your thinking space to:\n\n1. **Analyze the core problem or question** - Break down what's really being asked\n2. **Consider multiple perspectives and approaches** - Explore different angles and potential solutions\n3. **Evaluate evidence and reasoning** - Think through the logic, assumptions, and implications\n4. **Synthesize insights** - Connect ideas and draw meaningful conclusions\n\nOnly after this substantive analysis should you consider how the advisors would present these insights to the user.`
+      : baseSystemPrompt;
+    
+    // Debug logging for High Council mode
+    if (systemPromptText.includes('HIGH COUNCIL MODE')) {
+      console.log('🏛️ DEBUG: System prompt contains High Council instructions');
+      console.log('🏛️ DEBUG: System prompt preview:', systemPromptText.substring(systemPromptText.indexOf('HIGH COUNCIL MODE'), systemPromptText.indexOf('HIGH COUNCIL MODE') + 200));
+    } else {
+      console.log('🏛️ DEBUG: System prompt does NOT contain High Council instructions');
+    }
     
     // Calculate input tokens for tracking
     const systemTokens = estimateTokens(systemPromptText);
@@ -60,6 +73,24 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
       stream: true,
     };
 
+    // Add native Extended Thinking if reasoning mode is enabled AND not in council mode
+    const isCouncilMode = systemPromptText.includes('HIGH COUNCIL MODE');
+    if (reasoningMode && !isCouncilMode) {
+      // Set thinking budget to be 60% of max_tokens, leaving 40% for the actual response
+      const thinkingBudget = Math.floor(maxTokens * 0.6);
+      requestBody.thinking = {
+        type: 'enabled',
+        budget_tokens: thinkingBudget
+      };
+      if (debugMode) {
+        console.log(`🧠 Extended Thinking enabled with budget ${thinkingBudget}/${maxTokens} tokens`);
+      }
+    } else if (reasoningMode && isCouncilMode) {
+      if (debugMode) {
+        console.log(`🏛️ Extended Thinking disabled in Council Mode`);
+      }
+    }
+
     const response = await fetch(`${getApiEndpoint()}/v1/messages`, {
       method: 'POST',
       headers: {
@@ -73,7 +104,13 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
 
     if (!response.ok) {
       const errorText = await response.text();
-      await handleApiError(response);
+      console.error('🚨 API Error Response:', {
+        status: response.status,
+        statusText: response.statusText,
+        errorText: errorText,
+        reasoningMode: reasoningMode
+      });
+      await handleApiError(response, errorText);
       throw new Error(errorText);
     }
 
@@ -81,8 +118,9 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
     const decoder = new TextDecoder();
     let buffer = '';
     let currentMessageContent = '';
+    let thinkingContent = '';
 
-    setMessages((prev) => [...prev, { type: 'assistant', content: '' }]);
+    setMessages((prev) => [...prev, { type: 'assistant', content: '', thinking: (reasoningMode && !isCouncilMode) ? '' : undefined }]);
 
     const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
     const isPunctuation = (char) => ['.', '!', '?', '\n'].includes(char);
@@ -98,21 +136,45 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
         if (!dataMatch) continue;
         try {
           const data = JSON.parse(dataMatch[1]);
-          if (data.type === 'content_block_delta' && data.delta.type === 'text_delta') {
-            const text = data.delta.text;
-            for (let i = 0; i < text.length; i++) {
-              const char = text[i];
-              let delay = Math.random() * 5;
-              if (i > 0 && isPunctuation(text[i - 1])) delay += 0;
-              await sleep(delay);
-              currentMessageContent += char;
-              setMessages((prev) => {
-                const newMessages = [...prev];
-                if (newMessages.length > 0) {
-                  newMessages[newMessages.length - 1] = { type: 'assistant', content: currentMessageContent };
-                }
-                return newMessages;
-              });
+          if (data.type === 'content_block_delta') {
+            if (data.delta.type === 'text_delta') {
+              // Regular text content
+              const text = data.delta.text;
+              for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                let delay = Math.random() * 5;
+                if (i > 0 && isPunctuation(text[i - 1])) delay += 0;
+                await sleep(delay);
+                currentMessageContent += char;
+                setMessages((prev) => {
+                  const newMessages = [...prev];
+                  if (newMessages.length > 0) {
+                    newMessages[newMessages.length - 1] = { 
+                      type: 'assistant', 
+                      content: currentMessageContent,
+                      thinking: (reasoningMode && !isCouncilMode) ? thinkingContent : undefined
+                    };
+                  }
+                  return newMessages;
+                });
+              }
+            } else if (data.delta.type === 'thinking_delta' && reasoningMode && !isCouncilMode) {
+              // Thinking content (Extended Thinking) - only when not in council mode
+              const thinkingText = data.delta.thinking || '';
+              if (thinkingText) {
+                thinkingContent += thinkingText;
+                setMessages((prev) => {
+                  const newMessages = [...prev];
+                  if (newMessages.length > 0) {
+                    newMessages[newMessages.length - 1] = { 
+                      type: 'assistant', 
+                      content: currentMessageContent,
+                      thinking: thinkingContent
+                    };
+                  }
+                  return newMessages;
+                });
+              }
             }
           }
         } catch (e) {
@@ -133,7 +195,7 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
     }
     
     return currentMessageContent;
-  }, [messages, setMessages, maxTokens, contextLimit, memory, debugMode, getSystemPrompt]);
+  }, [messages, setMessages, maxTokens, contextLimit, memory, debugMode, reasoningMode, getSystemPrompt]);
 
   return { callClaude };
 }

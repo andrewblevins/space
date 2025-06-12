@@ -8,7 +8,7 @@ const InfoModal = ({ isOpen, onClose }) => {
   return (
     <div className="fixed inset-0 bg-stone-100/70 dark:bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
       <div
-        className="bg-stone-50 border border-green-600 rounded-lg w-full max-w-4xl mx-4 dark:bg-gray-900 dark:border-green-400 max-h-[90vh] overflow-hidden flex flex-col"
+        className="bg-stone-50 border border-green-600 rounded-lg w-full max-w-4xl mx-4 dark:bg-gray-900 dark:border-green-400 max-h-[90vh] overflow-y-auto overflow-x-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-6 pb-4">
@@ -25,7 +25,7 @@ const InfoModal = ({ isOpen, onClose }) => {
               </button>
             )}
             <h2 className="text-green-400 text-xl font-semibold">
-              {showChangelog ? 'Changelog v0.2.2' : 'About SPACE Terminal'}
+              {showChangelog ? 'Changelog v0.2.3' : 'About SPACE Terminal'}
             </h2>
           </div>
           <button
@@ -55,7 +55,7 @@ const AboutContent = ({ onShowChangelog }) => {
   return (
     <div className="space-y-4">
             <div className="text-center">
-              <h3 className="text-green-400 text-lg font-semibold mb-2">SPACE Terminal v0.2.2</h3>
+              <h3 className="text-green-400 text-lg font-semibold mb-2">SPACE Terminal v0.2.3</h3>
               <p className="text-gray-600 dark:text-gray-300 text-sm">
                 An experimental interface for conversations with AI advisors
               </p>
@@ -101,7 +101,7 @@ const AboutContent = ({ onShowChangelog }) => {
                   onClick={onShowChangelog}
                   className="text-green-600 dark:text-green-400 hover:underline text-sm flex items-center gap-1"
                 >
-                  📋 View v0.2.2 Changelog
+                  📋 View v0.2.3 Changelog
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
@@ -146,7 +146,7 @@ const ChangelogContent = () => {
   return (
     <div className="space-y-6 text-gray-800 dark:text-gray-200">
       <div className="text-center border-b border-gray-300 dark:border-gray-600 pb-4">
-        <h3 className="text-green-400 text-lg font-semibold mb-2">SPACE Terminal v0.2.2</h3>
+        <h3 className="text-green-400 text-lg font-semibold mb-2">SPACE Terminal v0.2.3</h3>
         <p className="text-gray-600 dark:text-gray-300 text-sm">
           Version 0.2.2 adds new features and fixes.
         </p>
