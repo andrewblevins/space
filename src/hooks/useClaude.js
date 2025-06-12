@@ -73,8 +73,9 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
       stream: true,
     };
 
-    // Add native Extended Thinking if reasoning mode is enabled
-    if (reasoningMode) {
+    // Add native Extended Thinking if reasoning mode is enabled AND not in council mode
+    const isCouncilMode = systemPromptText.includes('HIGH COUNCIL MODE');
+    if (reasoningMode && !isCouncilMode) {
       // Set thinking budget to be 60% of max_tokens, leaving 40% for the actual response
       const thinkingBudget = Math.floor(maxTokens * 0.6);
       requestBody.thinking = {
@@ -83,6 +84,10 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
       };
       if (debugMode) {
         console.log(`🧠 Extended Thinking enabled with budget ${thinkingBudget}/${maxTokens} tokens`);
+      }
+    } else if (reasoningMode && isCouncilMode) {
+      if (debugMode) {
+        console.log(`🏛️ Extended Thinking disabled in Council Mode`);
       }
     }
 
@@ -115,7 +120,7 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
     let currentMessageContent = '';
     let thinkingContent = '';
 
-    setMessages((prev) => [...prev, { type: 'assistant', content: '', thinking: reasoningMode ? '' : undefined }]);
+    setMessages((prev) => [...prev, { type: 'assistant', content: '', thinking: (reasoningMode && !isCouncilMode) ? '' : undefined }]);
 
     const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
     const isPunctuation = (char) => ['.', '!', '?', '\n'].includes(char);
@@ -147,14 +152,14 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
                     newMessages[newMessages.length - 1] = { 
                       type: 'assistant', 
                       content: currentMessageContent,
-                      thinking: reasoningMode ? thinkingContent : undefined
+                      thinking: (reasoningMode && !isCouncilMode) ? thinkingContent : undefined
                     };
                   }
                   return newMessages;
                 });
               }
-            } else if (data.delta.type === 'thinking_delta' && reasoningMode) {
-              // Thinking content (Extended Thinking)
+            } else if (data.delta.type === 'thinking_delta' && reasoningMode && !isCouncilMode) {
+              // Thinking content (Extended Thinking) - only when not in council mode
               const thinkingText = data.delta.thinking || '';
               if (thinkingText) {
                 thinkingContent += thinkingText;

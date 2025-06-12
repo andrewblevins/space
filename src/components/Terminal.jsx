@@ -105,12 +105,15 @@ const Terminal = ({ theme, toggleTheme }) => {
         const summaryContent = content.substring(debateEnd);
         
         console.log('🏛️ Split debate and summary for streaming display');
+        console.log('🏛️ DEBUG: Summary content found:', summaryContent.substring(0, 200) + '...');
         return { 
           processedContent: summaryContent, 
           debates: [debateContent] 
         };
       } else {
         // No summary yet (still streaming), treat everything after opening tag as debate
+        console.log('🏛️ No summary detected yet, showing debate only');
+        console.log('🏛️ DEBUG: Content being searched for summary:', content.substring(Math.max(0, content.length - 200)));
         const debateContent = content.substring('<COUNCIL_DEBATE>'.length);
         return { 
           processedContent: '', 
