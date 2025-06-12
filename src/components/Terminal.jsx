@@ -286,11 +286,6 @@ const Terminal = ({ theme, toggleTheme }) => {
     return saved ? parseFloat(saved) : 0.25;
   }); // Spacing between paragraphs
 
-  const [agentMode, setAgentMode] = useState(() => {
-    return localStorage.getItem('space_agent_mode') === 'true';
-  });
-
-
   // Check for API keys after modal controller is initialized
   useEffect(() => {
     const checkKeys = async () => {
@@ -340,12 +335,14 @@ const Terminal = ({ theme, toggleTheme }) => {
     }
   }, [modalController, hasCheckedKeys]);
 
-const buildSystemPrompt = (advisorList, contexts = []) => {
+const getSystemPrompt = () => {
   let prompt = "";
-
-  if (advisorList.length > 0) {
-    prompt += `You are currently embodying the following advisors:\n${advisorList.map(a => `\n${a.name}: ${a.description}`).join('\n')}\n\n`;
-
+  
+  // Add advisor personas
+  const activeAdvisors = advisors.filter(a => a.active);
+  if (activeAdvisors.length > 0) {
+    prompt += `You are currently embodying the following advisors:\n${activeAdvisors.map(a => `\n${a.name}: ${a.description}`).join('\n')}\n\n`;
+    
     prompt += `RESPONSE FORMAT: Use this exact structure for every advisor response:
 
 [ADVISOR: Advisor Name]
@@ -365,31 +362,29 @@ FORMATTING RULES:
 4. Use single line breaks within paragraphs, double line breaks between major sections
 5. Each advisor gets their own clearly separated section`;
   }
-
-  console.log('📄 buildSystemPrompt - sessionContexts:', contexts);
-  if (contexts.length > 0) {
+  // If no advisors are active, no system prompt is needed
+  
+  // Add session context from @ references
+  console.log('📄 getSystemPrompt - currentSessionContexts:', currentSessionContexts);
+  if (currentSessionContexts.length > 0) {
     if (prompt) prompt += "\n\n";
     prompt += "## REFERENCED CONVERSATION CONTEXTS\n\n";
     prompt += "The user has referenced the following previous conversations for context:\n\n";
-
-    contexts.forEach((context, index) => {
+    
+    currentSessionContexts.forEach((context, index) => {
       const date = new Date(context.timestamp).toLocaleDateString();
       prompt += `### Context ${index + 1}: "${context.title}" (Session ${context.sessionId}, ${date})\n`;
       prompt += `${context.summary}\n\n`;
     });
-
+    
     prompt += "Use these conversation contexts to inform your response when relevant. The user's message may reference specific details from these conversations.\n";
     console.log('📄 Added session contexts to system prompt');
   } else {
     console.log('📄 No session contexts to add');
   }
-
-  console.log('🔍 buildSystemPrompt - Final system prompt:', prompt);
+  
+  console.log('🔍 getSystemPrompt - Final system prompt:', prompt);
   return prompt;
-};
-
-const getSystemPrompt = () => {
-  return buildSystemPrompt(advisors.filter(a => a.active), currentSessionContexts);
 };
 
 const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimit, memory, debugMode, reasoningMode, getSystemPrompt });
@@ -2242,8 +2237,6 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
 
       // Add it to messages state
       await setMessages(prev => [...prev, newMessage]);
-      // Call Claude with advisor-specific prompts
-      const activeAdvisors = advisors.filter(a => a.active);
 
       // Create a temporary system prompt function with the contexts
       const getSystemPromptWithContexts = ({ councilMode } = {}) => {
@@ -2362,18 +2355,10 @@ FORMATTING RULES:
         return prompt;
       };
 
-      // Handle agent mode vs normal mode
-      if (agentMode && activeAdvisors.length > 0 && !councilMode) {
-        // Agent mode: separate API call for each advisor
-        for (const advisor of activeAdvisors) {
-          const getAdvisorSystemPrompt = () => buildSystemPrompt([advisor], sessionContexts);
-          await callClaude(newMessage.content, getAdvisorSystemPrompt);
-        }
-      } else {
-        // Normal mode or council mode: single API call
-        console.log('🏛️ Calling Claude with councilMode:', councilMode);
-        await callClaude(newMessage.content, () => getSystemPromptWithContexts({ councilMode }));
-      }
+      // Pass the content to Claude with enhanced system prompt (this starts immediately)
+      console.log('🏛️ Calling Claude with councilMode:', councilMode);
+      await callClaude(newMessage.content, () => getSystemPromptWithContexts({ councilMode }));
+
       // Update message with tags after tag analysis completes (in background)
       tagAnalysisPromise.then(tags => {
         setMessages(prev => prev.map(msg => 
@@ -3453,8 +3438,6 @@ ${selectedText}
         toggleTheme={toggleTheme}
         paragraphSpacing={paragraphSpacing}
         setParagraphSpacing={setParagraphSpacing}
-        agentMode={agentMode}
-        setAgentMode={setAgentMode}
       />
 
       {/* Prompt Library Component */}
