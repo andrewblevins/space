@@ -2257,7 +2257,9 @@ IMPORTANT: Start your response with the exact text "<COUNCIL_DEBATE>" (this is r
 The advisors will engage in a structured debate, each maintaining their unique perspective throughout. Each advisor should:
 
 - Stay true to their core philosophy and worldview
-- Respond authentically from their own perspective 
+- Respond authentically from their own perspective
+- Keep responses concise: 2-3 sentences maximum per turn
+- Be direct and punchy - avoid lengthy explanations 
 - Challenge other advisors when they genuinely disagree
 - Build on points that align with their own thinking
 - Never abandon their perspective just to reach agreement
@@ -2292,7 +2294,10 @@ REQUIREMENTS:
 - Each response must build on the conversation, not restart it
 - Use transition phrases that show you're responding: "But as [Name] just pointed out..." or "That contradicts [Name]'s argument that..."
 
-MANDATORY: You MUST wrap the entire debate in these exact tags:
+MANDATORY FORMAT REQUIREMENTS:
+- Each advisor speaks for 2-3 sentences maximum per turn
+- Be concise and impactful, not verbose
+- You MUST wrap the entire debate in these exact tags:
 
 <COUNCIL_DEBATE>
 **ROUND 1: Initial Positions**
