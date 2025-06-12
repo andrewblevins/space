@@ -2818,13 +2818,18 @@ Example: {"position": "Option 2 text here", "confidence": 75, "reasoning": "This
       return;
     }
 
-    // Add the High Council command to start the debate
+    // Set the input and trigger form submission
     const councilMessage = `/council ${topic}`;
-    setInput('');
-    setMessages(prev => [...prev, { type: 'user', content: councilMessage }]);
+    setInput(councilMessage);
     
-    // Process the council command
-    await handleSendMessage(councilMessage);
+    // Trigger the form submission programmatically
+    setTimeout(() => {
+      const form = document.querySelector('form');
+      if (form) {
+        const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
+        form.dispatchEvent(submitEvent);
+      }
+    }, 100);
   };
 
   useEffect(() => {
