@@ -7,6 +7,7 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [message, setMessage] = useState(null);
 
   const { signInWithGoogle, signInWithEmail, signUp } = useAuth();
 
@@ -14,6 +15,7 @@ export default function LoginScreen() {
     try {
       setLoading(true);
       setError(null);
+      setMessage(null);
       await signInWithGoogle();
     } catch (error) {
       setError(error.message);
@@ -27,13 +29,23 @@ export default function LoginScreen() {
     try {
       setLoading(true);
       setError(null);
+      setMessage(null);
+      
+      console.log(`Starting ${isSignUp ? 'sign up' : 'sign in'} for:`, email);
       
       if (isSignUp) {
+        console.log('Calling signUp function...');
         await signUp(email, password);
+        console.log('Sign up completed successfully');
+        // For sign up, we might need to show a confirmation message
+        setMessage('Check your email for a confirmation link to complete your registration.');
       } else {
+        console.log('Calling signInWithEmail function...');
         await signInWithEmail(email, password);
+        console.log('Sign in completed successfully');
       }
     } catch (error) {
+      console.error('Auth error:', error);
       setError(error.message);
     } finally {
       setLoading(false);
@@ -87,6 +99,12 @@ export default function LoginScreen() {
         {error && (
           <div className="bg-red-900 border border-red-500 text-red-400 p-3 rounded mb-4">
             {error}
+          </div>
+        )}
+
+        {message && (
+          <div className="bg-blue-900 border border-blue-500 text-blue-400 p-3 rounded mb-4">
+            {message}
           </div>
         )}
 
