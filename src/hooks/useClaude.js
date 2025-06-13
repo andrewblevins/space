@@ -4,6 +4,7 @@ import { handleApiError } from '../utils/apiErrorHandler';
 import { getDecrypted } from '../utils/secureStorage';
 import { buildConversationContext } from '../utils/terminalHelpers';
 import { trackUsage, formatCost } from '../utils/usageTracking';
+import { useAuth } from '../contexts/AuthContext';
 
 /**
  * Hook providing the callClaude function used to stream responses from the API.
@@ -18,11 +19,26 @@ import { trackUsage, formatCost } from '../utils/usageTracking';
  * @returns {{ callClaude: (msg: string, customGetSystemPrompt?: () => string) => Promise<string> }}
  */
 export function useClaude({ messages, setMessages, maxTokens, contextLimit, memory, debugMode, reasoningMode, getSystemPrompt }) {
+  // Check if auth is enabled
+  const useAuthSystem = import.meta.env.VITE_USE_AUTH === 'true';
+  const authData = useAuthSystem ? useAuth() : { session: null };
+  const { session } = authData;
+  
   const callClaude = useCallback(async (userMessage, customGetSystemPrompt = null) => {
     const formatTimestamp = (iso) => new Date(iso).toISOString().slice(0, 16);
     if (!userMessage?.trim()) throw new Error('Empty message');
-    const anthropicKey = await getDecrypted('space_anthropic_key');
-    if (!anthropicKey) throw new Error('Anthropic API key not found');
+    
+    // Check for auth session if auth is enabled
+    if (useAuthSystem && !session) {
+      throw new Error('Not authenticated');
+    }
+    
+    // Only get API key for legacy mode
+    let anthropicKey = null;
+    if (!useAuthSystem) {
+      anthropicKey = await getDecrypted('space_anthropic_key');
+      if (!anthropicKey) throw new Error('Anthropic API key not found');
+    }
 
     const estimateTokens = (text) => Math.ceil(text.length / 4);
     const totalTokens = messages.reduce((sum, msg) => sum + estimateTokens(msg.content), 0);
@@ -91,14 +107,28 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
       }
     }
 
-    const response = await fetch(`${getApiEndpoint()}/v1/messages`, {
+    // Build headers based on auth mode
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+    
+    if (useAuthSystem) {
+      // Auth mode: use bearer token
+      headers['Authorization'] = `Bearer ${session.access_token}`;
+    } else {
+      // Legacy mode: direct API access
+      headers['x-api-key'] = anthropicKey;
+      headers['anthropic-version'] = '2023-06-01';
+      headers['anthropic-dangerous-direct-browser-access'] = 'true';
+    }
+    
+    const apiUrl = useAuthSystem 
+      ? `${getApiEndpoint()}/api/chat/claude`  // Backend proxy
+      : `${getApiEndpoint()}/v1/messages`;     // Direct API
+    
+    const response = await fetch(apiUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': anthropicKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
+      headers,
       body: JSON.stringify(requestBody),
     });
 
@@ -195,7 +225,7 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
     }
     
     return currentMessageContent;
-  }, [messages, setMessages, maxTokens, contextLimit, memory, debugMode, reasoningMode, getSystemPrompt]);
+  }, [messages, setMessages, maxTokens, contextLimit, memory, debugMode, reasoningMode, getSystemPrompt, useAuthSystem, session]);
 
   return { callClaude };
 }
