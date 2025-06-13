@@ -131,11 +131,27 @@ const Terminal = ({ theme, toggleTheme }) => {
     return { processedContent, debates };
   };
 
-  const [messages, setMessages] = useState([
-    { type: 'system', content: 'SPACE Terminal - v0.2.3' },
-    { type: 'system', content: '🎉 New in v0.2.3:\n• Extended Thinking mode\n• High Council debate mode\n• Call a Vote\n• Improved tag analyzer' },
-    { type: 'system', content: 'Start a conversation, add an advisor (+), draw from the Prompt Library (↙), or type /help for instructions.' }
-  ]);
+  const [messages, setMessages] = useState(() => {
+    const baseMessages = [
+      { type: 'system', content: 'SPACE Terminal - v0.2.3' },
+      { type: 'system', content: '🎉 New in v0.2.3:\n• Extended Thinking mode\n• High Council debate mode\n• Call a Vote\n• Improved tag analyzer' }
+    ];
+    
+    // Add auth-specific welcome message
+    if (useAuthSystem && user) {
+      baseMessages.push({
+        type: 'system',
+        content: `Welcome back${user.email ? ', ' + user.email.split('@')[0] : ''}! You have 25 messages per day to explore complex problems with AI advisors. Your limit resets at midnight.`
+      });
+    }
+    
+    baseMessages.push({
+      type: 'system',
+      content: 'Start a conversation, add an advisor (+), draw from the Prompt Library (↙), or type /help for instructions.'
+    });
+    
+    return baseMessages;
+  });
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [metaphors, setMetaphors] = useState([]);
@@ -291,6 +307,16 @@ const Terminal = ({ theme, toggleTheme }) => {
         if (useAuthSystem) {
           console.log('🔑 Auth system enabled, skipping API key check');
           setApiKeysSet(true);
+          
+          // Check if first-time user (no sessions saved)
+          const savedSessions = localStorage.getItem('space_sessions');
+          const skipWelcome = localStorage.getItem('space_skip_welcome');
+          
+          if (!savedSessions && !skipWelcome) {
+            console.log('👋 First-time auth user, showing welcome screen');
+            setShowWelcome(true);
+          }
+          
           return;
         }
 
@@ -2373,9 +2399,23 @@ FORMATTING RULES:
 
     } catch (error) {
       console.error('Error in handleSubmit:', error);
+      
+      // Provide better error messages based on error type
+      let errorMessage = 'Error: Failed to get response from Claude';
+      
+      if (error.message?.includes('rate limit') || error.message?.includes('429')) {
+        errorMessage = "You've reached today's message limit (25 messages). Your limit will reset at midnight. Consider upgrading for more messages!";
+      } else if (error.message?.includes('401') || error.message?.includes('authentication')) {
+        errorMessage = "Authentication error. Please sign in again.";
+      } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
+        errorMessage = "Network error. Please check your connection and try again.";
+      } else if (error.message) {
+        errorMessage = `Error: ${error.message}`;
+      }
+      
       setMessages(prev => [...prev, { 
         type: 'system', 
-        content: 'Error: Failed to get response from Claude' 
+        content: errorMessage 
       }]);
       // Clear session contexts on error
       setCurrentSessionContexts([]);
