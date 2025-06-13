@@ -17,15 +17,36 @@ export const AuthProvider = ({ children }) => {
   const [session, setSession] = useState(null);
 
   useEffect(() => {
+    // Handle email confirmation and other auth redirects
+    const handleAuthCallback = async () => {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error('Auth callback error:', error);
+      } else if (data?.session) {
+        console.log('Auth callback successful, user authenticated:', data.session.user.email);
+      }
+      return data;
+    };
+
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    handleAuthCallback().then(({ session }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
     });
 
-    // Listen for auth changes
+    // Listen for auth changes including email confirmation
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state change:', event, session?.user?.email);
+      
+      if (event === 'SIGNED_IN') {
+        console.log('User signed in:', session?.user?.email);
+      } else if (event === 'TOKEN_REFRESHED') {
+        console.log('Token refreshed for:', session?.user?.email);
+      } else if (event === 'SIGNED_OUT') {
+        console.log('User signed out');
+      }
+      
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -55,7 +76,10 @@ export const AuthProvider = ({ children }) => {
   const signUp = async (email, password) => {
     const { error } = await supabase.auth.signUp({
       email,
-      password
+      password,
+      options: {
+        emailRedirectTo: window.location.origin
+      }
     });
     if (error) throw error;
   };
