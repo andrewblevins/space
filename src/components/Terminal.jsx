@@ -12,7 +12,7 @@ import { getApiEndpoint } from '../utils/apiConfig';
 import { defaultPrompts } from '../lib/defaultPrompts';
 import { handleApiError } from '../utils/apiErrorHandler';
 import { getNextAvailableColor, ADVISOR_COLORS } from '../lib/advisorColors';
-import { getDecrypted, setEncrypted, removeEncrypted, setModalController, hasEncryptedData } from '../utils/secureStorage';
+import { setEncrypted, removeEncrypted, setModalController, hasEncryptedData } from '../utils/secureStorage';
 import { useModal } from '../contexts/ModalContext';
 import AccordionMenu from './AccordionMenu';
 import SessionPanel from './SessionPanel';
@@ -304,29 +304,9 @@ const Terminal = ({ theme, toggleTheme }) => {
           return;
         }
 
-        // If encrypted data exists, try to decrypt it (this will prompt for password if needed)
-        console.log('🔒 Encrypted keys found, attempting to decrypt...');
-        try {
-          const anthropicKey = await getDecrypted('space_anthropic_key');
-          const openaiKey = await getDecrypted('space_openai_key');
-          
-          if (anthropicKey && openaiKey) {
-            setApiKeysSet(true);
-            
-            // Initialize OpenAI client if keys are available
-            const client = new OpenAI({
-              apiKey: openaiKey,
-              dangerouslyAllowBrowser: true
-            });
-            setOpenaiClient(client);
-            console.log('✅ OpenAI client initialized successfully');
-          }
-        } catch (error) {
-          console.error('Error decrypting API keys:', error);
-          // If decryption fails (user canceled password, wrong password, etc.), 
-          // don't show welcome screen - they have encrypted keys, just couldn't access them this time
-          console.log('🔑 Password entry was required but failed/canceled');
-        }
+        // In auth mode, we don't use encrypted storage
+        console.log('🔒 Legacy encrypted keys found but auth mode is enabled');
+        // Skip welcome screen since user has existing data but we're in auth mode
       } finally {
         // Always stop the loading state once initialization is complete
         setIsInitializing(false);
@@ -399,8 +379,8 @@ const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimi
       // Skip in auth mode - this feature is disabled when using authentication
       if (useAuthSystem) return;
       
-      const anthropicKey = await getDecrypted('space_anthropic_key');
-      if (!anthropicKey) return;
+      // API key access not available in auth mode
+      return;
 
       const response = await fetch(`${getApiEndpoint()}/v1/messages`, {
         method: 'POST',
@@ -512,8 +492,8 @@ Generate ONLY the user's message describing their situation, nothing else. Inclu
     }
 
     try {
-      const anthropicKey = await getDecrypted('space_anthropic_key');
-      if (!anthropicKey) return;
+      // API key access not available in auth mode
+      return;
 
       // Build conversation context
       const contextMessages = messages
@@ -1981,8 +1961,9 @@ Default is 4,096 tokens.`
             case 'status':
               (async () => {
                 try {
-                  const anthropicKey = await getDecrypted('space_anthropic_key');
-                  const openaiKey = await getDecrypted('space_openai_key');
+                  // API key access not available in auth mode
+                  const anthropicKey = null;
+                  const openaiKey = null;
                   setMessages(prev => [...prev, {
                     type: 'system',
                     content: `API Keys Status:

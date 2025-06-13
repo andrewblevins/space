@@ -86,17 +86,33 @@ await page.locator('[data-testid="password-submit-btn"]').click();
 
 ### Setup Commands
 ```bash
-# Automated development setup (preferred)
-npm run dev:setup
+# RECOMMENDED: Full development with backend functions
+npm run dev:functions
 
-# Manual development
+# Legacy: Frontend only (will cause 404s in auth mode)
 npm run dev
+
+# Automated development setup (Google OAuth, rate limiting)
+npm run dev:setup
 
 # Testing and validation
 npm run lint
 npm run build
 npm run preview  # Preview production build
 ```
+
+### ⚠️ **Important: Use npm run dev:functions for Auth Mode**
+
+**SPACE Terminal now uses authentication by default (`VITE_USE_AUTH=true`)**
+
+- **✅ CORRECT**: `npm run dev:functions` - Runs both frontend AND backend functions
+- **❌ WRONG**: `npm run dev` - Only frontend, backend functions return 404
+
+**Backend functions are required for:**
+- Google OAuth authentication
+- Claude API calls (server-side)
+- Rate limiting and usage tracking
+- User account management
 
 ### Build Verification Best Practices
 - **Always run `npm run build`** after refactoring or major changes

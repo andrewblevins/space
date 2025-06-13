@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getApiEndpoint } from '../utils/apiConfig';
 import { handleApiError } from '../utils/apiErrorHandler';
-import { getDecrypted } from '../utils/secureStorage';
 import { ADVISOR_COLORS, getNextAvailableColor } from '../lib/advisorColors';
 
 const generateAdvisorDescription = async (advisorName, onStream) => {
@@ -12,10 +11,7 @@ const generateAdvisorDescription = async (advisorName, onStream) => {
       throw new Error('Advisor description generation disabled in auth mode');
     }
     
-    const anthropicKey = await getDecrypted('space_anthropic_key');
-    if (!anthropicKey) {
-      throw new Error('Anthropic API key not found');
-    }
+    throw new Error('API key access not available in auth mode');
 
     const response = await fetch(`${getApiEndpoint()}/v1/messages`, {
       method: 'POST',

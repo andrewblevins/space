@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { getDecrypted } from '../utils/secureStorage';
 import { useAuth } from '../contexts/AuthContext';
 import UsageDisplay from './UsageDisplay';
 import UsageIndicator from './UsageIndicator';
@@ -39,12 +38,8 @@ const SettingsMenu = ({
     
     setIsCheckingKeys(true);
     try {
-      const anthropicKey = await getDecrypted('space_anthropic_key');
-      const openaiKey = await getDecrypted('space_openai_key');
-      setApiKeyStatus({
-        anthropic: !!anthropicKey,
-        openai: !!openaiKey
-      });
+      // In auth mode, we don't use local API keys
+      setApiKeyStatus({ anthropic: false, openai: false });
     } catch (error) {
       console.error('Error checking API keys:', error);
       setApiKeyStatus({ anthropic: false, openai: false });
