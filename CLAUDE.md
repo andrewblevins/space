@@ -5,11 +5,14 @@ SPACE is a terminal-style AI conversation interface built with React, featuring 
 
 ## 🤖 Automation-First Development
 
-### ⚠️ CRITICAL AUTOMATION RULES
-1. **Use detached server startup**: `nohup npm run dev > /dev/null 2>&1 & echo "Server started"`
-2. **Use modern Puppeteer methods**: `page.locator().fill()` NOT `element.type()`
-3. **Use data-testid selectors first**, CSS selectors as fallback
-4. **Enable console logging** to monitor application behavior
+### ⚠️ CRITICAL SAFETY RULES
+1. **NEVER deploy to main branch** without explicit user permission
+2. **NEVER merge to main** or suggest merging without user approval
+3. **NEVER push directly to main** - always use feature branches
+4. **Use detached server startup**: `nohup npm run dev > /dev/null 2>&1 & echo "Server started"`
+5. **Use modern Puppeteer methods**: `page.locator().fill()` NOT `element.type()`
+6. **Use data-testid selectors first**, CSS selectors as fallback
+7. **Enable console logging** to monitor application behavior
 
 ### Server Management for Automation
 ```bash
