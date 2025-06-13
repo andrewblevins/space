@@ -6,8 +6,8 @@ import { useState, useEffect } from 'react'
 
 function AppContent() {
   const useAuthSystem = import.meta.env.VITE_USE_AUTH === 'true';
-  const authData = useAuthSystem ? useAuth() : { user: true, loading: false };
-  const { user, loading } = authData;
+  const authData = useAuth();
+  const { user, loading } = useAuthSystem ? authData : { user: true, loading: false };
   
   const [theme, setTheme] = useState(() =>
     localStorage.getItem('theme') || 'dark'
