@@ -6,6 +6,12 @@ import { ADVISOR_COLORS, getNextAvailableColor } from '../lib/advisorColors';
 
 const generateAdvisorDescription = async (advisorName, onStream) => {
   try {
+    // Skip in auth mode - this feature is disabled when using authentication
+    const useAuthSystem = import.meta.env.VITE_USE_AUTH === 'true';
+    if (useAuthSystem) {
+      throw new Error('Advisor description generation disabled in auth mode');
+    }
+    
     const anthropicKey = await getDecrypted('space_anthropic_key');
     if (!anthropicKey) {
       throw new Error('Anthropic API key not found');

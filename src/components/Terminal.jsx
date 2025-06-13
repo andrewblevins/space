@@ -396,6 +396,9 @@ const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimi
   // Generate a creative starting prompt for new conversations
   const generateStartingPrompt = async () => {
     try {
+      // Skip in auth mode - this feature is disabled when using authentication
+      if (useAuthSystem) return;
+      
       const anthropicKey = await getDecrypted('space_anthropic_key');
       if (!anthropicKey) return;
 
@@ -497,6 +500,9 @@ Generate ONLY the user's message describing their situation, nothing else. Inclu
 
   // Generate contextual test prompt using Claude
   const generateTestPrompt = async () => {
+    // Skip in auth mode - this feature is disabled when using authentication
+    if (useAuthSystem) return;
+    
     const hasConversation = messages.length > 0 && !messages.every(m => m.type === 'system');
     
     if (!hasConversation) {

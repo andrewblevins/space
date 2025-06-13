@@ -31,6 +31,12 @@ export default class TagAnalyzer {
     if (this.initialized) return;
     
     try {
+      // Skip in auth mode - this feature is disabled when using authentication
+      const useAuthSystem = import.meta.env.VITE_USE_AUTH === 'true';
+      if (useAuthSystem) {
+        throw new Error('Tag analyzer disabled in auth mode');
+      }
+      
       const openaiKey = await getDecrypted('space_openai_key');
       if (!openaiKey) {
         throw new Error('OpenAI API key not found in secure storage');

@@ -34,6 +34,9 @@ const SettingsMenu = ({
 
   // Check API keys when modal opens or when switching to API tab
   const checkApiKeys = async () => {
+    // Skip in auth mode - no API keys to check
+    if (useAuthSystem) return;
+    
     setIsCheckingKeys(true);
     try {
       const anthropicKey = await getDecrypted('space_anthropic_key');
