@@ -14,6 +14,7 @@ import { handleApiError } from '../utils/apiErrorHandler';
 import { getNextAvailableColor, ADVISOR_COLORS } from '../lib/advisorColors';
 import { setEncrypted, removeEncrypted, setModalController, hasEncryptedData } from '../utils/secureStorage';
 import { useModal } from '../contexts/ModalContext';
+import { useAuth } from '../contexts/AuthContext';
 import AccordionMenu from './AccordionMenu';
 import SessionPanel from './SessionPanel';
 import PromptLibrary from './PromptLibrary';
@@ -46,6 +47,8 @@ import { worksheetQuestions, WORKSHEET_TEMPLATES } from "../utils/worksheetTempl
 
 const Terminal = ({ theme, toggleTheme }) => {
   const modalController = useModal();
+  const useAuthSystem = import.meta.env.VITE_USE_AUTH === 'true';
+  const { user } = useAuth();
   
   // Initialize the modal controller for secureStorage
   useEffect(() => {
@@ -268,8 +271,7 @@ const Terminal = ({ theme, toggleTheme }) => {
   const [lastAdvisorAnalysisContent, setLastAdvisorAnalysisContent] = useState('');
   const [suggestedAdvisorName, setSuggestedAdvisorName] = useState('');
   const [contextLimit, setContextLimit] = useState(150000);
-  // Check if auth system is enabled
-  const useAuthSystem = import.meta.env.VITE_USE_AUTH === 'true';
+  // Already defined useAuthSystem at the top of component
   const [apiKeysSet, setApiKeysSet] = useState(useAuthSystem);
   const [showWelcome, setShowWelcome] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
