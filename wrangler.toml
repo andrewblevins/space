@@ -1,0 +1,10 @@
+name = "space-terminal"
+compatibility_date = "2023-05-18"
+pages_build_output_dir = "dist"
+
+[env.development.vars]
+ANTHROPIC_API_KEY = "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"
+OPENAI_API_KEY = "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"
+
+# Note: SUPABASE_SERVICE_ROLE_KEY should be added here for rate limiting to work
+# Get it from Supabase Dashboard → Settings → API → service_role (secret)
