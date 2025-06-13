@@ -92,7 +92,7 @@ const AboutContent = ({ onShowChangelog }) => {
                 </p>
                 
                 <p className="text-gray-600 dark:text-gray-300 text-sm">
-                  <strong>Local encrypted storage.</strong> Your API keys and data stay on your machine, encrypted and secure.
+                  <strong>Secure cloud storage.</strong> Your conversations and data are safely stored with Google authentication.
                 </p>
               </div>
               
