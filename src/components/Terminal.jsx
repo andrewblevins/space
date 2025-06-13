@@ -252,7 +252,9 @@ const Terminal = ({ theme, toggleTheme }) => {
   const [lastAdvisorAnalysisContent, setLastAdvisorAnalysisContent] = useState('');
   const [suggestedAdvisorName, setSuggestedAdvisorName] = useState('');
   const [contextLimit, setContextLimit] = useState(150000);
-  const [apiKeysSet, setApiKeysSet] = useState(false);
+  // Check if auth system is enabled
+  const useAuthSystem = import.meta.env.VITE_USE_AUTH === 'true';
+  const [apiKeysSet, setApiKeysSet] = useState(useAuthSystem);
   const [showWelcome, setShowWelcome] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
   const [hasCheckedKeys, setHasCheckedKeys] = useState(false);
@@ -285,7 +287,14 @@ const Terminal = ({ theme, toggleTheme }) => {
   useEffect(() => {
     const checkKeys = async () => {
       try {
-        // First check if encrypted data exists
+        // Skip API key checking in auth mode
+        if (useAuthSystem) {
+          console.log('🔑 Auth system enabled, skipping API key check');
+          setApiKeysSet(true);
+          return;
+        }
+
+        // Legacy mode: check for API keys
         if (!hasEncryptedData()) {
           console.log('❌ No encrypted keys found, showing welcome screen');
           const skipWelcome = localStorage.getItem('space_skip_welcome');
@@ -328,7 +337,7 @@ const Terminal = ({ theme, toggleTheme }) => {
     if (modalController && !hasCheckedKeys) {
       checkKeys();
     }
-  }, [modalController, hasCheckedKeys]);
+  }, [modalController, hasCheckedKeys, useAuthSystem]);
 
 const getSystemPrompt = () => {
   let prompt = "";
@@ -1944,6 +1953,14 @@ Default is 4,096 tokens.`
           return true;
 
         case '/keys':
+          if (useAuthSystem) {
+            setMessages(prev => [...prev, {
+              type: 'system',
+              content: 'API key management disabled. Using authentication system.'
+            }]);
+            return true;
+          }
+          
           switch(args[0]) {
             case 'clear':
               removeEncrypted('space_anthropic_key');
@@ -2424,6 +2441,14 @@ FORMATTING RULES:
 
   // Settings Menu Callback Functions
   const handleClearApiKeys = () => {
+    if (useAuthSystem) {
+      setMessages(prev => [...prev, {
+        type: 'system',
+        content: 'API key management disabled. Using authentication system.'
+      }]);
+      return;
+    }
+    
     removeEncrypted('space_anthropic_key');
     removeEncrypted('space_openai_key');
     setApiKeysSet(false);
@@ -3166,6 +3191,7 @@ ${selectedText}
           onGetStarted={() => setShowWelcome(false)}
         />
       ) : !apiKeysSet ? (
+        // Only shown in legacy mode (useAuthSystem=false) when no API keys are set
         <ApiKeySetup 
           onComplete={({ anthropicKey, openaiKey }) => {
             const client = new OpenAI({
