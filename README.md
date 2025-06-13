@@ -12,7 +12,7 @@ The app uses Claude 4 Sonnet for the main conversation and GPT-4o for background
 
 Currently SPACE will only work well on a desktop or laptop computer. Mobile layout TK.
 
-SPACE uses secure cloud storage with Google authentication to save your conversations and settings. Your data is protected and accessible across devices. (Note: conversations are processed by Anthropic and OpenAI APIs, whose data policies are worth reviewing if this is a concern.)
+SPACE uses cloud storage with Google authentication to save your conversations and settings across all your devices. (Note: conversations are processed by Anthropic and OpenAI APIs, whose data policies are worth reviewing if this is a concern.)
 
 *SPACE is one node in a larger project exploring frameworks and interfaces for using Large Language Models for personal and social discovery. If you're interested in being a part of a commmunity supporting ongoing dialogue and experimentation around this, sign up for updates here: https://forms.gle/svMNnjJjJdFUjQ9L8.*
 
@@ -100,6 +100,6 @@ Author: [Andrew Shade Blevins](www.andrewshadeblevins.com)
 
 SPACE Terminal would not be possible without the generous support of the Context Appreciation Society. 
 
-## Security Note
+## Cloud Sync
 
-SPACE Terminal uses Google OAuth for secure authentication and stores your data safely in the cloud. API keys are managed server-side, so you don't need to handle them directly. Your conversations are protected with enterprise-grade security and accessible across all your devices.
+SPACE Terminal uses Google OAuth for authentication and automatically syncs your conversations across devices. API keys are managed server-side, so you don't need to handle them directly - just sign in and start exploring!

@@ -92,7 +92,7 @@ const AboutContent = ({ onShowChangelog }) => {
                 </p>
                 
                 <p className="text-gray-600 dark:text-gray-300 text-sm">
-                  <strong>Secure cloud storage.</strong> Your conversations and data are safely stored with Google authentication.
+                  <strong>Cloud sync across devices.</strong> Access your conversations anywhere with Google sign-in.
                 </p>
               </div>
               
