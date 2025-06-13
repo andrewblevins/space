@@ -310,14 +310,7 @@ const Terminal = ({ theme, toggleTheme }) => {
           console.log('🔑 Auth system enabled, skipping API key check');
           setApiKeysSet(true);
           
-          // Check if first-time user (no sessions saved)
-          const savedSessions = localStorage.getItem('space_sessions');
-          const skipWelcome = localStorage.getItem('space_skip_welcome');
-          
-          if (!savedSessions && !skipWelcome) {
-            console.log('👋 First-time auth user, showing welcome screen');
-            setShowWelcome(true);
-          }
+          // Welcome screen is now handled at App level for auth users
           
           return;
         }
@@ -3215,7 +3208,8 @@ ${selectedText}
         <div className="w-full h-screen bg-black flex items-center justify-center">
           <div className="text-green-400 animate-pulse">Loading SPACE Terminal...</div>
         </div>
-      ) : showWelcome ? (
+      ) : showWelcome && !useAuthSystem ? (
+        // Welcome screen only shown in legacy mode (auth mode handles this at App level)
         <WelcomeScreen 
           onGetStarted={() => setShowWelcome(false)}
         />
