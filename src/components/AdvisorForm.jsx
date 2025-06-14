@@ -5,22 +5,45 @@ import { ADVISOR_COLORS, getNextAvailableColor } from '../lib/advisorColors';
 
 const generateAdvisorDescription = async (advisorName, onStream) => {
   try {
-    // Skip in auth mode - this feature is disabled when using authentication
     const useAuthSystem = import.meta.env.VITE_USE_AUTH === 'true';
-    if (useAuthSystem) {
-      throw new Error('Advisor description generation disabled in auth mode');
-    }
     
-    throw new Error('API key access not available in auth mode');
+    // Get auth session if using auth system
+    let session = null;
+    if (useAuthSystem) {
+      const { getSession } = await import('../contexts/AuthContext');
+      session = await getSession();
+      if (!session) {
+        throw new Error('Please sign in to generate advisor descriptions');
+      }
+    }
 
-    const response = await fetch(`${getApiEndpoint()}/v1/messages`, {
+    // Use appropriate API endpoint
+    const apiUrl = useAuthSystem 
+      ? `${getApiEndpoint()}/api/chat/claude`  // Backend proxy
+      : `${getApiEndpoint()}/v1/messages`;     // Direct API
+    
+    // Set up headers based on auth mode
+    const headers = {
+      'Content-Type': 'application/json'
+    };
+    
+    if (useAuthSystem) {
+      headers['Authorization'] = `Bearer ${session.access_token}`;
+    } else {
+      // In legacy mode, get API key from secure storage
+      const { getDecryptedKey } = await import('../utils/secureStorage');
+      const anthropicKey = await getDecryptedKey('anthropic');
+      if (!anthropicKey) {
+        throw new Error('Please set your Anthropic API key first');
+      }
+      headers['x-api-key'] = anthropicKey;
+      headers['anthropic-version'] = '2023-06-01';
+      headers['anthropic-dangerous-direct-browser-access'] = 'true';
+    }
+
+    const response = await fetch(apiUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': anthropicKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
+      headers,
       body: JSON.stringify({
         model: 'claude-3-7-sonnet-20250219',
         messages: [{

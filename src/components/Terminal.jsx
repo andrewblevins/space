@@ -397,20 +397,28 @@ const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimi
   // Generate a creative starting prompt for new conversations
   const generateStartingPrompt = async () => {
     try {
-      // Skip in auth mode - this feature is disabled when using authentication
-      if (useAuthSystem) return;
+      // Build headers based on auth mode
+      const headers = {
+        'Content-Type': 'application/json',
+      };
       
-      // API key access not available in auth mode
-      return;
+      const apiUrl = useAuthSystem 
+        ? `${getApiEndpoint()}/api/chat/claude`  // Backend proxy
+        : `${getApiEndpoint()}/v1/messages`;     // Direct API
 
-      const response = await fetch(`${getApiEndpoint()}/v1/messages`, {
+      if (useAuthSystem) {
+        // Auth mode: use bearer token
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      } else {
+        // Legacy mode: direct API access
+        headers['x-api-key'] = anthropicKey;
+        headers['anthropic-version'] = '2023-06-01';
+        headers['anthropic-dangerous-direct-browser-access'] = 'true';
+      }
+
+      const response = await fetch(apiUrl, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': anthropicKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
-        },
+        headers,
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
           messages: [{
@@ -501,9 +509,6 @@ Generate ONLY the user's message describing their situation, nothing else. Inclu
 
   // Generate contextual test prompt using Claude
   const generateTestPrompt = async () => {
-    // Skip in auth mode - this feature is disabled when using authentication
-    if (useAuthSystem) return;
-    
     const hasConversation = messages.length > 0 && !messages.every(m => m.type === 'system');
     
     if (!hasConversation) {
@@ -513,9 +518,6 @@ Generate ONLY the user's message describing their situation, nothing else. Inclu
     }
 
     try {
-      // API key access not available in auth mode
-      return;
-
       // Build conversation context
       const contextMessages = messages
         .filter((m) => (m.type === 'user' || m.type === 'assistant') && m.content?.trim() !== '')
@@ -528,15 +530,29 @@ Generate ONLY the user's message describing their situation, nothing else. Inclu
         content: "Based on our conversation so far, what would be a natural and interesting follow-up question or comment from the user? Generate only the user's message, nothing else."
       });
 
-      // Make direct API call without going through useClaude hook
-      const response = await fetch(`${getApiEndpoint()}/v1/messages`, {
+      // Build headers based on auth mode
+      const headers = {
+        'Content-Type': 'application/json',
+      };
+      
+      const apiUrl = useAuthSystem 
+        ? `${getApiEndpoint()}/api/chat/claude`  // Backend proxy
+        : `${getApiEndpoint()}/v1/messages`;     // Direct API
+
+      if (useAuthSystem) {
+        // Auth mode: use bearer token
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      } else {
+        // Legacy mode: direct API access
+        headers['x-api-key'] = anthropicKey;
+        headers['anthropic-version'] = '2023-06-01';
+        headers['anthropic-dangerous-direct-browser-access'] = 'true';
+      }
+
+      // Make API call
+      const response = await fetch(apiUrl, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': anthropicKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
-        },
+        headers,
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
           messages: contextMessages,
