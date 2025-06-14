@@ -1,17 +1,24 @@
 # SPACE Terminal - TODO List
 
-## Features
+**NOTE FOR CLAUDE: This file contains Andrew's personal notes and thoughts. Please do not modify the content below this line unless explicitly asked.**
+
+---
+
 - Make the search function in the dossier work for searching specific terms (maybe also rethink the framing of that feature)
+
 - Do more to keep advisors from appearing if not selected
-- Add option in settings for toggling shift+enter vs enter for new line (shift+enter is default)
-- User should be able to input a tag in the chat and it sends the LLM all previous inputs associated with that tag
-- Generate style cues for advisor voices (5 ways this person might talk, example quotes, use as basis)
+
 - Give a warning message if user tries to use SPACE on phone (or just fix for mobile)
 
-## Completed ✅
-- ~~Lightweight analytics: google analytics~~ ✅ DONE - v0.2.3
-- ~~Google sign-in~~ ✅ DONE - Authentication system implemented
-- ~~Persistent storage for conversations~~ ✅ DONE - Plan created in CONVERSATION_STORAGE_PLAN.md
+- add option in settings for toggling shift+enter vs enter for new line (shift+enter is default)
+
+- user should be able to input a tag in the chat and it sends the LLM all previous inputs associated with that tag
+
+- generate style cues for advisor voices (5 ways this person might talk, example quotes, use as basis)
+
+- lightweight analytics: google analytics
+
+- google sign-in
 
 CURRENT STEPS
 
