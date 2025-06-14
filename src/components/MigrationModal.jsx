@@ -67,17 +67,16 @@ const MigrationModal = ({ onComplete }) => {
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div className="bg-gray-900 p-8 rounded-lg border border-green-500 max-w-md w-full mx-4">
           <h2 className="text-xl font-bold text-green-400 mb-4">
-            Welcome to SPACE Terminal 2.0!
+            Welcome to SPACE Terminal 0.2.4!
           </h2>
           
           <div className="space-y-4 text-gray-300">
             <p>
-              We found <span className="text-green-400 font-medium">{sessions.length}</span> conversation{sessions.length !== 1 ? 's' : ''} 
-              stored in your browser.
+              We found <span className="text-green-400 font-medium">{sessions.length}</span> conversation{sessions.length !== 1 ? 's' : ''} stored in your browser.
             </p>
             
             <p>
-              Would you like to migrate them to your account for cross-device access and backup?
+              Move them to your account so they sync across devices and never get lost?
             </p>
             
             {sessions.length > 0 && (
@@ -238,7 +237,7 @@ const MigrationModal = ({ onComplete }) => {
             </p>
             
             <div className="bg-green-900 border border-green-500 text-green-400 p-3 rounded text-sm">
-              Your browser data has been safely cleaned up. Welcome to SPACE 2.0!
+              Your browser data has been safely cleaned up. Welcome to SPACE 0.2.4!
             </div>
           </div>
 
