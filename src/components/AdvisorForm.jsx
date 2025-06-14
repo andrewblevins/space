@@ -10,8 +10,13 @@ const generateAdvisorDescription = async (advisorName, onStream) => {
     // Get auth session if using auth system
     let session = null;
     if (useAuthSystem) {
-      const { getSession } = await import('../contexts/AuthContext');
-      session = await getSession();
+      // Import the auth hook and get the current session
+      const { useAuth } = await import('../contexts/AuthContext');
+      // We need to get the session from React context, but we can't use hooks in async functions
+      // Instead, we'll get it from supabase directly
+      const { supabase } = await import('../lib/supabase');
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      session = currentSession;
       if (!session) {
         throw new Error('Please sign in to generate advisor descriptions');
       }
