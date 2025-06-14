@@ -1,8 +1,22 @@
 import { checkRateLimit, incrementUsage } from '../../middleware/rateLimiting.js';
+import { verifyAuth } from '../../utils/auth.js';
 
 export async function onRequestPost(context) {
-  // User is now available from middleware
-  const userId = context.user?.id;
+  // Verify authentication
+  const authResult = await verifyAuth(context);
+  if (!authResult.success) {
+    return new Response(JSON.stringify({ 
+      error: authResult.error 
+    }), { 
+      status: authResult.status,
+      headers: {
+        'content-type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      }
+    });
+  }
+  
+  const userId = authResult.user.id;
   
   try {
     // Check rate limit before processing
@@ -24,8 +38,6 @@ export async function onRequestPost(context) {
       body: JSON.stringify(requestBody)
     });
 
-    const data = await response.json();
-
     // Increment usage after successful API call
     if (response.ok) {
       await incrementUsage(context, userId);
@@ -33,14 +45,29 @@ export async function onRequestPost(context) {
 
     // Include rate limit info in response headers
     const responseHeaders = {
-      'content-type': 'application/json',
+      'content-type': response.headers.get('content-type') || 'application/json',
       'Access-Control-Allow-Origin': '*',
       'X-RateLimit-Limit': rateLimitInfo.limit.toString(),
       'X-RateLimit-Remaining': (rateLimitInfo.remaining - 1).toString(), // -1 because we just used one
       'X-RateLimit-Used': (rateLimitInfo.usage + 1).toString(), // +1 because we just used one
       'X-RateLimit-Tier': rateLimitInfo.tier
     };
+    
+    // Pass through cache-control for streaming responses
+    if (response.headers.get('cache-control')) {
+      responseHeaders['cache-control'] = response.headers.get('cache-control');
+    }
 
+    // If it's a streaming response, pass it through directly
+    if (requestBody.stream && response.ok) {
+      return new Response(response.body, {
+        status: response.status,
+        headers: responseHeaders
+      });
+    }
+
+    // Otherwise, parse and return JSON
+    const data = await response.json();
     return new Response(JSON.stringify(data), {
       status: response.status,
       headers: responseHeaders

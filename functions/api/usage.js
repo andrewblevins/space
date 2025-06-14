@@ -1,7 +1,19 @@
 import { checkRateLimit } from '../middleware/rateLimiting.js';
+import { verifyAuth } from '../utils/auth.js';
 
 export async function onRequestGet(context) {
-  const userId = context.user?.id;
+  // Verify authentication
+  const authResult = await verifyAuth(context);
+  if (!authResult.success) {
+    return new Response(authResult.error, { 
+      status: authResult.status,
+      headers: {
+        'Access-Control-Allow-Origin': '*'
+      }
+    });
+  }
+  
+  const userId = authResult.user.id;
   
   try {
     const rateLimitInfo = await checkRateLimit(context, userId);

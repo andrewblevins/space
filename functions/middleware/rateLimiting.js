@@ -69,13 +69,23 @@ export async function incrementUsage(context, userId) {
     context.env.SUPABASE_SERVICE_ROLE_KEY
   );
 
-  const { error } = await supabase
+  // First get current count
+  const { data: usage, error: fetchError } = await supabase
+    .from('user_usage')
+    .select('messages_today')
+    .eq('user_id', userId)
+    .single();
+
+  if (fetchError) throw fetchError;
+
+  // Then update with incremented value
+  const { error: updateError } = await supabase
     .from('user_usage')
     .update({
-      messages_today: supabase.raw('messages_today + 1'),
+      messages_today: (usage?.messages_today || 0) + 1,
       updated_at: new Date().toISOString()
     })
     .eq('user_id', userId);
 
-  if (error) throw error;
+  if (updateError) throw updateError;
 }

@@ -1,6 +1,21 @@
+import { verifyAuth } from '../../utils/auth.js';
+
 export async function onRequestPost(context) {
-  // User is now available from middleware
-  const userId = context.user?.id;
+  // Verify authentication
+  const authResult = await verifyAuth(context);
+  if (!authResult.success) {
+    return new Response(JSON.stringify({ 
+      error: authResult.error 
+    }), { 
+      status: authResult.status,
+      headers: {
+        'content-type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      }
+    });
+  }
+  
+  const userId = authResult.user.id;
   
   try {
     const requestBody = await context.request.json();
