@@ -41,6 +41,9 @@ import useClaude from "../hooks/useClaude";
 import { analyzeMetaphors, analyzeForQuestions, summarizeSession, generateSessionSummary } from "../utils/terminalHelpers";
 import { trackUsage, trackSession } from '../utils/usageTracking';
 import { worksheetQuestions, WORKSHEET_TEMPLATES } from "../utils/worksheetTemplates";
+import { useConversationStorage } from '../hooks/useConversationStorage';
+import { needsMigration } from '../utils/migrationHelper';
+import MigrationModal from './MigrationModal';
 
 
 
@@ -48,7 +51,13 @@ import { worksheetQuestions, WORKSHEET_TEMPLATES } from "../utils/worksheetTempl
 const Terminal = ({ theme, toggleTheme }) => {
   const modalController = useModal();
   const useAuthSystem = import.meta.env.VITE_USE_AUTH === 'true';
-  const { user } = useAuth();
+  const { user, session } = useAuth();
+  const storage = useConversationStorage();
+  
+  // Database storage state
+  const [currentConversationId, setCurrentConversationId] = useState(null);
+  const [useDatabaseStorage, setUseDatabaseStorage] = useState(useAuthSystem && !!user);
+  const [showMigrationModal, setShowMigrationModal] = useState(false);
   
   // Initialize the modal controller for secureStorage
   useEffect(() => {
@@ -56,6 +65,13 @@ const Terminal = ({ theme, toggleTheme }) => {
       setModalController(modalController);
     }
   }, [modalController]);
+
+  // Check for migration when user logs in
+  useEffect(() => {
+    if (useAuthSystem && user && needsMigration()) {
+      setShowMigrationModal(true);
+    }
+  }, [useAuthSystem, user]);
 
 
   const getNextSessionId = () => {
@@ -681,22 +697,48 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
   };
 
   // Session management functions for SessionPanel
-  const handleNewSession = () => {
+  const handleNewSession = async () => {
     const prevSessionId = currentSessionId;
-    const newSessionId = getNextSessionId();
     
     // Auto-generate summary for the session we're leaving
     generateSummaryForPreviousSession(prevSessionId);
     
-    setCurrentSessionId(newSessionId);
+    if (useDatabaseStorage) {
+      // Create new conversation in database
+      try {
+        const conversation = await storage.createConversation(
+          `Session ${new Date().toLocaleString()}`,
+          {
+            metaphors: [],
+            advisorSuggestions: [],
+            voteHistory: [],
+            created: new Date().toISOString()
+          }
+        );
+        
+        setCurrentConversationId(conversation.id);
+        setCurrentSessionId(conversation.id); // Use conversation ID as session ID
+        console.log('🗃️ Created new database conversation:', conversation.id);
+      } catch (error) {
+        console.error('Failed to create database conversation, falling back to localStorage:', error);
+        // Fall back to localStorage
+        const newSessionId = getNextSessionId();
+        setCurrentSessionId(newSessionId);
+        setCurrentConversationId(null);
+      }
+    } else {
+      // Legacy localStorage session
+      const newSessionId = getNextSessionId();
+      setCurrentSessionId(newSessionId);
+      setCurrentConversationId(null);
+    }
+    
     setMessages([
       { type: 'system', content: 'SPACE Terminal - v0.2.3' },
       { type: 'system', content: '🎉 New in v0.2.3:\n• Extended Thinking mode\n• High Council debate mode\n• Call a Vote\n• Improved tag analyzer' },
       { type: 'system', content: 'Start a conversation, add an advisor (+), draw from the Prompt Library (↙), or type /help for instructions.' }
     ]);
     setMetaphors([]);
-    // DEPRECATED: Questions feature temporarily disabled
-    // setQuestions([]);
     setAdvisorSuggestions([]);
     setVoteHistory([]);
     
@@ -704,22 +746,42 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
     trackSession();
   };
 
-  const handleLoadSession = (sessionId) => {
-    const sessionData = localStorage.getItem(`space_session_${sessionId}`);
-    if (sessionData) {
-      const session = JSON.parse(sessionData);
-      setCurrentSessionId(session.id);
-      setMessages(session.messages);
-      setMetaphors(session.metaphors || []);
-      // DEPRECATED: Questions feature temporarily disabled
-      // setQuestions(session.questions || []);
-      setAdvisorSuggestions(session.advisorSuggestions || []);
-      setVoteHistory(session.voteHistory || []);
+  const handleLoadSession = async (sessionId) => {
+    if (useDatabaseStorage) {
+      // Load from database - sessionId is actually conversationId in database mode
+      try {
+        const conversation = await storage.loadConversation(sessionId);
+        setCurrentConversationId(conversation.id);
+        setCurrentSessionId(conversation.id);
+        setMessages(conversation.messages || []);
+        setMetaphors(conversation.metadata?.metaphors || []);
+        setAdvisorSuggestions(conversation.metadata?.advisorSuggestions || []);
+        setVoteHistory(conversation.metadata?.voteHistory || []);
+        console.log('🗃️ Loaded database conversation:', conversation.id);
+      } catch (error) {
+        console.error('Failed to load database conversation:', error);
+        setMessages(prev => [...prev, {
+          type: 'system',
+          content: `Failed to load conversation: ${error.message}`
+        }]);
+      }
     } else {
-      setMessages(prev => [...prev, {
-        type: 'system',
-        content: `Session ${sessionId} not found`
-      }]);
+      // Legacy localStorage loading
+      const sessionData = localStorage.getItem(`space_session_${sessionId}`);
+      if (sessionData) {
+        const session = JSON.parse(sessionData);
+        setCurrentSessionId(session.id);
+        setCurrentConversationId(null);
+        setMessages(session.messages);
+        setMetaphors(session.metaphors || []);
+        setAdvisorSuggestions(session.advisorSuggestions || []);
+        setVoteHistory(session.voteHistory || []);
+      } else {
+        setMessages(prev => [...prev, {
+          type: 'system',
+          content: `Session ${sessionId} not found`
+        }]);
+      }
     }
   };
 
@@ -2891,68 +2953,108 @@ Example: {"position": "Option 2 text here", "confidence": 75, "reasoning": "This
     }, 100);
   };
 
+  // Auto-save to database when using auth system, localStorage as fallback
   useEffect(() => {
     // Only save sessions that have actual user/assistant messages (not just system messages)
     const nonSystemMessages = messages.filter(msg => msg.type !== 'system');
     if (nonSystemMessages.length > 0) {
       const saveSession = async () => {
-        const sessionData = {
-          id: currentSessionId,
-          timestamp: new Date().toISOString(),
-          messages: messages.map(msg => ({
-            ...msg,
-            tags: msg.tags || []
-          })),
-          metaphors,
-          // DEPRECATED: Questions feature temporarily disabled
-          // questions,
-          advisorSuggestions,
-          voteHistory
-        };
-
-        // Generate title if this is a new session with enough content and no title yet
-        const existingSession = localStorage.getItem(`space_session_${currentSessionId}`);
-        const hasTitle = existingSession ? JSON.parse(existingSession).title : false;
-        
-        if (!hasTitle && nonSystemMessages.length >= 2) {
-          // Generate title when we have a back-and-forth conversation
-          const title = await generateConversationTitle(messages);
-          if (title) {
-            sessionData.title = title;
-          }
-        } else if (hasTitle) {
-          // Preserve existing title and existing summary
-          const existing = JSON.parse(existingSession);
-          sessionData.title = existing.title;
-          if (existing.summary) {
-            sessionData.summary = existing.summary;
-            sessionData.summaryTimestamp = existing.summaryTimestamp;
-            sessionData.summaryMessageCount = existing.summaryMessageCount;
-          }
-        }
-
-        // Auto-generate summary for long conversations (every 20 messages)
-        if (nonSystemMessages.length > 0 && nonSystemMessages.length % 20 === 0 && openaiClient) {
-          const existing = existingSession ? JSON.parse(existingSession) : null;
-          if (!existing?.summary || existing.summaryMessageCount < nonSystemMessages.length - 10) {
-            console.log(`📄 Auto-generating summary for long session ${currentSessionId} (${nonSystemMessages.length} messages)`);
+        if (useDatabaseStorage && currentConversationId) {
+          // Database storage: Save individual messages as they come
+          const lastMessage = messages[messages.length - 1];
+          if (lastMessage && !lastMessage.saved) {
             try {
-              // Generate summary in background without blocking UI
-              setTimeout(async () => {
-                await generateSessionSummary(sessionData, openaiClient);
-              }, 1000);
+              await storage.addMessage(
+                currentConversationId,
+                lastMessage.type,
+                lastMessage.content,
+                {
+                  tags: lastMessage.tags || [],
+                  timestamp: lastMessage.timestamp || new Date().toISOString()
+                }
+              );
+              
+              // Mark message as saved to prevent duplicate saves
+              setMessages(prev => prev.map((msg, idx) => 
+                idx === prev.length - 1 ? { ...msg, saved: true } : msg
+              ));
+              
+              // Update conversation metadata (metaphors, advisor suggestions, etc.)
+              await storage.saveSessionMetadata(currentConversationId, {
+                metaphors,
+                advisorSuggestions,
+                voteHistory,
+                lastActivity: new Date().toISOString()
+              });
+              
             } catch (error) {
-              console.error('Error auto-generating summary for long session:', error);
+              console.error('Failed to save to database:', error);
+              // Fall back to localStorage
+              saveLegacySession();
             }
           }
+        } else {
+          // Legacy localStorage storage
+          saveLegacySession();
         }
+        
+        async function saveLegacySession() {
+          const sessionData = {
+            id: currentSessionId,
+            timestamp: new Date().toISOString(),
+            messages: messages.map(msg => ({
+              ...msg,
+              tags: msg.tags || []
+            })),
+            metaphors,
+            advisorSuggestions,
+            voteHistory
+          };
 
-        localStorage.setItem(`space_session_${currentSessionId}`, JSON.stringify(sessionData));
+          // Generate title if this is a new session with enough content and no title yet
+          const existingSession = localStorage.getItem(`space_session_${currentSessionId}`);
+          const hasTitle = existingSession ? JSON.parse(existingSession).title : false;
+          
+          if (!hasTitle && nonSystemMessages.length >= 2) {
+            // Generate title when we have a back-and-forth conversation
+            const title = await generateConversationTitle(messages);
+            if (title) {
+              sessionData.title = title;
+            }
+          } else if (hasTitle) {
+            // Preserve existing title and existing summary
+            const existing = JSON.parse(existingSession);
+            sessionData.title = existing.title;
+            if (existing.summary) {
+              sessionData.summary = existing.summary;
+              sessionData.summaryTimestamp = existing.summaryTimestamp;
+              sessionData.summaryMessageCount = existing.summaryMessageCount;
+            }
+          }
+
+          // Auto-generate summary for long conversations (every 20 messages)
+          if (nonSystemMessages.length > 0 && nonSystemMessages.length % 20 === 0 && openaiClient) {
+            const existing = existingSession ? JSON.parse(existingSession) : null;
+            if (!existing?.summary || existing.summaryMessageCount < nonSystemMessages.length - 10) {
+              console.log(`📄 Auto-generating summary for long session ${currentSessionId} (${nonSystemMessages.length} messages)`);
+              try {
+                // Generate summary in background without blocking UI
+                setTimeout(async () => {
+                  await generateSessionSummary(sessionData, openaiClient);
+                }, 1000);
+              } catch (error) {
+                console.error('Error auto-generating summary for long session:', error);
+              }
+            }
+          }
+
+          localStorage.setItem(`space_session_${currentSessionId}`, JSON.stringify(sessionData));
+        }
       };
 
       saveSession();
     }
-  }, [messages, metaphors, /* questions, */ advisorSuggestions, voteHistory, currentSessionId, openaiClient]);
+  }, [messages, metaphors, advisorSuggestions, voteHistory, currentSessionId, currentConversationId, useDatabaseStorage, storage, openaiClient]);
 
   // Trigger analysis when messages change and we have a Claude response
   useEffect(() => {
@@ -3219,6 +3321,11 @@ ${selectedText}
 
   return (
     <>
+      {/* Migration modal for localStorage sessions */}
+      {showMigrationModal && (
+        <MigrationModal onComplete={() => setShowMigrationModal(false)} />
+      )}
+      
       {isInitializing ? (
         // Loading state to prevent flash of wrong screen
         <div className="w-full h-screen bg-black flex items-center justify-center">
