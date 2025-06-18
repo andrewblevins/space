@@ -1,9 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 
-// MVP Configuration - Everyone gets high limits
+// MVP Configuration - Everyone gets reasonable limits
 const RATE_LIMITS = {
-  free: 500,  // Generous MVP limits for all users
-  paid: 500   // Same for now, ready to differentiate later
+  free: 100,  // Reasonable MVP limits for all users
+  paid: 100   // Same for now, ready to differentiate later
 };
 
 export async function checkRateLimit(context, userId) {

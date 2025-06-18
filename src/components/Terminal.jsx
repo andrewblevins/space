@@ -168,7 +168,7 @@ const Terminal = ({ theme, toggleTheme }) => {
     if (useAuthSystem && user) {
       baseMessages.push({
         type: 'system',
-        content: `Welcome back${user.email ? ', ' + user.email.split('@')[0] : ''}! You have 25 messages per day to explore complex problems with AI advisors. Your limit resets at midnight.`
+        content: `Welcome back${user.email ? ', ' + user.email.split('@')[0] : ''}! You have 100 messages per day to explore complex problems with AI advisors. Your limit resets at midnight.`
       });
     }
     
@@ -2485,7 +2485,7 @@ FORMATTING RULES:
       let errorMessage = 'Error: Failed to get response from Claude';
       
       if (error.message?.includes('rate limit') || error.message?.includes('429')) {
-        errorMessage = "You've reached today's message limit (25 messages). Your limit will reset at midnight. Consider upgrading for more messages!";
+        errorMessage = "You've reached today's message limit (100 messages). Your limit will reset at midnight. Consider upgrading for more messages!";
       } else if (error.message?.includes('401') || error.message?.includes('authentication')) {
         errorMessage = "Authentication error. Please sign in again.";
       } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
