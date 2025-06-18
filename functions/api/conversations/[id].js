@@ -1,16 +1,19 @@
 import { createClient } from '@supabase/supabase-js';
+import { verifyAuth } from '../../utils/auth';
 
 export async function onRequestGet(context) {
   // GET /api/conversations/:id - Load specific conversation with messages
   const conversationId = context.params.id;
-  const userId = context.user?.id;
+  const authResult = await verifyAuth(context);
   
-  if (!userId) {
+  if (!authResult.success) {
     return new Response('Unauthorized', { 
-      status: 401,
+      status: authResult.status || 401,
       headers: { 'Access-Control-Allow-Origin': '*' }
     });
   }
+  
+  const userId = authResult.user.id;
 
   try {
     const supabase = createClient(
@@ -72,14 +75,16 @@ export async function onRequestGet(context) {
 export async function onRequestPut(context) {
   // PUT /api/conversations/:id - Update conversation
   const conversationId = context.params.id;
-  const userId = context.user?.id;
+  const authResult = await verifyAuth(context);
   
-  if (!userId) {
+  if (!authResult.success) {
     return new Response('Unauthorized', { 
-      status: 401,
+      status: authResult.status || 401,
       headers: { 'Access-Control-Allow-Origin': '*' }
     });
   }
+  
+  const userId = authResult.user.id;
 
   try {
     const requestBody = await context.request.json();
@@ -140,14 +145,16 @@ export async function onRequestPut(context) {
 export async function onRequestDelete(context) {
   // DELETE /api/conversations/:id - Delete conversation
   const conversationId = context.params.id;
-  const userId = context.user?.id;
+  const authResult = await verifyAuth(context);
   
-  if (!userId) {
+  if (!authResult.success) {
     return new Response('Unauthorized', { 
-      status: 401,
+      status: authResult.status || 401,
       headers: { 'Access-Control-Allow-Origin': '*' }
     });
   }
+  
+  const userId = authResult.user.id;
 
   try {
     const supabase = createClient(

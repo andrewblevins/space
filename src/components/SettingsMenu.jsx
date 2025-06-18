@@ -18,7 +18,8 @@ const SettingsMenu = ({
   theme,
   toggleTheme,
   paragraphSpacing,
-  setParagraphSpacing
+  setParagraphSpacing,
+  onMigrateConversations
 }) => {
   const [tempContextLimit, setTempContextLimit] = useState(contextLimit);
   const [tempMaxTokens, setTempMaxTokens] = useState(maxTokens);
@@ -366,6 +367,12 @@ const SettingsMenu = ({
                       Manage your SPACE Terminal account and authentication.
                     </p>
                     <div className="space-y-3">
+                      <button
+                        onClick={onMigrateConversations}
+                        className="w-full text-left px-3 py-2 bg-stone-50 border border-blue-600 rounded text-blue-600 hover:bg-blue-600 hover:text-white transition-colors dark:bg-black dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-400 dark:hover:text-black"
+                      >
+                        Migrate Local Conversations
+                      </button>
                       <button
                         onClick={signOut}
                         className="w-full text-left px-3 py-2 bg-stone-50 border border-red-600 rounded text-red-600 hover:bg-red-600 hover:text-white transition-colors dark:bg-black dark:border-red-400 dark:text-red-400 dark:hover:bg-red-400 dark:hover:text-black"

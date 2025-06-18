@@ -1,15 +1,18 @@
 import { createClient } from '@supabase/supabase-js';
+import { verifyAuth } from '../../utils/auth';
 
 export async function onRequestGet(context) {
   // GET /api/conversations - List user's conversations
-  const userId = context.user?.id;
+  const authResult = await verifyAuth(context);
   
-  if (!userId) {
+  if (!authResult.success) {
     return new Response('Unauthorized', { 
-      status: 401,
+      status: authResult.status || 401,
       headers: { 'Access-Control-Allow-Origin': '*' }
     });
   }
+  
+  const userId = authResult.user.id;
 
   try {
     const supabase = createClient(
@@ -48,14 +51,16 @@ export async function onRequestGet(context) {
 
 export async function onRequestPost(context) {
   // POST /api/conversations - Create new conversation
-  const userId = context.user?.id;
+  const authResult = await verifyAuth(context);
   
-  if (!userId) {
+  if (!authResult.success) {
     return new Response('Unauthorized', { 
-      status: 401,
+      status: authResult.status || 401,
       headers: { 'Access-Control-Allow-Origin': '*' }
     });
   }
+  
+  const userId = authResult.user.id;
 
   try {
     const requestBody = await context.request.json();

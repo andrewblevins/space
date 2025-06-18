@@ -8,7 +8,7 @@ import {
   getMigrationStatus 
 } from '../utils/migrationHelper';
 
-const MigrationModal = ({ onComplete }) => {
+const MigrationModal = ({ isOpen, onComplete }) => {
   const [step, setStep] = useState('discover'); // discover, confirm, migrating, complete
   const [sessions, setSessions] = useState([]);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
@@ -18,14 +18,21 @@ const MigrationModal = ({ onComplete }) => {
 
   useEffect(() => {
     // Check if migration is needed and get sessions
-    if (needsMigration()) {
-      const localSessions = getLocalStorageSessions();
+    const localSessions = getLocalStorageSessions();
+    if (localSessions.length > 0) {
       setSessions(localSessions);
     } else {
-      // No migration needed, close modal
-      onComplete();
+      // Check if migration was already completed
+      const migrationStatus = getMigrationStatus();
+      if (migrationStatus.status === 'completed' || migrationStatus.status === 'skipped') {
+        // Show no conversations message
+        setStep('no-conversations');
+      } else {
+        // No conversations to migrate
+        setStep('no-conversations');
+      }
     }
-  }, [onComplete]);
+  }, []);
 
   const handleStartMigration = async () => {
     setStep('migrating');
@@ -252,6 +259,58 @@ const MigrationModal = ({ onComplete }) => {
     );
   }
 
+  if (step === 'no-conversations') {
+    const migrationStatus = getMigrationStatus();
+    
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-gray-900 p-8 rounded-lg border border-green-500 max-w-md w-full mx-4">
+          <h2 className="text-xl font-bold text-green-400 mb-4">
+            No Conversations to Migrate
+          </h2>
+          
+          <div className="space-y-4 text-gray-300">
+            {migrationStatus.status === 'completed' && migrationStatus.summary ? (
+              <>
+                <p>
+                  All your localStorage conversations have already been migrated to your account.
+                </p>
+                <div className="bg-gray-800 p-3 rounded text-sm">
+                  <div className="text-gray-400">Previous migration:</div>
+                  <div className="mt-1">
+                    • {migrationStatus.summary.successful} conversations migrated
+                    {migrationStatus.summary.failed > 0 && (
+                      <div className="text-red-400">
+                        • {migrationStatus.summary.failed} failed
+                      </div>
+                    )}
+                  </div>
+                  <div className="text-xs text-gray-500 mt-2">
+                    {new Date(migrationStatus.date).toLocaleDateString()}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <p>
+                No localStorage conversations found. Your conversations are already 
+                synced to your account and available across all devices.
+              </p>
+            )}
+          </div>
+
+          <button
+            onClick={onComplete}
+            className="w-full mt-6 px-4 py-2 bg-green-500 text-black rounded font-medium hover:bg-green-400 transition-colors"
+          >
+            Continue
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isOpen) return null;
+  
   return null;
 };
 

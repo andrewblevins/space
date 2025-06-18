@@ -309,6 +309,7 @@ const Terminal = ({ theme, toggleTheme }) => {
   const [showImportExportModal, setShowImportExportModal] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
+  const [showMigrationModal, setShowMigrationModal] = useState(false);
   const [sessions, setSessions] = useState([]);
   const [sessionSelections, setSessionSelections] = useState(new Map()); // Map from title to session object
   const [currentSessionContexts, setCurrentSessionContexts] = useState([]); // Current @ reference contexts
@@ -3633,6 +3634,14 @@ ${selectedText}
         toggleTheme={toggleTheme}
         paragraphSpacing={paragraphSpacing}
         setParagraphSpacing={setParagraphSpacing}
+        onMigrateConversations={() => {
+          // Clear migration status to reset and show modal
+          localStorage.removeItem('space_migration_status');
+          localStorage.removeItem('space_migration_date');
+          localStorage.removeItem('space_migration_summary');
+          setShowMigrationModal(true);
+          setShowSettingsMenu(false);
+        }}
       />
 
       {/* Prompt Library Component */}
@@ -3721,6 +3730,12 @@ ${selectedText}
       <InfoModal
         isOpen={showInfoModal}
         onClose={() => setShowInfoModal(false)}
+      />
+
+      {/* Migration Modal Component */}
+      <MigrationModal
+        isOpen={showMigrationModal}
+        onComplete={() => setShowMigrationModal(false)}
       />
     </>
   );

@@ -1,16 +1,19 @@
 import { createClient } from '@supabase/supabase-js';
+import { verifyAuth } from '../../../utils/auth';
 
 export async function onRequestPost(context) {
   // POST /api/conversations/:id/messages - Add message to conversation
   const conversationId = context.params.id;
-  const userId = context.user?.id;
+  const authResult = await verifyAuth(context);
   
-  if (!userId) {
+  if (!authResult.success) {
     return new Response('Unauthorized', { 
-      status: 401,
+      status: authResult.status || 401,
       headers: { 'Access-Control-Allow-Origin': '*' }
     });
   }
+  
+  const userId = authResult.user.id;
 
   try {
     const requestBody = await context.request.json();

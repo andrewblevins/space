@@ -80,16 +80,30 @@ export async function migrateSession(session, storage) {
       );
       
       if (meaningfulMessages.length > 0) {
-        await storage.addMessages(conversation.id, meaningfulMessages.map(msg => ({
-          type: msg.type,
-          content: msg.content,
-          metadata: {
-            tags: msg.tags || [],
-            timestamp: msg.timestamp,
-            imported: true,
-            originalIndex: session.messages.indexOf(msg)
+        // Validate and fix message types
+        const validMessages = meaningfulMessages.map(msg => {
+          let validType = msg.type;
+          
+          // Map any invalid types to valid ones
+          if (!['system', 'user', 'assistant'].includes(msg.type)) {
+            console.warn(`⚠️ Invalid message type "${msg.type}" in session ${session.id}, mapping to "system"`);
+            validType = 'system';
           }
-        })));
+          
+          return {
+            type: validType,
+            content: msg.content || '',
+            metadata: {
+              tags: msg.tags || [],
+              timestamp: msg.timestamp,
+              imported: true,
+              originalIndex: session.messages.indexOf(msg),
+              originalType: msg.type // Preserve original type in metadata
+            }
+          };
+        });
+        
+        await storage.addMessages(conversation.id, validMessages);
       }
     }
 
