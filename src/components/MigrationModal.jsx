@@ -66,6 +66,7 @@ const MigrationModal = ({ isOpen, onComplete }) => {
   };
 
   const handleComplete = () => {
+    console.log('🔄 Migration modal handleComplete called');
     onComplete();
   };
 

@@ -56,7 +56,11 @@ const Terminal = ({ theme, toggleTheme }) => {
   
   // Database storage state
   const [currentConversationId, setCurrentConversationId] = useState(null);
-  const [useDatabaseStorage, setUseDatabaseStorage] = useState(useAuthSystem && !!user);
+  const [useDatabaseStorage, setUseDatabaseStorage] = useState(() => {
+    const useDb = useAuthSystem && !!user;
+    console.log('🗃️ Database storage decision:', { useAuthSystem, user: !!user, useDatabaseStorage: useDb });
+    return useDb;
+  });
   const [showMigrationModal, setShowMigrationModal] = useState(() => {
     console.log('🔄 Initializing showMigrationModal to false');
     return false;
@@ -2997,8 +3001,8 @@ Example: {"position": "Option 2 text here", "confidence": 75, "reasoning": "This
               
             } catch (error) {
               console.error('Failed to save to database:', error);
-              // Fall back to localStorage
-              saveLegacySession();
+              // Don't fall back to localStorage in database mode - just log the error
+              // Falling back would create localStorage sessions that trigger migration
             }
           }
         } else {
