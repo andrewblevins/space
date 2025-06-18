@@ -66,7 +66,7 @@ const Terminal = ({ theme, toggleTheme }) => {
     }
   }, [modalController]);
 
-  // Check for migration when user logs in
+  // Check for migration when user logs in (only if there are actual conversations)
   useEffect(() => {
     if (useAuthSystem && user && needsMigration()) {
       setShowMigrationModal(true);
@@ -309,7 +309,6 @@ const Terminal = ({ theme, toggleTheme }) => {
   const [showImportExportModal, setShowImportExportModal] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
-  const [showMigrationModal, setShowMigrationModal] = useState(false);
   const [sessions, setSessions] = useState([]);
   const [sessionSelections, setSessionSelections] = useState(new Map()); // Map from title to session object
   const [currentSessionContexts, setCurrentSessionContexts] = useState([]); // Current @ reference contexts
@@ -3635,7 +3634,7 @@ ${selectedText}
         paragraphSpacing={paragraphSpacing}
         setParagraphSpacing={setParagraphSpacing}
         onMigrateConversations={() => {
-          // Clear migration status to reset and show modal
+          // Always show modal when user clicks migrate button (even if no conversations)
           localStorage.removeItem('space_migration_status');
           localStorage.removeItem('space_migration_date');
           localStorage.removeItem('space_migration_summary');
