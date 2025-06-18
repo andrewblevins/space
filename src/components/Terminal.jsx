@@ -57,7 +57,10 @@ const Terminal = ({ theme, toggleTheme }) => {
   // Database storage state
   const [currentConversationId, setCurrentConversationId] = useState(null);
   const [useDatabaseStorage, setUseDatabaseStorage] = useState(useAuthSystem && !!user);
-  const [showMigrationModal, setShowMigrationModal] = useState(false);
+  const [showMigrationModal, setShowMigrationModal] = useState(() => {
+    console.log('🔄 Initializing showMigrationModal to false');
+    return false;
+  });
   
   // Initialize the modal controller for secureStorage
   useEffect(() => {
@@ -68,8 +71,13 @@ const Terminal = ({ theme, toggleTheme }) => {
 
   // Check for migration when user logs in (only if there are actual conversations)
   useEffect(() => {
-    if (useAuthSystem && user && needsMigration()) {
-      setShowMigrationModal(true);
+    if (useAuthSystem && user) {
+      const needs = needsMigration();
+      console.log('🔄 Migration check:', { needs, useAuthSystem, user: !!user });
+      if (needs) {
+        console.log('🔄 Setting migration modal to TRUE (login check)');
+        setShowMigrationModal(true);
+      }
     }
   }, [useAuthSystem, user]);
 
@@ -3321,10 +3329,6 @@ ${selectedText}
 
   return (
     <>
-      {/* Migration modal for localStorage sessions */}
-      {showMigrationModal && (
-        <MigrationModal onComplete={() => setShowMigrationModal(false)} />
-      )}
       
       {isInitializing ? (
         // Loading state to prevent flash of wrong screen
@@ -3638,6 +3642,7 @@ ${selectedText}
           localStorage.removeItem('space_migration_status');
           localStorage.removeItem('space_migration_date');
           localStorage.removeItem('space_migration_summary');
+          console.log('🔄 Setting migration modal to TRUE (settings button)');
           setShowMigrationModal(true);
           setShowSettingsMenu(false);
         }}

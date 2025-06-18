@@ -259,6 +259,8 @@ const MigrationModal = ({ isOpen, onComplete }) => {
     );
   }
 
+  if (!isOpen) return null;
+
   if (step === 'no-conversations') {
     const migrationStatus = getMigrationStatus();
     
@@ -308,8 +310,6 @@ const MigrationModal = ({ isOpen, onComplete }) => {
       </div>
     );
   }
-
-  if (!isOpen) return null;
   
   return null;
 };
