@@ -94,7 +94,8 @@ const WelcomeScreen = ({ onGetStarted }) => {
             className="text-green-400 hover:text-green-300 transition-colors"
           >
             Andrew Blevins
-          </a>, Protocol by{' '}
+          </a>{' '}
+          • Protocol by{' '}
           <a 
             href="https://www.andrewshadeblevins.com" 
             target="_blank" 
