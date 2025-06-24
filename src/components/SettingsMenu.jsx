@@ -30,7 +30,8 @@ const SettingsMenu = ({
   
   // Auth system
   const useAuthSystem = import.meta.env.VITE_USE_AUTH === 'true';
-  const { user, signOut } = useAuth();
+  const authData = useAuthSystem ? useAuth() : { user: null, signOut: () => {} };
+  const { user, signOut } = authData;
 
   // Check API keys when modal opens or when switching to API tab
   const checkApiKeys = async () => {
