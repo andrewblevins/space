@@ -104,7 +104,16 @@ const WelcomeScreen = ({ onGetStarted }) => {
           >
             Andrew Blevins
           </a>{' '}
-          and Jason Ganz • v0.2.3
+          and{' '}
+          <a 
+            href="https://x.com/jasnonaz/" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-green-400 hover:text-green-300 transition-colors"
+          >
+            Jason Ganz
+          </a>{' '}
+          • v0.2.3
         </p>
       </footer>
 
