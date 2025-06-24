@@ -27,12 +27,6 @@ export default function LoginScreen() {
           <h1 className="text-3xl font-bold text-green-400 mb-3">
             SPACE Terminal
           </h1>
-          <p className="text-gray-400 text-lg mb-2">
-            AI-Powered Conversations
-          </p>
-          <p className="text-gray-500 text-sm">
-            Sign in with Google to start your AI conversation experience
-          </p>
         </div>
         
         {error && (
@@ -58,30 +52,6 @@ export default function LoginScreen() {
           </span>
         </button>
 
-        {/* Benefits Section */}
-        <div className="mt-8 bg-green-500/10 border border-green-500/30 p-4 rounded-lg">
-          <h3 className="font-medium text-green-300 mb-3 flex items-center gap-2">
-            🚀 What you get with SPACE Terminal:
-          </h3>
-          <ul className="text-sm text-green-200 space-y-2">
-            <li className="flex items-center gap-2">
-              <span className="text-green-400">•</span>
-              Free daily message limit to get started
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="text-green-400">•</span>
-              Access to Claude Sonnet 4 and GPT-4o-mini
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="text-green-400">•</span>
-              AI advisor system with metaphor analysis
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="text-green-400">•</span>
-              Conversation history and settings sync
-            </li>
-          </ul>
-        </div>
 
         {/* Privacy Notice */}
         <div className="mt-6 text-xs text-gray-400 text-center">
