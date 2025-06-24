@@ -78,8 +78,8 @@ const Terminal = ({ theme, toggleTheme }) => {
   useEffect(() => {
     if (useAuthSystem && user) {
       const needs = needsMigration();
-      console.log('🔄 Migration check:', { needs, useAuthSystem, user: !!user });
-      if (needs) {
+      console.log('🔄 Migration check:', { needs, useAuthSystem, user: !!user, currentModalState: showMigrationModal });
+      if (needs && !showMigrationModal) {
         console.log('🔄 Setting migration modal to TRUE (login check)');
         setShowMigrationModal(true);
       }
@@ -3746,6 +3746,9 @@ ${selectedText}
         isOpen={showMigrationModal}
         onComplete={() => {
           console.log('🔄 Migration completed, closing modal');
+          // Mark migration as completed immediately to prevent re-opening
+          localStorage.setItem('space_migration_status', 'completed');
+          localStorage.setItem('space_migration_date', new Date().toISOString());
           setShowMigrationModal(false);
         }}
       />
