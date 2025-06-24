@@ -275,7 +275,12 @@ const MigrationModal = ({ isOpen, onComplete }) => {
     );
   }
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    console.log('🔄 MigrationModal returning null (isOpen=false)');
+    return null;
+  }
+  
+  console.log('🔄 MigrationModal rendering (isOpen=true, step=' + step + ')');
 
   if (step === 'no-conversations') {
     const migrationStatus = getMigrationStatus();
