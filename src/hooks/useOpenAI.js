@@ -10,8 +10,8 @@ import { useAuth } from '../contexts/AuthContext';
 export function useOpenAI() {
   // Always call hooks (hooks rules), but check auth enabled inside logic
   const useAuthSystem = import.meta.env.VITE_USE_AUTH === 'true';
-  const authData = useAuth();
-  const { session } = useAuthSystem ? authData : { session: null };
+  const authData = useAuthSystem ? useAuth() : { session: null };
+  const { session } = authData;
   
   // Keep a ref to the legacy OpenAI client for non-auth mode
   const legacyClientRef = useRef(null);

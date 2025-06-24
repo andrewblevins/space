@@ -22,8 +22,8 @@ import { useUsageTracking } from './useUsageTracking';
 export function useClaude({ messages, setMessages, maxTokens, contextLimit, memory, debugMode, reasoningMode, getSystemPrompt }) {
   // Always call hooks (hooks rules), but check auth enabled inside logic
   const useAuthSystem = import.meta.env.VITE_USE_AUTH === 'true';
-  const authData = useAuth();
-  const { session } = useAuthSystem ? authData : { session: null };
+  const authData = useAuthSystem ? useAuth() : { session: null };
+  const { session } = authData;
   const { updateFromHeaders } = useUsageTracking();
   
   const callClaude = useCallback(async (userMessage, customGetSystemPrompt = null) => {

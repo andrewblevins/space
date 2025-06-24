@@ -3,7 +3,9 @@ import { useAuth } from '../contexts/AuthContext';
 import { getApiEndpoint } from '../utils/apiConfig';
 
 export function useConversationStorage() {
-  const { session } = useAuth();
+  const useAuthSystem = import.meta.env.VITE_USE_AUTH === 'true';
+  const authData = useAuthSystem ? useAuth() : { session: null };
+  const { session } = authData;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
