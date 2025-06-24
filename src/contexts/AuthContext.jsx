@@ -85,8 +85,18 @@ export const AuthProvider = ({ children }) => {
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+    console.log('🔐 Sign out requested');
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('🔐 Sign out error:', error);
+        throw error;
+      }
+      console.log('🔐 Sign out successful');
+    } catch (err) {
+      console.error('🔐 Sign out exception:', err);
+      throw err;
+    }
   };
 
   return (
