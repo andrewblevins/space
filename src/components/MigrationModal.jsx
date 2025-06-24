@@ -9,12 +9,27 @@ import {
 } from '../utils/migrationHelper';
 
 const MigrationModal = ({ isOpen, onComplete }) => {
+  // Early return if modal should not be shown
+  if (!isOpen) {
+    console.log('🔄 MigrationModal returning null (isOpen=false)');
+    return null;
+  }
+
   const [step, setStep] = useState('discover'); // discover, confirm, migrating, complete
   
   // Debug isOpen prop changes
   useEffect(() => {
-    console.log('🔄 MigrationModal isOpen prop changed:', isOpen);
+    console.log('🔄 MigrationModal isOpen prop changed:', isOpen, 'step:', step);
   }, [isOpen]);
+  
+  // Debug component mount/unmount
+  const instanceId = Math.random().toString(36).substr(2, 9);
+  useEffect(() => {
+    console.log('🔄 MigrationModal component mounted, ID:', instanceId);
+    return () => {
+      console.log('🔄 MigrationModal component unmounted, ID:', instanceId);
+    };
+  }, []);
   const [sessions, setSessions] = useState([]);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const [results, setResults] = useState(null);
@@ -275,11 +290,6 @@ const MigrationModal = ({ isOpen, onComplete }) => {
     );
   }
 
-  if (!isOpen) {
-    console.log('🔄 MigrationModal returning null (isOpen=false)');
-    return null;
-  }
-  
   console.log('🔄 MigrationModal rendering (isOpen=true, step=' + step + ')');
 
   if (step === 'no-conversations') {
