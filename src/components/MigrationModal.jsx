@@ -67,7 +67,14 @@ const MigrationModal = ({ isOpen, onComplete }) => {
 
   const handleComplete = () => {
     console.log('🔄 Migration modal handleComplete called');
-    onComplete();
+    console.log('🔄 onComplete function:', onComplete);
+    console.log('🔄 Current step:', step);
+    try {
+      onComplete();
+      console.log('🔄 onComplete executed successfully');
+    } catch (error) {
+      console.error('🔄 Error in onComplete:', error);
+    }
   };
 
   if (step === 'discover') {
@@ -250,7 +257,10 @@ const MigrationModal = ({ isOpen, onComplete }) => {
           </div>
 
           <button
-            onClick={handleComplete}
+            onClick={() => {
+              console.log('🔄 Continue to SPACE button clicked!');
+              handleComplete();
+            }}
             className="w-full mt-6 px-4 py-2 bg-green-500 text-black rounded font-medium hover:bg-green-400 transition-colors"
           >
             Continue to SPACE
