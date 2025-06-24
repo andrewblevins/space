@@ -9,56 +9,7 @@ const WelcomeScreen = ({ onGetStarted }) => {
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [skipInFuture, setSkipInFuture] = useState(false);
 
-  const features = [
-    {
-      icon: (
-        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-        </svg>
-      ),
-      title: "Frictionless advisor generation"
-    },
-    {
-      icon: (
-        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-        </svg>
-      ), 
-      title: "Reference previous conversations"
-    },
-    {
-      icon: (
-        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-        </svg>
-      ),
-      title: "Add suggested advisors"
-    },
-    {
-      icon: (
-        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-        </svg>
-      ),
-      title: "Search conversations by topic"
-    },
-    {
-      icon: (
-        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-        </svg>
-      ),
-      title: "Track the metaphors of thought"
-    },
-    {
-      icon: (
-        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-        </svg>
-      ),
-      title: "Council and vote modes"
-    }
-  ];
+  const features = [];
 
   return (
     <div className="min-h-screen bg-black text-green-400 flex flex-col relative overflow-hidden">
@@ -118,70 +69,17 @@ const WelcomeScreen = ({ onGetStarted }) => {
           </div>
         </div>
 
-        {/* Feature showcase */}
-        <div className="w-full max-w-4xl mx-auto mb-16">
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {features.map((feature, index) => (
-              <div key={index} className="bg-gray-900/20 border border-green-400/10 rounded p-3 backdrop-blur-sm hover:border-green-400/20 transition-colors duration-300">
-                <div className="text-center">
-                  <div className="flex justify-center mb-2 text-green-400 opacity-70">{feature.icon}</div>
-                  <h3 className="text-xs font-medium text-green-400 leading-tight">
-                    {feature.title}
-                  </h3>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
 
         {/* CTA section */}
         <div className="text-center max-w-2xl mx-auto">
-          <div className="mb-8">
-            <div className="flex items-center justify-center gap-6 mb-6">
-              <div className="flex items-center gap-2 text-gray-500 text-sm">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span>25 messages daily</span>
-              </div>
-              <div className="w-px h-4 bg-gray-600"></div>
-              <div className="flex items-center gap-2 text-gray-500 text-sm">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span>Resets at midnight</span>
-              </div>
-            </div>
-          </div>
-
           <button
             onClick={() => {
-              if (skipInFuture) {
-                localStorage.setItem('space_skip_welcome', 'true');
-              }
               onGetStarted();
             }}
-            className="bg-green-400 text-black px-8 py-3 rounded-lg text-lg font-medium hover:bg-green-300 transition-all duration-200 shadow-lg hover:shadow-green-400/10 mb-6"
+            className="bg-green-400 text-black px-8 py-3 rounded-lg text-lg font-medium hover:bg-green-300 transition-all duration-200 shadow-lg hover:shadow-green-400/10"
           >
             Start Exploring
           </button>
-          
-          <div className="flex items-center justify-center gap-2 mb-3">
-            <input
-              type="checkbox"
-              id="skip-welcome"
-              checked={skipInFuture}
-              onChange={(e) => setSkipInFuture(e.target.checked)}
-              className="rounded border-green-400/50 text-green-400 focus:ring-green-400/30"
-            />
-            <label htmlFor="skip-welcome" className="text-gray-500 text-xs">
-              Skip welcome screen in future
-            </label>
-          </div>
-          
-          <p className="text-gray-600 text-xs">
-            Requires Anthropic and OpenAI API keys
-          </p>
         </div>
       </main>
 
