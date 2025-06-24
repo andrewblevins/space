@@ -3744,7 +3744,10 @@ ${selectedText}
       {/* Migration Modal Component */}
       <MigrationModal
         isOpen={showMigrationModal}
-        onComplete={() => setShowMigrationModal(false)}
+        onComplete={() => {
+          console.log('🔄 Migration completed, closing modal');
+          setShowMigrationModal(false);
+        }}
       />
     </>
   );
