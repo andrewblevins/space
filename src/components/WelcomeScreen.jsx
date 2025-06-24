@@ -1,64 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import InfoModal from './InfoModal';
+import { useAuth } from '../contexts/AuthContext';
 
-const WelcomeScreen = ({ onGetStarted }) => {
+const WelcomeScreen = () => {
   // Reset any localStorage welcome flag when component mounts
   useEffect(() => {
     localStorage.removeItem('space_skip_welcome');
   }, []);
   const [showInfoModal, setShowInfoModal] = useState(false);
-  const [skipInFuture, setSkipInFuture] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const { signInWithGoogle } = useAuth();
 
-  const features = [
-    {
-      icon: (
-        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-        </svg>
-      ),
-      title: "Frictionless advisor generation"
-    },
-    {
-      icon: (
-        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-        </svg>
-      ), 
-      title: "Reference previous conversations"
-    },
-    {
-      icon: (
-        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-        </svg>
-      ),
-      title: "Add suggested advisors"
-    },
-    {
-      icon: (
-        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-        </svg>
-      ),
-      title: "Search conversations by topic"
-    },
-    {
-      icon: (
-        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-        </svg>
-      ),
-      title: "Track the metaphors of thought"
-    },
-    {
-      icon: (
-        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-        </svg>
-      ),
-      title: "Council and vote modes"
+  const handleGoogleSignIn = async () => {
+    try {
+      setLoading(true);
+      await signInWithGoogle();
+    } catch (error) {
+      console.error('Sign in error:', error);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  const features = [];
 
   return (
     <div className="min-h-screen bg-black text-green-400 flex flex-col relative overflow-hidden">
@@ -118,70 +82,24 @@ const WelcomeScreen = ({ onGetStarted }) => {
           </div>
         </div>
 
-        {/* Feature showcase */}
-        <div className="w-full max-w-4xl mx-auto mb-16">
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {features.map((feature, index) => (
-              <div key={index} className="bg-gray-900/20 border border-green-400/10 rounded p-3 backdrop-blur-sm hover:border-green-400/20 transition-colors duration-300">
-                <div className="text-center">
-                  <div className="flex justify-center mb-2 text-green-400 opacity-70">{feature.icon}</div>
-                  <h3 className="text-xs font-medium text-green-400 leading-tight">
-                    {feature.title}
-                  </h3>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
 
         {/* CTA section */}
         <div className="text-center max-w-2xl mx-auto">
-          <div className="mb-8">
-            <div className="flex items-center justify-center gap-6 mb-6">
-              <div className="flex items-center gap-2 text-gray-500 text-sm">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span>25 messages daily</span>
-              </div>
-              <div className="w-px h-4 bg-gray-600"></div>
-              <div className="flex items-center gap-2 text-gray-500 text-sm">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span>Resets at midnight</span>
-              </div>
-            </div>
-          </div>
-
           <button
-            onClick={() => {
-              if (skipInFuture) {
-                localStorage.setItem('space_skip_welcome', 'true');
-              }
-              onGetStarted();
-            }}
-            className="bg-green-400 text-black px-8 py-3 rounded-lg text-lg font-medium hover:bg-green-300 transition-all duration-200 shadow-lg hover:shadow-green-400/10 mb-6"
+            onClick={handleGoogleSignIn}
+            disabled={loading}
+            className="bg-green-400 text-black px-8 py-3 rounded-lg text-lg font-medium hover:bg-green-300 disabled:opacity-50 transition-all duration-200 shadow-lg hover:shadow-green-400/10 flex items-center justify-center gap-3 mx-auto"
           >
-            Start Exploring
+            <svg className="w-6 h-6" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            <span>
+              {loading ? 'Signing in...' : 'Explore'}
+            </span>
           </button>
-          
-          <div className="flex items-center justify-center gap-2 mb-3">
-            <input
-              type="checkbox"
-              id="skip-welcome"
-              checked={skipInFuture}
-              onChange={(e) => setSkipInFuture(e.target.checked)}
-              className="rounded border-green-400/50 text-green-400 focus:ring-green-400/30"
-            />
-            <label htmlFor="skip-welcome" className="text-gray-500 text-xs">
-              Skip welcome screen in future
-            </label>
-          </div>
-          
-          <p className="text-gray-600 text-xs">
-            Requires Anthropic and OpenAI API keys
-          </p>
         </div>
       </main>
 
@@ -196,6 +114,24 @@ const WelcomeScreen = ({ onGetStarted }) => {
             className="text-green-400 hover:text-green-300 transition-colors"
           >
             Andrew Blevins
+          </a>{' '}
+          • Protocol by{' '}
+          <a 
+            href="https://www.andrewshadeblevins.com" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-green-400 hover:text-green-300 transition-colors"
+          >
+            Andrew Blevins
+          </a>{' '}
+          and{' '}
+          <a 
+            href="https://x.com/jasnonaz/" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-green-400 hover:text-green-300 transition-colors"
+          >
+            Jason Ganz
           </a>{' '}
           • v0.2.3
         </p>
