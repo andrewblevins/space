@@ -3746,10 +3746,16 @@ ${selectedText}
         isOpen={showMigrationModal}
         onComplete={() => {
           console.log('🔄 Migration completed, closing modal');
+          console.log('🔄 Current showMigrationModal state:', showMigrationModal);
           // Mark migration as completed immediately to prevent re-opening
           localStorage.setItem('space_migration_status', 'completed');
           localStorage.setItem('space_migration_date', new Date().toISOString());
           setShowMigrationModal(false);
+          console.log('🔄 Called setShowMigrationModal(false)');
+          // Force a check after state update
+          setTimeout(() => {
+            console.log('🔄 showMigrationModal state after setState:', showMigrationModal);
+          }, 100);
         }}
       />
     </>

@@ -10,6 +10,11 @@ import {
 
 const MigrationModal = ({ isOpen, onComplete }) => {
   const [step, setStep] = useState('discover'); // discover, confirm, migrating, complete
+  
+  // Debug isOpen prop changes
+  useEffect(() => {
+    console.log('🔄 MigrationModal isOpen prop changed:', isOpen);
+  }, [isOpen]);
   const [sessions, setSessions] = useState([]);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const [results, setResults] = useState(null);
