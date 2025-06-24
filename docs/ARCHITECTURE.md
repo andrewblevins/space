@@ -3,9 +3,11 @@
 ## Overview
 SPACE Terminal is a React-based web application for deep conversations with AI advisors, featuring modular architecture, session management, and advanced conversation analysis capabilities.
 
-**Version:** 0.2.0  
-**Tech Stack:** React 18, Vite, TailwindCSS, TypeScript/JavaScript  
-**Primary APIs:** Anthropic Claude, OpenAI GPT-4
+**Version:** 0.2.3  
+**Tech Stack:** React 18, Vite, TailwindCSS, TypeScript/JavaScript, Supabase, Cloudflare Pages Functions
+**Primary APIs:** Anthropic Claude, OpenAI GPT-4  
+**Authentication:** Supabase Auth (Google OAuth + email/password)  
+**Backend:** Cloudflare Pages Functions with rate limiting
 
 ---
 
@@ -15,24 +17,28 @@ SPACE Terminal is a React-based web application for deep conversations with AI a
 ┌─────────────────────────────────────────────────┐
 │                 SPACE Terminal                  │
 ├─────────────────────────────────────────────────┤
-│  UI Layer (React Components)                   │
-│  ├── Terminal (Main Interface)                 │
+│  Frontend (React SPA)                          │
+│  ├── Authentication (Supabase Auth)           │
+│  ├── Terminal UI (Main Interface)             │
 │  ├── Modal Components (Forms, Menus)           │
 │  └── Terminal Modules (Collapsible Panels)     │
 ├─────────────────────────────────────────────────┤
-│  Business Logic Layer                          │
-│  ├── Hooks (useClaude)                        │
-│  ├── Utils (Helpers, Templates)               │
-│  └── Contexts (Modal Management)              │
+│  Backend (Cloudflare Pages Functions)          │
+│  ├── /api/chat/claude (AI Proxy)              │
+│  ├── /api/usage (Rate Limiting)               │
+│  ├── Authentication Middleware                 │
+│  └── CORS & Security Headers                  │
 ├─────────────────────────────────────────────────┤
 │  Data Layer                                    │
+│  ├── Supabase Database (Users, Usage)         │
 │  ├── Local Storage (Sessions, Settings)       │
 │  ├── Memory System (Conversation Context)     │
-│  └── Secure Storage (API Keys)                │
+│  └── Secure Storage (Legacy API Keys)         │
 ├─────────────────────────────────────────────────┤
 │  External Services                             │
 │  ├── Anthropic Claude API (Primary AI)        │
-│  └── OpenAI API (Analysis & Suggestions)      │
+│  ├── OpenAI API (Analysis & Suggestions)      │
+│  └── Google OAuth (Authentication)            │
 └─────────────────────────────────────────────────┘
 ```
 

@@ -112,9 +112,15 @@ const fullPrompt = `${advisor.description}\n\n${expertPrompt}`;
 - ROI justification for business users
 - Sustainable revenue for continued development
 
-### **Pricing Strategy Ideas**
-- **Individual**: $10-15/month for expert advisors + advanced features
-- **Professional**: $25-35/month for teams + integrations
+### **Current Implementation Status**
+- **Authentication System**: ✅ IMPLEMENTED - Google OAuth + email/password via Supabase
+- **Rate Limiting**: ✅ IMPLEMENTED - 500 messages/day for all users (MVP approach)
+- **Payment Infrastructure**: 📋 PLANNED - See conversation storage plan for subscription system
+- **Expert Advisors**: 📋 FUTURE - Premium feature outlined above
+
+### **Pricing Strategy**
+- **Free Tier**: 50 messages/day (when subscriptions launch)
+- **Pro Tier**: $10/month, 500 messages/day + expert advisors
 - **Enterprise**: Custom pricing for organizations
 
 This positions SPACE Terminal as a "conversation platform that grows with you" - start free, upgrade when you need professional capabilities.

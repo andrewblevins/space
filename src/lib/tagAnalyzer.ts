@@ -31,6 +31,14 @@ export default class TagAnalyzer {
     if (this.initialized) return;
     
     try {
+      // In auth mode, tag analysis is handled by the backend
+      const useAuthSystem = import.meta.env.VITE_USE_AUTH === 'true';
+      if (useAuthSystem) {
+        // Skip initialization - backend handles OpenAI calls
+        this.initialized = true;
+        return;
+      }
+      
       const openaiKey = await getDecrypted('space_openai_key');
       if (!openaiKey) {
         throw new Error('OpenAI API key not found in secure storage');

@@ -1,24 +1,54 @@
 import React, { useState, useEffect } from 'react';
 import { getApiEndpoint } from '../utils/apiConfig';
 import { handleApiError } from '../utils/apiErrorHandler';
-import { getDecrypted } from '../utils/secureStorage';
 import { ADVISOR_COLORS, getNextAvailableColor } from '../lib/advisorColors';
 
 const generateAdvisorDescription = async (advisorName, onStream) => {
   try {
-    const anthropicKey = await getDecrypted('space_anthropic_key');
-    if (!anthropicKey) {
-      throw new Error('Anthropic API key not found');
+    const useAuthSystem = import.meta.env.VITE_USE_AUTH === 'true';
+    
+    // Get auth session if using auth system
+    let session = null;
+    if (useAuthSystem) {
+      // Import the auth hook and get the current session
+      const { useAuth } = await import('../contexts/AuthContext');
+      // We need to get the session from React context, but we can't use hooks in async functions
+      // Instead, we'll get it from supabase directly
+      const { supabase } = await import('../lib/supabase');
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      session = currentSession;
+      if (!session) {
+        throw new Error('Please sign in to generate advisor descriptions');
+      }
     }
 
-    const response = await fetch(`${getApiEndpoint()}/v1/messages`, {
+    // Use appropriate API endpoint
+    const apiUrl = useAuthSystem 
+      ? `${getApiEndpoint()}/api/chat/claude`  // Backend proxy
+      : `${getApiEndpoint()}/v1/messages`;     // Direct API
+    
+    // Set up headers based on auth mode
+    const headers = {
+      'Content-Type': 'application/json'
+    };
+    
+    if (useAuthSystem) {
+      headers['Authorization'] = `Bearer ${session.access_token}`;
+    } else {
+      // In legacy mode, get API key from secure storage
+      const { getDecryptedKey } = await import('../utils/secureStorage');
+      const anthropicKey = await getDecryptedKey('anthropic');
+      if (!anthropicKey) {
+        throw new Error('Please set your Anthropic API key first');
+      }
+      headers['x-api-key'] = anthropicKey;
+      headers['anthropic-version'] = '2023-06-01';
+      headers['anthropic-dangerous-direct-browser-access'] = 'true';
+    }
+
+    const response = await fetch(apiUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': anthropicKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
+      headers,
       body: JSON.stringify({
         model: 'claude-3-7-sonnet-20250219',
         messages: [{

@@ -1,5 +1,9 @@
 # SPACE Terminal - TODO List
 
+**NOTE FOR CLAUDE: This file contains Andrew's personal notes and thoughts. Please do not modify the content below this line unless explicitly asked.**
+
+---
+
 - Make the search function in the dossier work for searching specific terms (maybe also rethink the framing of that feature)
 
 - Do more to keep advisors from appearing if not selected

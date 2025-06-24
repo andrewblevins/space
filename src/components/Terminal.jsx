@@ -12,8 +12,9 @@ import { getApiEndpoint } from '../utils/apiConfig';
 import { defaultPrompts } from '../lib/defaultPrompts';
 import { handleApiError } from '../utils/apiErrorHandler';
 import { getNextAvailableColor, ADVISOR_COLORS } from '../lib/advisorColors';
-import { getDecrypted, setEncrypted, removeEncrypted, setModalController, hasEncryptedData } from '../utils/secureStorage';
+import { setEncrypted, removeEncrypted, setModalController, hasEncryptedData } from '../utils/secureStorage';
 import { useModal } from '../contexts/ModalContext';
+import { useAuth } from '../contexts/AuthContext';
 import AccordionMenu from './AccordionMenu';
 import SessionPanel from './SessionPanel';
 import PromptLibrary from './PromptLibrary';
@@ -40,12 +41,30 @@ import useClaude from "../hooks/useClaude";
 import { analyzeMetaphors, analyzeForQuestions, summarizeSession, generateSessionSummary } from "../utils/terminalHelpers";
 import { trackUsage, trackSession } from '../utils/usageTracking';
 import { worksheetQuestions, WORKSHEET_TEMPLATES } from "../utils/worksheetTemplates";
+import { useConversationStorage } from '../hooks/useConversationStorage';
+import { needsMigration } from '../utils/migrationHelper';
+import MigrationModal from './MigrationModal';
 
 
 
 
 const Terminal = ({ theme, toggleTheme }) => {
   const modalController = useModal();
+  const useAuthSystem = import.meta.env.VITE_USE_AUTH === 'true';
+  const { user, session } = useAuth();
+  const storage = useConversationStorage();
+  
+  // Database storage state
+  const [currentConversationId, setCurrentConversationId] = useState(null);
+  const [useDatabaseStorage, setUseDatabaseStorage] = useState(() => {
+    const useDb = useAuthSystem && !!user;
+    console.log('🗃️ Database storage decision:', { useAuthSystem, user: !!user, useDatabaseStorage: useDb });
+    return useDb;
+  });
+  const [showMigrationModal, setShowMigrationModal] = useState(() => {
+    console.log('🔄 Initializing showMigrationModal to false');
+    return false;
+  });
   
   // Initialize the modal controller for secureStorage
   useEffect(() => {
@@ -53,6 +72,18 @@ const Terminal = ({ theme, toggleTheme }) => {
       setModalController(modalController);
     }
   }, [modalController]);
+
+  // Check for migration when user logs in (only if there are actual conversations)
+  useEffect(() => {
+    if (useAuthSystem && user) {
+      const needs = needsMigration();
+      console.log('🔄 Migration check:', { needs, useAuthSystem, user: !!user });
+      if (needs) {
+        console.log('🔄 Setting migration modal to TRUE (login check)');
+        setShowMigrationModal(true);
+      }
+    }
+  }, [useAuthSystem, user]);
 
 
   const getNextSessionId = () => {
@@ -131,11 +162,27 @@ const Terminal = ({ theme, toggleTheme }) => {
     return { processedContent, debates };
   };
 
-  const [messages, setMessages] = useState([
-    { type: 'system', content: 'SPACE Terminal - v0.2.3' },
-    { type: 'system', content: '🎉 New in v0.2.3:\n• Extended Thinking mode\n• High Council debate mode\n• Call a Vote\n• Improved tag analyzer' },
-    { type: 'system', content: 'Start a conversation, add an advisor (+), draw from the Prompt Library (↙), or type /help for instructions.' }
-  ]);
+  const [messages, setMessages] = useState(() => {
+    const baseMessages = [
+      { type: 'system', content: 'SPACE Terminal - v0.2.3' },
+      { type: 'system', content: '🎉 New in v0.2.3:\n• Extended Thinking mode\n• High Council debate mode\n• Call a Vote\n• Improved tag analyzer' }
+    ];
+    
+    // Add auth-specific welcome message
+    if (useAuthSystem && user) {
+      baseMessages.push({
+        type: 'system',
+        content: `Welcome back${user.email ? ', ' + user.email.split('@')[0] : ''}! You have 100 messages per day to explore complex problems with AI advisors. Your limit resets at midnight.`
+      });
+    }
+    
+    baseMessages.push({
+      type: 'system',
+      content: 'Start a conversation, add an advisor (+), draw from the Prompt Library (↙), or type /help for instructions.'
+    });
+    
+    return baseMessages;
+  });
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [metaphors, setMetaphors] = useState([]);
@@ -252,7 +299,8 @@ const Terminal = ({ theme, toggleTheme }) => {
   const [lastAdvisorAnalysisContent, setLastAdvisorAnalysisContent] = useState('');
   const [suggestedAdvisorName, setSuggestedAdvisorName] = useState('');
   const [contextLimit, setContextLimit] = useState(150000);
-  const [apiKeysSet, setApiKeysSet] = useState(false);
+  // Already defined useAuthSystem at the top of component
+  const [apiKeysSet, setApiKeysSet] = useState(useAuthSystem);
   const [showWelcome, setShowWelcome] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
   const [hasCheckedKeys, setHasCheckedKeys] = useState(false);
@@ -285,7 +333,17 @@ const Terminal = ({ theme, toggleTheme }) => {
   useEffect(() => {
     const checkKeys = async () => {
       try {
-        // First check if encrypted data exists
+        // Skip API key checking in auth mode
+        if (useAuthSystem) {
+          console.log('🔑 Auth system enabled, skipping API key check');
+          setApiKeysSet(true);
+          
+          // Welcome screen is now handled at App level for auth users
+          
+          return;
+        }
+
+        // Legacy mode: check for API keys
         if (!hasEncryptedData()) {
           console.log('❌ No encrypted keys found, showing welcome screen');
           const skipWelcome = localStorage.getItem('space_skip_welcome');
@@ -295,29 +353,9 @@ const Terminal = ({ theme, toggleTheme }) => {
           return;
         }
 
-        // If encrypted data exists, try to decrypt it (this will prompt for password if needed)
-        console.log('🔒 Encrypted keys found, attempting to decrypt...');
-        try {
-          const anthropicKey = await getDecrypted('space_anthropic_key');
-          const openaiKey = await getDecrypted('space_openai_key');
-          
-          if (anthropicKey && openaiKey) {
-            setApiKeysSet(true);
-            
-            // Initialize OpenAI client if keys are available
-            const client = new OpenAI({
-              apiKey: openaiKey,
-              dangerouslyAllowBrowser: true
-            });
-            setOpenaiClient(client);
-            console.log('✅ OpenAI client initialized successfully');
-          }
-        } catch (error) {
-          console.error('Error decrypting API keys:', error);
-          // If decryption fails (user canceled password, wrong password, etc.), 
-          // don't show welcome screen - they have encrypted keys, just couldn't access them this time
-          console.log('🔑 Password entry was required but failed/canceled');
-        }
+        // In auth mode, we don't use encrypted storage
+        console.log('🔒 Legacy encrypted keys found but auth mode is enabled');
+        // Skip welcome screen since user has existing data but we're in auth mode
       } finally {
         // Always stop the loading state once initialization is complete
         setIsInitializing(false);
@@ -328,7 +366,7 @@ const Terminal = ({ theme, toggleTheme }) => {
     if (modalController && !hasCheckedKeys) {
       checkKeys();
     }
-  }, [modalController, hasCheckedKeys]);
+  }, [modalController, hasCheckedKeys, useAuthSystem]);
 
 const getSystemPrompt = () => {
   let prompt = "";
@@ -387,17 +425,28 @@ const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimi
   // Generate a creative starting prompt for new conversations
   const generateStartingPrompt = async () => {
     try {
-      const anthropicKey = await getDecrypted('space_anthropic_key');
-      if (!anthropicKey) return;
+      // Build headers based on auth mode
+      const headers = {
+        'Content-Type': 'application/json',
+      };
+      
+      const apiUrl = useAuthSystem 
+        ? `${getApiEndpoint()}/api/chat/claude`  // Backend proxy
+        : `${getApiEndpoint()}/v1/messages`;     // Direct API
 
-      const response = await fetch(`${getApiEndpoint()}/v1/messages`, {
+      if (useAuthSystem) {
+        // Auth mode: use bearer token
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      } else {
+        // Legacy mode: direct API access
+        headers['x-api-key'] = anthropicKey;
+        headers['anthropic-version'] = '2023-06-01';
+        headers['anthropic-dangerous-direct-browser-access'] = 'true';
+      }
+
+      const response = await fetch(apiUrl, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': anthropicKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
-        },
+        headers,
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
           messages: [{
@@ -497,9 +546,6 @@ Generate ONLY the user's message describing their situation, nothing else. Inclu
     }
 
     try {
-      const anthropicKey = await getDecrypted('space_anthropic_key');
-      if (!anthropicKey) return;
-
       // Build conversation context
       const contextMessages = messages
         .filter((m) => (m.type === 'user' || m.type === 'assistant') && m.content?.trim() !== '')
@@ -512,15 +558,29 @@ Generate ONLY the user's message describing their situation, nothing else. Inclu
         content: "Based on our conversation so far, what would be a natural and interesting follow-up question or comment from the user? Generate only the user's message, nothing else."
       });
 
-      // Make direct API call without going through useClaude hook
-      const response = await fetch(`${getApiEndpoint()}/v1/messages`, {
+      // Build headers based on auth mode
+      const headers = {
+        'Content-Type': 'application/json',
+      };
+      
+      const apiUrl = useAuthSystem 
+        ? `${getApiEndpoint()}/api/chat/claude`  // Backend proxy
+        : `${getApiEndpoint()}/v1/messages`;     // Direct API
+
+      if (useAuthSystem) {
+        // Auth mode: use bearer token
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      } else {
+        // Legacy mode: direct API access
+        headers['x-api-key'] = anthropicKey;
+        headers['anthropic-version'] = '2023-06-01';
+        headers['anthropic-dangerous-direct-browser-access'] = 'true';
+      }
+
+      // Make API call
+      const response = await fetch(apiUrl, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': anthropicKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
-        },
+        headers,
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
           messages: contextMessages,
@@ -649,22 +709,48 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
   };
 
   // Session management functions for SessionPanel
-  const handleNewSession = () => {
+  const handleNewSession = async () => {
     const prevSessionId = currentSessionId;
-    const newSessionId = getNextSessionId();
     
     // Auto-generate summary for the session we're leaving
     generateSummaryForPreviousSession(prevSessionId);
     
-    setCurrentSessionId(newSessionId);
+    if (useDatabaseStorage) {
+      // Create new conversation in database
+      try {
+        const conversation = await storage.createConversation(
+          `Session ${new Date().toLocaleString()}`,
+          {
+            metaphors: [],
+            advisorSuggestions: [],
+            voteHistory: [],
+            created: new Date().toISOString()
+          }
+        );
+        
+        setCurrentConversationId(conversation.id);
+        setCurrentSessionId(conversation.id); // Use conversation ID as session ID
+        console.log('🗃️ Created new database conversation:', conversation.id);
+      } catch (error) {
+        console.error('Failed to create database conversation, falling back to localStorage:', error);
+        // Fall back to localStorage
+        const newSessionId = getNextSessionId();
+        setCurrentSessionId(newSessionId);
+        setCurrentConversationId(null);
+      }
+    } else {
+      // Legacy localStorage session
+      const newSessionId = getNextSessionId();
+      setCurrentSessionId(newSessionId);
+      setCurrentConversationId(null);
+    }
+    
     setMessages([
       { type: 'system', content: 'SPACE Terminal - v0.2.3' },
       { type: 'system', content: '🎉 New in v0.2.3:\n• Extended Thinking mode\n• High Council debate mode\n• Call a Vote\n• Improved tag analyzer' },
       { type: 'system', content: 'Start a conversation, add an advisor (+), draw from the Prompt Library (↙), or type /help for instructions.' }
     ]);
     setMetaphors([]);
-    // DEPRECATED: Questions feature temporarily disabled
-    // setQuestions([]);
     setAdvisorSuggestions([]);
     setVoteHistory([]);
     
@@ -672,22 +758,42 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
     trackSession();
   };
 
-  const handleLoadSession = (sessionId) => {
-    const sessionData = localStorage.getItem(`space_session_${sessionId}`);
-    if (sessionData) {
-      const session = JSON.parse(sessionData);
-      setCurrentSessionId(session.id);
-      setMessages(session.messages);
-      setMetaphors(session.metaphors || []);
-      // DEPRECATED: Questions feature temporarily disabled
-      // setQuestions(session.questions || []);
-      setAdvisorSuggestions(session.advisorSuggestions || []);
-      setVoteHistory(session.voteHistory || []);
+  const handleLoadSession = async (sessionId) => {
+    if (useDatabaseStorage) {
+      // Load from database - sessionId is actually conversationId in database mode
+      try {
+        const conversation = await storage.loadConversation(sessionId);
+        setCurrentConversationId(conversation.id);
+        setCurrentSessionId(conversation.id);
+        setMessages(conversation.messages || []);
+        setMetaphors(conversation.metadata?.metaphors || []);
+        setAdvisorSuggestions(conversation.metadata?.advisorSuggestions || []);
+        setVoteHistory(conversation.metadata?.voteHistory || []);
+        console.log('🗃️ Loaded database conversation:', conversation.id);
+      } catch (error) {
+        console.error('Failed to load database conversation:', error);
+        setMessages(prev => [...prev, {
+          type: 'system',
+          content: `Failed to load conversation: ${error.message}`
+        }]);
+      }
     } else {
-      setMessages(prev => [...prev, {
-        type: 'system',
-        content: `Session ${sessionId} not found`
-      }]);
+      // Legacy localStorage loading
+      const sessionData = localStorage.getItem(`space_session_${sessionId}`);
+      if (sessionData) {
+        const session = JSON.parse(sessionData);
+        setCurrentSessionId(session.id);
+        setCurrentConversationId(null);
+        setMessages(session.messages);
+        setMetaphors(session.metaphors || []);
+        setAdvisorSuggestions(session.advisorSuggestions || []);
+        setVoteHistory(session.voteHistory || []);
+      } else {
+        setMessages(prev => [...prev, {
+          type: 'system',
+          content: `Session ${sessionId} not found`
+        }]);
+      }
     }
   };
 
@@ -1944,6 +2050,14 @@ Default is 4,096 tokens.`
           return true;
 
         case '/keys':
+          if (useAuthSystem) {
+            setMessages(prev => [...prev, {
+              type: 'system',
+              content: 'API key management disabled. Using authentication system.'
+            }]);
+            return true;
+          }
+          
           switch(args[0]) {
             case 'clear':
               removeEncrypted('space_anthropic_key');
@@ -1958,8 +2072,9 @@ Default is 4,096 tokens.`
             case 'status':
               (async () => {
                 try {
-                  const anthropicKey = await getDecrypted('space_anthropic_key');
-                  const openaiKey = await getDecrypted('space_openai_key');
+                  // API key access not available in auth mode
+                  const anthropicKey = null;
+                  const openaiKey = null;
                   setMessages(prev => [...prev, {
                     type: 'system',
                     content: `API Keys Status:
@@ -2369,9 +2484,23 @@ FORMATTING RULES:
 
     } catch (error) {
       console.error('Error in handleSubmit:', error);
+      
+      // Provide better error messages based on error type
+      let errorMessage = 'Error: Failed to get response from Claude';
+      
+      if (error.message?.includes('rate limit') || error.message?.includes('429')) {
+        errorMessage = "You've reached today's message limit (100 messages). Your limit will reset at midnight. Consider upgrading for more messages!";
+      } else if (error.message?.includes('401') || error.message?.includes('authentication')) {
+        errorMessage = "Authentication error. Please sign in again.";
+      } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
+        errorMessage = "Network error. Please check your connection and try again.";
+      } else if (error.message) {
+        errorMessage = `Error: ${error.message}`;
+      }
+      
       setMessages(prev => [...prev, { 
         type: 'system', 
-        content: 'Error: Failed to get response from Claude' 
+        content: errorMessage 
       }]);
       // Clear session contexts on error
       setCurrentSessionContexts([]);
@@ -2424,6 +2553,14 @@ FORMATTING RULES:
 
   // Settings Menu Callback Functions
   const handleClearApiKeys = () => {
+    if (useAuthSystem) {
+      setMessages(prev => [...prev, {
+        type: 'system',
+        content: 'API key management disabled. Using authentication system.'
+      }]);
+      return;
+    }
+    
     removeEncrypted('space_anthropic_key');
     removeEncrypted('space_openai_key');
     setApiKeysSet(false);
@@ -2828,68 +2965,108 @@ Example: {"position": "Option 2 text here", "confidence": 75, "reasoning": "This
     }, 100);
   };
 
+  // Auto-save to database when using auth system, localStorage as fallback
   useEffect(() => {
     // Only save sessions that have actual user/assistant messages (not just system messages)
     const nonSystemMessages = messages.filter(msg => msg.type !== 'system');
     if (nonSystemMessages.length > 0) {
       const saveSession = async () => {
-        const sessionData = {
-          id: currentSessionId,
-          timestamp: new Date().toISOString(),
-          messages: messages.map(msg => ({
-            ...msg,
-            tags: msg.tags || []
-          })),
-          metaphors,
-          // DEPRECATED: Questions feature temporarily disabled
-          // questions,
-          advisorSuggestions,
-          voteHistory
-        };
-
-        // Generate title if this is a new session with enough content and no title yet
-        const existingSession = localStorage.getItem(`space_session_${currentSessionId}`);
-        const hasTitle = existingSession ? JSON.parse(existingSession).title : false;
-        
-        if (!hasTitle && nonSystemMessages.length >= 2) {
-          // Generate title when we have a back-and-forth conversation
-          const title = await generateConversationTitle(messages);
-          if (title) {
-            sessionData.title = title;
-          }
-        } else if (hasTitle) {
-          // Preserve existing title and existing summary
-          const existing = JSON.parse(existingSession);
-          sessionData.title = existing.title;
-          if (existing.summary) {
-            sessionData.summary = existing.summary;
-            sessionData.summaryTimestamp = existing.summaryTimestamp;
-            sessionData.summaryMessageCount = existing.summaryMessageCount;
-          }
-        }
-
-        // Auto-generate summary for long conversations (every 20 messages)
-        if (nonSystemMessages.length > 0 && nonSystemMessages.length % 20 === 0 && openaiClient) {
-          const existing = existingSession ? JSON.parse(existingSession) : null;
-          if (!existing?.summary || existing.summaryMessageCount < nonSystemMessages.length - 10) {
-            console.log(`📄 Auto-generating summary for long session ${currentSessionId} (${nonSystemMessages.length} messages)`);
+        if (useDatabaseStorage && currentConversationId) {
+          // Database storage: Save individual messages as they come
+          const lastMessage = messages[messages.length - 1];
+          if (lastMessage && !lastMessage.saved) {
             try {
-              // Generate summary in background without blocking UI
-              setTimeout(async () => {
-                await generateSessionSummary(sessionData, openaiClient);
-              }, 1000);
+              await storage.addMessage(
+                currentConversationId,
+                lastMessage.type,
+                lastMessage.content,
+                {
+                  tags: lastMessage.tags || [],
+                  timestamp: lastMessage.timestamp || new Date().toISOString()
+                }
+              );
+              
+              // Mark message as saved to prevent duplicate saves
+              setMessages(prev => prev.map((msg, idx) => 
+                idx === prev.length - 1 ? { ...msg, saved: true } : msg
+              ));
+              
+              // Update conversation metadata (metaphors, advisor suggestions, etc.)
+              await storage.saveSessionMetadata(currentConversationId, {
+                metaphors,
+                advisorSuggestions,
+                voteHistory,
+                lastActivity: new Date().toISOString()
+              });
+              
             } catch (error) {
-              console.error('Error auto-generating summary for long session:', error);
+              console.error('Failed to save to database:', error);
+              // Don't fall back to localStorage in database mode - just log the error
+              // Falling back would create localStorage sessions that trigger migration
             }
           }
+        } else {
+          // Legacy localStorage storage
+          saveLegacySession();
         }
+        
+        async function saveLegacySession() {
+          const sessionData = {
+            id: currentSessionId,
+            timestamp: new Date().toISOString(),
+            messages: messages.map(msg => ({
+              ...msg,
+              tags: msg.tags || []
+            })),
+            metaphors,
+            advisorSuggestions,
+            voteHistory
+          };
 
-        localStorage.setItem(`space_session_${currentSessionId}`, JSON.stringify(sessionData));
+          // Generate title if this is a new session with enough content and no title yet
+          const existingSession = localStorage.getItem(`space_session_${currentSessionId}`);
+          const hasTitle = existingSession ? JSON.parse(existingSession).title : false;
+          
+          if (!hasTitle && nonSystemMessages.length >= 2) {
+            // Generate title when we have a back-and-forth conversation
+            const title = await generateConversationTitle(messages);
+            if (title) {
+              sessionData.title = title;
+            }
+          } else if (hasTitle) {
+            // Preserve existing title and existing summary
+            const existing = JSON.parse(existingSession);
+            sessionData.title = existing.title;
+            if (existing.summary) {
+              sessionData.summary = existing.summary;
+              sessionData.summaryTimestamp = existing.summaryTimestamp;
+              sessionData.summaryMessageCount = existing.summaryMessageCount;
+            }
+          }
+
+          // Auto-generate summary for long conversations (every 20 messages)
+          if (nonSystemMessages.length > 0 && nonSystemMessages.length % 20 === 0 && openaiClient) {
+            const existing = existingSession ? JSON.parse(existingSession) : null;
+            if (!existing?.summary || existing.summaryMessageCount < nonSystemMessages.length - 10) {
+              console.log(`📄 Auto-generating summary for long session ${currentSessionId} (${nonSystemMessages.length} messages)`);
+              try {
+                // Generate summary in background without blocking UI
+                setTimeout(async () => {
+                  await generateSessionSummary(sessionData, openaiClient);
+                }, 1000);
+              } catch (error) {
+                console.error('Error auto-generating summary for long session:', error);
+              }
+            }
+          }
+
+          localStorage.setItem(`space_session_${currentSessionId}`, JSON.stringify(sessionData));
+        }
       };
 
       saveSession();
     }
-  }, [messages, metaphors, /* questions, */ advisorSuggestions, voteHistory, currentSessionId, openaiClient]);
+  }, [messages, metaphors, advisorSuggestions, voteHistory, currentSessionId, currentConversationId, useDatabaseStorage, storage, openaiClient]);
 
   // Trigger analysis when messages change and we have a Claude response
   useEffect(() => {
@@ -3156,16 +3333,19 @@ ${selectedText}
 
   return (
     <>
+      
       {isInitializing ? (
         // Loading state to prevent flash of wrong screen
         <div className="w-full h-screen bg-black flex items-center justify-center">
           <div className="text-green-400 animate-pulse">Loading SPACE Terminal...</div>
         </div>
-      ) : showWelcome ? (
+      ) : showWelcome && !useAuthSystem ? (
+        // Welcome screen only shown in legacy mode (auth mode handles this at App level)
         <WelcomeScreen 
           onGetStarted={() => setShowWelcome(false)}
         />
       ) : !apiKeysSet ? (
+        // Only shown in legacy mode (useAuthSystem=false) when no API keys are set
         <ApiKeySetup 
           onComplete={({ anthropicKey, openaiKey }) => {
             const client = new OpenAI({
@@ -3461,6 +3641,15 @@ ${selectedText}
         toggleTheme={toggleTheme}
         paragraphSpacing={paragraphSpacing}
         setParagraphSpacing={setParagraphSpacing}
+        onMigrateConversations={() => {
+          // Always show modal when user clicks migrate button (even if no conversations)
+          localStorage.removeItem('space_migration_status');
+          localStorage.removeItem('space_migration_date');
+          localStorage.removeItem('space_migration_summary');
+          console.log('🔄 Setting migration modal to TRUE (settings button)');
+          setShowMigrationModal(true);
+          setShowSettingsMenu(false);
+        }}
       />
 
       {/* Prompt Library Component */}
@@ -3549,6 +3738,12 @@ ${selectedText}
       <InfoModal
         isOpen={showInfoModal}
         onClose={() => setShowInfoModal(false)}
+      />
+
+      {/* Migration Modal Component */}
+      <MigrationModal
+        isOpen={showMigrationModal}
+        onComplete={() => setShowMigrationModal(false)}
       />
     </>
   );

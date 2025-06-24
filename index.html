@@ -11,6 +11,16 @@
     <title>SPACE Terminal</title>
     <!-- Quick fix for crypto-js (will be replaced with npm install later) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+    
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      // Replace G-XXXXXXXXXX with your actual GA4 measurement ID
+      gtag('config', 'G-XXXXXXXXXX');
+    </script>
   </head>
   <body>
     <div id="root"></div>

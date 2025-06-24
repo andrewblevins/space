@@ -1,15 +1,13 @@
-import { verifyAuth } from '../../utils/auth.js';
+import { checkRateLimit } from '../middleware/rateLimiting.js';
+import { verifyAuth } from '../utils/auth.js';
 
-export async function onRequestPost(context) {
+export async function onRequestGet(context) {
   // Verify authentication
   const authResult = await verifyAuth(context);
   if (!authResult.success) {
-    return new Response(JSON.stringify({ 
-      error: authResult.error 
-    }), { 
+    return new Response(authResult.error, { 
       status: authResult.status,
       headers: {
-        'content-type': 'application/json',
         'Access-Control-Allow-Origin': '*'
       }
     });
@@ -18,23 +16,23 @@ export async function onRequestPost(context) {
   const userId = authResult.user.id;
   
   try {
-    const requestBody = await context.request.json();
+    const rateLimitInfo = await checkRateLimit(context, userId);
     
-    // Log usage for this user (for future analytics)
-    console.log(`User ${userId} calling OpenAI API`);
+    // Calculate time until reset
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+    tomorrow.setUTCHours(0, 0, 0, 0);
+    const hoursUntilReset = Math.ceil((tomorrow - now) / (1000 * 60 * 60));
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${context.env.OPENAI_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(requestBody)
-    });
-
-    const data = await response.json();
-
-    return new Response(JSON.stringify(data), {
+    return new Response(JSON.stringify({
+      usage: rateLimitInfo.usage,
+      limit: rateLimitInfo.limit,
+      remaining: rateLimitInfo.remaining,
+      tier: rateLimitInfo.tier,
+      resetIn: `${hoursUntilReset} hours`,
+      resetTime: tomorrow.toISOString()
+    }), {
       headers: {
         'content-type': 'application/json',
         'Access-Control-Allow-Origin': '*'
@@ -42,7 +40,7 @@ export async function onRequestPost(context) {
     });
   } catch (error) {
     return new Response(JSON.stringify({
-      error: 'Error communicating with OpenAI',
+      error: 'Failed to fetch usage',
       message: error.message
     }), {
       status: 500,
@@ -59,9 +57,9 @@ export async function onRequestOptions() {
   return new Response(null, {
     headers: {
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Methods': 'GET, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       'Access-Control-Max-Age': '86400'
     }
   });
-} 
+}
