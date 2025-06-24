@@ -4,8 +4,8 @@ import { getApiEndpoint } from '../utils/apiConfig';
 
 export function useUsageTracking() {
   const useAuthSystem = import.meta.env.VITE_USE_AUTH === 'true';
-  const authData = useAuth();
-  const { session } = useAuthSystem ? authData : { session: null };
+  const authData = useAuthSystem ? useAuth() : { session: null };
+  const { session } = authData;
   
   const [usage, setUsage] = useState(null);
   const [loading, setLoading] = useState(true);
