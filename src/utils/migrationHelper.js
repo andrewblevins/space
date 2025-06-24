@@ -5,7 +5,11 @@
 // Check if migration is needed
 export function needsMigration() {
   const migrationStatus = localStorage.getItem('space_migration_status');
-  if (migrationStatus === 'completed') {
+  console.log('🔍 needsMigration check:', { migrationStatus });
+  
+  // If migration is completed or skipped, never show migration modal
+  if (migrationStatus === 'completed' || migrationStatus === 'skipped') {
+    console.log('🔍 Migration already completed/skipped, returning false');
     return false;
   }
   
@@ -18,6 +22,7 @@ export function needsMigration() {
     }
   }
   
+  console.log('🔍 Found session keys:', sessionKeys.length);
   return sessionKeys.length > 0;
 }
 
