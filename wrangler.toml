@@ -3,7 +3,12 @@ compatibility_date = "2023-05-18"
 pages_build_output_dir = "dist"
 
 [vars]
+# Frontend build-time variables (VITE_)
 VITE_USE_AUTH = "true"
+VITE_SUPABASE_URL = "https://subcycvduvqywclwgncp.supabase.co"
+VITE_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1YmN5Y3ZkdXZxeXdjbHdnbmNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk4MjY3NzQsImV4cCI6MjA2NTQwMjc3NH0.odeQHIuwBmNXNn2B3RDz6aTybypgLroofHHZ28cjKoI"
+
+# Backend runtime variables (Functions)
 ANTHROPIC_API_KEY = "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"
 OPENAI_API_KEY = "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"
 SUPABASE_URL = "https://subcycvduvqywclwgncp.supabase.co"
