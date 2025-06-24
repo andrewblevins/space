@@ -5,6 +5,7 @@ import { getDecrypted } from '../utils/secureStorage';
 import { buildConversationContext } from '../utils/terminalHelpers';
 import { trackUsage, formatCost } from '../utils/usageTracking';
 import { useAuth } from '../contexts/AuthContext';
+import { useUsageTracking } from './useUsageTracking';
 
 /**
  * Hook providing the callClaude function used to stream responses from the API.
@@ -19,10 +20,11 @@ import { useAuth } from '../contexts/AuthContext';
  * @returns {{ callClaude: (msg: string, customGetSystemPrompt?: () => string) => Promise<string> }}
  */
 export function useClaude({ messages, setMessages, maxTokens, contextLimit, memory, debugMode, reasoningMode, getSystemPrompt }) {
-  // Check if auth is enabled
+  // Always call hooks (hooks rules), but check auth enabled inside logic
   const useAuthSystem = import.meta.env.VITE_USE_AUTH === 'true';
-  const authData = useAuthSystem ? useAuth() : { session: null };
-  const { session } = authData;
+  const authData = useAuth();
+  const { session } = useAuthSystem ? authData : { session: null };
+  const { updateFromHeaders } = useUsageTracking();
   
   const callClaude = useCallback(async (userMessage, customGetSystemPrompt = null) => {
     const formatTimestamp = (iso) => new Date(iso).toISOString().slice(0, 16);
@@ -132,6 +134,9 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
       body: JSON.stringify(requestBody),
     });
 
+    // Update usage from response headers
+    updateFromHeaders(response);
+
     if (!response.ok) {
       const errorText = await response.text();
       console.error('🚨 API Error Response:', {
@@ -225,7 +230,7 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
     }
     
     return currentMessageContent;
-  }, [messages, setMessages, maxTokens, contextLimit, memory, debugMode, reasoningMode, getSystemPrompt, useAuthSystem, session]);
+  }, [messages, setMessages, maxTokens, contextLimit, memory, debugMode, reasoningMode, getSystemPrompt, useAuthSystem, session, updateFromHeaders]);
 
   return { callClaude };
 }

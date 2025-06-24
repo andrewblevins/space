@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:functions": "npm run build && wrangler pages dev dist --compatibility-date=2023-05-18 --port 3000",
+    "dev:watch": "vite build --watch & wrangler pages dev dist --compatibility-date=2023-05-18 --port 3000",
     "dev:setup": "node scripts/improved-setup.js",
     "build": "vite build",
     "lint": "eslint .",

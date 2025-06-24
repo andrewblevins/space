@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { getDecrypted } from '../utils/secureStorage';
+import { useAuth } from '../contexts/AuthContext';
 import UsageDisplay from './UsageDisplay';
+import UsageIndicator from './UsageIndicator';
 
 const SettingsMenu = ({
   isOpen,
@@ -17,7 +18,8 @@ const SettingsMenu = ({
   theme,
   toggleTheme,
   paragraphSpacing,
-  setParagraphSpacing
+  setParagraphSpacing,
+  onMigrateConversations
 }) => {
   const [tempContextLimit, setTempContextLimit] = useState(contextLimit);
   const [tempMaxTokens, setTempMaxTokens] = useState(maxTokens);
@@ -25,17 +27,20 @@ const SettingsMenu = ({
   const [activeTab, setActiveTab] = useState('general');
   const [apiKeyStatus, setApiKeyStatus] = useState({ anthropic: false, openai: false });
   const [isCheckingKeys, setIsCheckingKeys] = useState(false);
+  
+  // Auth system
+  const useAuthSystem = import.meta.env.VITE_USE_AUTH === 'true';
+  const { user, signOut } = useAuth();
 
   // Check API keys when modal opens or when switching to API tab
   const checkApiKeys = async () => {
+    // Skip in auth mode - no API keys to check
+    if (useAuthSystem) return;
+    
     setIsCheckingKeys(true);
     try {
-      const anthropicKey = await getDecrypted('space_anthropic_key');
-      const openaiKey = await getDecrypted('space_openai_key');
-      setApiKeyStatus({
-        anthropic: !!anthropicKey,
-        openai: !!openaiKey
-      });
+      // In auth mode, we don't use local API keys
+      setApiKeyStatus({ anthropic: false, openai: false });
     } catch (error) {
       console.error('Error checking API keys:', error);
       setApiKeyStatus({ anthropic: false, openai: false });
@@ -130,7 +135,7 @@ const SettingsMenu = ({
   const tabs = [
     { id: 'general', label: 'General' },
     { id: 'performance', label: 'Performance' },
-    { id: 'api', label: 'API Keys' }
+    { id: 'api', label: useAuthSystem ? 'Account & Usage' : 'API Keys' }
   ];
 
   return (
@@ -330,57 +335,115 @@ const SettingsMenu = ({
 
           {activeTab === 'api' && (
             <div className="space-y-6">
-              {/* API Key Status */}
-              <div>
-                <label className="text-green-400 font-medium block mb-3">
-                  API Key Status
-                </label>
-                {isCheckingKeys ? (
-                  <div className="text-gray-400 text-sm">Checking API keys...</div>
-                ) : (
-                  <div className="space-y-2 mb-4">
-                    <div className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-800 rounded">
-                      <span className="text-gray-600 dark:text-gray-300 text-sm">Anthropic (Claude)</span>
-                      <span className={`text-sm font-medium ${apiKeyStatus.anthropic ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                        {apiKeyStatus.anthropic ? '✓ Set' : '✗ Not Set'}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-800 rounded">
-                      <span className="text-gray-600 dark:text-gray-300 text-sm">OpenAI (GPT)</span>
-                      <span className={`text-sm font-medium ${apiKeyStatus.openai ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                        {apiKeyStatus.openai ? '✓ Set' : '✗ Not Set'}
-                      </span>
+              {useAuthSystem ? (
+                /* Authentication & Account Info */
+                <>
+                  <div>
+                    <label className="text-green-400 font-medium block mb-3">
+                      Account Information
+                    </label>
+                    <div className="space-y-2 mb-4">
+                      <div className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-800 rounded">
+                        <span className="text-gray-600 dark:text-gray-300 text-sm">Email</span>
+                        <span className="text-sm font-medium text-green-600 dark:text-green-400">
+                          {user?.email || 'Not available'}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-800 rounded">
+                        <span className="text-gray-600 dark:text-gray-300 text-sm">Authentication</span>
+                        <span className="text-sm font-medium text-green-600 dark:text-green-400">
+                          ✓ Signed In
+                        </span>
+                      </div>
                     </div>
                   </div>
-                )}
-              </div>
 
-              {/* API Key Management */}
-              <div>
-                <label className="text-green-400 font-medium block mb-3">
-                  API Key Management
-                </label>
-                <p className="text-gray-400 text-sm mb-4">
-                  Manage your Anthropic and OpenAI API keys for SPACE Terminal.
-                </p>
-                <div className="space-y-3">
-                  <button
-                    onClick={checkApiKeys}
-                    disabled={isCheckingKeys}
-                    className="w-full text-left px-3 py-2 bg-stone-50 border border-green-600 rounded text-green-600 hover:bg-green-600 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed dark:bg-black dark:border-green-400 dark:text-green-400 dark:hover:bg-green-400 dark:hover:text-black"
-                  >
-                    {isCheckingKeys ? 'Checking...' : 'Refresh Status'}
-                  </button>
-                  <button
-                    onClick={handleClearApiKeysClick}
-                    className="w-full text-left px-3 py-2 bg-stone-50 border border-red-600 rounded text-red-600 hover:bg-red-600 hover:text-white transition-colors dark:bg-black dark:border-red-400 dark:text-red-400 dark:hover:bg-red-400 dark:hover:text-black"
-                  >
-                    Clear API Keys
-                  </button>
-                </div>
-                <div className="mt-4 p-3 bg-gray-100 dark:bg-gray-800 rounded text-xs text-gray-600 dark:text-gray-400">
-                  <p>API keys are encrypted and stored locally in your browser. They are never sent to SPACE servers.</p>
-                </div>
+                  {/* Account Management */}
+                  <div>
+                    <label className="text-green-400 font-medium block mb-3">
+                      Account Management
+                    </label>
+                    <p className="text-gray-400 text-sm mb-4">
+                      Manage your SPACE Terminal account and authentication.
+                    </p>
+                    <div className="space-y-3">
+                      <button
+                        onClick={onMigrateConversations}
+                        className="w-full text-left px-3 py-2 bg-stone-50 border border-blue-600 rounded text-blue-600 hover:bg-blue-600 hover:text-white transition-colors dark:bg-black dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-400 dark:hover:text-black"
+                      >
+                        Migrate Local Conversations
+                      </button>
+                      <button
+                        onClick={signOut}
+                        className="w-full text-left px-3 py-2 bg-stone-50 border border-red-600 rounded text-red-600 hover:bg-red-600 hover:text-white transition-colors dark:bg-black dark:border-red-400 dark:text-red-400 dark:hover:bg-red-400 dark:hover:text-black"
+                      >
+                        Sign Out
+                      </button>
+                    </div>
+                    <div className="mt-4 p-3 bg-gray-100 dark:bg-gray-800 rounded text-xs text-gray-600 dark:text-gray-400">
+                      <p>API access is managed server-side. No API keys needed on your device.</p>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                /* Legacy API Key Management */
+                <>
+                  <div>
+                    <label className="text-green-400 font-medium block mb-3">
+                      API Key Status
+                    </label>
+                    {isCheckingKeys ? (
+                      <div className="text-gray-400 text-sm">Checking API keys...</div>
+                    ) : (
+                      <div className="space-y-2 mb-4">
+                        <div className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-800 rounded">
+                          <span className="text-gray-600 dark:text-gray-300 text-sm">Anthropic (Claude)</span>
+                          <span className={`text-sm font-medium ${apiKeyStatus.anthropic ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                            {apiKeyStatus.anthropic ? '✓ Set' : '✗ Not Set'}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-800 rounded">
+                          <span className="text-gray-600 dark:text-gray-300 text-sm">OpenAI (GPT)</span>
+                          <span className={`text-sm font-medium ${apiKeyStatus.openai ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                            {apiKeyStatus.openai ? '✓ Set' : '✗ Not Set'}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="text-green-400 font-medium block mb-3">
+                      API Key Management
+                    </label>
+                    <p className="text-gray-400 text-sm mb-4">
+                      Manage your Anthropic and OpenAI API keys for SPACE Terminal.
+                    </p>
+                    <div className="space-y-3">
+                      <button
+                        onClick={checkApiKeys}
+                        disabled={isCheckingKeys}
+                        className="w-full text-left px-3 py-2 bg-stone-50 border border-green-600 rounded text-green-600 hover:bg-green-600 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed dark:bg-black dark:border-green-400 dark:text-green-400 dark:hover:bg-green-400 dark:hover:text-black"
+                      >
+                        {isCheckingKeys ? 'Checking...' : 'Refresh Status'}
+                      </button>
+                      <button
+                        onClick={handleClearApiKeysClick}
+                        className="w-full text-left px-3 py-2 bg-stone-50 border border-red-600 rounded text-red-600 hover:bg-red-600 hover:text-white transition-colors dark:bg-black dark:border-red-400 dark:text-red-400 dark:hover:bg-red-400 dark:hover:text-black"
+                      >
+                        Clear API Keys
+                      </button>
+                    </div>
+                    <div className="mt-4 p-3 bg-gray-100 dark:bg-gray-800 rounded text-xs text-gray-600 dark:text-gray-400">
+                      <p>API keys are encrypted and stored locally in your browser. They are never sent to SPACE servers.</p>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Rate Limiting */}
+              <div className="border-t border-gray-300 dark:border-gray-600 pt-6">
+                <UsageIndicator />
               </div>
 
               {/* Usage Statistics */}
