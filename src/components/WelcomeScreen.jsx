@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import InfoModal from './InfoModal';
 import { useAuth } from '../contexts/AuthContext';
 
-const WelcomeScreen = ({ onGetStarted }) => {
+const WelcomeScreen = () => {
   // Reset any localStorage welcome flag when component mounts
   useEffect(() => {
     localStorage.removeItem('space_skip_welcome');

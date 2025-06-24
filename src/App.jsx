@@ -1,5 +1,4 @@
 import Terminal from './components/Terminal'
-import LoginScreen from './components/LoginScreen'
 import WelcomeScreen from './components/WelcomeScreen'
 import MobileWarning from './components/MobileWarning'
 import { ModalProvider } from './contexts/ModalContext'
@@ -15,7 +14,6 @@ function AppContent() {
     localStorage.getItem('theme') || 'dark'
   )
   const [showMobileWarning, setShowMobileWarning] = useState(false)
-  const [showLogin, setShowLogin] = useState(false)
 
   useEffect(() => {
     const root = document.documentElement
@@ -55,10 +53,7 @@ function AppContent() {
   }
 
   if (!user) {
-    if (showLogin) {
-      return <LoginScreen />;
-    }
-    return <WelcomeScreen onGetStarted={() => setShowLogin(true)} />;
+    return <WelcomeScreen />;
   }
 
   return (
