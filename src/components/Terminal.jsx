@@ -51,7 +51,8 @@ import MigrationModal from './MigrationModal';
 const Terminal = ({ theme, toggleTheme }) => {
   const modalController = useModal();
   const useAuthSystem = import.meta.env.VITE_USE_AUTH === 'true';
-  const { user, session } = useAuth();
+  const authData = useAuthSystem ? useAuth() : { user: null, session: null };
+  const { user, session } = authData;
   const storage = useConversationStorage();
   
   // Database storage state
