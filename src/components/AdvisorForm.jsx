@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { getApiEndpoint } from '../utils/apiConfig';
 import { handleApiError } from '../utils/apiErrorHandler';
 import { ADVISOR_COLORS, getNextAvailableColor } from '../lib/advisorColors';
+import { trackAdvisorCreated } from '../utils/analytics';
 
 const generateAdvisorDescription = async (advisorName, onStream) => {
   try {
@@ -219,7 +220,10 @@ const AdvisorForm = ({ onSubmit, onCancel, initialName = '', existingAdvisors = 
             Generate Description
           </button>
           <button
-            onClick={() => onSubmit({ name, description, color: selectedColor })}
+            onClick={() => {
+              trackAdvisorCreated(name);
+              onSubmit({ name, description, color: selectedColor });
+            }}
             className="px-4 py-2 text-green-600 border border-green-600 rounded hover:bg-green-600 hover:text-white dark:text-green-400 dark:border-green-400 dark:hover:bg-green-400 dark:hover:text-black"
           >
             Add Advisor
