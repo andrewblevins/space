@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import UsageDisplay from './UsageDisplay';
 import UsageIndicator from './UsageIndicator';
+import PrivacyPolicy from './PrivacyPolicy';
 
 const SettingsMenu = ({
   isOpen,
@@ -27,6 +28,7 @@ const SettingsMenu = ({
   const [activeTab, setActiveTab] = useState('general');
   const [apiKeyStatus, setApiKeyStatus] = useState({ anthropic: false, openai: false });
   const [isCheckingKeys, setIsCheckingKeys] = useState(false);
+  const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
   
   // Auth system
   const useAuthSystem = import.meta.env.VITE_USE_AUTH === 'true';
@@ -375,6 +377,12 @@ const SettingsMenu = ({
                         Migrate Local Conversations
                       </button>
                       <button
+                        onClick={() => setShowPrivacyPolicy(true)}
+                        className="w-full text-left px-3 py-2 bg-stone-50 border border-gray-600 rounded text-gray-600 hover:bg-gray-600 hover:text-white transition-colors dark:bg-black dark:border-gray-400 dark:text-gray-400 dark:hover:bg-gray-400 dark:hover:text-black"
+                      >
+                        Privacy Policy
+                      </button>
+                      <button
                         onClick={async () => {
                           console.log('🔐 Sign out button clicked');
                           try {
@@ -502,6 +510,11 @@ const SettingsMenu = ({
           </div>
         </div>
       )}
+      
+      <PrivacyPolicy
+        isOpen={showPrivacyPolicy}
+        onClose={() => setShowPrivacyPolicy(false)}
+      />
     </div>
   );
 };

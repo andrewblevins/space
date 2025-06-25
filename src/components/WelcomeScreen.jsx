@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import InfoModal from './InfoModal';
+import PrivacyPolicy from './PrivacyPolicy';
 import { useAuth } from '../contexts/AuthContext';
 
 const WelcomeScreen = () => {
@@ -8,6 +9,7 @@ const WelcomeScreen = () => {
     localStorage.removeItem('space_skip_welcome');
   }, []);
   const [showInfoModal, setShowInfoModal] = useState(false);
+  const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
   const [loading, setLoading] = useState(false);
   const { signInWithGoogle } = useAuth();
 
@@ -100,6 +102,17 @@ const WelcomeScreen = () => {
               {loading ? 'Signing in...' : 'Explore'}
             </span>
           </button>
+          
+          <p className="text-xs text-gray-500 mt-4 max-w-md mx-auto">
+            By continuing, you agree to our{' '}
+            <button 
+              onClick={() => setShowPrivacyPolicy(true)}
+              className="text-green-400 hover:text-green-300 underline"
+            >
+              Privacy Policy
+            </button>
+            . We use cookies and analytics to improve your experience.
+          </p>
         </div>
       </main>
 
@@ -135,11 +148,24 @@ const WelcomeScreen = () => {
           </a>{' '}
           • v0.2.3
         </p>
+        <p className="text-xs mt-2">
+          <button 
+            onClick={() => setShowPrivacyPolicy(true)}
+            className="text-green-400 hover:text-green-300 transition-colors underline"
+          >
+            Privacy Policy
+          </button>
+        </p>
       </footer>
 
       <InfoModal
         isOpen={showInfoModal}
         onClose={() => setShowInfoModal(false)}
+      />
+      
+      <PrivacyPolicy
+        isOpen={showPrivacyPolicy}
+        onClose={() => setShowPrivacyPolicy(false)}
       />
     </div>
   );
