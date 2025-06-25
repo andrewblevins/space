@@ -4,6 +4,8 @@
 
 ---
 
+FEATURES TO ADD/FIX:
+
 - Make the search function in the dossier work for searching specific terms (maybe also rethink the framing of that feature)
 
 - Do more to keep advisors from appearing if not selected
@@ -17,8 +19,6 @@
 - generate style cues for advisor voices (5 ways this person might talk, example quotes, use as basis)
 
 - lightweight analytics: google analytics
-
-- google sign-in
 
 CURRENT STEPS
 
