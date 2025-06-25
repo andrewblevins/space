@@ -6,6 +6,7 @@ import { buildConversationContext } from '../utils/terminalHelpers';
 import { trackUsage, formatCost } from '../utils/usageTracking';
 import { useAuth } from '../contexts/AuthContext';
 import { useUsageTracking } from './useUsageTracking';
+import { trackMessage } from '../utils/analytics';
 
 /**
  * Hook providing the callClaude function used to stream responses from the API.
@@ -136,6 +137,17 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
 
     // Update usage from response headers
     updateFromHeaders(response);
+
+    // Track successful message sent
+    if (response.ok) {
+      // Count advisors by checking if messages contain multiple perspectives
+      const hasAdvisors = messages.some(msg => 
+        msg.content?.includes('**') || 
+        msg.content?.includes('---') ||
+        systemPromptText.includes('advisor')
+      );
+      trackMessage(hasAdvisors, messages.length + 1);
+    }
 
     if (!response.ok) {
       const errorText = await response.text();

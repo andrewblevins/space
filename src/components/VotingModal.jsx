@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { trackFeature } from '../utils/analytics';
 
 const VotingModal = ({ isOpen, onClose, advisors, onSubmitVote }) => {
   const [question, setQuestion] = useState('');
@@ -44,6 +45,7 @@ const VotingModal = ({ isOpen, onClose, advisors, onSubmitVote }) => {
     }
 
     setIsSubmitting(true);
+    trackFeature('voting');
     await onSubmitVote(question.trim(), validOptions);
     setIsSubmitting(false);
     

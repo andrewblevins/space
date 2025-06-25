@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { trackFeature } from '../utils/analytics';
 
 const HighCouncilModal = ({ isOpen, onClose, onStartCouncil }) => {
   const [topic, setTopic] = useState('');
@@ -7,6 +8,7 @@ const HighCouncilModal = ({ isOpen, onClose, onStartCouncil }) => {
 
   const handleStart = () => {
     if (topic.trim()) {
+      trackFeature('high_council');
       onStartCouncil(topic.trim());
       setTopic('');
       onClose();
