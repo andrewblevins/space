@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { trackLogin, trackSessionStart } from '../utils/analytics';
 
 const AuthContext = createContext();
 
@@ -41,6 +42,8 @@ export const AuthProvider = ({ children }) => {
       
       if (event === 'SIGNED_IN') {
         console.log('User signed in:', session?.user?.email);
+        trackLogin('google');
+        trackSessionStart();
       } else if (event === 'TOKEN_REFRESHED') {
         console.log('Token refreshed for:', session?.user?.email);
       } else if (event === 'SIGNED_OUT') {
