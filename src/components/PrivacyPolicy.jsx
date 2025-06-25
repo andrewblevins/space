@@ -84,9 +84,9 @@ const PrivacyPolicy = ({ isOpen, onClose }) => {
               <div>
                 <h4 className="font-medium text-white mb-2">Database Storage</h4>
                 <p className="text-sm">
-                  Your conversations are stored in a secure Supabase (PostgreSQL) database with row-level 
-                  security policies that restrict access to your own data. Database servers are located 
-                  in the United States.
+                  Your conversations are stored in plaintext in a secure Supabase (PostgreSQL) database 
+                  with row-level security policies that restrict access to your own data. Conversations 
+                  are not encrypted on the server. Database servers are located in the United States.
                 </p>
               </div>
               
@@ -95,7 +95,8 @@ const PrivacyPolicy = ({ isOpen, onClose }) => {
                 <p className="text-sm">
                   Application administrators have technical access to user data through database 
                   administration tools for troubleshooting, security, and service improvement purposes. 
-                  This access is logged and restricted to essential personnel.
+                  This includes the ability to read conversation content in plaintext. This access is 
+                  logged and restricted to essential personnel.
                 </p>
               </div>
             </div>
