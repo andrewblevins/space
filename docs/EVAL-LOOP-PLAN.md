@@ -98,23 +98,32 @@ Implement an evaluation and optimization loop for advisor responses, allowing us
 
 ### Evaluation Process
 1. User clicks "Evaluate" in Evaluations modal
-2. For each assertion, call Gemini with:
+2. Send single batch request to Gemini with:
    - The advisor response
-   - The assertion to check
-   - Binary evaluation (pass/fail)
-3. Store results with timestamp
+   - All assertions to evaluate
+   - Request JSON response with pass/fail for each
+3. Parse results and store with timestamp
 
 ### Evaluation Prompt Template
 ```
-You are evaluating whether an AI advisor's response meets a specific assertion.
+Evaluate whether this AI advisor's response meets the following assertions.
 
 Response:
 [ADVISOR RESPONSE]
 
-Assertion:
-[ASSERTION TEXT]
+Assertions:
+1. [ASSERTION 1]
+2. [ASSERTION 2]
+3. [ASSERTION 3]
 
-Does this response satisfy the assertion? Answer with only "PASS" or "FAIL" followed by a brief explanation (max 50 words).
+Return your evaluation as JSON in this exact format:
+{
+  "results": [
+    {"id": 1, "pass": true, "reason": "Response discusses shadow and personal unconscious"},
+    {"id": 2, "pass": false, "reason": "No mention of collective unconscious"},
+    {"id": 3, "pass": true, "reason": "Includes dream analysis example"}
+  ]
+}
 ```
 
 ### Storage Structure
@@ -127,16 +136,19 @@ evaluations: [
     results: [
       {
         assertionId: "assert-1",
+        assertionIndex: 1,
         passed: true,
-        feedback: "Response discusses shadow and personal unconscious patterns"
+        reason: "Response discusses shadow and personal unconscious patterns"
       },
       {
         assertionId: "assert-2",
+        assertionIndex: 2,
         passed: false,
-        feedback: "No mention of collective unconscious or archetypes"
+        reason: "No mention of collective unconscious or archetypes"
       }
     ],
-    overallPassed: false
+    overallPassed: false,
+    batchRequest: true  // Indicates this used batch evaluation
   }
 ]
 ```
