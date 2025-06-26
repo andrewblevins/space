@@ -2068,6 +2068,7 @@ Default is 4,096 tokens.`
             case 'clear':
               removeEncrypted('space_anthropic_key');
               removeEncrypted('space_openai_key');
+              removeEncrypted('space_gemini_key');
               setApiKeysSet(false);
               setMessages(prev => [...prev, {
                 type: 'system',
@@ -2081,11 +2082,13 @@ Default is 4,096 tokens.`
                   // API key access not available in auth mode
                   const anthropicKey = null;
                   const openaiKey = null;
+                  const geminiKey = null;
                   setMessages(prev => [...prev, {
                     type: 'system',
                     content: `API Keys Status:
 Anthropic: ${anthropicKey ? '✓ Set' : '✗ Not Set'}
-OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
+OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}
+Gemini: ${geminiKey ? '✓ Set' : '✗ Not Set'}`
                   }]);
                 } catch (error) {
                   setMessages(prev => [...prev, {
@@ -2113,7 +2116,7 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
                 if (!args[1] || !args[2]) {
                   setMessages(prev => [...prev, {
                     type: 'system',
-                    content: 'Usage: /key set [anthropic/openai] <api-key>'
+                    content: 'Usage: /key set [anthropic/openai/gemini] <api-key>'
                   }]);
                   return true;
                 }
@@ -2121,10 +2124,10 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
                 const service = args[1].toLowerCase();
                 const newKey = args[2];
 
-                if (service !== 'anthropic' && service !== 'openai') {
+                if (service !== 'anthropic' && service !== 'openai' && service !== 'gemini') {
                   setMessages(prev => [...prev, {
                     type: 'system',
-                    content: 'Invalid service. Use "anthropic" or "openai"'
+                    content: 'Invalid service. Use "anthropic", "openai", or "gemini"'
                   }]);
                   return true;
                 }
@@ -2142,6 +2145,14 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
                   setMessages(prev => [...prev, {
                     type: 'system',
                     content: 'Invalid OpenAI API key format'
+                  }]);
+                  return true;
+                }
+
+                if (service === 'gemini' && !newKey.startsWith('AIza')) {
+                  setMessages(prev => [...prev, {
+                    type: 'system',
+                    content: 'Invalid Gemini API key format'
                   }]);
                   return true;
                 }
@@ -2200,7 +2211,7 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
               setMessages(prev => [...prev, {
                 type: 'system',
                 content: 'Available key commands:\n' +
-                  '/key set [anthropic/openai] <api-key> - Update API key\n' +
+                  '/key set [anthropic/openai/gemini] <api-key> - Update API key\n' +
                   '/keys status - Check API key status\n' +
                   '/keys clear - Clear stored API keys'
               }]);
