@@ -37,6 +37,7 @@ import HighCouncilModal from './HighCouncilModal';
 import { ExpandingInput } from "./terminal/ExpandingInput";
 import { MemoizedMarkdownMessage } from "./terminal/MemoizedMarkdownMessage";
 import { AdvisorResponseMessage } from "./terminal/AdvisorResponseMessage";
+import { AdvisorResponseCard } from "./terminal/AdvisorResponseCard";
 import useClaude from "../hooks/useClaude";
 import { analyzeMetaphors, analyzeForQuestions, summarizeSession, generateSessionSummary } from "../utils/terminalHelpers";
 import { trackUsage, trackSession } from '../utils/usageTracking';
@@ -377,24 +378,28 @@ const getSystemPrompt = () => {
   if (activeAdvisors.length > 0) {
     prompt += `You are currently embodying the following advisors:\n${activeAdvisors.map(a => `\n${a.name}: ${a.description}`).join('\n')}\n\n`;
     
-    prompt += `RESPONSE FORMAT: Use this exact structure for every advisor response:
+    prompt += `RESPONSE FORMAT: Return your response as JSON in this exact structure:
 
-[ADVISOR: Advisor Name]
-optional action or emotional state on this line by itself
-
-Main response content starts here on a new line after a blank line.
-
-[ADVISOR: Another Advisor Name]
-another optional action line
-
-Another advisor's response content.
+{
+  "type": "advisor_response",
+  "advisors": [
+    {
+      "id": "resp-advisor-name-${Date.now()}",
+      "name": "Advisor Name",
+      "response": "The advisor's complete response content here...",
+      "timestamp": "${new Date().toISOString()}"
+    }
+  ],
+  "synthesis": "Optional synthesis or conclusion bringing perspectives together"
+}
 
 FORMATTING RULES:
-1. Advisor name always goes in [ADVISOR: Name] brackets
-2. If you include an action/emotional description, it goes on its own line immediately after the advisor name
-3. Always leave one blank line before starting the main response content
-4. Use single line breaks within paragraphs, double line breaks between major sections
-5. Each advisor gets their own clearly separated section`;
+1. Each advisor gets their own object in the advisors array
+2. Use the advisor's exact name as it appears in your persona list
+3. Include all response content in the "response" field
+4. Generate unique IDs using the pattern: resp-{advisor-name-lowercase}-{timestamp}
+5. The synthesis field is optional - include only if multiple perspectives need integration
+6. Return valid JSON only - no additional text before or after`;
   }
   // If no advisors are active, no system prompt is needed
   
@@ -3423,6 +3428,27 @@ ${selectedText}
                   >
                     {msg.type === 'system' ? (
                       <MemoizedMarkdownMessage content={msg.content} advisors={advisors} />
+                    ) : msg.type === 'advisor_json' ? (
+                      <div>
+                        {msg.thinking && <ThinkingBlock content={msg.thinking} />}
+                        {msg.parsedAdvisors.advisors.map((advisor, advisorIdx) => (
+                          <AdvisorResponseCard
+                            key={`${advisor.id || advisor.name}-${advisorIdx}`}
+                            advisor={advisor}
+                            allAdvisors={advisors}
+                            onAssertionsClick={(advisorData) => {
+                              console.log('🎯 Assertions clicked for:', advisorData);
+                              // TODO: Open assertions modal
+                            }}
+                          />
+                        ))}
+                        {msg.parsedAdvisors.synthesis && (
+                          <div className="mt-4 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                            <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Synthesis</h4>
+                            <MemoizedMarkdownMessage content={msg.parsedAdvisors.synthesis} advisors={advisors} />
+                          </div>
+                        )}
+                      </div>
                     ) : msg.type === 'assistant' ? (
                       (() => {
                         const { processedContent, debates } = processCouncilDebates(msg.content);

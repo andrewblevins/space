@@ -230,6 +230,34 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
       }
     }
     
+    // Check if response is JSON advisor format and parse it
+    let parsedAdvisorResponse = null;
+    if (currentMessageContent.trim().startsWith('{') && currentMessageContent.trim().endsWith('}')) {
+      try {
+        const parsed = JSON.parse(currentMessageContent.trim());
+        if (parsed.type === 'advisor_response' && parsed.advisors && Array.isArray(parsed.advisors)) {
+          parsedAdvisorResponse = parsed;
+          console.log('🎭 Detected JSON advisor response:', parsedAdvisorResponse);
+          
+          // Update the message with parsed format
+          setMessages((prev) => {
+            const newMessages = [...prev];
+            if (newMessages.length > 0) {
+              newMessages[newMessages.length - 1] = { 
+                type: 'advisor_json', 
+                content: currentMessageContent,
+                parsedAdvisors: parsedAdvisorResponse,
+                thinking: (reasoningMode && !isCouncilMode) ? thinkingContent : undefined
+              };
+            }
+            return newMessages;
+          });
+        }
+      } catch (e) {
+        console.log('🎭 Response looks like JSON but failed to parse, treating as regular text');
+      }
+    }
+    
     // Track usage after successful completion
     const outputTokens = estimateTokens(currentMessageContent);
     const cost = trackUsage('claude', inputTokens, outputTokens);
