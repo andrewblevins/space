@@ -470,7 +470,8 @@ DO NOT FORGET THE <COUNCIL_DEBATE> TAGS. Without these tags, the debate will not
 ## Council Summary
 
 After the debate section, provide:
-- One sentence per advisor summarizing their final position`;
+- One sentence per advisor summarizing their final position
+- Synthesis: 1-2 sentences on the overall outcome or remaining tensions`;
     } else {
       prompt += ADVISOR_JSON_FORMAT;
     }
@@ -3423,6 +3424,14 @@ ${selectedText}
                             }}
                           />
                         ))}
+                        
+                        {/* Show synthesis if it exists (for council mode or other cases) */}
+                        {msg.parsedAdvisors.synthesis && (
+                          <div className="mt-4 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                            <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Synthesis</h4>
+                            <MemoizedMarkdownMessage content={msg.parsedAdvisors.synthesis} advisors={advisors} />
+                          </div>
+                        )}
                       </div>
                     ) : msg.type === 'assistant' ? (
                       (() => {
