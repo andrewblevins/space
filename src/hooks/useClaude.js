@@ -233,9 +233,18 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
     // Check if response is JSON advisor format and parse it
     let parsedAdvisorResponse = null;
     
+    console.log('🎭 Checking if response is JSON...', {
+      content: currentMessageContent.substring(0, 100) + '...',
+      startsWithBrace: currentMessageContent.trim().startsWith('{'),
+      endsWithBrace: currentMessageContent.trim().endsWith('}'),
+      length: currentMessageContent.length
+    });
+    
     if (currentMessageContent.trim().startsWith('{') && currentMessageContent.trim().endsWith('}')) {
       try {
         const parsed = JSON.parse(currentMessageContent.trim());
+        console.log('🎭 Successfully parsed JSON:', parsed);
+        
         if (parsed.type === 'advisor_response' && parsed.advisors && Array.isArray(parsed.advisors)) {
           parsedAdvisorResponse = parsed;
           console.log('🎭 JSON advisor response detected with', parsed.advisors.length, 'advisors');
@@ -253,9 +262,15 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
             }
             return newMessages;
           });
+        } else {
+          console.log('🎭 JSON parsed but wrong structure:', {
+            type: parsed.type,
+            hasAdvisors: !!parsed.advisors,
+            advisorsIsArray: Array.isArray(parsed.advisors)
+          });
         }
       } catch (e) {
-        console.log('🎭 Response looks like JSON but failed to parse, treating as regular text');
+        console.log('🎭 Response looks like JSON but failed to parse:', e.message);
       }
     }
     
