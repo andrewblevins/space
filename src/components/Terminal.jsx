@@ -45,6 +45,7 @@ import { worksheetQuestions, WORKSHEET_TEMPLATES } from "../utils/worksheetTempl
 import { useConversationStorage } from '../hooks/useConversationStorage';
 import { needsMigration } from '../utils/migrationHelper';
 import MigrationModal from './MigrationModal';
+import AssertionsModal from './AssertionsModal';
 
 
 
@@ -323,6 +324,8 @@ const Terminal = ({ theme, toggleTheme }) => {
   const [showImportExportModal, setShowImportExportModal] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
+  const [showAssertionsModal, setShowAssertionsModal] = useState(false);
+  const [selectedAdvisorForAssertions, setSelectedAdvisorForAssertions] = useState(null);
   const [sessions, setSessions] = useState([]);
   const [sessionSelections, setSessionSelections] = useState(new Map()); // Map from title to session object
   const [currentSessionContexts, setCurrentSessionContexts] = useState([]); // Current @ reference contexts
@@ -3449,7 +3452,16 @@ ${selectedText}
                             allAdvisors={advisors}
                             onAssertionsClick={(advisorData) => {
                               console.log('🎯 Assertions clicked for:', advisorData);
-                              // TODO: Open assertions modal
+                              setSelectedAdvisorForAssertions({
+                                ...advisorData,
+                                conversationContext: {
+                                  messages: [...messages],
+                                  advisors: [...advisors],
+                                  systemPrompt: getSystemPrompt(),
+                                  timestamp: new Date().toISOString()
+                                }
+                              });
+                              setShowAssertionsModal(true);
                             }}
                           />
                         ))}
@@ -3793,6 +3805,26 @@ ${selectedText}
           setTimeout(() => {
             console.log('🔄 showMigrationModal state after setState:', showMigrationModal);
           }, 100);
+        }}
+      />
+
+      {/* Assertions Modal Component */}
+      <AssertionsModal
+        isOpen={showAssertionsModal}
+        onClose={() => {
+          setShowAssertionsModal(false);
+          setSelectedAdvisorForAssertions(null);
+        }}
+        advisorResponse={selectedAdvisorForAssertions}
+        conversationContext={selectedAdvisorForAssertions?.conversationContext || {
+          messages: [...messages],
+          advisors: [...advisors],
+          systemPrompt: getSystemPrompt(),
+          timestamp: new Date().toISOString()
+        }}
+        onSave={(assertionsData) => {
+          console.log('🎯 Assertions saved:', assertionsData);
+          // TODO: Show success message or update UI
         }}
       />
     </>
