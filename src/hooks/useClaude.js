@@ -232,12 +232,13 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
     
     // Check if response is JSON advisor format and parse it
     let parsedAdvisorResponse = null;
+    
     if (currentMessageContent.trim().startsWith('{') && currentMessageContent.trim().endsWith('}')) {
       try {
         const parsed = JSON.parse(currentMessageContent.trim());
         if (parsed.type === 'advisor_response' && parsed.advisors && Array.isArray(parsed.advisors)) {
           parsedAdvisorResponse = parsed;
-          console.log('🎭 Detected JSON advisor response:', parsedAdvisorResponse);
+          console.log('🎭 JSON advisor response detected with', parsed.advisors.length, 'advisors');
           
           // Update the message with parsed format
           setMessages((prev) => {
@@ -262,7 +263,7 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
     const outputTokens = estimateTokens(currentMessageContent);
     const cost = trackUsage('claude', inputTokens, outputTokens);
     
-    console.log('🔍 useClaude - Final response from Claude:', JSON.stringify(currentMessageContent));
+    // console.log('🔍 useClaude - Final response from Claude:', JSON.stringify(currentMessageContent));
     
     if (debugMode) {
       const debugOutput = `Response complete:\nOutput tokens: ${outputTokens}\nTotal cost for this call: ${formatCost(cost)}`;

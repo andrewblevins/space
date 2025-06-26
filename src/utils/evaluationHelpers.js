@@ -1,5 +1,3 @@
-import { useGemini } from '../hooks/useGemini';
-
 /**
  * Utility functions for the evaluation system
  */
@@ -8,10 +6,10 @@ import { useGemini } from '../hooks/useGemini';
  * Evaluate a response against multiple assertions using Gemini
  * @param {string} response - The advisor response to evaluate
  * @param {Array} assertions - Array of assertion objects with {id, text}
+ * @param {Function} callGemini - The Gemini API call function
  * @returns {Promise<Object>} Evaluation results
  */
-export async function evaluateAssertions(response, assertions) {
-  const { callGemini } = useGemini();
+export async function evaluateAssertions(response, assertions, callGemini) {
 
   if (!assertions || assertions.length === 0) {
     throw new Error('No assertions provided for evaluation');

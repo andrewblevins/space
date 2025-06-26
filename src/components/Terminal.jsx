@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MemorySystem } from '../lib/memory';
 import { OpenAI } from 'openai';
 import AdvisorForm from './AdvisorForm';
@@ -46,6 +46,7 @@ import { useConversationStorage } from '../hooks/useConversationStorage';
 import { needsMigration } from '../utils/migrationHelper';
 import MigrationModal from './MigrationModal';
 import AssertionsModal from './AssertionsModal';
+import EvaluationsModal from './EvaluationsModal';
 
 
 
@@ -326,6 +327,7 @@ const Terminal = ({ theme, toggleTheme }) => {
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [showAssertionsModal, setShowAssertionsModal] = useState(false);
   const [selectedAdvisorForAssertions, setSelectedAdvisorForAssertions] = useState(null);
+  const [showEvaluationsModal, setShowEvaluationsModal] = useState(false);
   const [sessions, setSessions] = useState([]);
   const [sessionSelections, setSessionSelections] = useState(new Map()); // Map from title to session object
   const [currentSessionContexts, setCurrentSessionContexts] = useState([]); // Current @ reference contexts
@@ -373,7 +375,7 @@ const Terminal = ({ theme, toggleTheme }) => {
     }
   }, [modalController, hasCheckedKeys, useAuthSystem]);
 
-const getSystemPrompt = () => {
+const getSystemPrompt = useCallback(() => {
   let prompt = "";
   
   // Add advisor personas
@@ -407,7 +409,6 @@ FORMATTING RULES:
   // If no advisors are active, no system prompt is needed
   
   // Add session context from @ references
-  console.log('📄 getSystemPrompt - currentSessionContexts:', currentSessionContexts);
   if (currentSessionContexts.length > 0) {
     if (prompt) prompt += "\n\n";
     prompt += "## REFERENCED CONVERSATION CONTEXTS\n\n";
@@ -420,14 +421,10 @@ FORMATTING RULES:
     });
     
     prompt += "Use these conversation contexts to inform your response when relevant. The user's message may reference specific details from these conversations.\n";
-    console.log('📄 Added session contexts to system prompt');
-  } else {
-    console.log('📄 No session contexts to add');
   }
   
-  console.log('🔍 getSystemPrompt - Final system prompt:', prompt);
   return prompt;
-};
+}, [advisors, currentSessionContexts]);
 
 const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimit, memory, debugMode, reasoningMode, getSystemPrompt });
 
@@ -768,8 +765,12 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
   };
 
   const handleLoadSession = async (sessionId) => {
-    if (useDatabaseStorage) {
-      // Load from database - sessionId is actually conversationId in database mode
+    // Check if sessionId looks like a UUID (database ID) or integer (localStorage ID)
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(sessionId);
+    const isLocalStorageId = /^\d+$/.test(sessionId);
+    
+    if (useDatabaseStorage && isUUID) {
+      // Load from database - sessionId is a proper UUID
       try {
         const conversation = await storage.loadConversation(sessionId);
         setCurrentConversationId(conversation.id);
@@ -786,8 +787,8 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
           content: `Failed to load conversation: ${error.message}`
         }]);
       }
-    } else {
-      // Legacy localStorage loading
+    } else if (isLocalStorageId) {
+      // Legacy localStorage loading (works for both database and localStorage modes)
       const sessionData = localStorage.getItem(`space_session_${sessionId}`);
       if (sessionData) {
         const session = JSON.parse(sessionData);
@@ -797,12 +798,18 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
         setMetaphors(session.metaphors || []);
         setAdvisorSuggestions(session.advisorSuggestions || []);
         setVoteHistory(session.voteHistory || []);
+        console.log('🗃️ Loaded localStorage session:', sessionId);
       } else {
         setMessages(prev => [...prev, {
           type: 'system',
           content: `Session ${sessionId} not found`
         }]);
       }
+    } else {
+      setMessages(prev => [...prev, {
+        type: 'system',
+        content: `Invalid session ID format: ${sessionId}`
+      }]);
     }
   };
 
@@ -2464,7 +2471,7 @@ FORMATTING RULES:
         // If no advisors are active, no system prompt is needed
         
         // Add session context from @ references
-        console.log('📄 getSystemPromptWithContexts - sessionContexts:', sessionContexts);
+        // console.log('📄 getSystemPromptWithContexts - sessionContexts:', sessionContexts);
         if (sessionContexts.length > 0) {
           if (prompt) prompt += "\n\n";
           prompt += "## REFERENCED CONVERSATION CONTEXTS\n\n";
@@ -2477,9 +2484,9 @@ FORMATTING RULES:
           });
           
           prompt += "Use these conversation contexts to inform your response when relevant. The user's message may reference specific details from these conversations.\n";
-          console.log('📄 Added session contexts to system prompt');
+          // console.log('📄 Added session contexts to system prompt');
         } else {
-          console.log('📄 No session contexts to add');
+          // console.log('📄 No session contexts to add');
         }
         
         return prompt;
@@ -2488,7 +2495,7 @@ FORMATTING RULES:
       // Pass the content to Claude with enhanced system prompt (this starts immediately)
       if (councilMode) {
         const systemPrompt = getSystemPromptWithContexts({ councilMode });
-        console.log('🏛️ High Council System Prompt:', systemPrompt);
+        // console.log('🏛️ High Council System Prompt:', systemPrompt);
       }
       await callClaude(newMessage.content, () => getSystemPromptWithContexts({ councilMode }));
 
@@ -3642,6 +3649,7 @@ ${selectedText}
             onNewSessionClick={handleNewSession}
             onExportClick={() => setShowExportMenu(true)}
             onDossierClick={() => setShowDossierModal(true)}
+            onEvaluationsClick={() => setShowEvaluationsModal(true)}
             onImportExportAdvisorsClick={() => setShowImportExportModal(true)}
             onVotingClick={() => setShowVotingModal(true)}
             onHighCouncilClick={() => setShowHighCouncilModal(true)}
@@ -3826,6 +3834,12 @@ ${selectedText}
           console.log('🎯 Assertions saved:', assertionsData);
           // TODO: Show success message or update UI
         }}
+      />
+
+      {/* Evaluations Modal Component */}
+      <EvaluationsModal
+        isOpen={showEvaluationsModal}
+        onClose={() => setShowEvaluationsModal(false)}
       />
     </>
   );
