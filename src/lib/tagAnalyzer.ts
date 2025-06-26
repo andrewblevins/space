@@ -71,43 +71,89 @@ export default class TagAnalyzer {
     try {
       await this.initialize();
       
-      if (!this.openai) {
-        throw new Error('OpenAI client not initialized');
+      const useAuthSystem = import.meta.env.VITE_USE_AUTH === 'true';
+      
+      if (useAuthSystem) {
+        // Use backend API for tag analysis in auth mode
+        console.log('🏷️ TagAnalyzer using backend API in auth mode');
+        
+        const inputTokens = Math.ceil((TAGGING_PROMPT.length + content.length) / 4);
+        
+        const response = await fetch('/api/chat/openai', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            model: "gpt-4o-mini",
+            messages: [{
+              role: "system",
+              content: TAGGING_PROMPT
+            }, {
+              role: "user",
+              content
+            }],
+            temperature: 0.7,
+            response_format: { type: "json_object" }
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Backend API call failed: ${response.status}`);
+        }
+
+        const apiResponse = await response.json();
+        console.log('🔍 TagAnalyzer - Raw backend response:', apiResponse.choices[0].message.content);
+
+        const result = JSON.parse(apiResponse.choices[0].message.content || '{}');
+        
+        // Track usage
+        const outputTokens = Math.ceil((apiResponse.choices[0].message.content || '').length / 4);
+        trackUsage('gpt', inputTokens, outputTokens);
+        
+        return result.tags || [];
+      } else {
+        // Use client-side OpenAI in legacy mode
+        if (!this.openai) {
+          throw new Error('OpenAI client not initialized');
+        }
+        
+        console.log('🔍 TagAnalyzer - Starting analysis:', {
+          contentPreview: content.substring(0, 100) + '...',
+          contentLength: content.length
+        });
+        
+        const inputTokens = Math.ceil((TAGGING_PROMPT.length + content.length) / 4); // Estimate input tokens
+        const response = await this.openai.chat.completions.create({
+          model: "gpt-4o-mini",
+          messages: [{
+            role: "system",
+            content: TAGGING_PROMPT
+          }, {
+            role: "user",
+            content
+          }],
+          temperature: 0.7,
+          response_format: { type: "json_object" }
+        });
+
+        console.log('🔍 TagAnalyzer - Raw OpenAI response:', response.choices[0].message.content);
+
+        const result = JSON.parse(response.choices[0].message.content || '{}');
+        
+        // Track usage
+        const outputTokens = Math.ceil((response.choices[0].message.content || '').length / 4);
+        trackUsage('gpt', inputTokens, outputTokens);
+        
+        console.log('🔍 TagAnalyzer - Parsed result:', {
+          content: content.substring(0, 50) + '...',
+          tags: result.tags,
+          fullResult: result
+        });
+        
+        return result.tags || [];
       }
-      
-      console.log('🔍 TagAnalyzer - Starting analysis:', {
-        contentPreview: content.substring(0, 100) + '...',
-        contentLength: content.length
-      });
-      
-      const inputTokens = Math.ceil((TAGGING_PROMPT.length + content.length) / 4); // Estimate input tokens
-      const response = await this.openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [{
-          role: "system",
-          content: TAGGING_PROMPT
-        }, {
-          role: "user",
-          content
-        }],
-        temperature: 0.7,
-        response_format: { type: "json_object" }
-      });
-
-      console.log('🔍 TagAnalyzer - Raw OpenAI response:', response.choices[0].message.content);
-
-      const result = JSON.parse(response.choices[0].message.content || '{}');
-      
-      // Track usage
-      const outputTokens = Math.ceil((response.choices[0].message.content || '').length / 4);
-      trackUsage('gpt', inputTokens, outputTokens);
-      console.log('🔍 TagAnalyzer - Parsed result:', {
-        content: content.substring(0, 50) + '...',
-        tags: result.tags,
-        fullResult: result
-      });
-      
-      return result.tags || [];
     } catch (error) {
       console.error('🔍 TagAnalyzer - Error:', {
         error,

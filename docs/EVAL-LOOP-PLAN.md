@@ -1,5 +1,10 @@
 # SPACE Terminal - Evaluation Loop Implementation Plan
 
+## 🎯 Current Status: Phase 5 Ready
+**Completed**: Phases 1-4 (JSON format, Gemini integration, Assertions system, Evaluations system, UI implementation)  
+**Next Up**: Phase 5 - Optimization Loop (10 iterations max)  
+**Branch**: `feature/eval-loop` (ready to merge)
+
 ## Overview
 Implement an evaluation and optimization loop for advisor responses, allowing users to define assertions, run evaluations, and automatically optimize prompts to meet those assertions.
 
@@ -10,7 +15,7 @@ Implement an evaluation and optimization loop for advisor responses, allowing us
 4. Store full conversation context for reproducibility
 5. Track evaluation and optimization history
 
-## Phase 1: JSON Refactor for Advisor Responses
+## Phase 1: JSON Refactor for Advisor Responses ✅ COMPLETED
 
 ### Current State
 - Single message contains multiple advisor perspectives with `[ADVISOR: Name]` markers
@@ -39,25 +44,25 @@ Implement an evaluation and optimization loop for advisor responses, allowing us
 }
 ```
 
-### Implementation Steps
-1. Update system prompt to request JSON output
-2. Modify `useClaude` hook to detect and parse JSON responses
-3. Create `AdvisorResponseCard` component with assertion button
-4. Update message rendering to handle both formats (backwards compatibility)
+### Implementation Steps ✅ COMPLETED
+1. ✅ Update system prompt to request JSON output
+2. ✅ Modify `useClaude` hook to detect and parse JSON responses
+3. ✅ Create `AdvisorResponseCard` component with assertion button
+4. ✅ Update message rendering to handle both formats (backwards compatibility)
 
-## Phase 2: Gemini 2.5 Flash-lite Integration
+## Phase 2: Gemini 2.5 Flash-lite Integration ✅ COMPLETED
 
 ### API Setup
 - Model: `gemini-2.5-flash-lite` (8192 token context)
 - Pricing: Free tier available, then $0.01/$0.04 per million tokens
 - Use cases: Assertions evaluation, prompt optimization
 
-### Implementation
-1. Add Gemini API key to environment variables
-2. Create `useGemini` hook for API calls
-3. Add key management in settings (similar to OpenAI)
+### Implementation ✅ COMPLETED
+1. ✅ Add Gemini API key to environment variables
+2. ✅ Create `useGemini` hook for API calls
+3. ✅ Add key management in settings (similar to OpenAI)
 
-## Phase 3: Assertions System
+## Phase 3: Assertions System ✅ COMPLETED
 
 ### Data Structure
 ```javascript
@@ -89,20 +94,20 @@ Implement an evaluation and optimization loop for advisor responses, allowing us
 }
 ```
 
-### UI Components
-1. **Assertion Button**: Small icon next to each advisor response
-2. **Assertions Modal**: Text area for entering multiple assertions
-3. **Save Logic**: Store assertions with full context
+### UI Components ✅ COMPLETED
+1. ✅ **Assertion Button**: Small icon next to each advisor response
+2. ✅ **Assertions Modal**: Text area for entering multiple assertions
+3. ✅ **Save Logic**: Store assertions with full context
 
-## Phase 4: Evaluations System
+## Phase 4: Evaluations System ✅ COMPLETED
 
-### Evaluation Process
-1. User clicks "Evaluate" in Evaluations modal
-2. Send single batch request to Gemini with:
+### Evaluation Process ✅ COMPLETED
+1. ✅ User clicks "Evaluate" in Evaluations modal
+2. ✅ Send single batch request to Gemini with:
    - The advisor response
    - All assertions to evaluate
    - Request JSON response with pass/fail for each
-3. Parse results and store with timestamp
+3. ✅ Parse results and store with timestamp
 
 ### Evaluation Prompt Template
 ```
@@ -153,7 +158,7 @@ evaluations: [
 ]
 ```
 
-## Phase 5: Optimization Loop
+## Phase 5: Optimization Loop ⏳ NEXT UP
 
 ### Optimization Strategy
 1. User selects "advisor" or "system" prompt optimization
@@ -207,16 +212,16 @@ optimizations: [
 ]
 ```
 
-## Phase 6: UI Implementation
+## Phase 6: UI Implementation ✅ COMPLETED
 
-### New Components
-1. **AssertionsModal**: Create/view assertions for a response
-2. **EvaluationsModal**: List responses with assertions, run evals
-3. **EvaluationResultsModal**: Show eval results
-4. **OptimizationModal**: Configure and run optimization
-5. **OptimizationProgressModal**: Show optimization progress
+### New Components ✅ COMPLETED
+1. ✅ **AssertionsModal**: Create/view assertions for a response
+2. ✅ **EvaluationsModal**: List responses with assertions, run evals
+3. ⏳ **EvaluationResultsModal**: Show eval results (basic version done)
+4. ⏳ **OptimizationModal**: Configure and run optimization (pending Phase 5)
+5. ⏳ **OptimizationProgressModal**: Show optimization progress (pending Phase 5)
 
-### AccordionMenu Addition
+### AccordionMenu Addition ✅ COMPLETED
 ```javascript
 {
   id: 'evaluations',
@@ -227,13 +232,13 @@ optimizations: [
 ```
 
 ## Implementation Order
-1. JSON refactor for advisor responses
-2. Gemini API integration
-3. Assertions UI and storage
-4. Evaluations button and modal
-5. Basic evaluation functionality
-6. Optimization loop
-7. Prompt update mechanism
+1. ✅ JSON refactor for advisor responses
+2. ✅ Gemini API integration
+3. ✅ Assertions UI and storage
+4. ✅ Evaluations button and modal
+5. ✅ Basic evaluation functionality
+6. ⏳ Optimization loop (NEXT: Phase 5)
+7. ⏳ Prompt update mechanism (NEXT: Phase 5)
 
 ## Success Metrics
 - Clean separation of advisor responses
