@@ -375,15 +375,8 @@ const Terminal = ({ theme, toggleTheme }) => {
     }
   }, [modalController, hasCheckedKeys, useAuthSystem]);
 
-const getSystemPrompt = useCallback(() => {
-  let prompt = "";
-  
-  // Add advisor personas
-  const activeAdvisors = advisors.filter(a => a.active);
-  if (activeAdvisors.length > 0) {
-    prompt += `You are currently embodying the following advisors:\n${activeAdvisors.map(a => `\n${a.name}: ${a.description}`).join('\n')}\n\n`;
-    
-    prompt += `RESPONSE FORMAT: Return your response as JSON in this exact structure:
+// Shared JSON response format for advisor responses (without synthesis)
+const ADVISOR_JSON_FORMAT = `RESPONSE FORMAT: Return your response as JSON in this exact structure:
 
 {
   "type": "advisor_response",
@@ -394,8 +387,7 @@ const getSystemPrompt = useCallback(() => {
       "response": "The advisor's complete response content here...",
       "timestamp": "${new Date().toISOString()}"
     }
-  ],
-  "synthesis": "Optional synthesis or conclusion bringing perspectives together"
+  ]
 }
 
 FORMATTING RULES:
@@ -403,18 +395,96 @@ FORMATTING RULES:
 2. Use the advisor's exact name as it appears in your persona list
 3. Include all response content in the "response" field
 4. Generate unique IDs using the pattern: resp-{advisor-name-lowercase}-{timestamp}
-5. The synthesis field is optional - include only if multiple perspectives need integration
-6. Return valid JSON only - no additional text before or after`;
+5. Return valid JSON only - no additional text before or after`;
+
+const getSystemPrompt = useCallback(({ councilMode, sessionContexts } = {}) => {
+  let prompt = "";
+  
+  // Add advisor personas
+  const activeAdvisors = advisors.filter(a => a.active);
+  if (activeAdvisors.length > 0) {
+    prompt += `You are currently embodying the following advisors:\n${activeAdvisors.map(a => `\n${a.name}: ${a.description}`).join('\n')}\n\n`;
+    
+    if (councilMode) {
+      prompt += `\n\n## HIGH COUNCIL MODE
+IMPORTANT: Start your response with the exact text "<COUNCIL_DEBATE>" (this is required for the interface to work properly).
+
+The advisors will engage in a structured debate, each maintaining their unique perspective throughout. Each advisor should:
+
+- Stay true to their core philosophy and worldview
+- Respond authentically from their own perspective
+- Keep responses concise: 2-3 sentences maximum per turn
+- Be direct and punchy - avoid lengthy explanations 
+- Challenge other advisors when they genuinely disagree
+- Build on points that align with their own thinking
+- Never abandon their perspective just to reach agreement
+
+CRITICAL: This must be a true DEBATE where advisors directly engage with each other's arguments, not separate speeches.
+
+Structure the debate exactly as follows:
+
+## ROUND 1: Initial Positions
+Each advisor states their position on the question.
+
+## ROUND 2: Direct Responses
+Each advisor must directly address the other advisors by name, responding to specific points from Round 1:
+- "Elon, you're wrong about X because..."
+- "I agree with you, Sarah, but you're missing..."
+- "That's complete nonsense, Marcus. Here's why..."
+
+## ROUND 3: Final Positions
+Each advisor directly challenges or supports the others' Round 2 arguments, speaking TO each other, not about them.
+
+CRITICAL: Use ## for round headers (not **bold**). Always add a blank line before each round header. Example:
+
+[ADVISOR: Name] Final sentence of previous round.
+
+## ROUND 2: Direct Responses
+
+[ADVISOR: Next Name] First response...
+
+REQUIREMENTS:
+- Advisors must reference each other by name and quote/paraphrase specific arguments
+- No advisor can ignore what others have said
+- Each response must build on the conversation, not restart it
+- Use transition phrases that show you're responding: "But as [Name] just pointed out..." or "That contradicts [Name]'s argument that..."
+
+MANDATORY FORMAT REQUIREMENTS:
+- Each advisor speaks for 2-3 sentences maximum per turn
+- Be concise and impactful, not verbose
+- You MUST wrap the entire debate in these exact tags:
+
+<COUNCIL_DEBATE>
+**ROUND 1: Initial Positions**
+[ADVISOR: Name] content...
+
+**ROUND 2: Direct Responses** 
+[ADVISOR: Name] responds to [Other Advisor]...
+
+**ROUND 3: Final Positions**
+[ADVISOR: Name] presents final stance...
+</COUNCIL_DEBATE>
+
+DO NOT FORGET THE <COUNCIL_DEBATE> TAGS. Without these tags, the debate will not display properly.
+
+## Council Summary
+
+After the debate section, provide:
+- One sentence per advisor summarizing their final position`;
+    } else {
+      prompt += ADVISOR_JSON_FORMAT;
+    }
   }
   // If no advisors are active, no system prompt is needed
   
-  // Add session context from @ references
-  if (currentSessionContexts.length > 0) {
+  // Add session context from @ references  
+  const contextsToUse = sessionContexts || currentSessionContexts;
+  if (contextsToUse.length > 0) {
     if (prompt) prompt += "\n\n";
     prompt += "## REFERENCED CONVERSATION CONTEXTS\n\n";
     prompt += "The user has referenced the following previous conversations for context:\n\n";
     
-    currentSessionContexts.forEach((context, index) => {
+    contextsToUse.forEach((context, index) => {
       const date = new Date(context.timestamp).toLocaleDateString();
       prompt += `### Context ${index + 1}: "${context.title}" (Session ${context.sessionId}, ${date})\n`;
       prompt += `${context.summary}\n\n`;
@@ -2344,7 +2414,7 @@ Gemini: ${geminiKey ? '✓ Set' : '✗ Not Set'}`
       const tagAnalysisPromise = (async () => {
         try {
           console.log('🏷️ Starting tag analysis for:', processedInput.substring(0, 100) + '...');
-          const tags = await sharedTagAnalyzer.analyzeTags(processedInput);
+          const tags = await sharedTagAnalyzer.analyzeTags(processedInput, session);
           console.log('🏷️ Tags generated:', tags);
           if (debugMode) {
             console.log('🏷️ Debug mode active, tags:', tags);
@@ -2371,133 +2441,14 @@ Gemini: ${geminiKey ? '✓ Set' : '✗ Not Set'}`
       // Add it to messages state
       await setMessages(prev => [...prev, newMessage]);
 
-      // Create a temporary system prompt function with the contexts
-      const getSystemPromptWithContexts = ({ councilMode } = {}) => {
-        let prompt = "";
-        
-        // Add advisor personas
-        const activeAdvisors = advisors.filter(a => a.active);
-        if (activeAdvisors.length > 0) {
-          prompt += `You are currently embodying the following advisors:\n${activeAdvisors.map(a => `\n${a.name}: ${a.description}`).join('\n')}\n\n`;
-          
-          if (councilMode) {
-            prompt += `\n\n## HIGH COUNCIL MODE
-IMPORTANT: Start your response with the exact text "<COUNCIL_DEBATE>" (this is required for the interface to work properly).
-
-The advisors will engage in a structured debate, each maintaining their unique perspective throughout. Each advisor should:
-
-- Stay true to their core philosophy and worldview
-- Respond authentically from their own perspective
-- Keep responses concise: 2-3 sentences maximum per turn
-- Be direct and punchy - avoid lengthy explanations 
-- Challenge other advisors when they genuinely disagree
-- Build on points that align with their own thinking
-- Never abandon their perspective just to reach agreement
-
-CRITICAL: This must be a true DEBATE where advisors directly engage with each other's arguments, not separate speeches.
-
-Structure the debate exactly as follows:
-
-## ROUND 1: Initial Positions
-Each advisor states their position on the question.
-
-## ROUND 2: Direct Responses
-Each advisor must directly address the other advisors by name, responding to specific points from Round 1:
-- "Elon, you're wrong about X because..."
-- "I agree with you, Sarah, but you're missing..."
-- "That's complete nonsense, Marcus. Here's why..."
-
-## ROUND 3: Final Positions
-Each advisor directly challenges or supports the others' Round 2 arguments, speaking TO each other, not about them.
-
-CRITICAL: Use ## for round headers (not **bold**). Always add a blank line before each round header. Example:
-
-[ADVISOR: Name] Final sentence of previous round.
-
-## ROUND 2: Direct Responses
-
-[ADVISOR: Next Name] First response...
-
-REQUIREMENTS:
-- Advisors must reference each other by name and quote/paraphrase specific arguments
-- No advisor can ignore what others have said
-- Each response must build on the conversation, not restart it
-- Use transition phrases that show you're responding: "But as [Name] just pointed out..." or "That contradicts [Name]'s argument that..."
-
-MANDATORY FORMAT REQUIREMENTS:
-- Each advisor speaks for 2-3 sentences maximum per turn
-- Be concise and impactful, not verbose
-- You MUST wrap the entire debate in these exact tags:
-
-<COUNCIL_DEBATE>
-**ROUND 1: Initial Positions**
-[ADVISOR: Name] content...
-
-**ROUND 2: Direct Responses** 
-[ADVISOR: Name] responds to [Other Advisor]...
-
-**ROUND 3: Final Positions**
-[ADVISOR: Name] presents final stance...
-</COUNCIL_DEBATE>
-
-DO NOT FORGET THE <COUNCIL_DEBATE> TAGS. Without these tags, the debate will not display properly.
-
-## Council Summary
-
-After the debate section, provide:
-- One sentence per advisor summarizing their final position
-- Synthesis: 1-2 sentences on the overall outcome or remaining tensions`;
-          } else {
-            prompt += `RESPONSE FORMAT: Use this exact structure for every advisor response:
-
-[ADVISOR: Advisor Name]
-optional action or emotional state on this line by itself
-
-Main response content starts here on a new line after a blank line.
-
-[ADVISOR: Another Advisor Name]
-another optional action line
-
-Another advisor's response content.
-
-FORMATTING RULES:
-1. Advisor name always goes in [ADVISOR: Name] brackets
-2. If you include an action/emotional description, it goes on its own line immediately after the advisor name
-3. Always leave one blank line before starting the main response content
-4. Use single line breaks within paragraphs, double line breaks between major sections
-5. Each advisor gets their own clearly separated section`;
-          }
-        }
-        // If no advisors are active, no system prompt is needed
-        
-        // Add session context from @ references
-        // console.log('📄 getSystemPromptWithContexts - sessionContexts:', sessionContexts);
-        if (sessionContexts.length > 0) {
-          if (prompt) prompt += "\n\n";
-          prompt += "## REFERENCED CONVERSATION CONTEXTS\n\n";
-          prompt += "The user has referenced the following previous conversations for context:\n\n";
-          
-          sessionContexts.forEach((context, index) => {
-            const date = new Date(context.timestamp).toLocaleDateString();
-            prompt += `### Context ${index + 1}: "${context.title}" (Session ${context.sessionId}, ${date})\n`;
-            prompt += `${context.summary}\n\n`;
-          });
-          
-          prompt += "Use these conversation contexts to inform your response when relevant. The user's message may reference specific details from these conversations.\n";
-          // console.log('📄 Added session contexts to system prompt');
-        } else {
-          // console.log('📄 No session contexts to add');
-        }
-        
-        return prompt;
-      };
+      // Use the consolidated system prompt function with the session contexts
 
       // Pass the content to Claude with enhanced system prompt (this starts immediately)
       if (councilMode) {
-        const systemPrompt = getSystemPromptWithContexts({ councilMode });
+        const systemPrompt = getSystemPrompt({ councilMode, sessionContexts });
         // console.log('🏛️ High Council System Prompt:', systemPrompt);
       }
-      await callClaude(newMessage.content, () => getSystemPromptWithContexts({ councilMode }));
+      await callClaude(newMessage.content, () => getSystemPrompt({ councilMode, sessionContexts }));
 
       // Update message with tags after tag analysis completes (in background)
       tagAnalysisPromise.then(tags => {
@@ -3472,12 +3423,6 @@ ${selectedText}
                             }}
                           />
                         ))}
-                        {msg.parsedAdvisors.synthesis && (
-                          <div className="mt-4 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
-                            <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Synthesis</h4>
-                            <MemoizedMarkdownMessage content={msg.parsedAdvisors.synthesis} advisors={advisors} />
-                          </div>
-                        )}
                       </div>
                     ) : msg.type === 'assistant' ? (
                       (() => {

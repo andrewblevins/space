@@ -74,10 +74,7 @@ export const MemoizedMarkdownMessage = memo(({ content, advisors = [] }) => {
   }
 
     // Regular content without advisor markers - reduce paragraph spacing
-  console.log('🔍 Original content:', JSON.stringify(content));
   const processedContent = content.replace(/\n\n+/g, '\n\n'); // Keep paragraph breaks but will use tiny spacing
-  console.log('🔍 Processed content:', JSON.stringify(processedContent));
-  console.log('🔍 Double newlines found:', content.includes('\n\n'));
   
   return (
     <ReactMarkdown

@@ -67,7 +67,7 @@ export default class TagAnalyzer {
     }
   }
 
-  async analyzeTags(content: string): Promise<Tag[]> {
+  async analyzeTags(content: string, session: any = null): Promise<Tag[]> {
     try {
       await this.initialize();
       
@@ -79,11 +79,17 @@ export default class TagAnalyzer {
         
         const inputTokens = Math.ceil((TAGGING_PROMPT.length + content.length) / 4);
         
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json'
+        };
+        
+        if (session && session.access_token) {
+          headers['Authorization'] = `Bearer ${session.access_token}`;
+        }
+        
         const response = await fetch('/api/chat/openai', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
+          headers,
           credentials: 'include',
           body: JSON.stringify({
             model: "gpt-4o-mini",
