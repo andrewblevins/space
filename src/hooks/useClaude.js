@@ -237,12 +237,22 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
       content: currentMessageContent.substring(0, 100) + '...',
       startsWithBrace: currentMessageContent.trim().startsWith('{'),
       endsWithBrace: currentMessageContent.trim().endsWith('}'),
+      startsWithCodeBlock: currentMessageContent.trim().startsWith('```json'),
+      endsWithCodeBlock: currentMessageContent.trim().endsWith('```'),
       length: currentMessageContent.length
     });
     
-    if (currentMessageContent.trim().startsWith('{') && currentMessageContent.trim().endsWith('}')) {
+    // Check for JSON - either direct JSON or markdown code block
+    let jsonContent = currentMessageContent.trim();
+    if (jsonContent.startsWith('```json') && jsonContent.endsWith('```')) {
+      // Extract JSON from markdown code block
+      jsonContent = jsonContent.slice(7, -3).trim(); // Remove ```json and ```
+      console.log('🎭 Extracted JSON from code block:', jsonContent.substring(0, 100) + '...');
+    }
+    
+    if (jsonContent.startsWith('{') && jsonContent.endsWith('}')) {
       try {
-        const parsed = JSON.parse(currentMessageContent.trim());
+        const parsed = JSON.parse(jsonContent);
         console.log('🎭 Successfully parsed JSON:', parsed);
         
         if (parsed.type === 'advisor_response' && parsed.advisors && Array.isArray(parsed.advisors)) {
@@ -255,7 +265,7 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
             if (newMessages.length > 0) {
               newMessages[newMessages.length - 1] = { 
                 type: 'advisor_json', 
-                content: currentMessageContent,
+                content: jsonContent, // Use clean JSON content instead of raw with markdown
                 parsedAdvisors: parsedAdvisorResponse,
                 thinking: (reasoningMode && !isCouncilMode) ? thinkingContent : undefined
               };
