@@ -333,8 +333,8 @@ If you can remove a word without changing the meaning, remove it. If you can sim
 
 ## 📚 Additional Resources
 
-
 - **Technical Architecture**: `/docs/ARCHITECTURE.md` - Comprehensive system overview
+- **Advisor System**: `/docs/ADVISOR-SYSTEM.md` - Implementation details for advisor features
 - **API Documentation**: Check component files for props and usage
 - **Environment Setup**: Use `npm run dev:setup` for quick start
 
