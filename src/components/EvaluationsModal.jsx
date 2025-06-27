@@ -1,13 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { getAllResponsesWithAssertions, evaluateAssertions } from '../utils/evaluationHelpers';
 import { useGemini } from '../hooks/useGemini';
+import useClaude from '../hooks/useClaude';
 
 const EvaluationsModal = ({ isOpen, onClose }) => {
   const [responses, setResponses] = useState([]);
   const [selectedResponse, setSelectedResponse] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isEvaluating, setIsEvaluating] = useState(false);
+  const [isOptimizing, setIsOptimizing] = useState(false);
+  const [optimizationProgress, setOptimizationProgress] = useState({ current: 0, total: 10 });
+  const [optimizationResult, setOptimizationResult] = useState(null);
+  const [showOptimizationModal, setShowOptimizationModal] = useState(false);
   const { callGemini } = useGemini();
+  
+  // Create a minimal Claude hook instance for testing optimized prompts
+  const { callClaude } = useClaude({ 
+    messages: [], 
+    setMessages: () => {}, 
+    maxTokens: 1000, 
+    contextLimit: 16000, 
+    memory: null, 
+    debugMode: false, 
+    reasoningMode: false, 
+    getSystemPrompt: () => ""
+  });
 
   useEffect(() => {
     if (isOpen) {
@@ -60,9 +77,187 @@ const EvaluationsModal = ({ isOpen, onClose }) => {
     }
   };
 
-  const handleOptimize = () => {
-    // TODO: Implement optimization modal
-    console.log('🔧 Optimize clicked for:', selectedResponse);
+  const handleOptimize = async () => {
+    if (!selectedResponse) return;
+
+    setIsOptimizing(true);
+    setOptimizationProgress({ current: 0, total: 10 });
+    setOptimizationResult(null);
+    setShowOptimizationModal(true);
+
+    try {
+      // Find the advisor that produced this response
+      const targetAdvisor = selectedResponse.conversationContext.advisors?.find(
+        advisor => advisor.name === selectedResponse.advisorName
+      );
+
+      if (!targetAdvisor) {
+        throw new Error('Could not find advisor configuration for optimization');
+      }
+
+      const originalPrompt = targetAdvisor.description;
+      const failedAssertions = selectedResponse.assertions.filter(assertion => {
+        // Check if this assertion failed in the most recent evaluation
+        const latestEval = selectedResponse.evaluations?.[selectedResponse.evaluations.length - 1];
+        if (!latestEval) return true; // No evaluation yet, assume all need optimization
+        
+        const assertionResult = latestEval.results.find(r => r.assertionId === assertion.id);
+        return !assertionResult?.passed;
+      });
+
+      if (failedAssertions.length === 0) {
+        throw new Error('No failed assertions to optimize for');
+      }
+
+      let bestPrompt = originalPrompt;
+      let bestResult = null;
+      let bestScore = 0;
+
+      // Run optimization iterations
+      for (let iteration = 1; iteration <= 10; iteration++) {
+        setOptimizationProgress({ current: iteration, total: 10 });
+
+        // Generate improved prompt using Gemini
+        const optimizationPrompt = `Current advisor prompt for ${selectedResponse.advisorName}:
+${bestPrompt}
+
+This advisor's response failed these assertions:
+${failedAssertions.map((assertion, index) => `${index + 1}. ${assertion.text}`).join('\n')}
+
+The original response was:
+${selectedResponse.responseContent}
+
+Suggest an improved advisor prompt that would help produce responses meeting all assertions. Keep the same expertise level and personality, just enhance the approach.
+
+Improved prompt:`;
+
+        const geminiResult = await callGemini(optimizationPrompt, {
+          temperature: 0.3,
+          maxOutputTokens: 500
+        });
+
+        const improvedPrompt = geminiResult.choices[0].message.content.trim();
+
+        // Create a temporary system prompt with the improved advisor
+        const testSystemPrompt = `You are currently embodying the following advisor:
+
+${selectedResponse.advisorName}: ${improvedPrompt}
+
+Please respond to user questions from this advisor's perspective, maintaining their expertise and approach.`;
+
+        // Test the improved prompt with the original conversation context
+        const contextMessages = selectedResponse.conversationContext.messages || [];
+        const lastUserMessage = contextMessages.reverse().find(msg => msg.type === 'user');
+        
+        if (!lastUserMessage) {
+          throw new Error('Could not find original user message for testing');
+        }
+
+        // Get test response from Claude
+        const testResponse = await callClaude(lastUserMessage.content, () => testSystemPrompt);
+
+        // Evaluate the test response
+        const evaluationResult = await evaluateAssertions(
+          testResponse,
+          selectedResponse.assertions,
+          callGemini
+        );
+
+        // Calculate score (number of assertions passed)
+        const score = evaluationResult.results.filter(r => r.passed).length;
+
+        // Keep best result
+        if (score > bestScore) {
+          bestScore = score;
+          bestPrompt = improvedPrompt;
+          bestResult = {
+            prompt: improvedPrompt,
+            evaluation: evaluationResult,
+            iteration: iteration,
+            score: score,
+            totalAssertions: selectedResponse.assertions.length
+          };
+        }
+
+        // If all assertions pass, we're done
+        if (evaluationResult.overallPassed) {
+          break;
+        }
+      }
+
+      // Set final result
+      setOptimizationResult({
+        originalPrompt,
+        bestPrompt,
+        result: bestResult,
+        success: bestResult?.evaluation.overallPassed || false,
+        improvementCount: bestScore,
+        totalAssertions: selectedResponse.assertions.length
+      });
+
+    } catch (error) {
+      console.error('Optimization failed:', error);
+      setOptimizationResult({
+        error: error.message,
+        success: false
+      });
+    } finally {
+      setIsOptimizing(false);
+    }
+  };
+
+  const handleAcceptOptimization = () => {
+    if (!optimizationResult || !selectedResponse) return;
+
+    // Store the optimization result in the assertions data
+    const optimizationData = {
+      id: `opt-${Date.now()}`,
+      startedAt: new Date().toISOString(),
+      completedAt: new Date().toISOString(),
+      originalPrompt: optimizationResult.originalPrompt,
+      finalPrompt: optimizationResult.bestPrompt,
+      success: optimizationResult.success,
+      totalIterations: optimizationResult.result?.iteration || 10,
+      improvementCount: optimizationResult.improvementCount,
+      totalAssertions: optimizationResult.totalAssertions
+    };
+
+    // Update the response with optimization data
+    const updatedResponse = {
+      ...selectedResponse,
+      optimizations: [...(selectedResponse.optimizations || []), optimizationData],
+      updatedAt: new Date().toISOString()
+    };
+
+    // Save to localStorage
+    localStorage.setItem(
+      `space_assertions_${selectedResponse.responseId}`,
+      JSON.stringify(updatedResponse)
+    );
+
+    // Update local state
+    setSelectedResponse(updatedResponse);
+    setResponses(prev => prev.map(r => 
+      r.responseId === selectedResponse.responseId ? updatedResponse : r
+    ));
+
+    // TODO: Actually update the advisor in the main application
+    // This would require access to the main advisor state management
+    console.log('🎯 Optimization accepted - would update advisor:', {
+      advisorName: selectedResponse.advisorName,
+      newPrompt: optimizationResult.bestPrompt
+    });
+
+    // Close optimization modal
+    setShowOptimizationModal(false);
+    setOptimizationResult(null);
+  };
+
+  const handleCancelOptimization = () => {
+    setIsOptimizing(false);
+    setShowOptimizationModal(false);
+    setOptimizationResult(null);
+    setOptimizationProgress({ current: 0, total: 10 });
   };
 
   const formatDate = (dateString) => {
@@ -250,9 +445,10 @@ const EvaluationsModal = ({ isOpen, onClose }) => {
                   </button>
                   <button
                     onClick={handleOptimize}
-                    className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+                    disabled={isOptimizing}
+                    className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
-                    Optimize
+                    {isOptimizing ? 'Optimizing...' : 'Optimize'}
                   </button>
                 </div>
               </div>
@@ -264,6 +460,100 @@ const EvaluationsModal = ({ isOpen, onClose }) => {
           </div>
         </div>
       </div>
+
+      {/* Optimization Modal Overlay */}
+      {showOptimizationModal && (
+        <div className="absolute inset-0 bg-black bg-opacity-75 flex items-center justify-center z-10">
+          <div className="bg-white dark:bg-gray-900 rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+            {isOptimizing ? (
+              /* Progress View */
+              <div className="text-center">
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">
+                  Optimizing {selectedResponse?.advisorName}
+                </h3>
+                <div className="flex items-center justify-center mb-4">
+                  <svg className="animate-spin h-8 w-8 text-green-600 mr-3" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span className="text-gray-600 dark:text-gray-400">
+                    Iteration {optimizationProgress.current} of {optimizationProgress.total}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                  Testing improved prompts against your assertions...
+                </p>
+                <button
+                  onClick={handleCancelOptimization}
+                  className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : optimizationResult ? (
+              /* Results View */
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">
+                  Optimization Results
+                </h3>
+                
+                {optimizationResult.error ? (
+                  <div className="mb-4 p-3 bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded">
+                    <p className="text-red-800 dark:text-red-200">
+                      Error: {optimizationResult.error}
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded">
+                      <p className="text-blue-800 dark:text-blue-200">
+                        {optimizationResult.success ? (
+                          `✅ Success! All ${optimizationResult.totalAssertions} assertions now pass.`
+                        ) : (
+                          `⚠️ Improved ${optimizationResult.improvementCount} of ${optimizationResult.totalAssertions} assertions.`
+                        )}
+                      </p>
+                    </div>
+
+                    <div className="space-y-4 mb-6">
+                      <div>
+                        <h4 className="font-medium text-gray-800 dark:text-gray-200 mb-2">Original Prompt:</h4>
+                        <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded text-sm">
+                          {optimizationResult.originalPrompt}
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <h4 className="font-medium text-gray-800 dark:text-gray-200 mb-2">Optimized Prompt:</h4>
+                        <div className="p-3 bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-700 rounded text-sm">
+                          {optimizationResult.bestPrompt}
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                <div className="flex space-x-3">
+                  {!optimizationResult.error && (
+                    <button
+                      onClick={handleAcceptOptimization}
+                      className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+                    >
+                      Accept & Apply
+                    </button>
+                  )}
+                  <button
+                    onClick={handleCancelOptimization}
+                    className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+                  >
+                    {optimizationResult.error ? 'Close' : 'Cancel'}
+                  </button>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

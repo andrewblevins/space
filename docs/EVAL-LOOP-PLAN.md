@@ -1,9 +1,9 @@
 # SPACE Terminal - Evaluation Loop Implementation Plan
 
-## 🎯 Current Status: Phase 5 Ready
-**Completed**: Phases 1-4 (JSON format, Gemini integration, Assertions system, Evaluations system, UI implementation)  
-**Next Up**: Phase 5 - Optimization Loop (10 iterations max)  
-**Branch**: `feature/eval-loop` (ready to merge)
+## 🎯 Current Status: Phase 5 Complete (Ready for Testing)
+**Completed**: Phases 1-5 (JSON format, Gemini integration, Assertions system, Evaluations system, Optimization MVP)  
+**Next Up**: Testing and refinement  
+**Branch**: `feature/eval-loop` (ready to merge full evaluation + optimization system)
 
 ## Overview
 Implement an evaluation and optimization loop for advisor responses, allowing users to define assertions, run evaluations, and automatically optimize prompts to meet those assertions.
@@ -158,68 +158,74 @@ evaluations: [
 ]
 ```
 
-## Phase 5: Optimization Loop ⏳ NEXT UP
+## Phase 5: Optimization Loop (MVP) ✅ COMPLETED
 
-### Optimization Strategy
-1. User selects "advisor" or "system" prompt optimization
-2. Run baseline evaluation
-3. For up to 10 iterations:
-   - Use Gemini to suggest improved prompt
-   - Test with Claude using new prompt
+### MVP Optimization Strategy
+1. **Advisor-only optimization** (skip system prompt for MVP)
+2. **Simple progress feedback** - spinner with iteration count
+3. **Background processing** - run all 10 iterations without user intervention
+4. **Binary decision** - accept optimized prompt or keep original
+5. **Best attempt on failure** - present best result if no perfect solution found
+
+### Optimization Process (MVP)
+1. User clicks "Optimize" in Evaluations modal
+2. Simple modal: "Optimize [Advisor Name]?" with Start button
+3. Progress: "Optimizing prompts... (3/10)" with cancel option
+4. For each iteration (up to 10):
+   - Use Gemini to suggest improved advisor prompt
+   - Test with Claude using original conversation context
    - Evaluate against assertions
-   - Stop if all pass, continue if not
+   - Keep best result, continue if not perfect
+5. Present results: "Improved X/Y assertions" with before/after prompts
+6. User chooses: Accept or Cancel
 
-### Optimization Prompt Template
+### Optimization Prompt Template (MVP)
 ```
-Current [advisor/system] prompt:
+Current advisor prompt for [ADVISOR_NAME]:
 [CURRENT PROMPT]
 
-This prompt produced a response that failed these assertions:
-[FAILED ASSERTIONS]
+This advisor's response failed these assertions:
+[FAILED ASSERTIONS WITH REASONS]
 
-The response was:
+The original response was:
 [ADVISOR RESPONSE]
 
-Suggest an improved prompt that would help produce responses meeting all assertions. Keep the same tone and expertise level.
+Suggest an improved advisor prompt that would help produce responses meeting all assertions. Keep the same expertise level and personality, just enhance the approach.
 
 Improved prompt:
 ```
 
-### Storage Structure
+### Storage Structure (MVP)
 ```javascript
+// Add to existing assertions data structure
 optimizations: [
   {
     id: "opt-1",
     startedAt: "2025-01-26T12:10:00.000Z",
     completedAt: "2025-01-26T12:15:00.000Z",
-    targetType: "advisor", // or "system"
-    targetAdvisor: "Carl Jung", // if advisor type
     originalPrompt: "Analytical psychologist...",
-    iterations: [
-      {
-        iteration: 1,
-        prompt: "Analytical psychologist who emphasizes unconscious patterns...",
-        response: "...",
-        evalResults: { passed: 1, failed: 1 },
-        timestamp: "2025-01-26T12:11:00.000Z"
-      },
-      // ... more iterations
-    ],
     finalPrompt: "Analytical psychologist who explores both personal and collective unconscious...",
-    success: true,
-    totalIterations: 3
+    success: true,  // All assertions passed
+    totalIterations: 3,
+    improvementCount: 2, // How many assertions improved
+    totalAssertions: 3
   }
 ]
 ```
 
-## Phase 6: UI Implementation ✅ COMPLETED
+### Implementation (MVP)
+1. **Single component**: Extend `EvaluationsModal` with optimization logic
+2. **No new hooks**: Add `handleOptimize` function directly
+3. **Simple UI**: Basic modal overlay for progress and results
+4. **Core logic**: 10-iteration loop with Gemini + Claude + evaluation
+
+## Phase 6: UI Implementation ✅ PARTIALLY COMPLETED
 
 ### New Components ✅ COMPLETED
 1. ✅ **AssertionsModal**: Create/view assertions for a response
 2. ✅ **EvaluationsModal**: List responses with assertions, run evals
-3. ⏳ **EvaluationResultsModal**: Show eval results (basic version done)
-4. ⏳ **OptimizationModal**: Configure and run optimization (pending Phase 5)
-5. ⏳ **OptimizationProgressModal**: Show optimization progress (pending Phase 5)
+3. ✅ **EvaluationResultsModal**: Show eval results (basic version)
+4. ⏳ **Optimization UI**: Simple modal overlay within EvaluationsModal (MVP approach)
 
 ### AccordionMenu Addition ✅ COMPLETED
 ```javascript
@@ -237,8 +243,8 @@ optimizations: [
 3. ✅ Assertions UI and storage
 4. ✅ Evaluations button and modal
 5. ✅ Basic evaluation functionality
-6. ⏳ Optimization loop (NEXT: Phase 5)
-7. ⏳ Prompt update mechanism (NEXT: Phase 5)
+6. ✅ Optimization loop (MVP implementation)
+7. ⏳ Prompt update mechanism (basic version implemented, needs integration with main advisor state)
 
 ## Success Metrics
 - Clean separation of advisor responses
