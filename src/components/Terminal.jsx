@@ -3794,6 +3794,18 @@ ${selectedText}
       <EvaluationsModal
         isOpen={showEvaluationsModal}
         onClose={() => setShowEvaluationsModal(false)}
+        advisors={advisors}
+        onUpdateAdvisor={(advisorName, updatedProperties) => {
+          setAdvisors(prev => prev.map(a => 
+            a.name === advisorName 
+              ? { ...a, ...updatedProperties }
+              : a
+          ));
+          setMessages(prev => [...prev, {
+            type: 'system',
+            content: `Updated advisor "${advisorName}" with optimized prompt.`
+          }]);
+        }}
       />
     </>
   );

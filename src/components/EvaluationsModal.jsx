@@ -3,7 +3,7 @@ import { getAllResponsesWithAssertions, evaluateAssertions } from '../utils/eval
 import { useGemini } from '../hooks/useGemini';
 import useClaude from '../hooks/useClaude';
 
-const EvaluationsModal = ({ isOpen, onClose }) => {
+const EvaluationsModal = ({ isOpen, onClose, advisors = [], onUpdateAdvisor }) => {
   const [responses, setResponses] = useState([]);
   const [selectedResponse, setSelectedResponse] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -80,6 +80,8 @@ const EvaluationsModal = ({ isOpen, onClose }) => {
   const handleOptimize = async () => {
     if (!selectedResponse) return;
 
+    console.log('🚀 Starting optimization process for:', selectedResponse.advisorName);
+
     setIsOptimizing(true);
     setOptimizationProgress({ current: 0, total: 10 });
     setOptimizationResult(null);
@@ -96,6 +98,8 @@ const EvaluationsModal = ({ isOpen, onClose }) => {
       }
 
       const originalPrompt = targetAdvisor.description;
+      console.log('📝 Original prompt:', originalPrompt);
+
       const failedAssertions = selectedResponse.assertions.filter(assertion => {
         // Check if this assertion failed in the most recent evaluation
         const latestEval = selectedResponse.evaluations?.[selectedResponse.evaluations.length - 1];
@@ -105,6 +109,8 @@ const EvaluationsModal = ({ isOpen, onClose }) => {
         return !assertionResult?.passed;
       });
 
+      console.log('❌ Failed assertions to optimize:', failedAssertions.map(a => a.text));
+
       if (failedAssertions.length === 0) {
         throw new Error('No failed assertions to optimize for');
       }
@@ -113,8 +119,11 @@ const EvaluationsModal = ({ isOpen, onClose }) => {
       let bestResult = null;
       let bestScore = 0;
 
+      console.log('🔄 Starting 10-iteration optimization loop...');
+
       // Run optimization iterations
       for (let iteration = 1; iteration <= 10; iteration++) {
+        console.log(`🔄 Iteration ${iteration}/10 - Testing new prompt...`);
         setOptimizationProgress({ current: iteration, total: 10 });
 
         // Generate improved prompt using Gemini
@@ -129,14 +138,66 @@ ${selectedResponse.responseContent}
 
 Suggest an improved advisor prompt that would help produce responses meeting all assertions. Keep the same expertise level and personality, just enhance the approach.
 
-Improved prompt:`;
+Return ONLY the improved prompt text, no explanations or meta-commentary. Just the prompt that would be used to instruct the AI advisor.`;
 
+        console.log(`🤖 Asking Gemini for prompt improvement...`);
         const geminiResult = await callGemini(optimizationPrompt, {
           temperature: 0.3,
           maxOutputTokens: 500
         });
 
-        const improvedPrompt = geminiResult.choices[0].message.content.trim();
+        let improvedPrompt = geminiResult.choices[0].message.content.trim();
+        
+        // Clean up the response - remove any meta-commentary
+        // Look for common patterns and extract just the prompt
+        const promptMarkers = [
+          /^(?:Here's an improved.*?prompt.*?:[\s\S]*?)(?=\*\*Prompt:\*\*)(.*?)(?=\*\*.*?:)/s,
+          /\*\*Prompt:\*\*(.*?)(?=\*\*(?:Key improvements|Example|Your response).*?:)/s,
+          /(?:Improved prompt:|IMPROVED PROMPT:)(.*?)(?=\n\n\*\*|$)/s,
+          /^(?:.*?)(You are .*?)(?=\n\n\*\*|$)/s
+        ];
+        
+        for (const marker of promptMarkers) {
+          const match = improvedPrompt.match(marker);
+          if (match && match[1]) {
+            improvedPrompt = match[1].trim();
+            break;
+          }
+        }
+        
+        // If the response still contains meta-commentary, try to extract the core prompt
+        if (improvedPrompt.includes('**') || improvedPrompt.includes('Key improvements') || improvedPrompt.includes('Example Responses')) {
+          // Try to find the actual prompt between markers
+          const lines = improvedPrompt.split('\n');
+          let promptStart = -1;
+          let promptEnd = -1;
+          
+          for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (line.startsWith('You are ') && promptStart === -1) {
+              promptStart = i;
+            }
+            if (promptStart !== -1 && (line.includes('**') || line.includes('Key improvements') || line.includes('Example'))) {
+              promptEnd = i;
+              break;
+            }
+          }
+          
+          if (promptStart !== -1 && promptEnd !== -1) {
+            improvedPrompt = lines.slice(promptStart, promptEnd).join('\n').trim();
+          } else if (promptStart !== -1) {
+            // Take from start to first double asterisk or end
+            let endIndex = lines.length;
+            for (let i = promptStart; i < lines.length; i++) {
+              if (lines[i].includes('**')) {
+                endIndex = i;
+                break;
+              }
+            }
+            improvedPrompt = lines.slice(promptStart, endIndex).join('\n').trim();
+          }
+        }
+        console.log(`✨ Iteration ${iteration} - Improved prompt:`, improvedPrompt);
 
         // Create a temporary system prompt with the improved advisor
         const testSystemPrompt = `You are currently embodying the following advisor:
@@ -154,9 +215,12 @@ Please respond to user questions from this advisor's perspective, maintaining th
         }
 
         // Get test response from Claude
+        console.log(`🧠 Testing with Claude using prompt: "${lastUserMessage.content}"`);
         const testResponse = await callClaude(lastUserMessage.content, () => testSystemPrompt);
+        console.log(`💬 Claude test response:`, testResponse.substring(0, 200) + '...');
 
         // Evaluate the test response
+        console.log(`🔍 Evaluating test response against assertions...`);
         const evaluationResult = await evaluateAssertions(
           testResponse,
           selectedResponse.assertions,
@@ -165,9 +229,17 @@ Please respond to user questions from this advisor's perspective, maintaining th
 
         // Calculate score (number of assertions passed)
         const score = evaluationResult.results.filter(r => r.passed).length;
+        console.log(`📊 Iteration ${iteration} - Score: ${score}/${selectedResponse.assertions.length} assertions passed`);
+        
+        // Log individual assertion results
+        evaluationResult.results.forEach((result, index) => {
+          const status = result.passed ? '✅' : '❌';
+          console.log(`   ${status} Assertion ${index + 1}: ${result.reason}`);
+        });
 
         // Keep best result
         if (score > bestScore) {
+          console.log(`🎯 New best score! ${score}/${selectedResponse.assertions.length} (previous: ${bestScore})`);
           bestScore = score;
           bestPrompt = improvedPrompt;
           bestResult = {
@@ -177,15 +249,23 @@ Please respond to user questions from this advisor's perspective, maintaining th
             score: score,
             totalAssertions: selectedResponse.assertions.length
           };
+        } else {
+          console.log(`📈 No improvement. Keeping previous best: ${bestScore}/${selectedResponse.assertions.length}`);
         }
 
         // If all assertions pass, we're done
         if (evaluationResult.overallPassed) {
+          console.log(`🎉 All assertions passed! Optimization complete at iteration ${iteration}`);
           break;
         }
       }
 
       // Set final result
+      console.log(`🏁 Optimization complete!`);
+      console.log(`📝 Final optimized prompt:`, bestPrompt);
+      console.log(`📊 Final score: ${bestScore}/${selectedResponse.assertions.length} assertions passed`);
+      console.log(`🎯 Success: ${bestResult?.evaluation.overallPassed ? 'YES' : 'NO'}`);
+
       setOptimizationResult({
         originalPrompt,
         bestPrompt,
@@ -196,7 +276,7 @@ Please respond to user questions from this advisor's perspective, maintaining th
       });
 
     } catch (error) {
-      console.error('Optimization failed:', error);
+      console.error('❌ Optimization failed:', error);
       setOptimizationResult({
         error: error.message,
         success: false
@@ -208,6 +288,9 @@ Please respond to user questions from this advisor's perspective, maintaining th
 
   const handleAcceptOptimization = () => {
     if (!optimizationResult || !selectedResponse) return;
+
+    console.log('✅ User accepted optimization for:', selectedResponse.advisorName);
+    console.log('📝 Accepted prompt:', optimizationResult.bestPrompt);
 
     // Store the optimization result in the assertions data
     const optimizationData = {
@@ -241,12 +324,18 @@ Please respond to user questions from this advisor's perspective, maintaining th
       r.responseId === selectedResponse.responseId ? updatedResponse : r
     ));
 
-    // TODO: Actually update the advisor in the main application
-    // This would require access to the main advisor state management
-    console.log('🎯 Optimization accepted - would update advisor:', {
-      advisorName: selectedResponse.advisorName,
-      newPrompt: optimizationResult.bestPrompt
-    });
+    // Update the advisor in the main application
+    if (onUpdateAdvisor) {
+      onUpdateAdvisor(selectedResponse.advisorName, {
+        description: optimizationResult.bestPrompt
+      });
+      console.log('🎯 Optimization accepted - updated advisor:', {
+        advisorName: selectedResponse.advisorName,
+        newPrompt: optimizationResult.bestPrompt
+      });
+    } else {
+      console.warn('⚠️ onUpdateAdvisor callback not provided - cannot update advisor');
+    }
 
     // Close optimization modal
     setShowOptimizationModal(false);
@@ -254,6 +343,7 @@ Please respond to user questions from this advisor's perspective, maintaining th
   };
 
   const handleCancelOptimization = () => {
+    console.log('❌ User cancelled optimization');
     setIsOptimizing(false);
     setShowOptimizationModal(false);
     setOptimizationResult(null);

@@ -16,7 +16,6 @@ export async function evaluateAssertions(response, assertions, callGemini) {
   }
 
   // Validate assertions structure
-  console.log('🔍 Evaluating assertions:', assertions);
   assertions.forEach((assertion, index) => {
     if (!assertion) {
       throw new Error(`Assertion at index ${index} is null or undefined`);
@@ -50,8 +49,7 @@ Return your evaluation as JSON in this exact format. You must evaluate EXACTLY $
   ]
 }`;
 
-  console.log('🔍 Full evaluation prompt being sent to Gemini:');
-  console.log(prompt);
+      // Removed debugging logs - now handled by optimization process
 
   try {
     const result = await callGemini(prompt, {
@@ -60,7 +58,6 @@ Return your evaluation as JSON in this exact format. You must evaluate EXACTLY $
     });
 
     const content = result.choices[0].message.content;
-    console.log('🔍 Raw Gemini response:', content);
     
     // Parse the JSON response
     let parsedResults;
@@ -76,10 +73,6 @@ Return your evaluation as JSON in this exact format. You must evaluate EXACTLY $
       console.error('Failed to parse Gemini evaluation response:', content);
       throw new Error(`Invalid JSON response from Gemini: ${parseError.message}`);
     }
-
-    console.log('🔍 Parsed Gemini results:', parsedResults);
-    console.log('🔍 Number of assertions sent:', assertions.length);
-    console.log('🔍 Number of results returned:', parsedResults.results?.length);
 
     // Validate the response structure
     if (!parsedResults.results || !Array.isArray(parsedResults.results)) {
