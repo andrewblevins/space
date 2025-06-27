@@ -299,68 +299,71 @@ ${failedAssertions.map((assertion, index) => `${index + 1}. ${assertion.text} (f
           console.log(`🆕 First optimization attempt - no previous failures to learn from`);
         }
 
-        optimizationPrompt += `\n\nSuggest an improved advisor prompt that would help produce responses meeting all these requirements. Keep the same expertise level and personality, just enhance the approach to satisfy these diverse criteria.
+        optimizationPrompt += `\n\nCreate an improved advisor description that would help produce responses meeting all these requirements. You have complete creative freedom to:
 
-Return ONLY the improved prompt text, no explanations or meta-commentary. Just the prompt that would be used to instruct the AI advisor.`;
+- Rewrite the advisor's perspective, background, or approach entirely if needed
+- Change the writing style (first-person, third-person, narrative, instructional, etc.)
+- Add specific methodologies, frameworks, or techniques that would help meet the assertions
+- Expand the description significantly if that would help (no length limits)
+- Modify the advisor's expertise areas or combine multiple perspectives
+- Include specific examples, case studies, or reference points that would guide better responses
+
+The only constraint is that the result should be a coherent advisor description that would realistically help an AI produce responses satisfying all the listed requirements.
+
+Return ONLY the improved advisor description, no explanations or meta-commentary.`;
 
         console.log(`🤖 Asking Gemini for prompt improvement (attempt ${iteration})...`);
         console.log(`📤 Sending optimization prompt to Gemini:`, optimizationPrompt);
         const geminiResult = await callGemini(optimizationPrompt, {
-          temperature: 0.3,
-          maxOutputTokens: 500
+          temperature: 0.7,
+          maxOutputTokens: 1500
         });
 
         let improvedPrompt = geminiResult.choices[0].message.content.trim();
         
-        // Clean up the response - remove any meta-commentary
-        // Look for common patterns and extract just the prompt
-        const promptMarkers = [
-          /^(?:Here's an improved.*?prompt.*?:[\s\S]*?)(?=\*\*Prompt:\*\*)(.*?)(?=\*\*.*?:)/s,
-          /\*\*Prompt:\*\*(.*?)(?=\*\*(?:Key improvements|Example|Your response).*?:)/s,
-          /(?:Improved prompt:|IMPROVED PROMPT:)(.*?)(?=\n\n\*\*|$)/s,
-          /^(?:.*?)(You are .*?)(?=\n\n\*\*|$)/s
+        // Clean up the response - remove any meta-commentary while preserving any writing style
+        // Look for common meta-commentary patterns and extract the actual description
+        const metaPatterns = [
+          /^(?:Here's an improved.*?:[\s\S]*?)(?=\*\*(?:Description|Advisor):\*\*)(.*?)(?=\*\*.*?:)/s,
+          /\*\*(?:Description|Advisor|Improved):\*\*(.*?)(?=\*\*(?:Key improvements|Example|Notes).*?:)/s,
+          /(?:Improved (?:description|advisor):|IMPROVED (?:DESCRIPTION|ADVISOR):)(.*?)(?=\n\n\*\*|$)/s,
         ];
         
-        for (const marker of promptMarkers) {
-          const match = improvedPrompt.match(marker);
+        for (const pattern of metaPatterns) {
+          const match = improvedPrompt.match(pattern);
           if (match && match[1]) {
             improvedPrompt = match[1].trim();
             break;
           }
         }
         
-        // If the response still contains meta-commentary, try to extract the core prompt
-        if (improvedPrompt.includes('**') || improvedPrompt.includes('Key improvements') || improvedPrompt.includes('Example Responses')) {
-          // Try to find the actual prompt between markers
-          const lines = improvedPrompt.split('\n');
-          let promptStart = -1;
-          let promptEnd = -1;
+        // If the response still contains obvious meta-commentary markers, try to extract the core description
+        if (improvedPrompt.includes('**') || improvedPrompt.includes('Key improvements') || improvedPrompt.includes('Example') || improvedPrompt.includes('Notes:')) {
+          // Split by double asterisks and take the largest meaningful chunk
+          const sections = improvedPrompt.split(/\*\*[^*]+\*\*/);
+          let longestSection = '';
           
-          for (let i = 0; i < lines.length; i++) {
-            const line = lines[i].trim();
-            if (line.startsWith('You are ') && promptStart === -1) {
-              promptStart = i;
-            }
-            if (promptStart !== -1 && (line.includes('**') || line.includes('Key improvements') || line.includes('Example'))) {
-              promptEnd = i;
-              break;
+          for (const section of sections) {
+            const cleaned = section.trim();
+            if (cleaned.length > longestSection.length && 
+                !cleaned.toLowerCase().includes('key improvement') && 
+                !cleaned.toLowerCase().includes('example') &&
+                !cleaned.toLowerCase().includes('note:') &&
+                cleaned.length > 50) { // Minimum meaningful length
+              longestSection = cleaned;
             }
           }
           
-          if (promptStart !== -1 && promptEnd !== -1) {
-            improvedPrompt = lines.slice(promptStart, promptEnd).join('\n').trim();
-          } else if (promptStart !== -1) {
-            // Take from start to first double asterisk or end
-            let endIndex = lines.length;
-            for (let i = promptStart; i < lines.length; i++) {
-              if (lines[i].includes('**')) {
-                endIndex = i;
-                break;
-              }
-            }
-            improvedPrompt = lines.slice(promptStart, endIndex).join('\n').trim();
+          if (longestSection) {
+            improvedPrompt = longestSection;
           }
         }
+        
+        // Final cleanup - remove any remaining formatting artifacts
+        improvedPrompt = improvedPrompt
+          .replace(/^\*\*.*?\*\*\s*/g, '') // Remove bold headers at start
+          .replace(/\*\*.*?\*\*$/g, '') // Remove bold headers at end  
+          .trim();
         console.log(`✨ Iteration ${iteration} - Improved prompt:`, improvedPrompt);
 
         // Test the improved prompt against each selected assertion in its original context
