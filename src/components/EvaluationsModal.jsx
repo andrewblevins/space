@@ -530,30 +530,47 @@ Please respond to user questions from this advisor's perspective, maintaining th
                     Select assertions to optimize against:
                   </p>
                   <div className="space-y-3">
-                    {getAllAssertionsForAdvisor().map((assertion, index) => (
-                      <div key={assertion.id} className="p-3 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
-                        <div className="flex items-start space-x-3">
-                          <input
-                            type="checkbox"
-                            id={`assertion-${assertion.id}`}
-                            checked={selectedAssertions.has(assertion.id)}
-                            onChange={() => handleAssertionToggle(assertion.id)}
-                            className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                          />
-                          <div className="flex-1">
-                            <label 
-                              htmlFor={`assertion-${assertion.id}`}
-                              className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer block"
-                            >
-                              {assertion.text}
-                            </label>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                              Source: {assertion.sourceDescription}
-                            </p>
+                    {getAllAssertionsForAdvisor().map((assertion, index) => {
+                      const isFromCurrentResponse = assertion.responseId === selectedResponse.responseId;
+                      return (
+                        <div 
+                          key={assertion.id} 
+                          className={`p-3 rounded border ${
+                            isFromCurrentResponse 
+                              ? 'bg-blue-50 dark:bg-blue-900 border-blue-300 dark:border-blue-600' 
+                              : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+                          }`}
+                        >
+                          <div className="flex items-start space-x-3">
+                            <input
+                              type="checkbox"
+                              id={`assertion-${assertion.id}`}
+                              checked={selectedAssertions.has(assertion.id)}
+                              onChange={() => handleAssertionToggle(assertion.id)}
+                              className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                            />
+                            <div className="flex-1">
+                              <div className="flex items-start justify-between">
+                                <label 
+                                  htmlFor={`assertion-${assertion.id}`}
+                                  className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer block"
+                                >
+                                  {assertion.text}
+                                </label>
+                                {isFromCurrentResponse && (
+                                  <span className="ml-2 px-2 py-1 text-xs bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200 rounded-full font-medium">
+                                    This Response
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                Source: {assertion.sourceDescription}
+                              </p>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                   {selectedAssertions.size > 0 && (
                     <div className="mt-3 p-2 bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded">
