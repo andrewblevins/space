@@ -1,0 +1,16 @@
+# Allow access to .env files for configuration debugging
+!.env
+!.env.*
+
+# Keep other sensitive files ignored
+*.key
+*.pem
+id_rsa
+*.p12
+*_private*
+
+# Keep build artifacts ignored but allow config access
+node_modules/
+dist/
+.wrangler/
+.cache/ 

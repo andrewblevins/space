@@ -59,10 +59,11 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const signInWithGoogle = async () => {
+    const redirectUrl = import.meta.env.VITE_AUTH_REDIRECT_URL || window.location.origin;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: window.location.origin
+        redirectTo: redirectUrl
       }
     });
     if (error) throw error;
@@ -77,11 +78,12 @@ export const AuthProvider = ({ children }) => {
   };
 
   const signUp = async (email, password) => {
+    const redirectUrl = import.meta.env.VITE_AUTH_REDIRECT_URL || window.location.origin;
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: window.location.origin
+        emailRedirectTo: redirectUrl
       }
     });
     if (error) throw error;
