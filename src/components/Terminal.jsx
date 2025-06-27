@@ -3780,6 +3780,11 @@ ${selectedText}
           setShowAssertionsModal(false);
           setSelectedAdvisorForAssertions(null);
         }}
+        onSaveAndEvaluate={() => {
+          setShowAssertionsModal(false);
+          setSelectedAdvisorForAssertions(null);
+          setShowEvaluationsModal(true);
+        }}
         advisorResponse={selectedAdvisorForAssertions}
         conversationContext={selectedAdvisorForAssertions?.conversationContext || {
           messages: [...messages],

@@ -6,7 +6,8 @@ const AssertionsModal = ({
   onClose, 
   advisorResponse, 
   conversationContext,
-  onSave
+  onSave,
+  onSaveAndEvaluate
 }) => {
   const [assertions, setAssertions] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -28,58 +29,78 @@ const AssertionsModal = ({
     }
   }, [isOpen, advisorResponse]);
 
-  const handleSave = async () => {
+  const saveAssertionsData = async () => {
     if (!advisorResponse || !assertions.trim()) {
-      return;
+      return null;
     }
 
+    // Parse assertions (one per line)
+    const assertionLines = assertions
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0);
+
+    if (assertionLines.length === 0) {
+      return null;
+    }
+
+    // Create assertion objects
+    const assertionObjects = assertionLines.map((text, index) => ({
+      id: `assert-${Date.now()}-${index}`,
+      text,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }));
+
+    // Create the assertions data structure
+    const assertionsData = {
+      responseId: advisorResponse.id,
+      responseContent: advisorResponse.response,
+      advisorName: advisorResponse.name,
+      conversationContext: {
+        ...conversationContext,
+        timestamp: conversationContext.timestamp || new Date().toISOString()
+      },
+      assertions: assertionObjects,
+      evaluations: existingAssertions?.evaluations || [],
+      optimizations: existingAssertions?.optimizations || [],
+      createdAt: existingAssertions?.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    // Save to localStorage
+    saveAssertions(advisorResponse.id, assertionsData);
+
+    // Callback for parent component
+    if (onSave) {
+      onSave(assertionsData);
+    }
+
+    return assertionsData;
+  };
+
+  const handleSave = async () => {
     setIsLoading(true);
-
     try {
-      // Parse assertions (one per line)
-      const assertionLines = assertions
-        .split('\n')
-        .map(line => line.trim())
-        .filter(line => line.length > 0);
-
-      if (assertionLines.length === 0) {
-        setIsLoading(false);
-        return;
+      const result = await saveAssertionsData();
+      if (result) {
+        onClose();
       }
+    } catch (error) {
+      console.error('Failed to save assertions:', error);
+      // TODO: Show error message to user
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-      // Create assertion objects
-      const assertionObjects = assertionLines.map((text, index) => ({
-        id: `assert-${Date.now()}-${index}`,
-        text,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }));
-
-      // Create the assertions data structure
-      const assertionsData = {
-        responseId: advisorResponse.id,
-        responseContent: advisorResponse.response,
-        advisorName: advisorResponse.name,
-        conversationContext: {
-          ...conversationContext,
-          timestamp: conversationContext.timestamp || new Date().toISOString()
-        },
-        assertions: assertionObjects,
-        evaluations: existingAssertions?.evaluations || [],
-        optimizations: existingAssertions?.optimizations || [],
-        createdAt: existingAssertions?.createdAt || new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-
-      // Save to localStorage
-      saveAssertions(advisorResponse.id, assertionsData);
-
-      // Callback for parent component
-      if (onSave) {
-        onSave(assertionsData);
+  const handleSaveAndEvaluate = async () => {
+    setIsLoading(true);
+    try {
+      const result = await saveAssertionsData();
+      if (result && onSaveAndEvaluate) {
+        onSaveAndEvaluate();
       }
-
-      onClose();
     } catch (error) {
       console.error('Failed to save assertions:', error);
       // TODO: Show error message to user
@@ -175,7 +196,7 @@ const AssertionsModal = ({
           <button
             onClick={handleSave}
             disabled={isLoading || !assertions.trim()}
-            className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 
+            className="px-6 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 
                      disabled:opacity-50 disabled:cursor-not-allowed transition-colors
                      flex items-center"
           >
@@ -188,9 +209,35 @@ const AssertionsModal = ({
                 Saving...
               </>
             ) : (
-              'Save Assertions'
+              'Save Only'
             )}
           </button>
+          {onSaveAndEvaluate && (
+            <button
+              onClick={handleSaveAndEvaluate}
+              disabled={isLoading || !assertions.trim()}
+              className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 
+                       disabled:opacity-50 disabled:cursor-not-allowed transition-colors
+                       flex items-center"
+            >
+              {isLoading ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Saving...
+                </>
+              ) : (
+                <>
+                  Save & Evaluate
+                  <svg className="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                </>
+              )}
+            </button>
+          )}
         </div>
       </div>
     </div>
