@@ -15,6 +15,21 @@ export async function evaluateAssertions(response, assertions, callGemini) {
     throw new Error('No assertions provided for evaluation');
   }
 
+  // Validate assertions structure
+  console.log('🔍 Evaluating assertions:', assertions);
+  assertions.forEach((assertion, index) => {
+    if (!assertion) {
+      throw new Error(`Assertion at index ${index} is null or undefined`);
+    }
+    if (!assertion.id) {
+      console.warn(`Assertion at index ${index} missing ID:`, assertion);
+      throw new Error(`Assertion at index ${index} is missing required 'id' property`);
+    }
+    if (!assertion.text) {
+      throw new Error(`Assertion at index ${index} is missing required 'text' property`);
+    }
+  });
+
   // Build the evaluation prompt
   const assertionsList = assertions.map((assertion, index) => 
     `${index + 1}. ${assertion.text}`
@@ -28,14 +43,15 @@ ${response}
 Assertions:
 ${assertionsList}
 
-Return your evaluation as JSON in this exact format:
+Return your evaluation as JSON in this exact format. You must evaluate EXACTLY ${assertions.length} assertion(s), no more, no less:
 {
   "results": [
-    {"id": 1, "pass": true, "reason": "Response discusses shadow and personal unconscious"},
-    {"id": 2, "pass": false, "reason": "No mention of collective unconscious"},
-    {"id": 3, "pass": true, "reason": "Includes dream analysis example"}
+    ${assertions.map((_, index) => `{"id": ${index + 1}, "pass": true/false, "reason": "explanation for assertion ${index + 1}"}`).join(',\n    ')}
   ]
 }`;
+
+  console.log('🔍 Full evaluation prompt being sent to Gemini:');
+  console.log(prompt);
 
   try {
     const result = await callGemini(prompt, {
@@ -44,6 +60,7 @@ Return your evaluation as JSON in this exact format:
     });
 
     const content = result.choices[0].message.content;
+    console.log('🔍 Raw Gemini response:', content);
     
     // Parse the JSON response
     let parsedResults;
@@ -60,18 +77,44 @@ Return your evaluation as JSON in this exact format:
       throw new Error(`Invalid JSON response from Gemini: ${parseError.message}`);
     }
 
+    console.log('🔍 Parsed Gemini results:', parsedResults);
+    console.log('🔍 Number of assertions sent:', assertions.length);
+    console.log('🔍 Number of results returned:', parsedResults.results?.length);
+
     // Validate the response structure
     if (!parsedResults.results || !Array.isArray(parsedResults.results)) {
       throw new Error('Invalid evaluation response structure');
     }
 
+    // Validate that the number of results matches the number of assertions
+    if (parsedResults.results.length !== assertions.length) {
+      console.error('Mismatch between assertions and results:', {
+        assertionsCount: assertions.length,
+        resultsCount: parsedResults.results.length,
+        assertions: assertions.map(a => a.text),
+        results: parsedResults.results
+      });
+      throw new Error(`Result count mismatch: sent ${assertions.length} assertions, got ${parsedResults.results.length} results`);
+    }
+
     // Map the results back to assertion IDs
-    const mappedResults = parsedResults.results.map((result, index) => ({
-      assertionId: assertions[index].id,
-      assertionIndex: index + 1,
-      passed: result.pass,
-      reason: result.reason
-    }));
+    const mappedResults = parsedResults.results.map((result, index) => {
+      const assertion = assertions[index];
+      if (!assertion) {
+        console.warn(`No assertion found at index ${index}. Assertions:`, assertions);
+        throw new Error(`Assertion mismatch: expected assertion at index ${index}`);
+      }
+      if (!assertion.id) {
+        console.warn(`Assertion at index ${index} has no ID:`, assertion);
+        throw new Error(`Assertion at index ${index} is missing ID property`);
+      }
+      return {
+        assertionId: assertion.id,
+        assertionIndex: index + 1,
+        passed: result.pass,
+        reason: result.reason
+      };
+    });
 
     const overallPassed = mappedResults.every(r => r.passed);
 
