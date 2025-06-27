@@ -405,6 +405,9 @@ const getSystemPrompt = useCallback(({ councilMode, sessionContexts } = {}) => {
   if (activeAdvisors.length > 0) {
     prompt += `You are currently embodying the following advisors:\n${activeAdvisors.map(a => `\n${a.name}: ${a.description}`).join('\n')}\n\n`;
     
+    // Add conversation continuity instructions
+    prompt += `## CONVERSATION CONTINUITY\n\nIMPORTANT: You are continuing an ongoing conversation with this user. Do not re-introduce topics, concepts, or ask questions that have already been addressed in the conversation history. Build upon what has been established rather than starting fresh each time. Reference previous exchanges naturally and maintain the flow of the conversation.\n\n`;
+    
     if (councilMode) {
       prompt += `\n\n## HIGH COUNCIL MODE
 IMPORTANT: Start your response with the exact text "<COUNCIL_DEBATE>" (this is required for the interface to work properly).

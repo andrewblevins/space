@@ -49,8 +49,22 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
     const contextMessages = [{ role: 'user', content: userMessage }];
     if (totalTokens < contextLimit) {
       const historical = messages
-        .filter((m) => (m.type === 'user' || m.type === 'assistant') && m.content?.trim() !== '' && m.content !== userMessage)
-        .map((m) => ({ role: m.type, content: m.timestamp ? `[${formatTimestamp(m.timestamp)}] ${m.content}` : m.content }));
+        .filter((m) => (m.type === 'user' || m.type === 'assistant' || m.type === 'advisor_json') && m.content?.trim() !== '' && m.content !== userMessage)
+        .map((m) => {
+          // Convert advisor_json messages to assistant role for Claude
+          const role = m.type === 'advisor_json' ? 'assistant' : m.type;
+          // For advisor_json messages, extract the actual advisor responses
+          let content = m.content;
+          if (m.type === 'advisor_json' && m.parsedAdvisors) {
+            content = m.parsedAdvisors.advisors.map(advisor => 
+              `**${advisor.name}**: ${advisor.response}`
+            ).join('\n\n');
+          }
+          return { 
+            role, 
+            content: m.timestamp ? `[${formatTimestamp(m.timestamp)}] ${content}` : content 
+          };
+        });
       contextMessages.unshift(...historical);
     } else {
       const managed = buildConversationContext(userMessage, messages, memory);
@@ -91,6 +105,20 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
       max_tokens: maxTokens,
       stream: true,
     };
+    
+    // Log the complete system prompt that Claude receives
+    console.log('📝 SYSTEM PROMPT SENT TO CLAUDE:');
+    console.log('=' .repeat(80));
+    console.log(systemPromptText);
+    console.log('=' .repeat(80));
+    
+    // Log the conversation context messages
+    console.log('💬 CONVERSATION CONTEXT SENT TO CLAUDE:');
+    console.log('=' .repeat(60));
+    contextMessages.forEach((msg, i) => {
+      console.log(`${i + 1}. [${msg.role}]: ${msg.content.substring(0, 200)}${msg.content.length > 200 ? '...' : ''}`);
+    });
+    console.log('=' .repeat(60));
 
     // Add native Extended Thinking if reasoning mode is enabled AND not in council mode
     const isCouncilMode = systemPromptText.includes('HIGH COUNCIL MODE');
