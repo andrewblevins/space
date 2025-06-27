@@ -327,6 +327,7 @@ const Terminal = ({ theme, toggleTheme }) => {
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [showAssertionsModal, setShowAssertionsModal] = useState(false);
   const [selectedAdvisorForAssertions, setSelectedAdvisorForAssertions] = useState(null);
+  const [selectedResponseForEvaluation, setSelectedResponseForEvaluation] = useState(null);
   const [showEvaluationsModal, setShowEvaluationsModal] = useState(false);
   const [sessions, setSessions] = useState([]);
   const [sessionSelections, setSessionSelections] = useState(new Map()); // Map from title to session object
@@ -3780,8 +3781,9 @@ ${selectedText}
           setShowAssertionsModal(false);
           setSelectedAdvisorForAssertions(null);
         }}
-        onSaveAndEvaluate={() => {
+        onSaveAndEvaluate={(assertionsData) => {
           setShowAssertionsModal(false);
+          setSelectedResponseForEvaluation(assertionsData);
           setSelectedAdvisorForAssertions(null);
           setShowEvaluationsModal(true);
         }}
@@ -3801,7 +3803,11 @@ ${selectedText}
       {/* Evaluations Modal Component */}
       <EvaluationsModal
         isOpen={showEvaluationsModal}
-        onClose={() => setShowEvaluationsModal(false)}
+        onClose={() => {
+          setShowEvaluationsModal(false);
+          setSelectedResponseForEvaluation(null);
+        }}
+        initialResponse={selectedResponseForEvaluation}
         advisors={advisors}
         onUpdateAdvisor={(advisorName, updatedProperties) => {
           setAdvisors(prev => prev.map(a => 

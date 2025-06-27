@@ -3,7 +3,7 @@ import { getAllResponsesWithAssertions, evaluateAssertions } from '../utils/eval
 import { useGemini } from '../hooks/useGemini';
 import useClaude from '../hooks/useClaude';
 
-const EvaluationsModal = ({ isOpen, onClose, advisors = [], onUpdateAdvisor }) => {
+const EvaluationsModal = ({ isOpen, onClose, advisors = [], onUpdateAdvisor, initialResponse = null }) => {
   const [responses, setResponses] = useState([]);
   const [selectedResponse, setSelectedResponse] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -31,9 +31,17 @@ const EvaluationsModal = ({ isOpen, onClose, advisors = [], onUpdateAdvisor }) =
       // Load all responses with assertions
       const responsesWithAssertions = getAllResponsesWithAssertions();
       setResponses(responsesWithAssertions);
-      setSelectedResponse(null);
+      
+      // If an initial response is provided, select it
+      if (initialResponse) {
+        // Find the response in the loaded data (it might have been updated)
+        const matchingResponse = responsesWithAssertions.find(r => r.responseId === initialResponse.responseId);
+        setSelectedResponse(matchingResponse || initialResponse);
+      } else {
+        setSelectedResponse(null);
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, initialResponse]);
 
   const handleResponseClick = (response) => {
     setSelectedResponse(response);

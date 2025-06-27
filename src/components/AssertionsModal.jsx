@@ -99,7 +99,7 @@ const AssertionsModal = ({
     try {
       const result = await saveAssertionsData();
       if (result && onSaveAndEvaluate) {
-        onSaveAndEvaluate();
+        onSaveAndEvaluate(result);
       }
     } catch (error) {
       console.error('Failed to save assertions:', error);
