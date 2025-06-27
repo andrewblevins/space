@@ -39,7 +39,7 @@ const EvaluationsModal = ({ isOpen, onClose, advisors = [], onUpdateAdvisor, ini
         const matchingResponse = responsesWithAssertions.find(r => r.responseId === initialResponse.responseId);
         setSelectedResponse(matchingResponse || initialResponse);
       } else {
-        setSelectedResponse(null);
+      setSelectedResponse(null);
       }
       
       // Reset selected assertions when modal opens
@@ -91,6 +91,99 @@ const EvaluationsModal = ({ isOpen, onClose, advisors = [], onUpdateAdvisor, ini
 
     setIsEvaluating(true);
     try {
+      // If no assertions are selected, evaluate all assertions from the current response
+      // If assertions are selected, evaluate only those selected assertions
+      let assertionsToEvaluate;
+      let evaluationScope;
+      
+      if (selectedAssertions.size === 0) {
+        // Default behavior: evaluate all assertions from current response
+        assertionsToEvaluate = selectedResponse.assertions;
+        evaluationScope = 'current_response';
+        console.log('📋 Evaluating all assertions from current response:', assertionsToEvaluate.map(a => a.text));
+      } else {
+        // New behavior: evaluate only selected assertions
+        const allAssertions = getAllAssertionsForAdvisor();
+        assertionsToEvaluate = allAssertions.filter(assertion => 
+          selectedAssertions.has(assertion.id)
+        );
+        evaluationScope = 'selected_assertions';
+        console.log('📋 Evaluating selected assertions:', assertionsToEvaluate.map(a => a.text));
+      }
+
+      if (assertionsToEvaluate.length === 0) {
+        console.warn('No assertions to evaluate');
+        return;
+      }
+
+      // For selected assertions from different responses, we need to test each in its original context
+      if (evaluationScope === 'selected_assertions') {
+        console.log('🧠 Testing selected assertions in their original contexts...');
+        
+        const allResults = [];
+        let totalPassed = 0;
+
+        for (const assertion of assertionsToEvaluate) {
+          console.log(`🧠 Testing assertion: "${assertion.text}" from response ${assertion.responseId}`);
+          
+          // Use the response content from the assertion's original context
+          const responseContent = assertion.responseContent;
+          
+          // Evaluate this single assertion
+          const singleAssertionEval = await evaluateAssertions(
+            responseContent,
+            [assertion], // Test just this one assertion
+            callGemini
+          );
+
+          if (singleAssertionEval.results[0]?.passed) {
+            totalPassed++;
+            console.log(`✅ Assertion passed: ${assertion.text}`);
+          } else {
+            console.log(`❌ Assertion failed: ${assertion.text} - ${singleAssertionEval.results[0]?.reason}`);
+          }
+
+          allResults.push({
+            ...singleAssertionEval.results[0],
+            assertionText: assertion.text,
+            sourceResponse: assertion.responseId
+          });
+        }
+
+        // Create a combined evaluation result
+        const combinedEvaluationResult = {
+          id: `eval_${Date.now()}`,
+          timestamp: new Date().toISOString(),
+          results: allResults,
+          overallPassed: totalPassed === assertionsToEvaluate.length,
+          score: totalPassed,
+          totalAssertions: assertionsToEvaluate.length,
+          evaluationScope: 'selected_assertions'
+        };
+
+        console.log(`📊 Combined evaluation result: ${totalPassed}/${assertionsToEvaluate.length} assertions passed`);
+
+        // For selected assertions, we'll add this evaluation to the current response for display
+        const updatedResponse = {
+          ...selectedResponse,
+          evaluations: [...(selectedResponse.evaluations || []), combinedEvaluationResult],
+          updatedAt: new Date().toISOString()
+        };
+
+        // Save updated response back to localStorage
+        localStorage.setItem(
+          `space_assertions_${selectedResponse.responseId}`,
+          JSON.stringify(updatedResponse)
+        );
+
+        // Update local state
+        setSelectedResponse(updatedResponse);
+        setResponses(prev => prev.map(r => 
+          r.responseId === selectedResponse.responseId ? updatedResponse : r
+        ));
+
+      } else {
+        // Original behavior for current response assertions
       const evaluationResult = await evaluateAssertions(
         selectedResponse.responseContent,
         selectedResponse.assertions,
@@ -115,6 +208,7 @@ const EvaluationsModal = ({ isOpen, onClose, advisors = [], onUpdateAdvisor, ini
       setResponses(prev => prev.map(r => 
         r.responseId === selectedResponse.responseId ? updatedResponse : r
       ));
+      }
 
     } catch (error) {
       console.error('Evaluation failed:', error);
@@ -271,10 +365,9 @@ Return ONLY the improved prompt text, no explanations or meta-commentary. Just t
 
         // Test the improved prompt against each selected assertion in its original context
         console.log(`🧠 Testing improved prompt against ${failedAssertions.length} selected assertions...`);
-        let totalPassed = 0;
-        let allResults = [];
-
-        for (const assertion of failedAssertions) {
+        
+        // Parallelize Claude testing calls
+        const testPromises = failedAssertions.map(async (assertion) => {
           // Create a temporary system prompt with the improved advisor
           const testSystemPrompt = `You are currently embodying the following advisor:
 
@@ -288,7 +381,11 @@ Please respond to user questions from this advisor's perspective, maintaining th
           
           if (!lastUserMessage) {
             console.warn(`⚠️ Could not find original user message for assertion: ${assertion.text}`);
-            continue;
+            return {
+              assertion: assertion.text,
+              testResponse: null,
+              error: 'No original user message found'
+            };
           }
 
           // Get test response from Claude using the original context
@@ -296,26 +393,96 @@ Please respond to user questions from this advisor's perspective, maintaining th
           const testResponse = await callClaude(lastUserMessage.content, () => testSystemPrompt);
           console.log(`💬 Claude test response:`, testResponse.substring(0, 100) + '...');
 
-          // Evaluate this specific assertion
-          const singleAssertionEval = await evaluateAssertions(
+          return {
+            assertion: assertion.text,
             testResponse,
-            [assertion], // Test just this one assertion
-            callGemini
-          );
+            assertionObj: assertion
+          };
+        });
 
-          if (singleAssertionEval.results[0]?.passed) {
-            totalPassed++;
-            console.log(`✅ Assertion passed: ${assertion.text}`);
+        // Wait for all Claude tests to complete
+        const testResults = await Promise.all(testPromises);
+        console.log(`✅ All ${testResults.length} Claude tests completed in parallel`);
+
+        // Batch evaluate all assertions in a single Gemini call
+        const validTestResults = testResults.filter(result => result.testResponse && !result.error);
+        
+        if (validTestResults.length === 0) {
+          console.warn('⚠️ No valid test results to evaluate');
+          continue;
+        }
+
+        // Create batch evaluation prompt
+        const batchEvaluationPrompt = `Please evaluate the following advisor responses against their respective assertions. For each response-assertion pair, determine if the assertion is satisfied and provide a brief reason.
+
+${validTestResults.map((result, index) => `
+Response ${index + 1}:
+Assertion: "${result.assertion}"
+Response: "${result.testResponse}"
+`).join('\n')}
+
+Please respond with a JSON array containing ${validTestResults.length} objects, each with:
+- "passed": boolean (true if assertion is satisfied)
+- "reason": string (brief explanation of why it passed or failed)
+
+Format: [{"passed": true/false, "reason": "explanation"}, ...]`;
+
+        console.log(`🤖 Batch evaluating ${validTestResults.length} assertions with single Gemini call...`);
+        const batchEvalResult = await callGemini(batchEvaluationPrompt, {
+          temperature: 0.1,
+          maxOutputTokens: 1000
+        });
+
+        let batchResults;
+        try {
+          const content = batchEvalResult.choices[0].message.content.trim();
+          // Extract JSON from response
+          const jsonMatch = content.match(/\[[\s\S]*\]/);
+          if (jsonMatch) {
+            batchResults = JSON.parse(jsonMatch[0]);
           } else {
-            console.log(`❌ Assertion failed: ${assertion.text} - ${singleAssertionEval.results[0]?.reason}`);
+            throw new Error('No JSON array found in response');
+          }
+        } catch (parseError) {
+          console.error('Failed to parse batch evaluation results:', parseError);
+          // Fallback to individual evaluations if batch fails
+          console.log('📝 Falling back to individual evaluations...');
+          batchResults = [];
+          for (const result of validTestResults) {
+            const singleEval = await evaluateAssertions(
+              result.testResponse,
+              [result.assertionObj],
+              callGemini
+            );
+            batchResults.push({
+              passed: singleEval.results[0]?.passed || false,
+              reason: singleEval.results[0]?.reason || 'Unknown error'
+            });
+          }
+        }
+
+        // Process batch results
+        let totalPassed = 0;
+        let allResults = [];
+
+        validTestResults.forEach((testResult, index) => {
+          const evalResult = batchResults[index] || { passed: false, reason: 'Evaluation failed' };
+          
+          if (evalResult.passed) {
+            totalPassed++;
+            console.log(`✅ Assertion passed: ${testResult.assertion}`);
+          } else {
+            console.log(`❌ Assertion failed: ${testResult.assertion} - ${evalResult.reason}`);
           }
 
           allResults.push({
-            assertion: assertion.text,
-            passed: singleAssertionEval.results[0]?.passed || false,
-            reason: singleAssertionEval.results[0]?.reason || 'Unknown error'
+            assertion: testResult.assertion,
+            passed: evalResult.passed,
+            reason: evalResult.reason
           });
-        }
+        });
+
+        console.log(`📊 Batch evaluation completed: ${totalPassed}/${validTestResults.length} assertions passed`);
 
         // Calculate score (number of assertions passed)
         const score = totalPassed;
@@ -626,8 +793,8 @@ Please respond to user questions from this advisor's perspective, maintaining th
                               </div>
                               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                 Source: {assertion.sourceDescription}
-                              </p>
-                            </div>
+                        </p>
+                      </div>
                           </div>
                         </div>
                       );
@@ -702,6 +869,8 @@ Please respond to user questions from this advisor's perspective, maintaining th
                         </svg>
                         Evaluating...
                       </>
+                    ) : selectedAssertions.size > 0 ? (
+                      `Evaluate Selected (${selectedAssertions.size})`
                     ) : (
                       'Evaluate This Response'
                     )}
