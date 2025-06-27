@@ -186,6 +186,14 @@ ${failedAssertions.map((assertion, index) => `${index + 1}. ${assertion.text} (f
 
         // Add learning from previous failures
         if (previousAttempts.length > 0) {
+          console.log(`🧠 Learning from ${previousAttempts.length} previous failed attempt(s):`);
+          previousAttempts.forEach((attempt, index) => {
+            console.log(`   📋 Failed Attempt ${index + 1}: ${attempt.stillFailing.length} assertions still failing`);
+            console.log(`      Approach: ${attempt.approach}`);
+            console.log(`      Failed: ${attempt.stillFailing.join(', ')}`);
+          });
+          console.log(`🎯 Asking Gemini to try a different approach...`);
+          
           optimizationPrompt += `\n\nPrevious attempts that didn't improve the score:`;
           previousAttempts.forEach((attempt, index) => {
             optimizationPrompt += `\n\nAttempt ${index + 1}:
@@ -193,6 +201,8 @@ ${failedAssertions.map((assertion, index) => `${index + 1}. ${assertion.text} (f
 - Still failed: ${attempt.stillFailing.join(', ')}`;
           });
           optimizationPrompt += `\n\nTry a different approach than the previous attempts. Focus on the assertions that keep failing.`;
+        } else {
+          console.log(`🆕 First optimization attempt - no previous failures to learn from`);
         }
 
         optimizationPrompt += `\n\nSuggest an improved advisor prompt that would help produce responses meeting all these requirements. Keep the same expertise level and personality, just enhance the approach to satisfy these diverse criteria.
@@ -200,6 +210,7 @@ ${failedAssertions.map((assertion, index) => `${index + 1}. ${assertion.text} (f
 Return ONLY the improved prompt text, no explanations or meta-commentary. Just the prompt that would be used to instruct the AI advisor.`;
 
         console.log(`🤖 Asking Gemini for prompt improvement (attempt ${iteration})...`);
+        console.log(`📤 Sending optimization prompt to Gemini:`, optimizationPrompt);
         const geminiResult = await callGemini(optimizationPrompt, {
           temperature: 0.3,
           maxOutputTokens: 500
@@ -356,6 +367,33 @@ Please respond to user questions from this advisor's perspective, maintaining th
       console.log(`📝 Final optimized prompt:`, bestPrompt);
       console.log(`📊 Final score: ${bestScore}/${failedAssertions.length} assertions passed`);
       console.log(`🎯 Success: ${bestResult?.overallPassed ? 'YES' : 'NO'}`);
+      
+      // Summary of learning journey
+      if (previousAttempts.length > 0) {
+        console.log(`\n🧠 OPTIMIZATION LEARNING SUMMARY:`);
+        console.log(`   Total failed attempts: ${previousAttempts.length}`);
+        console.log(`   Learning iterations: ${previousAttempts.length + 1}`);
+        
+        // Find which assertions were consistently problematic
+        const allFailedAssertions = previousAttempts.flatMap(attempt => attempt.stillFailing);
+        const failureCount = {};
+        allFailedAssertions.forEach(assertion => {
+          failureCount[assertion] = (failureCount[assertion] || 0) + 1;
+        });
+        
+        if (Object.keys(failureCount).length > 0) {
+          console.log(`   Most challenging assertions:`);
+          Object.entries(failureCount)
+            .sort(([,a], [,b]) => b - a)
+            .forEach(([assertion, count]) => {
+              console.log(`     "${assertion}" failed ${count} time(s)`);
+            });
+        }
+        
+        console.log(`   Final approach succeeded: ${bestResult?.overallPassed ? 'YES' : 'PARTIAL'}`);
+      } else {
+        console.log(`\n🎯 FIRST ATTEMPT SUCCESS - No learning iterations needed!`);
+      }
 
       setOptimizationResult({
         originalPrompt,
