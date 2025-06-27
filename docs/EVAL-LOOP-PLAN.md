@@ -1,12 +1,14 @@
 # SPACE Terminal - Evaluation Loop Implementation Plan
 
-## 🎯 Current Status: Phase 5 Complete (Ready for Testing)
+## 🎯 Current Status: Phase 5 Complete, Phase 6 In Progress
 **Completed**: Phases 1-5 (JSON format, Gemini integration, Assertions system, Evaluations system, Optimization MVP)  
-**Next Up**: Testing and refinement  
-**Branch**: `feature/eval-loop` (ready to merge full evaluation + optimization system)
+**In Progress**: Phase 6 - Assertion-Centric Redesign (MVP)  
+**Branch**: `feature/eval-loop` (implementing assertion-centric architecture)
 
 ## Overview
 Implement an evaluation and optimization loop for advisor responses, allowing users to define assertions, run evaluations, and automatically optimize prompts to meet those assertions.
+
+**MAJOR UPDATE**: Moving from response-centric to assertion-centric architecture for better user experience and flexibility.
 
 ## Architecture Goals
 1. Allow users to create assertions about advisor responses
@@ -219,33 +221,6 @@ optimizations: [
 3. **Simple UI**: Basic modal overlay for progress and results
 4. **Core logic**: 10-iteration loop with Gemini + Claude + evaluation
 
-## Phase 6: UI Implementation ✅ PARTIALLY COMPLETED
-
-### New Components ✅ COMPLETED
-1. ✅ **AssertionsModal**: Create/view assertions for a response
-2. ✅ **EvaluationsModal**: List responses with assertions, run evals
-3. ✅ **EvaluationResultsModal**: Show eval results (basic version)
-4. ⏳ **Optimization UI**: Simple modal overlay within EvaluationsModal (MVP approach)
-
-### AccordionMenu Addition ✅ COMPLETED
-```javascript
-{
-  id: 'evaluations',
-  label: 'Evaluations',
-  onClick: onEvaluationsClick,
-  icon: (/* checklist icon */)
-}
-```
-
-## Implementation Order
-1. ✅ JSON refactor for advisor responses
-2. ✅ Gemini API integration
-3. ✅ Assertions UI and storage
-4. ✅ Evaluations button and modal
-5. ✅ Basic evaluation functionality
-6. ✅ Optimization loop (MVP implementation)
-7. ⏳ Prompt update mechanism (basic version implemented, needs integration with main advisor state)
-
 ## Success Metrics
 - Clean separation of advisor responses
 - Reliable assertion evaluation
@@ -259,3 +234,116 @@ optimizations: [
 - Rate limiting for Gemini API calls
 - Error handling for failed evaluations
 - Rollback mechanism for prompt changes
+
+## Phase 6: Assertion-Centric Redesign (MVP) 🚧 IN PROGRESS
+
+### Problem with Current Architecture
+The current system is **response-centric**: assertions belong to specific responses, making it difficult to:
+- Test against multiple assertions from different responses
+- Build comprehensive test suites for advisors
+- Think in terms of requirements rather than individual responses
+
+### New Architecture: Assertions as Primitives
+
+**User Mental Model**: "I want my advisor to be gnomic AND concise AND metaphorical" (requirements-focused)  
+**Not**: "I want it to be like Response A and Response B" (response-focused)
+
+### New Data Structure
+```javascript
+// Assertion-centric storage
+assertion_${assertionId} = {
+  id: assertionId,
+  text: "Response should be gnomic",
+  advisorId: "advisor_123",
+  advisorName: "Skull Cup", 
+  sourceResponseId: "response_456",
+  sourceConversationId: "conv_789",
+  sourceUserInput: "Tell me about wisdom",
+  sourceAdvisorResponse: "The owl knows...",
+  sourceContext: [...], // conversation history
+  createdAt: timestamp,
+  isActive: true // for selection in UI
+}
+
+// Index for quick lookup
+advisor_assertions_${advisorId} = [assertionId1, assertionId2, ...]
+```
+
+### MVP Implementation Plan
+
+#### Step 1: Storage Migration (Foundation)
+**Goal**: Change storage from response-centric to assertion-centric while preserving all existing data
+
+**Changes Needed**:
+1. **New Storage Structure**: Assertion objects with source context
+2. **Migration Helper**: Convert existing `assertions_${conversationId}_${responseId}` to new format
+3. **Storage Helper Functions**: Create/read/update/delete assertions
+4. **Advisor Index**: Maintain `advisor_assertions_${advisorId}` arrays
+
+#### Step 2: AssertionsModal Update (Creation)
+**Goal**: Change assertion creation to store in new format
+
+**Changes Needed**:
+1. **Generate unique assertion IDs** instead of storing by response
+2. **Capture full context** (user input, advisor response, conversation history)
+3. **Store in assertion-centric format**
+4. **Update advisor index** when assertions are created
+
+#### Step 3: EvaluationsModal Redesign (Selection Interface)
+**Goal**: Replace response selection with assertion selection
+
+**New UI Layout**:
+```
+Assertions for [Advisor Name]:
+☑ "Response should be gnomic"
+   Source: "Tell me about wisdom" → "The owl knows..."
+☐ "Response should be concise"
+   Source: "Explain philosophy" → "Philosophy seeks..."
+☑ "Response should use metaphors"
+   Source: "What is truth?" → "Truth is a mirror..."
+
+[Optimize Against Selected Assertions]
+```
+
+**Changes Needed**:
+1. **Assertion List Component**: Show assertions with source context
+2. **Selection State**: Track which assertions are selected for optimization
+3. **Replace response dropdown** with assertion checklist
+
+#### Step 4: Optimization Logic Update (Testing)
+**Goal**: Test against selected assertions instead of response-specific assertions
+
+**Changes Needed**:
+1. **Collect selected assertions** instead of loading by response ID
+2. **Test each assertion in its original context** (preserve source conversation)
+3. **Update evaluation helpers** to work with assertion objects
+4. **Results display** showing which assertions passed/failed
+
+#### Step 5: UI Polish (MVP Completion)
+**Goal**: Clean up interface and add basic assertion management
+
+**Changes Needed**:
+1. **Remove assertion count indicators** from response cards (no longer relevant)
+2. **Add assertion management**: Edit/delete assertions from EvaluationsModal
+3. **Visual improvements**: Better display of assertion source context
+4. **Error handling**: Graceful migration and fallbacks
+
+### MVP Benefits
+- **Granular Selection**: Pick specific requirements without taking all assertions from a response
+- **Requirement-Focused**: Interface organized around "what should this advisor do?" 
+- **Flexible Composition**: Mix and match requirements from different contexts
+- **Reusable**: Assertions become reusable criteria for different optimization runs
+
+### MVP Scope Limitations
+**What we're NOT including in MVP**:
+- Advanced assertion organization/grouping
+- Assertion templates or suggestions
+- Bulk assertion operations
+- Advanced filtering/search
+- Assertion analytics/statistics
+
+**MVP Focus**: 
+- Core functionality: Create → Select → Optimize
+- Data migration without loss
+- Clean, intuitive selection interface
+- Preserve all existing optimization capabilities

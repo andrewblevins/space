@@ -6,6 +6,7 @@ import useClaude from '../hooks/useClaude';
 const EvaluationsModal = ({ isOpen, onClose, advisors = [], onUpdateAdvisor, initialResponse = null }) => {
   const [responses, setResponses] = useState([]);
   const [selectedResponse, setSelectedResponse] = useState(null);
+  const [selectedAssertions, setSelectedAssertions] = useState(new Set());
   const [isLoading, setIsLoading] = useState(false);
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [isOptimizing, setIsOptimizing] = useState(false);
@@ -40,11 +41,49 @@ const EvaluationsModal = ({ isOpen, onClose, advisors = [], onUpdateAdvisor, ini
       } else {
         setSelectedResponse(null);
       }
+      
+      // Reset selected assertions when modal opens
+      setSelectedAssertions(new Set());
     }
   }, [isOpen, initialResponse]);
 
+  // Helper function to get all assertions across all responses for the selected advisor
+  const getAllAssertionsForAdvisor = () => {
+    if (!selectedResponse) return [];
+    
+    const advisorResponses = responses.filter(r => r.advisorName === selectedResponse.advisorName);
+    const allAssertions = [];
+    
+    advisorResponses.forEach(response => {
+      response.assertions.forEach(assertion => {
+        allAssertions.push({
+          ...assertion,
+          responseId: response.responseId,
+          responseContent: response.responseContent,
+          conversationContext: response.conversationContext,
+          sourceDescription: response.responseContent.substring(0, 100) + '...'
+        });
+      });
+    });
+    
+    return allAssertions;
+  };
+
+  // Handle assertion selection
+  const handleAssertionToggle = (assertionId) => {
+    const newSelected = new Set(selectedAssertions);
+    if (newSelected.has(assertionId)) {
+      newSelected.delete(assertionId);
+    } else {
+      newSelected.add(assertionId);
+    }
+    setSelectedAssertions(newSelected);
+  };
+
   const handleResponseClick = (response) => {
     setSelectedResponse(response);
+    // Reset selected assertions when switching responses
+    setSelectedAssertions(new Set());
   };
 
   const handleEvaluate = async () => {
@@ -88,7 +127,19 @@ const EvaluationsModal = ({ isOpen, onClose, advisors = [], onUpdateAdvisor, ini
   const handleOptimize = async () => {
     if (!selectedResponse) return;
 
+    // Get all selected assertions
+    const allAssertions = getAllAssertionsForAdvisor();
+    const selectedAssertionObjects = allAssertions.filter(assertion => 
+      selectedAssertions.has(assertion.id)
+    );
+
+    if (selectedAssertionObjects.length === 0) {
+      alert('Please select at least one assertion to optimize against.');
+      return;
+    }
+
     console.log('🚀 Starting optimization process for:', selectedResponse.advisorName);
+    console.log('📋 Selected assertions:', selectedAssertionObjects.map(a => a.text));
 
     setIsOptimizing(true);
     setOptimizationProgress({ current: 0, total: 10 });
@@ -108,20 +159,11 @@ const EvaluationsModal = ({ isOpen, onClose, advisors = [], onUpdateAdvisor, ini
       const originalPrompt = targetAdvisor.description;
       console.log('📝 Original prompt:', originalPrompt);
 
-      const failedAssertions = selectedResponse.assertions.filter(assertion => {
-        // Check if this assertion failed in the most recent evaluation
-        const latestEval = selectedResponse.evaluations?.[selectedResponse.evaluations.length - 1];
-        if (!latestEval) return true; // No evaluation yet, assume all need optimization
-        
-        const assertionResult = latestEval.results.find(r => r.assertionId === assertion.id);
-        return !assertionResult?.passed;
-      });
+      // For optimization, we'll assume all selected assertions need to be met
+      // In a more sophisticated version, we could run evaluations first
+      const failedAssertions = selectedAssertionObjects;
 
-      console.log('❌ Failed assertions to optimize:', failedAssertions.map(a => a.text));
-
-      if (failedAssertions.length === 0) {
-        throw new Error('No failed assertions to optimize for');
-      }
+      console.log('❌ Assertions to optimize for:', failedAssertions.map(a => a.text));
 
       let bestPrompt = originalPrompt;
       let bestResult = null;
@@ -138,13 +180,10 @@ const EvaluationsModal = ({ isOpen, onClose, advisors = [], onUpdateAdvisor, ini
         const optimizationPrompt = `Current advisor prompt for ${selectedResponse.advisorName}:
 ${bestPrompt}
 
-This advisor's response failed these assertions:
-${failedAssertions.map((assertion, index) => `${index + 1}. ${assertion.text}`).join('\n')}
+This advisor needs to meet these requirements across different conversations:
+${failedAssertions.map((assertion, index) => `${index + 1}. ${assertion.text} (from: "${assertion.sourceDescription}")`).join('\n')}
 
-The original response was:
-${selectedResponse.responseContent}
-
-Suggest an improved advisor prompt that would help produce responses meeting all assertions. Keep the same expertise level and personality, just enhance the approach.
+Suggest an improved advisor prompt that would help produce responses meeting all these requirements. Keep the same expertise level and personality, just enhance the approach to satisfy these diverse criteria.
 
 Return ONLY the improved prompt text, no explanations or meta-commentary. Just the prompt that would be used to instruct the AI advisor.`;
 
@@ -207,62 +246,83 @@ Return ONLY the improved prompt text, no explanations or meta-commentary. Just t
         }
         console.log(`✨ Iteration ${iteration} - Improved prompt:`, improvedPrompt);
 
-        // Create a temporary system prompt with the improved advisor
-        const testSystemPrompt = `You are currently embodying the following advisor:
+        // Test the improved prompt against each selected assertion in its original context
+        console.log(`🧠 Testing improved prompt against ${failedAssertions.length} selected assertions...`);
+        let totalPassed = 0;
+        let allResults = [];
+
+        for (const assertion of failedAssertions) {
+          // Create a temporary system prompt with the improved advisor
+          const testSystemPrompt = `You are currently embodying the following advisor:
 
 ${selectedResponse.advisorName}: ${improvedPrompt}
 
 Please respond to user questions from this advisor's perspective, maintaining their expertise and approach.`;
 
-        // Test the improved prompt with the original conversation context
-        const contextMessages = selectedResponse.conversationContext.messages || [];
-        const lastUserMessage = contextMessages.reverse().find(msg => msg.type === 'user');
-        
-        if (!lastUserMessage) {
-          throw new Error('Could not find original user message for testing');
+          // Get the original context for this assertion
+          const contextMessages = assertion.conversationContext.messages || [];
+          const lastUserMessage = contextMessages.slice().reverse().find(msg => msg.type === 'user');
+          
+          if (!lastUserMessage) {
+            console.warn(`⚠️ Could not find original user message for assertion: ${assertion.text}`);
+            continue;
+          }
+
+          // Get test response from Claude using the original context
+          console.log(`🧠 Testing assertion "${assertion.text}" with original prompt: "${lastUserMessage.content}"`);
+          const testResponse = await callClaude(lastUserMessage.content, () => testSystemPrompt);
+          console.log(`💬 Claude test response:`, testResponse.substring(0, 100) + '...');
+
+          // Evaluate this specific assertion
+          const singleAssertionEval = await evaluateAssertions(
+            testResponse,
+            [assertion], // Test just this one assertion
+            callGemini
+          );
+
+          if (singleAssertionEval.results[0]?.passed) {
+            totalPassed++;
+            console.log(`✅ Assertion passed: ${assertion.text}`);
+          } else {
+            console.log(`❌ Assertion failed: ${assertion.text} - ${singleAssertionEval.results[0]?.reason}`);
+          }
+
+          allResults.push({
+            assertion: assertion.text,
+            passed: singleAssertionEval.results[0]?.passed || false,
+            reason: singleAssertionEval.results[0]?.reason || 'Unknown error'
+          });
         }
 
-        // Get test response from Claude
-        console.log(`🧠 Testing with Claude using prompt: "${lastUserMessage.content}"`);
-        const testResponse = await callClaude(lastUserMessage.content, () => testSystemPrompt);
-        console.log(`💬 Claude test response:`, testResponse.substring(0, 200) + '...');
-
-        // Evaluate the test response
-        console.log(`🔍 Evaluating test response against assertions...`);
-        const evaluationResult = await evaluateAssertions(
-          testResponse,
-          selectedResponse.assertions,
-          callGemini
-        );
-
         // Calculate score (number of assertions passed)
-        const score = evaluationResult.results.filter(r => r.passed).length;
-        console.log(`📊 Iteration ${iteration} - Score: ${score}/${selectedResponse.assertions.length} assertions passed`);
+        const score = totalPassed;
+        console.log(`📊 Iteration ${iteration} - Score: ${score}/${failedAssertions.length} assertions passed`);
         
         // Log individual assertion results
-        evaluationResult.results.forEach((result, index) => {
+        allResults.forEach((result, index) => {
           const status = result.passed ? '✅' : '❌';
           console.log(`   ${status} Assertion ${index + 1}: ${result.reason}`);
         });
 
         // Keep best result
         if (score > bestScore) {
-          console.log(`🎯 New best score! ${score}/${selectedResponse.assertions.length} (previous: ${bestScore})`);
+          console.log(`🎯 New best score! ${score}/${failedAssertions.length} (previous: ${bestScore})`);
           bestScore = score;
           bestPrompt = improvedPrompt;
           bestResult = {
             prompt: improvedPrompt,
-            evaluation: evaluationResult,
+            results: allResults,
             iteration: iteration,
             score: score,
-            totalAssertions: selectedResponse.assertions.length
+            totalAssertions: failedAssertions.length,
+            overallPassed: score === failedAssertions.length
           };
         } else {
-          console.log(`📈 No improvement. Keeping previous best: ${bestScore}/${selectedResponse.assertions.length}`);
+          console.log(`📈 No improvement. Keeping previous best: ${bestScore}/${failedAssertions.length}`);
         }
 
         // If all assertions pass, we're done
-        if (evaluationResult.overallPassed) {
+        if (score === failedAssertions.length) {
           console.log(`🎉 All assertions passed! Optimization complete at iteration ${iteration}`);
           break;
         }
@@ -271,16 +331,16 @@ Please respond to user questions from this advisor's perspective, maintaining th
       // Set final result
       console.log(`🏁 Optimization complete!`);
       console.log(`📝 Final optimized prompt:`, bestPrompt);
-      console.log(`📊 Final score: ${bestScore}/${selectedResponse.assertions.length} assertions passed`);
-      console.log(`🎯 Success: ${bestResult?.evaluation.overallPassed ? 'YES' : 'NO'}`);
+      console.log(`📊 Final score: ${bestScore}/${failedAssertions.length} assertions passed`);
+      console.log(`🎯 Success: ${bestResult?.overallPassed ? 'YES' : 'NO'}`);
 
       setOptimizationResult({
         originalPrompt,
         bestPrompt,
         result: bestResult,
-        success: bestResult?.evaluation.overallPassed || false,
+        success: bestResult?.overallPassed || false,
         improvementCount: bestScore,
-        totalAssertions: selectedResponse.assertions.length
+        totalAssertions: failedAssertions.length
       });
 
     } catch (error) {
@@ -461,20 +521,47 @@ Please respond to user questions from this advisor's perspective, maintaining th
                   </div>
                 </div>
 
-                {/* Assertions */}
+                {/* All Assertions for this Advisor */}
                 <div className="mb-6">
                   <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">
-                    Assertions ({selectedResponse.assertions.length})
+                    All Assertions for {selectedResponse.advisorName} ({getAllAssertionsForAdvisor().length})
                   </h3>
-                  <div className="space-y-2">
-                    {selectedResponse.assertions.map((assertion, index) => (
-                      <div key={assertion.id} className="p-2 bg-gray-50 dark:bg-gray-800 rounded">
-                        <p className="text-sm text-gray-700 dark:text-gray-300">
-                          {index + 1}. {assertion.text}
-                        </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                    Select assertions to optimize against:
+                  </p>
+                  <div className="space-y-3">
+                    {getAllAssertionsForAdvisor().map((assertion, index) => (
+                      <div key={assertion.id} className="p-3 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+                        <div className="flex items-start space-x-3">
+                          <input
+                            type="checkbox"
+                            id={`assertion-${assertion.id}`}
+                            checked={selectedAssertions.has(assertion.id)}
+                            onChange={() => handleAssertionToggle(assertion.id)}
+                            className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                          />
+                          <div className="flex-1">
+                            <label 
+                              htmlFor={`assertion-${assertion.id}`}
+                              className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer block"
+                            >
+                              {assertion.text}
+                            </label>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              Source: {assertion.sourceDescription}
+                            </p>
+                          </div>
+                        </div>
                       </div>
                     ))}
                   </div>
+                  {selectedAssertions.size > 0 && (
+                    <div className="mt-3 p-2 bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded">
+                      <p className="text-sm text-blue-800 dark:text-blue-200">
+                        {selectedAssertions.size} assertion{selectedAssertions.size !== 1 ? 's' : ''} selected for optimization
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Previous Evaluations */}
@@ -538,15 +625,15 @@ Please respond to user questions from this advisor's perspective, maintaining th
                         Evaluating...
                       </>
                     ) : (
-                      'Evaluate'
+                      'Evaluate This Response'
                     )}
                   </button>
                   <button
                     onClick={handleOptimize}
-                    disabled={isOptimizing}
+                    disabled={isOptimizing || selectedAssertions.size === 0}
                     className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
-                    {isOptimizing ? 'Optimizing...' : 'Optimize'}
+                    {isOptimizing ? 'Optimizing...' : `Optimize (${selectedAssertions.size} selected)`}
                   </button>
                 </div>
               </div>
