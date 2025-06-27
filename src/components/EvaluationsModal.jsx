@@ -168,6 +168,7 @@ const EvaluationsModal = ({ isOpen, onClose, advisors = [], onUpdateAdvisor, ini
       let bestPrompt = originalPrompt;
       let bestResult = null;
       let bestScore = 0;
+      let previousAttempts = []; // Track failed attempts for learning
 
       console.log('🔄 Starting 10-iteration optimization loop...');
 
@@ -176,18 +177,29 @@ const EvaluationsModal = ({ isOpen, onClose, advisors = [], onUpdateAdvisor, ini
         console.log(`🔄 Iteration ${iteration}/10 - Testing new prompt...`);
         setOptimizationProgress({ current: iteration, total: 10 });
 
-        // Generate improved prompt using Gemini
-        const optimizationPrompt = `Current advisor prompt for ${selectedResponse.advisorName}:
+        // Build adaptive prompt that learns from failures
+        let optimizationPrompt = `Current advisor prompt for ${selectedResponse.advisorName}:
 ${bestPrompt}
 
 This advisor needs to meet these requirements across different conversations:
-${failedAssertions.map((assertion, index) => `${index + 1}. ${assertion.text} (from: "${assertion.sourceDescription}")`).join('\n')}
+${failedAssertions.map((assertion, index) => `${index + 1}. ${assertion.text} (from: "${assertion.sourceDescription}")`).join('\n')}`;
 
-Suggest an improved advisor prompt that would help produce responses meeting all these requirements. Keep the same expertise level and personality, just enhance the approach to satisfy these diverse criteria.
+        // Add learning from previous failures
+        if (previousAttempts.length > 0) {
+          optimizationPrompt += `\n\nPrevious attempts that didn't improve the score:`;
+          previousAttempts.forEach((attempt, index) => {
+            optimizationPrompt += `\n\nAttempt ${index + 1}:
+- Approach: ${attempt.approach}
+- Still failed: ${attempt.stillFailing.join(', ')}`;
+          });
+          optimizationPrompt += `\n\nTry a different approach than the previous attempts. Focus on the assertions that keep failing.`;
+        }
+
+        optimizationPrompt += `\n\nSuggest an improved advisor prompt that would help produce responses meeting all these requirements. Keep the same expertise level and personality, just enhance the approach to satisfy these diverse criteria.
 
 Return ONLY the improved prompt text, no explanations or meta-commentary. Just the prompt that would be used to instruct the AI advisor.`;
 
-        console.log(`🤖 Asking Gemini for prompt improvement...`);
+        console.log(`🤖 Asking Gemini for prompt improvement (attempt ${iteration})...`);
         const geminiResult = await callGemini(optimizationPrompt, {
           temperature: 0.3,
           maxOutputTokens: 500
@@ -319,6 +331,17 @@ Please respond to user questions from this advisor's perspective, maintaining th
           };
         } else {
           console.log(`📈 No improvement. Keeping previous best: ${bestScore}/${failedAssertions.length}`);
+          
+          // Track failed attempts for learning
+          const stillFailingAssertions = allResults.filter(r => !r.passed).map(r => r.assertion);
+          const approachDescription = improvedPrompt.substring(0, 100) + '...';
+          
+          previousAttempts.push({
+            approach: approachDescription,
+            stillFailing: stillFailingAssertions
+          });
+          
+          console.log(`📝 Logged failed attempt: ${stillFailingAssertions.length} assertions still failing`);
         }
 
         // If all assertions pass, we're done
