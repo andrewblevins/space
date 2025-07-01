@@ -10,7 +10,7 @@ SPACE stands for Simple Perspective-Augmenting Conversation Environment.
 
 SPACE lets you create AI advisors with different perspectives and have conversations with them. You can define what makes a good response and let the system improve advisor quality through iterative testing.
 
-The key difference from other chat interfaces is the evaluation system: you set the standards, and SPACE optimizes responses to meet them. This puts you in control of AI behavior rather than accepting whatever the model provides.
+The key difference from other chat interfaces, aside from the multi-perspective interface, is the evaluation system: you set the standards, and SPACE optimizes responses to meet them. This gives you agency in the ongoing process of aligning the AI's tastes and perspectives.
 
 ## Key Features
 
