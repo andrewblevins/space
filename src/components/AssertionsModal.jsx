@@ -34,47 +34,47 @@ const AssertionsModal = ({
       return null;
     }
 
-    // Parse assertions (one per line)
-    const assertionLines = assertions
-      .split('\n')
-      .map(line => line.trim())
-      .filter(line => line.length > 0);
+      // Parse assertions (one per line)
+      const assertionLines = assertions
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 0);
 
-    if (assertionLines.length === 0) {
+      if (assertionLines.length === 0) {
       return null;
-    }
+      }
 
-    // Create assertion objects
-    const assertionObjects = assertionLines.map((text, index) => ({
-      id: `assert-${Date.now()}-${index}`,
-      text,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }));
+      // Create assertion objects
+      const assertionObjects = assertionLines.map((text, index) => ({
+        id: `assert-${Date.now()}-${index}`,
+        text,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }));
 
-    // Create the assertions data structure
-    const assertionsData = {
-      responseId: advisorResponse.id,
-      responseContent: advisorResponse.response,
-      advisorName: advisorResponse.name,
-      conversationContext: {
-        ...conversationContext,
-        timestamp: conversationContext.timestamp || new Date().toISOString()
-      },
-      assertions: assertionObjects,
-      evaluations: existingAssertions?.evaluations || [],
-      optimizations: existingAssertions?.optimizations || [],
-      createdAt: existingAssertions?.createdAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
+      // Create the assertions data structure
+      const assertionsData = {
+        responseId: advisorResponse.id,
+        responseContent: advisorResponse.response,
+        advisorName: advisorResponse.name,
+        conversationContext: {
+          ...conversationContext,
+          timestamp: conversationContext.timestamp || new Date().toISOString()
+        },
+        assertions: assertionObjects,
+        evaluations: existingAssertions?.evaluations || [],
+        optimizations: existingAssertions?.optimizations || [],
+        createdAt: existingAssertions?.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
 
-    // Save to localStorage
-    saveAssertions(advisorResponse.id, assertionsData);
+      // Save to localStorage
+      saveAssertions(advisorResponse.id, assertionsData);
 
-    // Callback for parent component
-    if (onSave) {
-      onSave(assertionsData);
-    }
+      // Callback for parent component
+      if (onSave) {
+        onSave(assertionsData);
+      }
 
     return assertionsData;
   };
@@ -84,7 +84,7 @@ const AssertionsModal = ({
     try {
       const result = await saveAssertionsData();
       if (result) {
-        onClose();
+      onClose();
       }
     } catch (error) {
       console.error('Failed to save assertions:', error);

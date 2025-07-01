@@ -103,9 +103,9 @@ Return your evaluation as JSON in this exact format. You must evaluate EXACTLY $
       }
       return {
         assertionId: assertion.id,
-        assertionIndex: index + 1,
-        passed: result.pass,
-        reason: result.reason
+      assertionIndex: index + 1,
+      passed: result.pass,
+      reason: result.reason
       };
     });
 

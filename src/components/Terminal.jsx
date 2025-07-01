@@ -3404,7 +3404,7 @@ ${selectedText}
                     }`}
                   >
                     {msg.type === 'system' ? (
-                      <MemoizedMarkdownMessage content={msg.content} advisors={advisors} />
+                      <MemoizedMarkdownMessage content={msg.content} advisors={advisors} paragraphSpacing={paragraphSpacing} />
                     ) : msg.type === 'advisor_json' ? (
                       <div>
                         {msg.thinking && <ThinkingBlock content={msg.thinking} />}
@@ -3433,7 +3433,7 @@ ${selectedText}
                         {msg.parsedAdvisors.synthesis && (
                           <div className="mt-4 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
                             <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Synthesis</h4>
-                            <MemoizedMarkdownMessage content={msg.parsedAdvisors.synthesis} advisors={advisors} />
+                            <MemoizedMarkdownMessage content={msg.parsedAdvisors.synthesis} advisors={advisors} paragraphSpacing={paragraphSpacing} />
                           </div>
                         )}
                       </div>
@@ -3444,11 +3444,12 @@ ${selectedText}
                           <div>
                             {msg.thinking && <ThinkingBlock content={msg.thinking} />}
                             {debates.map((debate, debateIdx) => (
-                              <DebateBlock key={debateIdx} content={debate} advisors={advisors} />
+                              <DebateBlock key={debateIdx} content={debate} advisors={advisors} paragraphSpacing={paragraphSpacing} />
                             ))}
                             <MemoizedMarkdownMessage 
                               content={processedContent.replace(/__DEBATE_PLACEHOLDER_\d+__/g, '')} 
                               advisors={advisors} 
+                              paragraphSpacing={paragraphSpacing}
                             />
                           </div>
                         );
