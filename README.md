@@ -1,105 +1,149 @@
 # SPACE Terminal
 
-[SPACE Terminal](https://spaceterminal.xyz) is a terminal-style interface for personal discovery and thinking with large language models. SPACE stands for Simple Perspective-Augmenting Conversation Environment (or maybe, Simulated People Advising Convincingly Enough).
+[SPACE Terminal](https://spaceterminal.xyz) is a revolutionary AI advisor system with **user-sovereign evaluation capabilities**. Available both as a hosted service and open source for self-hosting.
+
+SPACE stands for Simple Perspective-Augmenting Conversation Environment (or maybe, Simulated People Advising Convincingly Enough).
 
 <img src="screenshots/terminal-screenshot.png" alt="SPACE Terminal Interface" width="800"/>
 
-The biggest difference from other chat interfaces is the ability to create and manage AI personas with distinct perspectives, changing them out mid-conversation. For more about AI advisors, see the Insight Cascade process and guidelines here: https://github.com/andrewblevins/insight-cascade. 
+## 🚀 What Makes SPACE Different
 
-SPACE also lets you have much longer conversations without hitting rate limits, a current limitation of Claude Pro.
+### Multi-Advisor Conversations
+Create AI personas with distinct perspectives and have them debate complex topics. Switch advisors mid-conversation for varied viewpoints.
 
-The app uses Claude 4 Sonnet for the main conversation and GPT-4o for background analysis features like metaphor tracking and question generation (which you can activate by clicking the triangles next to those menus). Model selection is not configurable through the interface yet, if anyone wants to implement that I'd be very grateful.
+### **Revolutionary Evaluation System** 🔥
+The breakthrough feature: **user-controlled AI optimization**. Define your own quality criteria ("assertions") and let SPACE automatically improve advisor responses through iterative testing. This is "democratic AI development" - you define what "good" looks like, not big tech companies.
 
-Currently SPACE will only work well on a desktop or laptop computer. Mobile layout TK.
+### Terminal-Style Interface
+Clean, focused environment designed for deep thinking and exploration.
 
-SPACE uses cloud storage with Google authentication to save your conversations and settings across all your devices. (Note: conversations are processed by Anthropic and OpenAI APIs, whose data policies are worth reviewing if this is a concern.)
+## 🎯 Key Features
 
-*SPACE is one node in a larger project exploring frameworks and interfaces for using Large Language Models for personal and social discovery. If you're interested in being a part of a commmunity supporting ongoing dialogue and experimentation around this, sign up for updates here: https://forms.gle/svMNnjJjJdFUjQ9L8.*
+- **🤖 Multi-Advisor System**: Create, manage, and switch between AI personas
+- **⚡ Evaluation Loop**: Define assertions and optimize advisor quality automatically  
+- **🏛️ High Council Mode**: Get multiple perspectives debating complex topics
+- **📊 Context Management**: Smart conversation summarization and memory
+- **🏷️ Tag Analysis**: Automatic theme tracking and analysis
+- **📝 Export System**: Save conversations in markdown format
+- **💾 Session Management**: Save and load conversation sessions
+- **🔍 Debug Mode**: See exactly what's sent to AI models with cost estimates
 
-## Setup
+## 🌐 Two Ways to Use SPACE
 
-SPACE Terminal uses Google authentication - simply sign in with your Google account to get started! No API keys required.
+### 1. **Hosted Service** (Easiest)
+Visit [spaceterminal.xyz](https://spaceterminal.xyz) - sign in with Google and start immediately. No setup required.
 
-### Getting Started
+### 2. **Self-Hosted** (Full Control)
+Clone this repository and run your own instance with your API keys.
 
-Add your first advisor by clicking the + button on the left side of the screen. Type in a name and click "Generate Description" to get a personality, edit to your liking, then click "Create". 
+**Quick Start:**
+```bash
+git clone https://github.com/andrewblevins/space.git
+cd space
+npm install
+cp .env.example .env
+cp wrangler.toml.example wrangler.toml
+# Add your API keys to wrangler.toml
+npm run dev:watch
+```
 
-Make sure the advisors you want to talk to are green (selected).
+See [SETUP.md](SETUP.md) for detailed installation instructions.
 
-When you have a board of advisors you like, enter:
+## 🧠 The Evaluation System
 
-> /prompt use "serious-play"
+SPACE's evaluation system is a breakthrough in AI alignment:
 
-This will send a basic starting prompt for the conversation.
+1. **Create Assertions**: Define what makes a good response (accuracy, creativity, etc.)
+2. **Test Responses**: Evaluate advisor outputs against your criteria  
+3. **Optimize Automatically**: 10-iteration improvement loop using Gemini + Claude
+4. **Accept or Reject**: You control the final optimization results
 
-## Features
+This puts **you** in charge of AI alignment, not corporations. See [docs/EVALUATION-SYSTEM.md](docs/EVALUATION-SYSTEM.md) for details.
 
-- **Terminal-Style Interface**: Clean, focused environment for conversation
+## 🚀 Getting Started
 
-- **Advisor System**: Create, manage, and generate descriptions for AI personas for varied perspectives
+### Hosted Version
+1. Visit [spaceterminal.xyz](https://spaceterminal.xyz)
+2. Sign in with Google
+3. Click + to add your first advisor
+4. Start conversing!
 
-- **Column Layout**: 
-  - Left: Metaphor tracking and advisor menu
-  - Center: Main conversation area
-  - Right: Generated questions for exploration
+### Self-Hosted Version
+1. Follow the [SETUP.md](SETUP.md) guide
+2. Add your API keys (Anthropic, OpenAI, Gemini)
+3. Run `npm run dev:watch`
+4. Open `http://localhost:3000`
 
-- **Context Management**: Set token limit beyond which conversation history is shortened (to save tokens/$$$). Past this limit, the LLM will receive the six most recent messages and any messages deemed relevant according to...
+## 🎮 Usage Tips
 
-- **Tag Analysis**: Background analysis and tracking of conversation themes (currently only used for context management but will be expanded and deepened)
+- **Add Advisors**: Click the + button, generate descriptions, customize personalities
+- **Select Active Advisors**: Green = active, click to toggle
+- **Try High Council**: Use multiple advisors for complex debates
+- **Create Assertions**: Click "Evaluate" to set quality standards
+- **Optimize Responses**: Let the system improve advisor quality automatically
+- **Export Conversations**: Save your insights in markdown format
 
-- **Export**: Save your conversation in markdown format
+## 🏗️ Architecture
 
-- **Prompts Library**: A library of prompts you can add to, edit, and delete. Also includes a handful of default suggestions
+**Frontend**: React + Vite  
+**Backend**: Cloudflare Workers  
+**Database**: Supabase (optional)  
+**AI Models**: Claude 4 Sonnet, GPT-4o, Gemini Pro  
 
-- **Capture**: Right click selected text to capture and save to a Markdown file
-- **@ References**: Use `@<session_id>` in a message to insert a brief summary of that past session
-- **Debug**: Use the settings menu (gear icon, bottom-left) to toggle debug mode and see what's being sent to Claude plus estimated costs.
+## 🤝 Contributing
 
-## Interface
+We welcome contributions! This project represents a new paradigm in human-AI interaction.
 
-SPACE has moved to a **fully GUI-based interface** for ease of use. All functionality is accessible through:
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
 
-- **Settings Menu**: Click the gear icon (bottom-left) for debug mode, token limits, and account settings
-- **Advisors Panel**: Left sidebar for creating, editing, and selecting AI advisors  
-- **Conversation**: Main terminal area for natural conversation
-- **Export Menu**: Click export icon for saving conversations in markdown format
-- **Prompts Library**: Access saved prompts through the interface
+See [SETUP.md](SETUP.md) for development setup.
 
-### Legacy Commands
+## 📚 Documentation
 
-Some terminal commands are still available for power users:
-- `/new` - Start a new session  
-- `/debug` - Toggle debug mode
-- `/help` - Show available commands
+- **[SETUP.md](SETUP.md)** - Complete setup guide
+- **[docs/EVALUATION-SYSTEM.md](docs/EVALUATION-SYSTEM.md)** - Evaluation system deep dive
+- **[docs/SECURITY-AUDIT.md](docs/SECURITY-AUDIT.md)** - Security measures and audit
+- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** - Technical architecture
+- **[docs/](docs/)** - Additional documentation
 
-*Note: Advisor sharing, group management, and most other features are now handled through the graphical interface rather than slash commands.*
+## 🔒 Privacy & Security
 
-## Roadmap
+- **Self-Hosted**: Complete data control when running locally
+- **Hosted Service**: Conversations processed by AI providers (review their data policies)
+- **Open Source**: Full transparency - audit the code yourself
+- **Local Storage**: Works offline with browser storage
 
-- [ ] Worksheet system for reflection and advisor finding
-- [ ] Model selection and configuration 
-- [ ] Better memory / context management system
-- [ ] More conversation analysis tools (interpersonal patterns, Kegan stages, etc.?)
-- [x] Advisor sharing through file import/export
+## 💡 Use Cases
 
-## Usage Limits
+- **Academic Research**: Multi-perspective analysis with quality control
+- **Creative Collaboration**: Brainstorm with diverse AI personalities  
+- **Business Analysis**: Stress-test ideas from multiple angles
+- **Personal Development**: Explore complex topics with tailored advisors
+- **Truth-Seeking**: Democratic AI alignment for intellectual integrity
 
-SPACE Terminal includes a daily message limit to ensure fair usage for all users. You get 25 messages per day, which resets at midnight. This provides plenty of room for deep conversations while keeping the service sustainable. Usage tracking is shown in the settings menu.
+## 🌟 The Vision
 
-## Support
+SPACE Terminal is part of a larger project exploring frameworks for using AI for personal and social discovery. We're building tools that put humans in control of AI alignment and foster genuine intellectual growth.
 
-If you've found a bug or have an idea for a feature, contact me at andrew.s.blevins@gmail.com or [@andrew0blevins](https://x.com/andrew0blevins) on Twitter.
+Join our community: [Sign up for updates](https://forms.gle/svMNnjJjJdFUjQ9L8)
 
-## License
+## 📞 Support
 
-Proprietary Software - All Rights Reserved. See LICENSE file for details.
+- **Issues**: [GitHub Issues](https://github.com/andrewblevins/space/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/andrewblevins/space/discussions)
+- **Email**: andrew.s.blevins@gmail.com
+- **Twitter**: [@andrew0blevins](https://x.com/andrew0blevins)
 
-Author: [Andrew Shade Blevins](www.andrewshadeblevins.com)
+## 📄 License
 
-## Acknowledgments
+MIT License - see [LICENSE](LICENSE) file for details.
 
-SPACE Terminal would not be possible without the generous support of the Context Appreciation Society. 
+**Author**: [Andrew Shade Blevins](https://www.andrewshadeblevins.com)
 
-## Cloud Sync
+## 🙏 Acknowledgments
 
-SPACE Terminal uses Google OAuth for authentication and automatically syncs your conversations across devices. API keys are managed server-side, so you don't need to handle them directly - just sign in and start exploring!
+SPACE Terminal would not be possible without the generous support of the Context Appreciation Society and the open source community.
