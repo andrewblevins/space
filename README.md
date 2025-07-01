@@ -1,42 +1,34 @@
 # SPACE Terminal
 
-[SPACE Terminal](https://spaceterminal.xyz) is a revolutionary AI advisor system with **user-sovereign evaluation capabilities**. Available both as a hosted service and open source for self-hosting.
+[SPACE Terminal](https://spaceterminal.xyz) is an AI advisor system that lets you define quality criteria and optimize responses automatically. Available as a hosted service and open source for self-hosting.
 
-SPACE stands for Simple Perspective-Augmenting Conversation Environment (or maybe, Simulated People Advising Convincingly Enough).
+SPACE stands for Simple Perspective-Augmenting Conversation Environment.
 
 <img src="screenshots/terminal-screenshot.png" alt="SPACE Terminal Interface" width="800"/>
 
-## 🚀 What Makes SPACE Different
+## What SPACE Does
 
-### Multi-Advisor Conversations
-Create AI personas with distinct perspectives and have them debate complex topics. Switch advisors mid-conversation for varied viewpoints.
+SPACE lets you create AI advisors with different perspectives and have conversations with them. You can define what makes a good response and let the system improve advisor quality through iterative testing.
 
-### **Revolutionary Evaluation System** 🔥
-The breakthrough feature: **user-controlled AI optimization**. Define your own quality criteria ("assertions") and let SPACE automatically improve advisor responses through iterative testing. This is "democratic AI development" - you define what "good" looks like, not big tech companies.
+The key difference from other chat interfaces is the evaluation system: you set the standards, and SPACE optimizes responses to meet them. This puts you in control of AI behavior rather than accepting whatever the model provides.
 
-### Terminal-Style Interface
-Clean, focused environment designed for deep thinking and exploration.
+## Key Features
 
-## 🎯 Key Features
+- Create and manage AI advisors with distinct personalities
+- Define quality criteria ("assertions") for responses
+- Automatically optimize advisor responses through testing loops
+- Have multiple advisors debate complex topics
+- Export conversations and manage sessions
+- See exactly what's sent to AI models with cost estimates
 
-- **🤖 Multi-Advisor System**: Create, manage, and switch between AI personas
-- **⚡ Evaluation Loop**: Define assertions and optimize advisor quality automatically  
-- **🏛️ High Council Mode**: Get multiple perspectives debating complex topics
-- **📊 Context Management**: Smart conversation summarization and memory
-- **🏷️ Tag Analysis**: Automatic theme tracking and analysis
-- **📝 Export System**: Save conversations in markdown format
-- **💾 Session Management**: Save and load conversation sessions
-- **🔍 Debug Mode**: See exactly what's sent to AI models with cost estimates
+## Two Ways to Use SPACE
 
-## 🌐 Two Ways to Use SPACE
+### Hosted Service
+Visit [spaceterminal.xyz](https://spaceterminal.xyz) and sign in with Google. No setup required.
 
-### 1. **Hosted Service** (Easiest)
-Visit [spaceterminal.xyz](https://spaceterminal.xyz) - sign in with Google and start immediately. No setup required.
+### Self-Hosted
+Clone this repository and run your own instance:
 
-### 2. **Self-Hosted** (Full Control)
-Clone this repository and run your own instance with your API keys.
-
-**Quick Start:**
 ```bash
 git clone https://github.com/andrewblevins/space.git
 cd space
@@ -47,103 +39,69 @@ cp wrangler.toml.example wrangler.toml
 npm run dev:watch
 ```
 
-See [SETUP.md](SETUP.md) for detailed installation instructions.
+See [SETUP.md](SETUP.md) for detailed instructions.
 
-## 🧠 The Evaluation System
+## How the Evaluation System Works
 
-SPACE's evaluation system is a breakthrough in AI alignment:
+1. Have a conversation with an advisor
+2. Create assertions that define good responses
+3. Run the optimization process (10 iterations of testing and improvement)
+4. Accept or reject the optimized advisor
 
-1. **Create Assertions**: Define what makes a good response (accuracy, creativity, etc.)
-2. **Test Responses**: Evaluate advisor outputs against your criteria  
-3. **Optimize Automatically**: 10-iteration improvement loop using Gemini + Claude
-4. **Accept or Reject**: You control the final optimization results
+The system uses one AI model (Gemini) to suggest improvements and another (Claude) to test them against your criteria. You control the final decision.
 
-This puts **you** in charge of AI alignment, not corporations. See [docs/EVALUATION-SYSTEM.md](docs/EVALUATION-SYSTEM.md) for details.
-
-## 🚀 Getting Started
+## Getting Started
 
 ### Hosted Version
 1. Visit [spaceterminal.xyz](https://spaceterminal.xyz)
 2. Sign in with Google
-3. Click + to add your first advisor
-4. Start conversing!
+3. Add an advisor using the + button
+4. Start a conversation
 
 ### Self-Hosted Version
-1. Follow the [SETUP.md](SETUP.md) guide
-2. Add your API keys (Anthropic, OpenAI, Gemini)
+1. Follow [SETUP.md](SETUP.md) to install dependencies
+2. Add API keys for Anthropic, OpenAI, and Google
 3. Run `npm run dev:watch`
 4. Open `http://localhost:3000`
 
-## 🎮 Usage Tips
+## Technical Details
 
-- **Add Advisors**: Click the + button, generate descriptions, customize personalities
-- **Select Active Advisors**: Green = active, click to toggle
-- **Try High Council**: Use multiple advisors for complex debates
-- **Create Assertions**: Click "Evaluate" to set quality standards
-- **Optimize Responses**: Let the system improve advisor quality automatically
-- **Export Conversations**: Save your insights in markdown format
+Built with React, Cloudflare Workers, and Supabase. Uses Claude 4 Sonnet, GPT-4o, and Gemini Pro.
 
-## 🏗️ Architecture
+The evaluation system creates isolated test environments to avoid interfering with your main conversations.
 
-**Frontend**: React + Vite  
-**Backend**: Cloudflare Workers  
-**Database**: Supabase (optional)  
-**AI Models**: Claude 4 Sonnet, GPT-4o, Gemini Pro  
+## Documentation
 
-## 🤝 Contributing
+- [SETUP.md](SETUP.md) - Installation and setup
+- [docs/EVALUATION-SYSTEM.md](docs/EVALUATION-SYSTEM.md) - How the evaluation system works
+- [docs/SECURITY-AUDIT.md](docs/SECURITY-AUDIT.md) - Security measures
+- [docs/](docs/) - Additional documentation
 
-We welcome contributions! This project represents a new paradigm in human-AI interaction.
+## Contributing
 
 1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
+2. Create a feature branch
 3. Make your changes
 4. Test thoroughly
 5. Submit a pull request
 
 See [SETUP.md](SETUP.md) for development setup.
 
-## 📚 Documentation
+## Use Cases
 
-- **[SETUP.md](SETUP.md)** - Complete setup guide
-- **[docs/EVALUATION-SYSTEM.md](docs/EVALUATION-SYSTEM.md)** - Evaluation system deep dive
-- **[docs/SECURITY-AUDIT.md](docs/SECURITY-AUDIT.md)** - Security measures and audit
-- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** - Technical architecture
-- **[docs/](docs/)** - Additional documentation
+- Academic research with quality-controlled AI responses
+- Creative collaboration with diverse AI perspectives
+- Business analysis from multiple angles
+- Personal exploration of complex topics
 
-## 🔒 Privacy & Security
+## Support
 
-- **Self-Hosted**: Complete data control when running locally
-- **Hosted Service**: Conversations processed by AI providers (review their data policies)
-- **Open Source**: Full transparency - audit the code yourself
-- **Local Storage**: Works offline with browser storage
+- [GitHub Issues](https://github.com/andrewblevins/space/issues) for bugs
+- [GitHub Discussions](https://github.com/andrewblevins/space/discussions) for questions
+- andrew.s.blevins@gmail.com for direct contact
 
-## 💡 Use Cases
+## License
 
-- **Academic Research**: Multi-perspective analysis with quality control
-- **Creative Collaboration**: Brainstorm with diverse AI personalities  
-- **Business Analysis**: Stress-test ideas from multiple angles
-- **Personal Development**: Explore complex topics with tailored advisors
-- **Truth-Seeking**: Democratic AI alignment for intellectual integrity
+MIT License - see [LICENSE](LICENSE) file.
 
-## 🌟 The Vision
-
-SPACE Terminal is part of a larger project exploring frameworks for using AI for personal and social discovery. We're building tools that put humans in control of AI alignment and foster genuine intellectual growth.
-
-Join our community: [Sign up for updates](https://forms.gle/svMNnjJjJdFUjQ9L8)
-
-## 📞 Support
-
-- **Issues**: [GitHub Issues](https://github.com/andrewblevins/space/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/andrewblevins/space/discussions)
-- **Email**: andrew.s.blevins@gmail.com
-- **Twitter**: [@andrew0blevins](https://x.com/andrew0blevins)
-
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE) file for details.
-
-**Author**: [Andrew Shade Blevins](https://www.andrewshadeblevins.com)
-
-## 🙏 Acknowledgments
-
-SPACE Terminal would not be possible without the generous support of the Context Appreciation Society and the open source community.
+Author: [Andrew Shade Blevins](https://www.andrewshadeblevins.com)
