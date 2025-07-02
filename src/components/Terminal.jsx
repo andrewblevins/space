@@ -850,7 +850,41 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
         const conversation = await storage.loadConversation(sessionId);
         setCurrentConversationId(conversation.id);
         setCurrentSessionId(conversation.id);
-        setMessages(conversation.messages || []);
+        
+        // Process messages to restore advisor_json format if needed
+        const processedMessages = (conversation.messages || []).map(msg => {
+          // If it's an assistant message that looks like JSON advisor format, restore it
+          if (msg.type === 'assistant' && msg.content) {
+            let jsonContent = msg.content.trim();
+            
+            // Handle markdown code block format
+            if (jsonContent.startsWith('```json') && jsonContent.endsWith('```')) {
+              jsonContent = jsonContent.slice(7, -3).trim();
+            }
+            
+            // Check if it's valid advisor JSON
+            if (jsonContent.startsWith('{') && jsonContent.endsWith('}')) {
+              try {
+                const parsed = JSON.parse(jsonContent);
+                if (parsed.type === 'advisor_response' && parsed.advisors && Array.isArray(parsed.advisors)) {
+                  // Restore as advisor_json type with parsedAdvisors
+                  return {
+                    ...msg,
+                    type: 'advisor_json',
+                    content: jsonContent,
+                    parsedAdvisors: parsed
+                  };
+                }
+              } catch (e) {
+                // Not valid JSON, keep as-is
+              }
+            }
+          }
+          
+          return msg;
+        });
+        
+        setMessages(processedMessages);
         setMetaphors(conversation.metadata?.metaphors || []);
         setAdvisorSuggestions(conversation.metadata?.advisorSuggestions || []);
         setVoteHistory(conversation.metadata?.voteHistory || []);
@@ -869,7 +903,41 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
         const session = JSON.parse(sessionData);
         setCurrentSessionId(session.id);
         setCurrentConversationId(null);
-        setMessages(session.messages);
+        
+        // Process messages to restore advisor_json format if needed
+        const processedMessages = session.messages.map(msg => {
+          // If it's an assistant message that looks like JSON advisor format, restore it
+          if (msg.type === 'assistant' && msg.content) {
+            let jsonContent = msg.content.trim();
+            
+            // Handle markdown code block format
+            if (jsonContent.startsWith('```json') && jsonContent.endsWith('```')) {
+              jsonContent = jsonContent.slice(7, -3).trim();
+            }
+            
+            // Check if it's valid advisor JSON
+            if (jsonContent.startsWith('{') && jsonContent.endsWith('}')) {
+              try {
+                const parsed = JSON.parse(jsonContent);
+                if (parsed.type === 'advisor_response' && parsed.advisors && Array.isArray(parsed.advisors)) {
+                  // Restore as advisor_json type with parsedAdvisors
+                  return {
+                    ...msg,
+                    type: 'advisor_json',
+                    content: jsonContent,
+                    parsedAdvisors: parsed
+                  };
+                }
+              } catch (e) {
+                // Not valid JSON, keep as-is
+              }
+            }
+          }
+          
+          return msg;
+        });
+        
+        setMessages(processedMessages);
         setMetaphors(session.metaphors || []);
         setAdvisorSuggestions(session.advisorSuggestions || []);
         setVoteHistory(session.voteHistory || []);
@@ -893,7 +961,41 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
     if (sessions.length > 1) {
       const penultimate = sessions[sessions.length - 2];
       setCurrentSessionId(penultimate.id);
-      setMessages(penultimate.messages);
+      
+      // Process messages to restore advisor_json format if needed
+      const processedMessages = penultimate.messages.map(msg => {
+        // If it's an assistant message that looks like JSON advisor format, restore it
+        if (msg.type === 'assistant' && msg.content) {
+          let jsonContent = msg.content.trim();
+          
+          // Handle markdown code block format
+          if (jsonContent.startsWith('```json') && jsonContent.endsWith('```')) {
+            jsonContent = jsonContent.slice(7, -3).trim();
+          }
+          
+          // Check if it's valid advisor JSON
+          if (jsonContent.startsWith('{') && jsonContent.endsWith('}')) {
+            try {
+              const parsed = JSON.parse(jsonContent);
+              if (parsed.type === 'advisor_response' && parsed.advisors && Array.isArray(parsed.advisors)) {
+                // Restore as advisor_json type with parsedAdvisors
+                return {
+                  ...msg,
+                  type: 'advisor_json',
+                  content: jsonContent,
+                  parsedAdvisors: parsed
+                };
+              }
+            } catch (e) {
+              // Not valid JSON, keep as-is
+            }
+          }
+        }
+        
+        return msg;
+      });
+      
+      setMessages(processedMessages);
       setMetaphors(penultimate.metaphors || []);
       // DEPRECATED: Questions feature temporarily disabled
       // setQuestions(penultimate.questions || []);
@@ -1091,7 +1193,41 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
           if (sessionData) {
             const session = JSON.parse(sessionData);
             setCurrentSessionId(session.id);
-            setMessages(session.messages);
+            
+            // Process messages to restore advisor_json format if needed
+            const processedMessages = session.messages.map(msg => {
+              // If it's an assistant message that looks like JSON advisor format, restore it
+              if (msg.type === 'assistant' && msg.content) {
+                let jsonContent = msg.content.trim();
+                
+                // Handle markdown code block format
+                if (jsonContent.startsWith('```json') && jsonContent.endsWith('```')) {
+                  jsonContent = jsonContent.slice(7, -3).trim();
+                }
+                
+                // Check if it's valid advisor JSON
+                if (jsonContent.startsWith('{') && jsonContent.endsWith('}')) {
+                  try {
+                    const parsed = JSON.parse(jsonContent);
+                    if (parsed.type === 'advisor_response' && parsed.advisors && Array.isArray(parsed.advisors)) {
+                      // Restore as advisor_json type with parsedAdvisors
+                      return {
+                        ...msg,
+                        type: 'advisor_json',
+                        content: jsonContent,
+                        parsedAdvisors: parsed
+                      };
+                    }
+                  } catch (e) {
+                    // Not valid JSON, keep as-is
+                  }
+                }
+              }
+              
+              return msg;
+            });
+            
+            setMessages(processedMessages);
             setMetaphors(session.metaphors || []);
             // DEPRECATED: Questions feature temporarily disabled
             // setQuestions(session.questions || []);
@@ -3238,7 +3374,41 @@ ${selectedText}
       
       if (sessionData) {
         const session = JSON.parse(sessionData);
-        setMessages(session.messages);
+        
+        // Process messages to restore advisor_json format if needed
+        const processedMessages = session.messages.map(msg => {
+          // If it's an assistant message that looks like JSON advisor format, restore it
+          if (msg.type === 'assistant' && msg.content) {
+            let jsonContent = msg.content.trim();
+            
+            // Handle markdown code block format
+            if (jsonContent.startsWith('```json') && jsonContent.endsWith('```')) {
+              jsonContent = jsonContent.slice(7, -3).trim();
+            }
+            
+            // Check if it's valid advisor JSON
+            if (jsonContent.startsWith('{') && jsonContent.endsWith('}')) {
+              try {
+                const parsed = JSON.parse(jsonContent);
+                if (parsed.type === 'advisor_response' && parsed.advisors && Array.isArray(parsed.advisors)) {
+                  // Restore as advisor_json type with parsedAdvisors
+                  return {
+                    ...msg,
+                    type: 'advisor_json',
+                    content: jsonContent,
+                    parsedAdvisors: parsed
+                  };
+                }
+              } catch (e) {
+                // Not valid JSON, keep as-is
+              }
+            }
+          }
+          
+          return msg;
+        });
+        
+        setMessages(processedMessages);
         setCurrentSessionId(parseInt(sessionId));
         
         // Scroll to the specified message after render
