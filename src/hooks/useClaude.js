@@ -242,23 +242,45 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
         // Expected for partial JSON - not an error
       }
       
-      // If full parsing fails, try to create a minimal structure for early rendering
+      // If full parsing fails, try to extract partial advisor data for progressive rendering
       if (content.includes('"type"') && content.includes('"advisor_response"') && content.includes('"advisors"')) {
-        // We have the basic structure, create a placeholder
-        return {
-          success: true,
-          partial: true,
-          parsed: {
-            type: 'advisor_response',
-            advisors: [{
-              id: 'streaming-placeholder',
-              name: 'Loading...',
-              response: 'Generating response...',
-              timestamp: new Date().toISOString()
-            }]
-          },
-          jsonContent: content.trim()
-        };
+        // Try to extract any advisor data that's partially available
+        const advisorMatch = content.match(/"name":\s*"([^"]*)"(?:.*?"response":\s*"([^"]*(?:[^"\\]|\\.)*))/s);
+        if (advisorMatch) {
+          const [, advisorName, partialResponse] = advisorMatch;
+          // Clean up partial response - remove any incomplete escape sequences
+          const cleanResponse = (partialResponse || '').replace(/\\$/, '');
+          return {
+            success: true,
+            partial: true,
+            parsed: {
+              type: 'advisor_response',
+                              advisors: [{
+                  id: `streaming-${advisorName.toLowerCase().replace(/\s+/g, '-')}`,
+                  name: advisorName || 'Loading...',
+                  response: cleanResponse || 'Generating response...',
+                  timestamp: new Date().toISOString()
+                }]
+            },
+            jsonContent: content.trim()
+          };
+        } else {
+          // Fallback to placeholder if we can't extract advisor data yet
+          return {
+            success: true,
+            partial: true,
+            parsed: {
+              type: 'advisor_response',
+              advisors: [{
+                id: 'streaming-placeholder',
+                name: 'Loading...',
+                response: 'Generating response...',
+                timestamp: new Date().toISOString()
+              }]
+            },
+            jsonContent: content.trim()
+          };
+        }
       }
       
       return { success: false };
