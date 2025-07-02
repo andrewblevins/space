@@ -3590,7 +3590,7 @@ ${selectedText}
                         {msg.thinking && <ThinkingBlock content={msg.thinking} />}
                         {msg.isStreaming && (
                           <div className="mb-2 text-sm text-green-600 dark:text-green-400 italic">
-                            ⚡ Streaming advisor responses...
+                            {msg.isPartial ? '⚡ Preparing advisor cards...' : '⚡ Streaming advisor responses...'}
                           </div>
                         )}
                         {msg.parsedAdvisors.advisors.map((advisor, advisorIdx) => (

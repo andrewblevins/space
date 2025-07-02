@@ -241,6 +241,26 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
       } catch (e) {
         // Expected for partial JSON - not an error
       }
+      
+      // If full parsing fails, try to create a minimal structure for early rendering
+      if (content.includes('"type"') && content.includes('"advisor_response"') && content.includes('"advisors"')) {
+        // We have the basic structure, create a placeholder
+        return {
+          success: true,
+          partial: true,
+          parsed: {
+            type: 'advisor_response',
+            advisors: [{
+              id: 'streaming-placeholder',
+              name: 'Loading...',
+              response: 'Generating response...',
+              timestamp: new Date().toISOString()
+            }]
+          },
+          jsonContent: content.trim()
+        };
+      }
+      
       return { success: false };
     };
 
@@ -289,15 +309,26 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
                       const parseResult = tryParsePartialAdvisorJson(currentMessageContent);
                       if (parseResult.success) {
                         // We have valid partial advisor JSON - render as advisor_json
+                        console.log('🎭 Progressive parsing SUCCESS, switching to advisor_json mode', {
+                          isPartial: parseResult.partial,
+                          advisorCount: parseResult.parsed.advisors.length
+                        });
                         newMessages[newMessages.length - 1] = {
                           type: 'advisor_json',
                           content: parseResult.jsonContent,
                           parsedAdvisors: parseResult.parsed,
                           thinking: (reasoningMode && !isCouncilMode) ? thinkingContent : undefined,
-                          isStreaming: true // Flag to indicate still streaming
+                          isStreaming: true, // Flag to indicate still streaming
+                          isPartial: parseResult.partial // Flag to indicate partial/placeholder data
                         };
                       } else {
                         // JSON mode but not parseable yet - show as assistant with indicator
+                        if (currentMessageContent.length % 50 === 0) { // Log every 50 chars to avoid spam
+                          console.log('🎭 Progressive parsing failed, staying in assistant mode with indicator', {
+                            length: currentMessageContent.length,
+                            preview: currentMessageContent.substring(0, 100)
+                          });
+                        }
                         newMessages[newMessages.length - 1] = {
                           type: 'assistant',
                           content: currentMessageContent,
