@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { AdvisorResponseMessage } from './terminal/AdvisorResponseMessage';
 
-const DebateBlock = ({ content, advisors = [] }) => {
+const DebateBlock = ({ content, advisors = [], paragraphSpacing = 0.25 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   if (!content || content.trim() === '') return null;
@@ -41,7 +41,7 @@ const DebateBlock = ({ content, advisors = [] }) => {
             <AdvisorResponseMessage 
               content={cleanedContent} 
               advisors={advisors}
-              paragraphSpacing={2}
+              paragraphSpacing={paragraphSpacing}
             />
           </div>
         </div>

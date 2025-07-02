@@ -49,8 +49,22 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
     const contextMessages = [{ role: 'user', content: userMessage }];
     if (totalTokens < contextLimit) {
       const historical = messages
-        .filter((m) => (m.type === 'user' || m.type === 'assistant') && m.content?.trim() !== '' && m.content !== userMessage)
-        .map((m) => ({ role: m.type, content: m.timestamp ? `[${formatTimestamp(m.timestamp)}] ${m.content}` : m.content }));
+        .filter((m) => (m.type === 'user' || m.type === 'assistant' || m.type === 'advisor_json') && m.content?.trim() !== '' && m.content !== userMessage)
+        .map((m) => {
+          // Convert advisor_json messages to assistant role for Claude
+          const role = m.type === 'advisor_json' ? 'assistant' : m.type;
+          // For advisor_json messages, extract the actual advisor responses
+          let content = m.content;
+          if (m.type === 'advisor_json' && m.parsedAdvisors) {
+            content = m.parsedAdvisors.advisors.map(advisor => 
+              `**${advisor.name}**: ${advisor.response}`
+            ).join('\n\n');
+          }
+          return { 
+            role, 
+            content: m.timestamp ? `[${formatTimestamp(m.timestamp)}] ${content}` : content 
+          };
+        });
       contextMessages.unshift(...historical);
     } else {
       const managed = buildConversationContext(userMessage, messages, memory);
@@ -91,6 +105,20 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
       max_tokens: maxTokens,
       stream: true,
     };
+    
+    // Log the complete system prompt that Claude receives
+    console.log('📝 SYSTEM PROMPT SENT TO CLAUDE:');
+    console.log('=' .repeat(80));
+    console.log(systemPromptText);
+    console.log('=' .repeat(80));
+    
+    // Log the conversation context messages
+    console.log('💬 CONVERSATION CONTEXT SENT TO CLAUDE:');
+    console.log('=' .repeat(60));
+    contextMessages.forEach((msg, i) => {
+      console.log(`${i + 1}. [${msg.role}]: ${msg.content.substring(0, 200)}${msg.content.length > 200 ? '...' : ''}`);
+    });
+    console.log('=' .repeat(60));
 
     // Add native Extended Thinking if reasoning mode is enabled AND not in council mode
     const isCouncilMode = systemPromptText.includes('HIGH COUNCIL MODE');
@@ -166,11 +194,102 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
     let buffer = '';
     let currentMessageContent = '';
     let thinkingContent = '';
+    let isJsonMode = false;
+    let isInCodeBlock = false;
 
     setMessages((prev) => [...prev, { type: 'assistant', content: '', thinking: (reasoningMode && !isCouncilMode) ? '' : undefined }]);
 
     const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
     const isPunctuation = (char) => ['.', '!', '?', '\n'].includes(char);
+    
+    // Helper function to detect if we're starting JSON advisor format
+    const detectJsonFormat = (content) => {
+      const trimmed = content.trim();
+      // Check for direct JSON start
+      if (trimmed.startsWith('{')) return true;
+      // Check for markdown code block start
+      if (trimmed.startsWith('```json')) return true;
+      // Check if we have enough content to detect JSON pattern
+      if (trimmed.length >= 20 && trimmed.includes('"type"') && trimmed.includes('"advisor_response"')) return true;
+      return false;
+    };
+    
+    // Helper function to try parsing partial JSON for advisor structure
+    const tryParsePartialAdvisorJson = (content) => {
+      try {
+        let jsonContent = content.trim();
+        
+        // Handle markdown code block
+        if (jsonContent.startsWith('```json')) {
+          const endIndex = jsonContent.indexOf('```', 7);
+          if (endIndex === -1) {
+            // Code block not closed yet, extract what we have
+            jsonContent = jsonContent.slice(7).trim();
+          } else {
+            // Code block closed, extract the content
+            jsonContent = jsonContent.slice(7, endIndex).trim();
+          }
+        }
+        
+        // Try to parse - this will fail for incomplete JSON, which is expected
+        if (jsonContent.startsWith('{')) {
+          const parsed = JSON.parse(jsonContent);
+          if (parsed.type === 'advisor_response' && parsed.advisors && Array.isArray(parsed.advisors)) {
+            return { success: true, parsed, jsonContent };
+          }
+        }
+      } catch (e) {
+        // Expected for partial JSON - not an error
+      }
+      
+      // If full parsing fails, try to extract partial advisor data for progressive rendering
+      if (content.includes('"type"') && content.includes('"advisor_response"') && content.includes('"advisors"')) {
+        // Try to extract any advisor data that's partially available
+        const advisorMatch = content.match(/"name":\s*"([^"]*)"(?:.*?"response":\s*"([^"]*(?:[^"\\]|\\.)*))/s);
+        if (advisorMatch) {
+          const [, advisorName, partialResponse] = advisorMatch;
+          // Clean up partial response - remove any incomplete escape sequences
+          const cleanResponse = (partialResponse || '')
+            .replace(/\\$/, '') // Remove incomplete escape at end
+            .replace(/\\n/g, '\n') // Unescape newlines
+            .replace(/\\t/g, '\t') // Unescape tabs
+            .replace(/\\"/g, '"') // Unescape quotes
+            .replace(/\\\\/g, '\\'); // Unescape backslashes
+          return {
+            success: true,
+            partial: true,
+            parsed: {
+              type: 'advisor_response',
+                              advisors: [{
+                  id: `streaming-${advisorName.toLowerCase().replace(/\s+/g, '-')}`,
+                  name: advisorName || 'Loading...',
+                  response: cleanResponse || 'Generating response...',
+                  timestamp: new Date().toISOString()
+                }]
+            },
+            jsonContent: content.trim()
+          };
+        } else {
+          // Fallback to placeholder if we can't extract advisor data yet
+          return {
+            success: true,
+            partial: true,
+            parsed: {
+              type: 'advisor_response',
+              advisors: [{
+                id: 'streaming-placeholder',
+                name: 'Loading...',
+                response: 'Generating response...',
+                timestamp: new Date().toISOString()
+              }]
+            },
+            jsonContent: content.trim()
+          };
+        }
+      }
+      
+      return { success: false };
+    };
 
     while (true) {
       const { done, value } = await reader.read();
@@ -193,14 +312,60 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
                 if (i > 0 && isPunctuation(text[i - 1])) delay += 0;
                 await sleep(delay);
                 currentMessageContent += char;
+                
+                // Debug: Log first few characters to understand the format (reduced logging)
+                if (currentMessageContent.length === 1) {
+                  console.log('🎭 First char:', JSON.stringify(currentMessageContent));
+                }
+                
+                // Early detection of JSON advisor format
+                if (!isJsonMode && detectJsonFormat(currentMessageContent)) {
+                  isJsonMode = true;
+                  console.log('🎭 Early JSON detection - switching to advisor streaming mode', {
+                    content: currentMessageContent.substring(0, 50),
+                    trimmed: currentMessageContent.trim().substring(0, 50)
+                  });
+                }
+                
+                // Update message with appropriate type
                 setMessages((prev) => {
                   const newMessages = [...prev];
                   if (newMessages.length > 0) {
-                    newMessages[newMessages.length - 1] = { 
-                      type: 'assistant', 
-                      content: currentMessageContent,
-                      thinking: (reasoningMode && !isCouncilMode) ? thinkingContent : undefined
-                    };
+                    if (isJsonMode) {
+                      // Try to parse partial JSON for better streaming experience
+                      const parseResult = tryParsePartialAdvisorJson(currentMessageContent);
+                      if (parseResult.success) {
+                        // We have valid partial advisor JSON - render as advisor_json
+                        console.log('🎭 Progressive parsing SUCCESS, switching to advisor_json mode', {
+                          isPartial: parseResult.partial,
+                          advisorCount: parseResult.parsed.advisors.length
+                        });
+                        newMessages[newMessages.length - 1] = {
+                          type: 'advisor_json',
+                          content: parseResult.jsonContent,
+                          parsedAdvisors: parseResult.parsed,
+                          thinking: (reasoningMode && !isCouncilMode) ? thinkingContent : undefined,
+                          isStreaming: true, // Flag to indicate still streaming
+                          isPartial: parseResult.partial // Flag to indicate partial/placeholder data
+                        };
+                      } else {
+                        // JSON mode but not parseable yet - show as assistant with indicator
+                        // Reduced logging to prevent console spam
+                        newMessages[newMessages.length - 1] = {
+                          type: 'assistant',
+                          content: currentMessageContent,
+                          thinking: (reasoningMode && !isCouncilMode) ? thinkingContent : undefined,
+                          isJsonStreaming: true // Flag to indicate JSON is coming
+                        };
+                      }
+                    } else {
+                      // Regular assistant message
+                      newMessages[newMessages.length - 1] = { 
+                        type: 'assistant', 
+                        content: currentMessageContent,
+                        thinking: (reasoningMode && !isCouncilMode) ? thinkingContent : undefined
+                      };
+                    }
                   }
                   return newMessages;
                 });
@@ -230,11 +395,66 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
       }
     }
     
+    // Check if response is JSON advisor format and parse it
+    let parsedAdvisorResponse = null;
+    
+    console.log('🎭 Checking if response is JSON...', {
+      content: currentMessageContent.substring(0, 100) + '...',
+      startsWithBrace: currentMessageContent.trim().startsWith('{'),
+      endsWithBrace: currentMessageContent.trim().endsWith('}'),
+      startsWithCodeBlock: currentMessageContent.trim().startsWith('```json'),
+      endsWithCodeBlock: currentMessageContent.trim().endsWith('```'),
+      length: currentMessageContent.length
+    });
+    
+    // Check for JSON - either direct JSON or markdown code block
+    let jsonContent = currentMessageContent.trim();
+    if (jsonContent.startsWith('```json') && jsonContent.endsWith('```')) {
+      // Extract JSON from markdown code block
+      jsonContent = jsonContent.slice(7, -3).trim(); // Remove ```json and ```
+      console.log('🎭 Extracted JSON from code block:', jsonContent.substring(0, 100) + '...');
+    }
+    
+    if (jsonContent.startsWith('{') && jsonContent.endsWith('}')) {
+      try {
+        const parsed = JSON.parse(jsonContent);
+        console.log('🎭 Successfully parsed JSON:', parsed);
+        
+        if (parsed.type === 'advisor_response' && parsed.advisors && Array.isArray(parsed.advisors)) {
+          parsedAdvisorResponse = parsed;
+          console.log('🎭 JSON advisor response detected with', parsed.advisors.length, 'advisors');
+          
+          // Update the message with final parsed format (remove streaming flags)
+          setMessages((prev) => {
+            const newMessages = [...prev];
+            if (newMessages.length > 0) {
+              newMessages[newMessages.length - 1] = { 
+                type: 'advisor_json', 
+                content: jsonContent, // Use clean JSON content instead of raw with markdown
+                parsedAdvisors: parsedAdvisorResponse,
+                thinking: (reasoningMode && !isCouncilMode) ? thinkingContent : undefined
+                // Remove isStreaming and isJsonStreaming flags
+              };
+            }
+            return newMessages;
+          });
+        } else {
+          console.log('🎭 JSON parsed but wrong structure:', {
+            type: parsed.type,
+            hasAdvisors: !!parsed.advisors,
+            advisorsIsArray: Array.isArray(parsed.advisors)
+          });
+        }
+      } catch (e) {
+        console.log('🎭 Response looks like JSON but failed to parse:', e.message);
+      }
+    }
+    
     // Track usage after successful completion
     const outputTokens = estimateTokens(currentMessageContent);
     const cost = trackUsage('claude', inputTokens, outputTokens);
     
-    console.log('🔍 useClaude - Final response from Claude:', JSON.stringify(currentMessageContent));
+    // console.log('🔍 useClaude - Final response from Claude:', JSON.stringify(currentMessageContent));
     
     if (debugMode) {
       const debugOutput = `Response complete:\nOutput tokens: ${outputTokens}\nTotal cost for this call: ${formatCost(cost)}`;

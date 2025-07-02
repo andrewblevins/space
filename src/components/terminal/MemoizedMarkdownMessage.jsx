@@ -7,8 +7,9 @@ import { ADVISOR_COLORS } from '../../lib/advisorColors';
  * @param {object} props
  * @param {string} props.content
  * @param {Array} props.advisors - Array of advisor objects with color information
+ * @param {number} props.paragraphSpacing - Spacing between paragraphs (default: 0.25)
  */
-export const MemoizedMarkdownMessage = memo(({ content, advisors = [] }) => {
+export const MemoizedMarkdownMessage = memo(({ content, advisors = [], paragraphSpacing = 0.25 }) => {
   // Parse and render advisor names with colors
   const processContent = (text) => {
     const parts = text.split(/(\[ADVISOR:\s*[^\]]+\])/);
@@ -60,8 +61,8 @@ export const MemoizedMarkdownMessage = memo(({ content, advisors = [] }) => {
                      </code>
                    );
                  },
-                 p: ({ children }) => <p className="font-serif w-full text-gray-800 dark:text-gray-200" style={{ marginBottom: '12px', lineHeight: '1.7' }}>{children}</p>,
-                 ul: ({ children }) => <ul className="list-disc pl-4 space-y-1 mb-2 w-full text-gray-800 dark:text-gray-200">{children}</ul>,
+                 p: ({ children }) => <p className="font-serif w-full text-gray-800 dark:text-gray-200" style={{ marginBottom: `${paragraphSpacing}rem`, lineHeight: '1.7' }}>{children}</p>,
+                 ul: ({ children }) => <ul className="list-disc pl-4 space-y-1 w-full text-gray-800 dark:text-gray-200" style={{ marginBottom: `${paragraphSpacing}rem` }}>{children}</ul>,
                  li: ({ children }) => <li className="text-gray-800 dark:text-gray-200">{children}</li>,
                }}
              >
@@ -73,11 +74,8 @@ export const MemoizedMarkdownMessage = memo(({ content, advisors = [] }) => {
     );
   }
 
-    // Regular content without advisor markers - reduce paragraph spacing
-  console.log('🔍 Original content:', JSON.stringify(content));
-  const processedContent = content.replace(/\n\n+/g, '\n\n'); // Keep paragraph breaks but will use tiny spacing
-  console.log('🔍 Processed content:', JSON.stringify(processedContent));
-  console.log('🔍 Double newlines found:', content.includes('\n\n'));
+  // Regular content without advisor markers - use paragraph spacing setting
+  const processedContent = content.replace(/\n\n+/g, '\n\n');
   
   return (
     <ReactMarkdown
@@ -99,8 +97,8 @@ export const MemoizedMarkdownMessage = memo(({ content, advisors = [] }) => {
             </code>
           );
         },
-        p: ({ children }) => <p className="font-serif w-full text-gray-800 dark:text-gray-200" style={{ marginBottom: '12px', lineHeight: '1.5' }}>{children}</p>,
-        ul: ({ children }) => <ul className="list-disc pl-4 space-y-1 mb-2 w-full text-gray-800 dark:text-gray-200">{children}</ul>,
+        p: ({ children }) => <p className="font-serif w-full text-gray-800 dark:text-gray-200" style={{ marginBottom: `${paragraphSpacing}rem`, lineHeight: '1.5' }}>{children}</p>,
+        ul: ({ children }) => <ul className="list-disc pl-4 space-y-1 w-full text-gray-800 dark:text-gray-200" style={{ marginBottom: `${paragraphSpacing}rem` }}>{children}</ul>,
         li: ({ children }) => <li className="text-gray-800 dark:text-gray-200">{children}</li>,
       }}
     >

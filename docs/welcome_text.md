@@ -1,4 +1,4 @@
-SPACE
+SPACE v0.2.4
 
 Change Your Minds
 
@@ -11,5 +11,6 @@ Features:
 - Automated advisor recommendations in the side panel
 - Track and search based on topic with automatic knowledge tags
 - Metaphor tracking makes the structure of thought visible
+- Test advisor responses with assertions and evaluations
 
 SPACE is currently in beta.

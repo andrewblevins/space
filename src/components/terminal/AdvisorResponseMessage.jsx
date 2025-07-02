@@ -51,10 +51,10 @@ const parseAdvisorContent = (content, advisors = []) => {
  * Component to render advisor responses with color-coded names and fluid streaming
  * @param {object} props
  * @param {string} props.content - The response content with [ADVISOR: Name] markers
- * @param {number} props.paragraphSpacing - Spacing between paragraphs (default: 2)
+ * @param {number} props.paragraphSpacing - Spacing between paragraphs (default: 0.25)
  * @param {Array} props.advisors - Array of advisor objects with color information
  */
-export const AdvisorResponseMessage = memo(({ content, paragraphSpacing = 2, advisors = [] }) => {
+export const AdvisorResponseMessage = memo(({ content, paragraphSpacing = 0.25, advisors = [] }) => {
   // Parse the content into advisor sections
   const sections = parseAdvisorContent(content, advisors);
   
@@ -85,7 +85,7 @@ export const AdvisorResponseMessage = memo(({ content, paragraphSpacing = 2, adv
             );
           },
           p: ({ children }) => (
-            <p className="whitespace-pre-wrap font-serif w-full text-gray-800 dark:text-gray-200">
+            <p className="whitespace-pre-wrap font-serif w-full text-gray-800 dark:text-gray-200" style={{ marginBottom: `${paragraphSpacing}rem` }}>
               {children}
             </p>
           ),
@@ -142,7 +142,7 @@ export const AdvisorResponseMessage = memo(({ content, paragraphSpacing = 2, adv
                   );
                 },
                 p: ({ children }) => (
-                  <p className="whitespace-pre-wrap font-serif w-full text-gray-800 dark:text-gray-200">
+                  <p className="whitespace-pre-wrap font-serif w-full text-gray-800 dark:text-gray-200" style={{ marginBottom: `${paragraphSpacing}rem` }}>
                     {children}
                   </p>
                 ),

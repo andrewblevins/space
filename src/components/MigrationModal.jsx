@@ -11,7 +11,6 @@ import {
 const MigrationModal = ({ isOpen, onComplete }) => {
   // Early return if modal should not be shown
   if (!isOpen) {
-    console.log('🔄 MigrationModal returning null (isOpen=false)');
     return null;
   }
 

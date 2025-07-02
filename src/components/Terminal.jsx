@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MemorySystem } from '../lib/memory';
 import { OpenAI } from 'openai';
 import AdvisorForm from './AdvisorForm';
@@ -37,6 +37,7 @@ import HighCouncilModal from './HighCouncilModal';
 import { ExpandingInput } from "./terminal/ExpandingInput";
 import { MemoizedMarkdownMessage } from "./terminal/MemoizedMarkdownMessage";
 import { AdvisorResponseMessage } from "./terminal/AdvisorResponseMessage";
+import { AdvisorResponseCard } from "./terminal/AdvisorResponseCard";
 import useClaude from "../hooks/useClaude";
 import { analyzeMetaphors, analyzeForQuestions, summarizeSession, generateSessionSummary } from "../utils/terminalHelpers";
 import { trackUsage, trackSession } from '../utils/usageTracking';
@@ -44,6 +45,8 @@ import { worksheetQuestions, WORKSHEET_TEMPLATES } from "../utils/worksheetTempl
 import { useConversationStorage } from '../hooks/useConversationStorage';
 import { needsMigration } from '../utils/migrationHelper';
 import MigrationModal from './MigrationModal';
+import AssertionsModal from './AssertionsModal';
+import EvaluationsModal from './EvaluationsModal';
 
 
 
@@ -165,8 +168,8 @@ const Terminal = ({ theme, toggleTheme }) => {
 
   const [messages, setMessages] = useState(() => {
     const baseMessages = [
-      { type: 'system', content: 'SPACE Terminal - v0.2.3' },
-      { type: 'system', content: '🎉 New in v0.2.3:\n• Extended Thinking mode\n• High Council debate mode\n• Call a Vote\n• Improved tag analyzer' }
+      { type: 'system', content: 'SPACE Terminal - v0.2.4' },
+      { type: 'system', content: '🎉 New in v0.2.4:\n• Advisor evaluation system with Assert buttons\n• Automated scoring against test assertions\n• Optimization loop for iterative prompt improvement\n• Enhanced streaming with real-time formatting' }
     ];
     
     // Add auth-specific welcome message
@@ -322,6 +325,10 @@ const Terminal = ({ theme, toggleTheme }) => {
   const [showImportExportModal, setShowImportExportModal] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
+  const [showAssertionsModal, setShowAssertionsModal] = useState(false);
+  const [selectedAdvisorForAssertions, setSelectedAdvisorForAssertions] = useState(null);
+  const [selectedResponseForEvaluation, setSelectedResponseForEvaluation] = useState(null);
+  const [showEvaluationsModal, setShowEvaluationsModal] = useState(false);
   const [sessions, setSessions] = useState([]);
   const [sessionSelections, setSessionSelections] = useState(new Map()); // Map from title to session object
   const [currentSessionContexts, setCurrentSessionContexts] = useState([]); // Current @ reference contexts
@@ -369,7 +376,29 @@ const Terminal = ({ theme, toggleTheme }) => {
     }
   }, [modalController, hasCheckedKeys, useAuthSystem]);
 
-const getSystemPrompt = () => {
+// Shared JSON response format for advisor responses (without synthesis)
+const ADVISOR_JSON_FORMAT = `RESPONSE FORMAT: Return your response as JSON in this exact structure:
+
+{
+  "type": "advisor_response",
+  "advisors": [
+    {
+      "id": "resp-advisor-name-${Date.now()}",
+      "name": "Advisor Name",
+      "response": "The advisor's complete response content here...",
+      "timestamp": "${new Date().toISOString()}"
+    }
+  ]
+}
+
+FORMATTING RULES:
+1. Each advisor gets their own object in the advisors array
+2. Use the advisor's exact name as it appears in your persona list
+3. Include all response content in the "response" field
+4. Generate unique IDs using the pattern: resp-{advisor-name-lowercase}-{timestamp}
+5. Return valid JSON only - no additional text before or after`;
+
+const getSystemPrompt = useCallback(({ councilMode, sessionContexts } = {}) => {
   let prompt = "";
   
   // Add advisor personas
@@ -377,49 +406,100 @@ const getSystemPrompt = () => {
   if (activeAdvisors.length > 0) {
     prompt += `You are currently embodying the following advisors:\n${activeAdvisors.map(a => `\n${a.name}: ${a.description}`).join('\n')}\n\n`;
     
-    prompt += `RESPONSE FORMAT: Use this exact structure for every advisor response:
+    // Add conversation continuity instructions
+    prompt += `## CONVERSATION CONTINUITY\n\nIMPORTANT: You are continuing an ongoing conversation with this user. Do not re-introduce topics, concepts, or ask questions that have already been addressed in the conversation history. Build upon what has been established rather than starting fresh each time. Reference previous exchanges naturally and maintain the flow of the conversation.\n\n`;
+    
+    if (councilMode) {
+      prompt += `\n\n## HIGH COUNCIL MODE
+IMPORTANT: Start your response with the exact text "<COUNCIL_DEBATE>" (this is required for the interface to work properly).
 
-[ADVISOR: Advisor Name]
-optional action or emotional state on this line by itself
+The advisors will engage in a structured debate, each maintaining their unique perspective throughout. Each advisor should:
 
-Main response content starts here on a new line after a blank line.
+- Stay true to their core philosophy and worldview
+- Respond authentically from their own perspective
+- Keep responses concise: 2-3 sentences maximum per turn
+- Be direct and punchy - avoid lengthy explanations 
+- Challenge other advisors when they genuinely disagree
+- Build on points that align with their own thinking
+- Never abandon their perspective just to reach agreement
 
-[ADVISOR: Another Advisor Name]
-another optional action line
+CRITICAL: This must be a true DEBATE where advisors directly engage with each other's arguments, not separate speeches.
 
-Another advisor's response content.
+Structure the debate exactly as follows:
 
-FORMATTING RULES:
-1. Advisor name always goes in [ADVISOR: Name] brackets
-2. If you include an action/emotional description, it goes on its own line immediately after the advisor name
-3. Always leave one blank line before starting the main response content
-4. Use single line breaks within paragraphs, double line breaks between major sections
-5. Each advisor gets their own clearly separated section`;
+## ROUND 1: Initial Positions
+Each advisor states their position on the question.
+
+## ROUND 2: Direct Responses
+Each advisor must directly address the other advisors by name, responding to specific points from Round 1:
+- "Elon, you're wrong about X because..."
+- "I agree with you, Sarah, but you're missing..."
+- "That's complete nonsense, Marcus. Here's why..."
+
+## ROUND 3: Final Positions
+Each advisor directly challenges or supports the others' Round 2 arguments, speaking TO each other, not about them.
+
+CRITICAL: Use ## for round headers (not **bold**). Always add a blank line before each round header. Example:
+
+[ADVISOR: Name] Final sentence of previous round.
+
+## ROUND 2: Direct Responses
+
+[ADVISOR: Next Name] First response...
+
+REQUIREMENTS:
+- Advisors must reference each other by name and quote/paraphrase specific arguments
+- No advisor can ignore what others have said
+- Each response must build on the conversation, not restart it
+- Use transition phrases that show you're responding: "But as [Name] just pointed out..." or "That contradicts [Name]'s argument that..."
+
+MANDATORY FORMAT REQUIREMENTS:
+- Each advisor speaks for 2-3 sentences maximum per turn
+- Be concise and impactful, not verbose
+- You MUST wrap the entire debate in these exact tags:
+
+<COUNCIL_DEBATE>
+**ROUND 1: Initial Positions**
+[ADVISOR: Name] content...
+
+**ROUND 2: Direct Responses** 
+[ADVISOR: Name] responds to [Other Advisor]...
+
+**ROUND 3: Final Positions**
+[ADVISOR: Name] presents final stance...
+</COUNCIL_DEBATE>
+
+DO NOT FORGET THE <COUNCIL_DEBATE> TAGS. Without these tags, the debate will not display properly.
+
+## Council Summary
+
+After the debate section, provide:
+- One sentence per advisor summarizing their final position
+- Synthesis: 1-2 sentences on the overall outcome or remaining tensions`;
+    } else {
+      prompt += ADVISOR_JSON_FORMAT;
+    }
   }
   // If no advisors are active, no system prompt is needed
   
-  // Add session context from @ references
-  console.log('📄 getSystemPrompt - currentSessionContexts:', currentSessionContexts);
-  if (currentSessionContexts.length > 0) {
+  // Add session context from @ references  
+  const contextsToUse = sessionContexts || currentSessionContexts;
+  if (contextsToUse.length > 0) {
     if (prompt) prompt += "\n\n";
     prompt += "## REFERENCED CONVERSATION CONTEXTS\n\n";
     prompt += "The user has referenced the following previous conversations for context:\n\n";
     
-    currentSessionContexts.forEach((context, index) => {
+    contextsToUse.forEach((context, index) => {
       const date = new Date(context.timestamp).toLocaleDateString();
       prompt += `### Context ${index + 1}: "${context.title}" (Session ${context.sessionId}, ${date})\n`;
       prompt += `${context.summary}\n\n`;
     });
     
     prompt += "Use these conversation contexts to inform your response when relevant. The user's message may reference specific details from these conversations.\n";
-    console.log('📄 Added session contexts to system prompt');
-  } else {
-    console.log('📄 No session contexts to add');
   }
   
-  console.log('🔍 getSystemPrompt - Final system prompt:', prompt);
   return prompt;
-};
+}, [advisors, currentSessionContexts]);
 
 const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimit, memory, debugMode, reasoningMode, getSystemPrompt });
 
@@ -747,8 +827,8 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
     }
     
     setMessages([
-      { type: 'system', content: 'SPACE Terminal - v0.2.3' },
-      { type: 'system', content: '🎉 New in v0.2.3:\n• Extended Thinking mode\n• High Council debate mode\n• Call a Vote\n• Improved tag analyzer' },
+      { type: 'system', content: 'SPACE Terminal - v0.2.4' },
+      { type: 'system', content: '🎉 New in v0.2.4:\n• Advisor evaluation system with Assert buttons\n• Automated scoring against test assertions\n• Optimization loop for iterative prompt improvement\n• Enhanced streaming with real-time formatting' },
       { type: 'system', content: 'Start a conversation, add an advisor (+), draw from the Prompt Library (↙), or type /help for instructions.' }
     ]);
     setMetaphors([]);
@@ -760,13 +840,51 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
   };
 
   const handleLoadSession = async (sessionId) => {
-    if (useDatabaseStorage) {
-      // Load from database - sessionId is actually conversationId in database mode
+    // Check if sessionId looks like a UUID (database ID) or integer (localStorage ID)
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(sessionId);
+    const isLocalStorageId = /^\d+$/.test(sessionId);
+    
+    if (useDatabaseStorage && isUUID) {
+      // Load from database - sessionId is a proper UUID
       try {
         const conversation = await storage.loadConversation(sessionId);
         setCurrentConversationId(conversation.id);
         setCurrentSessionId(conversation.id);
-        setMessages(conversation.messages || []);
+        
+        // Process messages to restore advisor_json format if needed
+        const processedMessages = (conversation.messages || []).map(msg => {
+          // If it's an assistant message that looks like JSON advisor format, restore it
+          if (msg.type === 'assistant' && msg.content) {
+            let jsonContent = msg.content.trim();
+            
+            // Handle markdown code block format
+            if (jsonContent.startsWith('```json') && jsonContent.endsWith('```')) {
+              jsonContent = jsonContent.slice(7, -3).trim();
+            }
+            
+            // Check if it's valid advisor JSON
+            if (jsonContent.startsWith('{') && jsonContent.endsWith('}')) {
+              try {
+                const parsed = JSON.parse(jsonContent);
+                if (parsed.type === 'advisor_response' && parsed.advisors && Array.isArray(parsed.advisors)) {
+                  // Restore as advisor_json type with parsedAdvisors
+                  return {
+                    ...msg,
+                    type: 'advisor_json',
+                    content: jsonContent,
+                    parsedAdvisors: parsed
+                  };
+                }
+              } catch (e) {
+                // Not valid JSON, keep as-is
+              }
+            }
+          }
+          
+          return msg;
+        });
+        
+        setMessages(processedMessages);
         setMetaphors(conversation.metadata?.metaphors || []);
         setAdvisorSuggestions(conversation.metadata?.advisorSuggestions || []);
         setVoteHistory(conversation.metadata?.voteHistory || []);
@@ -778,23 +896,63 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
           content: `Failed to load conversation: ${error.message}`
         }]);
       }
-    } else {
-      // Legacy localStorage loading
+    } else if (isLocalStorageId) {
+      // Legacy localStorage loading (works for both database and localStorage modes)
       const sessionData = localStorage.getItem(`space_session_${sessionId}`);
       if (sessionData) {
         const session = JSON.parse(sessionData);
         setCurrentSessionId(session.id);
         setCurrentConversationId(null);
-        setMessages(session.messages);
+        
+        // Process messages to restore advisor_json format if needed
+        const processedMessages = session.messages.map(msg => {
+          // If it's an assistant message that looks like JSON advisor format, restore it
+          if (msg.type === 'assistant' && msg.content) {
+            let jsonContent = msg.content.trim();
+            
+            // Handle markdown code block format
+            if (jsonContent.startsWith('```json') && jsonContent.endsWith('```')) {
+              jsonContent = jsonContent.slice(7, -3).trim();
+            }
+            
+            // Check if it's valid advisor JSON
+            if (jsonContent.startsWith('{') && jsonContent.endsWith('}')) {
+              try {
+                const parsed = JSON.parse(jsonContent);
+                if (parsed.type === 'advisor_response' && parsed.advisors && Array.isArray(parsed.advisors)) {
+                  // Restore as advisor_json type with parsedAdvisors
+                  return {
+                    ...msg,
+                    type: 'advisor_json',
+                    content: jsonContent,
+                    parsedAdvisors: parsed
+                  };
+                }
+              } catch (e) {
+                // Not valid JSON, keep as-is
+              }
+            }
+          }
+          
+          return msg;
+        });
+        
+        setMessages(processedMessages);
         setMetaphors(session.metaphors || []);
         setAdvisorSuggestions(session.advisorSuggestions || []);
         setVoteHistory(session.voteHistory || []);
+        console.log('🗃️ Loaded localStorage session:', sessionId);
       } else {
         setMessages(prev => [...prev, {
           type: 'system',
           content: `Session ${sessionId} not found`
         }]);
       }
+    } else {
+      setMessages(prev => [...prev, {
+        type: 'system',
+        content: `Invalid session ID format: ${sessionId}`
+      }]);
     }
   };
 
@@ -803,7 +961,41 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
     if (sessions.length > 1) {
       const penultimate = sessions[sessions.length - 2];
       setCurrentSessionId(penultimate.id);
-      setMessages(penultimate.messages);
+      
+      // Process messages to restore advisor_json format if needed
+      const processedMessages = penultimate.messages.map(msg => {
+        // If it's an assistant message that looks like JSON advisor format, restore it
+        if (msg.type === 'assistant' && msg.content) {
+          let jsonContent = msg.content.trim();
+          
+          // Handle markdown code block format
+          if (jsonContent.startsWith('```json') && jsonContent.endsWith('```')) {
+            jsonContent = jsonContent.slice(7, -3).trim();
+          }
+          
+          // Check if it's valid advisor JSON
+          if (jsonContent.startsWith('{') && jsonContent.endsWith('}')) {
+            try {
+              const parsed = JSON.parse(jsonContent);
+              if (parsed.type === 'advisor_response' && parsed.advisors && Array.isArray(parsed.advisors)) {
+                // Restore as advisor_json type with parsedAdvisors
+                return {
+                  ...msg,
+                  type: 'advisor_json',
+                  content: jsonContent,
+                  parsedAdvisors: parsed
+                };
+              }
+            } catch (e) {
+              // Not valid JSON, keep as-is
+            }
+          }
+        }
+        
+        return msg;
+      });
+      
+      setMessages(processedMessages);
       setMetaphors(penultimate.metaphors || []);
       // DEPRECATED: Questions feature temporarily disabled
       // setQuestions(penultimate.questions || []);
@@ -1001,7 +1193,41 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
           if (sessionData) {
             const session = JSON.parse(sessionData);
             setCurrentSessionId(session.id);
-            setMessages(session.messages);
+            
+            // Process messages to restore advisor_json format if needed
+            const processedMessages = session.messages.map(msg => {
+              // If it's an assistant message that looks like JSON advisor format, restore it
+              if (msg.type === 'assistant' && msg.content) {
+                let jsonContent = msg.content.trim();
+                
+                // Handle markdown code block format
+                if (jsonContent.startsWith('```json') && jsonContent.endsWith('```')) {
+                  jsonContent = jsonContent.slice(7, -3).trim();
+                }
+                
+                // Check if it's valid advisor JSON
+                if (jsonContent.startsWith('{') && jsonContent.endsWith('}')) {
+                  try {
+                    const parsed = JSON.parse(jsonContent);
+                    if (parsed.type === 'advisor_response' && parsed.advisors && Array.isArray(parsed.advisors)) {
+                      // Restore as advisor_json type with parsedAdvisors
+                      return {
+                        ...msg,
+                        type: 'advisor_json',
+                        content: jsonContent,
+                        parsedAdvisors: parsed
+                      };
+                    }
+                  } catch (e) {
+                    // Not valid JSON, keep as-is
+                  }
+                }
+              }
+              
+              return msg;
+            });
+            
+            setMessages(processedMessages);
             setMetaphors(session.metaphors || []);
             // DEPRECATED: Questions feature temporarily disabled
             // setQuestions(session.questions || []);
@@ -2063,6 +2289,7 @@ Default is 4,096 tokens.`
             case 'clear':
               removeEncrypted('space_anthropic_key');
               removeEncrypted('space_openai_key');
+              removeEncrypted('space_gemini_key');
               setApiKeysSet(false);
               setMessages(prev => [...prev, {
                 type: 'system',
@@ -2076,11 +2303,13 @@ Default is 4,096 tokens.`
                   // API key access not available in auth mode
                   const anthropicKey = null;
                   const openaiKey = null;
+                  const geminiKey = null;
                   setMessages(prev => [...prev, {
                     type: 'system',
                     content: `API Keys Status:
 Anthropic: ${anthropicKey ? '✓ Set' : '✗ Not Set'}
-OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
+OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}
+Gemini: ${geminiKey ? '✓ Set' : '✗ Not Set'}`
                   }]);
                 } catch (error) {
                   setMessages(prev => [...prev, {
@@ -2108,7 +2337,7 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
                 if (!args[1] || !args[2]) {
                   setMessages(prev => [...prev, {
                     type: 'system',
-                    content: 'Usage: /key set [anthropic/openai] <api-key>'
+                    content: 'Usage: /key set [anthropic/openai/gemini] <api-key>'
                   }]);
                   return true;
                 }
@@ -2116,10 +2345,10 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
                 const service = args[1].toLowerCase();
                 const newKey = args[2];
 
-                if (service !== 'anthropic' && service !== 'openai') {
+                if (service !== 'anthropic' && service !== 'openai' && service !== 'gemini') {
                   setMessages(prev => [...prev, {
                     type: 'system',
-                    content: 'Invalid service. Use "anthropic" or "openai"'
+                    content: 'Invalid service. Use "anthropic", "openai", or "gemini"'
                   }]);
                   return true;
                 }
@@ -2137,6 +2366,14 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
                   setMessages(prev => [...prev, {
                     type: 'system',
                     content: 'Invalid OpenAI API key format'
+                  }]);
+                  return true;
+                }
+
+                if (service === 'gemini' && !newKey.startsWith('AIza')) {
+                  setMessages(prev => [...prev, {
+                    type: 'system',
+                    content: 'Invalid Gemini API key format'
                   }]);
                   return true;
                 }
@@ -2195,7 +2432,7 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
               setMessages(prev => [...prev, {
                 type: 'system',
                 content: 'Available key commands:\n' +
-                  '/key set [anthropic/openai] <api-key> - Update API key\n' +
+                  '/key set [anthropic/openai/gemini] <api-key> - Update API key\n' +
                   '/keys status - Check API key status\n' +
                   '/keys clear - Clear stored API keys'
               }]);
@@ -2318,7 +2555,7 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
       const tagAnalysisPromise = (async () => {
         try {
           console.log('🏷️ Starting tag analysis for:', processedInput.substring(0, 100) + '...');
-          const tags = await sharedTagAnalyzer.analyzeTags(processedInput);
+          const tags = await sharedTagAnalyzer.analyzeTags(processedInput, session);
           console.log('🏷️ Tags generated:', tags);
           if (debugMode) {
             console.log('🏷️ Debug mode active, tags:', tags);
@@ -2345,133 +2582,14 @@ OpenAI: ${openaiKey ? '✓ Set' : '✗ Not Set'}`
       // Add it to messages state
       await setMessages(prev => [...prev, newMessage]);
 
-      // Create a temporary system prompt function with the contexts
-      const getSystemPromptWithContexts = ({ councilMode } = {}) => {
-        let prompt = "";
-        
-        // Add advisor personas
-        const activeAdvisors = advisors.filter(a => a.active);
-        if (activeAdvisors.length > 0) {
-          prompt += `You are currently embodying the following advisors:\n${activeAdvisors.map(a => `\n${a.name}: ${a.description}`).join('\n')}\n\n`;
-          
-          if (councilMode) {
-            prompt += `\n\n## HIGH COUNCIL MODE
-IMPORTANT: Start your response with the exact text "<COUNCIL_DEBATE>" (this is required for the interface to work properly).
-
-The advisors will engage in a structured debate, each maintaining their unique perspective throughout. Each advisor should:
-
-- Stay true to their core philosophy and worldview
-- Respond authentically from their own perspective
-- Keep responses concise: 2-3 sentences maximum per turn
-- Be direct and punchy - avoid lengthy explanations 
-- Challenge other advisors when they genuinely disagree
-- Build on points that align with their own thinking
-- Never abandon their perspective just to reach agreement
-
-CRITICAL: This must be a true DEBATE where advisors directly engage with each other's arguments, not separate speeches.
-
-Structure the debate exactly as follows:
-
-## ROUND 1: Initial Positions
-Each advisor states their position on the question.
-
-## ROUND 2: Direct Responses
-Each advisor must directly address the other advisors by name, responding to specific points from Round 1:
-- "Elon, you're wrong about X because..."
-- "I agree with you, Sarah, but you're missing..."
-- "That's complete nonsense, Marcus. Here's why..."
-
-## ROUND 3: Final Positions
-Each advisor directly challenges or supports the others' Round 2 arguments, speaking TO each other, not about them.
-
-CRITICAL: Use ## for round headers (not **bold**). Always add a blank line before each round header. Example:
-
-[ADVISOR: Name] Final sentence of previous round.
-
-## ROUND 2: Direct Responses
-
-[ADVISOR: Next Name] First response...
-
-REQUIREMENTS:
-- Advisors must reference each other by name and quote/paraphrase specific arguments
-- No advisor can ignore what others have said
-- Each response must build on the conversation, not restart it
-- Use transition phrases that show you're responding: "But as [Name] just pointed out..." or "That contradicts [Name]'s argument that..."
-
-MANDATORY FORMAT REQUIREMENTS:
-- Each advisor speaks for 2-3 sentences maximum per turn
-- Be concise and impactful, not verbose
-- You MUST wrap the entire debate in these exact tags:
-
-<COUNCIL_DEBATE>
-**ROUND 1: Initial Positions**
-[ADVISOR: Name] content...
-
-**ROUND 2: Direct Responses** 
-[ADVISOR: Name] responds to [Other Advisor]...
-
-**ROUND 3: Final Positions**
-[ADVISOR: Name] presents final stance...
-</COUNCIL_DEBATE>
-
-DO NOT FORGET THE <COUNCIL_DEBATE> TAGS. Without these tags, the debate will not display properly.
-
-## Council Summary
-
-After the debate section, provide:
-- One sentence per advisor summarizing their final position
-- Synthesis: 1-2 sentences on the overall outcome or remaining tensions`;
-          } else {
-            prompt += `RESPONSE FORMAT: Use this exact structure for every advisor response:
-
-[ADVISOR: Advisor Name]
-optional action or emotional state on this line by itself
-
-Main response content starts here on a new line after a blank line.
-
-[ADVISOR: Another Advisor Name]
-another optional action line
-
-Another advisor's response content.
-
-FORMATTING RULES:
-1. Advisor name always goes in [ADVISOR: Name] brackets
-2. If you include an action/emotional description, it goes on its own line immediately after the advisor name
-3. Always leave one blank line before starting the main response content
-4. Use single line breaks within paragraphs, double line breaks between major sections
-5. Each advisor gets their own clearly separated section`;
-          }
-        }
-        // If no advisors are active, no system prompt is needed
-        
-        // Add session context from @ references
-        console.log('📄 getSystemPromptWithContexts - sessionContexts:', sessionContexts);
-        if (sessionContexts.length > 0) {
-          if (prompt) prompt += "\n\n";
-          prompt += "## REFERENCED CONVERSATION CONTEXTS\n\n";
-          prompt += "The user has referenced the following previous conversations for context:\n\n";
-          
-          sessionContexts.forEach((context, index) => {
-            const date = new Date(context.timestamp).toLocaleDateString();
-            prompt += `### Context ${index + 1}: "${context.title}" (Session ${context.sessionId}, ${date})\n`;
-            prompt += `${context.summary}\n\n`;
-          });
-          
-          prompt += "Use these conversation contexts to inform your response when relevant. The user's message may reference specific details from these conversations.\n";
-          console.log('📄 Added session contexts to system prompt');
-        } else {
-          console.log('📄 No session contexts to add');
-        }
-        
-        return prompt;
-      };
+      // Use the consolidated system prompt function with the session contexts
 
       // Pass the content to Claude with enhanced system prompt (this starts immediately)
       if (councilMode) {
-        const systemPrompt = getSystemPromptWithContexts({ councilMode });
-        console.log('🏛️ High Council System Prompt:', systemPrompt);
+        const systemPrompt = getSystemPrompt({ councilMode, sessionContexts });
+        // console.log('🏛️ High Council System Prompt:', systemPrompt);
       }
-      await callClaude(newMessage.content, () => getSystemPromptWithContexts({ councilMode }));
+      await callClaude(newMessage.content, () => getSystemPrompt({ councilMode, sessionContexts }));
 
       // Update message with tags after tag analysis completes (in background)
       tagAnalysisPromise.then(tags => {
@@ -2976,6 +3094,16 @@ Example: {"position": "Option 2 text here", "confidence": 75, "reasoning": "This
           // Database storage: Save individual messages as they come
           const lastMessage = messages[messages.length - 1];
           if (lastMessage && !lastMessage.saved) {
+            // Validate that message has required fields before attempting to save
+            if (!lastMessage.type || !lastMessage.content || lastMessage.content.trim() === '') {
+              console.log('⏳ Skipping save of incomplete message:', { 
+                type: lastMessage.type, 
+                hasContent: !!lastMessage.content,
+                contentLength: lastMessage.content?.length || 0 
+              });
+              return; // Skip saving incomplete messages
+            }
+            
             try {
               await storage.addMessage(
                 currentConversationId,
@@ -3246,7 +3374,41 @@ ${selectedText}
       
       if (sessionData) {
         const session = JSON.parse(sessionData);
-        setMessages(session.messages);
+        
+        // Process messages to restore advisor_json format if needed
+        const processedMessages = session.messages.map(msg => {
+          // If it's an assistant message that looks like JSON advisor format, restore it
+          if (msg.type === 'assistant' && msg.content) {
+            let jsonContent = msg.content.trim();
+            
+            // Handle markdown code block format
+            if (jsonContent.startsWith('```json') && jsonContent.endsWith('```')) {
+              jsonContent = jsonContent.slice(7, -3).trim();
+            }
+            
+            // Check if it's valid advisor JSON
+            if (jsonContent.startsWith('{') && jsonContent.endsWith('}')) {
+              try {
+                const parsed = JSON.parse(jsonContent);
+                if (parsed.type === 'advisor_response' && parsed.advisors && Array.isArray(parsed.advisors)) {
+                  // Restore as advisor_json type with parsedAdvisors
+                  return {
+                    ...msg,
+                    type: 'advisor_json',
+                    content: jsonContent,
+                    parsedAdvisors: parsed
+                  };
+                }
+              } catch (e) {
+                // Not valid JSON, keep as-is
+              }
+            }
+          }
+          
+          return msg;
+        });
+        
+        setMessages(processedMessages);
         setCurrentSessionId(parseInt(sessionId));
         
         // Scroll to the specified message after render
@@ -3422,19 +3584,62 @@ ${selectedText}
                     }`}
                   >
                     {msg.type === 'system' ? (
-                      <MemoizedMarkdownMessage content={msg.content} advisors={advisors} />
+                      <MemoizedMarkdownMessage content={msg.content} advisors={advisors} paragraphSpacing={paragraphSpacing} />
+                    ) : msg.type === 'advisor_json' ? (
+                      <div>
+                        {msg.thinking && <ThinkingBlock content={msg.thinking} />}
+                        {msg.isStreaming && (
+                          <div className="mb-2 text-sm text-green-600 dark:text-green-400 italic">
+                            {msg.isPartial ? '⚡ Preparing advisor cards...' : '⚡ Streaming advisor responses...'}
+                          </div>
+                        )}
+                        {msg.parsedAdvisors.advisors.map((advisor, advisorIdx) => (
+                          <AdvisorResponseCard
+                            key={`${advisor.id || advisor.name}-${advisorIdx}`}
+                            advisor={advisor}
+                            allAdvisors={advisors}
+                            onAssertionsClick={(advisorData) => {
+                              console.log('🎯 Assertions clicked for:', advisorData);
+                              setSelectedAdvisorForAssertions({
+                                ...advisorData,
+                                conversationContext: {
+                                  messages: [...messages],
+                                  advisors: [...advisors],
+                                  systemPrompt: getSystemPrompt(),
+                                  timestamp: new Date().toISOString()
+                                }
+                              });
+                              setShowAssertionsModal(true);
+                            }}
+                          />
+                        ))}
+                        
+                        {/* Show synthesis if it exists (for council mode or other cases) */}
+                        {msg.parsedAdvisors.synthesis && (
+                          <div className="mt-4 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                            <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Synthesis</h4>
+                            <MemoizedMarkdownMessage content={msg.parsedAdvisors.synthesis} advisors={advisors} paragraphSpacing={paragraphSpacing} />
+                          </div>
+                        )}
+                      </div>
                     ) : msg.type === 'assistant' ? (
                       (() => {
                         const { processedContent, debates } = processCouncilDebates(msg.content);
                         return (
                           <div>
                             {msg.thinking && <ThinkingBlock content={msg.thinking} />}
+                            {msg.isJsonStreaming && (
+                              <div className="mb-2 text-sm text-blue-600 dark:text-blue-400 italic">
+                                ⚡ Preparing advisor responses...
+                              </div>
+                            )}
                             {debates.map((debate, debateIdx) => (
-                              <DebateBlock key={debateIdx} content={debate} advisors={advisors} />
+                              <DebateBlock key={debateIdx} content={debate} advisors={advisors} paragraphSpacing={paragraphSpacing} />
                             ))}
                             <MemoizedMarkdownMessage 
                               content={processedContent.replace(/__DEBATE_PLACEHOLDER_\d+__/g, '')} 
                               advisors={advisors} 
+                              paragraphSpacing={paragraphSpacing}
                             />
                           </div>
                         );
@@ -3593,6 +3798,7 @@ ${selectedText}
             onNewSessionClick={handleNewSession}
             onExportClick={() => setShowExportMenu(true)}
             onDossierClick={() => setShowDossierModal(true)}
+            onEvaluationsClick={() => setShowEvaluationsModal(true)}
             onImportExportAdvisorsClick={() => setShowImportExportModal(true)}
             onVotingClick={() => setShowVotingModal(true)}
             onHighCouncilClick={() => setShowHighCouncilModal(true)}
@@ -3756,6 +3962,54 @@ ${selectedText}
           setTimeout(() => {
             console.log('🔄 showMigrationModal state after setState:', showMigrationModal);
           }, 100);
+        }}
+      />
+
+      {/* Assertions Modal Component */}
+      <AssertionsModal
+        isOpen={showAssertionsModal}
+        onClose={() => {
+          setShowAssertionsModal(false);
+          setSelectedAdvisorForAssertions(null);
+        }}
+        onSaveAndEvaluate={(assertionsData) => {
+          setShowAssertionsModal(false);
+          setSelectedResponseForEvaluation(assertionsData);
+          setSelectedAdvisorForAssertions(null);
+          setShowEvaluationsModal(true);
+        }}
+        advisorResponse={selectedAdvisorForAssertions}
+        conversationContext={selectedAdvisorForAssertions?.conversationContext || {
+          messages: [...messages],
+          advisors: [...advisors],
+          systemPrompt: getSystemPrompt(),
+          timestamp: new Date().toISOString()
+        }}
+        onSave={(assertionsData) => {
+          console.log('🎯 Assertions saved:', assertionsData);
+          // TODO: Show success message or update UI
+        }}
+      />
+
+      {/* Evaluations Modal Component */}
+      <EvaluationsModal
+        isOpen={showEvaluationsModal}
+        onClose={() => {
+          setShowEvaluationsModal(false);
+          setSelectedResponseForEvaluation(null);
+        }}
+        initialResponse={selectedResponseForEvaluation}
+        advisors={advisors}
+        onUpdateAdvisor={(advisorName, updatedProperties) => {
+          setAdvisors(prev => prev.map(a => 
+            a.name === advisorName 
+              ? { ...a, ...updatedProperties }
+              : a
+          ));
+          setMessages(prev => [...prev, {
+            type: 'system',
+            content: `Updated advisor "${advisorName}" with optimized prompt.`
+          }]);
         }}
       />
     </>
