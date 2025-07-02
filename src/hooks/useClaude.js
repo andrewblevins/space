@@ -209,6 +209,8 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
       if (trimmed.startsWith('{')) return true;
       // Check for markdown code block start
       if (trimmed.startsWith('```json')) return true;
+      // Check if we have enough content to detect JSON pattern
+      if (trimmed.length >= 20 && trimmed.includes('"type"') && trimmed.includes('"advisor_response"')) return true;
       return false;
     };
     
@@ -264,10 +266,18 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
                 await sleep(delay);
                 currentMessageContent += char;
                 
+                // Debug: Log first few characters to understand the format
+                if (currentMessageContent.length <= 10) {
+                  console.log('🎭 First chars:', JSON.stringify(currentMessageContent));
+                }
+                
                 // Early detection of JSON advisor format
                 if (!isJsonMode && detectJsonFormat(currentMessageContent)) {
                   isJsonMode = true;
-                  console.log('🎭 Early JSON detection - switching to advisor streaming mode');
+                  console.log('🎭 Early JSON detection - switching to advisor streaming mode', {
+                    content: currentMessageContent.substring(0, 50),
+                    trimmed: currentMessageContent.trim().substring(0, 50)
+                  });
                 }
                 
                 // Update message with appropriate type
