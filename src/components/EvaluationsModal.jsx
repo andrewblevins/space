@@ -275,10 +275,10 @@ const EvaluationsModal = ({ isOpen, onClose, advisors = [], onUpdateAdvisor, ini
         setOptimizationProgress({ current: iteration, total: 10 });
 
         // Build adaptive prompt that learns from failures
-        let optimizationPrompt = `Current advisor prompt for ${selectedResponse.advisorName}:
-${bestPrompt}
+        let optimizationPrompt = `CURRENT ADVISOR DESCRIPTION for ${selectedResponse.advisorName}:
+${originalPrompt}
 
-This advisor needs to meet these requirements across different conversations:
+FAILED ASSERTIONS that need to be addressed:
 ${failedAssertions.map((assertion, index) => `${index + 1}. ${assertion.text} (from: "${assertion.sourceDescription}")`).join('\n')}`;
 
         // Add learning from previous failures
@@ -302,16 +302,22 @@ ${failedAssertions.map((assertion, index) => `${index + 1}. ${assertion.text} (f
           console.log(`🆕 First optimization attempt - no previous failures to learn from`);
         }
 
-        optimizationPrompt += `\n\nCreate an improved advisor description that would help produce responses meeting all these requirements. You have complete creative freedom to:
+        optimizationPrompt += `\n\nCreate an improved advisor description that meets all the requirements while preserving the advisor's core identity and expertise. Follow this conservative approach:
 
-- Rewrite the advisor's perspective, background, or approach entirely if needed
-- Change the writing style (first-person, third-person, narrative, instructional, etc.)
-- Add specific methodologies, frameworks, or techniques that would help meet the assertions
-- Expand the description significantly if that would help (no length limits)
-- Modify the advisor's expertise areas or combine multiple perspectives
-- Include specific examples, case studies, or reference points that would guide better responses
+1. **PRESERVE FIRST**: Keep the advisor's name, core expertise, background, and personality intact
+2. **MINIMAL CHANGES**: Only add specific instructions or constraints needed to satisfy the failed assertions
+3. **ADDITIVE APPROACH**: Append behavioral guidelines or response formatting rules rather than rewriting the entire description
+4. **TARGETED FIXES**: Address each failed assertion with the smallest possible change
 
-The only constraint is that the result should be a coherent advisor description that would realistically help an AI produce responses satisfying all the listed requirements.
+For example:
+- If an assertion requires avoiding certain words, add: "Never begin responses with [specific words]"
+- If an assertion requires a specific format, add: "Always structure responses as [format]"
+- If an assertion requires certain content, add: "Include [specific elements] in every response"
+
+Only consider major rewrites if:
+- The original description directly contradicts the assertions
+- Multiple assertions require fundamentally incompatible approaches
+- The advisor's core identity prevents meeting the requirements
 
 Return ONLY the improved advisor description, no explanations or meta-commentary.`;
 
