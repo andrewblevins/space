@@ -302,7 +302,10 @@ ${failedAssertions.map((assertion, index) => `${index + 1}. ${assertion.text} (f
           console.log(`🆕 First optimization attempt - no previous failures to learn from`);
         }
 
-        optimizationPrompt += `\n\nCreate an improved advisor description that meets all the requirements while preserving the advisor's core identity and expertise. Follow this conservative approach:
+        optimizationPrompt += `
+
+INSTRUCTIONS:
+Create an improved advisor description that meets all the requirements while preserving the advisor's core identity and expertise. Follow this conservative approach:
 
 1. **PRESERVE FIRST**: Keep the advisor's name, core expertise, background, and personality intact
 2. **MINIMAL CHANGES**: Only add specific instructions or constraints needed to satisfy the failed assertions
@@ -319,7 +322,7 @@ Only consider major rewrites if:
 - Multiple assertions require fundamentally incompatible approaches
 - The advisor's core identity prevents meeting the requirements
 
-Return ONLY the improved advisor description, no explanations or meta-commentary.`;
+IMPORTANT: Return ONLY the improved advisor description text itself. Do NOT include any headers, labels, or meta-commentary. Start directly with the advisor description (e.g., "I am fluent in the language of..." not "CURRENT ADVISOR DESCRIPTION for...")`;
 
         console.log(`🤖 Asking Gemini for prompt improvement (attempt ${iteration})...`);
         console.log(`📤 Sending optimization prompt to Gemini:`, optimizationPrompt);
