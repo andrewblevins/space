@@ -773,7 +773,7 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
         return nonSystemMessages.length > 0;
       })
       .sort((a, b) => {
-        // Sort by most recent user message timestamp for better "Load Previous" behavior
+        // Sort by most recent user message timestamp (descending - most recent first)
         const getLastUserMessageTime = (session) => {
           const userMessages = session.messages.filter(m => m.type === 'user');
           if (userMessages.length === 0) return new Date(session.timestamp);
@@ -781,7 +781,7 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
           return new Date(lastUserMsg.timestamp || session.timestamp);
         };
         
-        return getLastUserMessageTime(a) - getLastUserMessageTime(b);  // Ascending order
+        return getLastUserMessageTime(b) - getLastUserMessageTime(a);  // Descending order - most recent first
       })
       .map(session => ({
         ...session,
@@ -958,55 +958,80 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
 
   const handleLoadPrevious = () => {
     const sessions = loadSessions();
-    if (sessions.length > 1) {
-      const penultimate = sessions[sessions.length - 2];
-      setCurrentSessionId(penultimate.id);
+    
+    // Find the most recent session that the user has sent a message in, excluding current session
+    const sessionsWithUserMessages = sessions.filter(session => {
+      // Skip current session
+      if (session.id === currentSessionId) return false;
       
-      // Process messages to restore advisor_json format if needed
-      const processedMessages = penultimate.messages.map(msg => {
-        // If it's an assistant message that looks like JSON advisor format, restore it
-        if (msg.type === 'assistant' && msg.content) {
-          let jsonContent = msg.content.trim();
-          
-          // Handle markdown code block format
-          if (jsonContent.startsWith('```json') && jsonContent.endsWith('```')) {
-            jsonContent = jsonContent.slice(7, -3).trim();
-          }
-          
-          // Check if it's valid advisor JSON
-          if (jsonContent.startsWith('{') && jsonContent.endsWith('}')) {
-            try {
-              const parsed = JSON.parse(jsonContent);
-              if (parsed.type === 'advisor_response' && parsed.advisors && Array.isArray(parsed.advisors)) {
-                // Restore as advisor_json type with parsedAdvisors
-                return {
-                  ...msg,
-                  type: 'advisor_json',
-                  content: jsonContent,
-                  parsedAdvisors: parsed
-                };
-              }
-            } catch (e) {
-              // Not valid JSON, keep as-is
-            }
-          }
-        }
-        
-        return msg;
-      });
-      
-      setMessages(processedMessages);
-      setMetaphors(penultimate.metaphors || []);
-      // DEPRECATED: Questions feature temporarily disabled
-      // setQuestions(penultimate.questions || []);
-      setAdvisorSuggestions(penultimate.advisorSuggestions || []);
-      setVoteHistory(penultimate.voteHistory || []);
-    } else {
+      // Only include sessions where user has sent at least one message
+      const userMessages = session.messages.filter(m => m.type === 'user');
+      return userMessages.length > 0;
+    });
+    
+    if (sessionsWithUserMessages.length === 0) {
       setMessages(prev => [...prev, {
         type: 'system',
-        content: sessions.length === 1 ? 'Only one session exists' : 'No previous sessions found'
+        content: 'No previous sessions with user messages found'
       }]);
+      return;
     }
+    
+    // Sort by most recent user message timestamp (descending - most recent first)
+    sessionsWithUserMessages.sort((a, b) => {
+      const getLastUserMessageTime = (session) => {
+        const userMessages = session.messages.filter(m => m.type === 'user');
+        if (userMessages.length === 0) return new Date(0); // Fallback for sessions without user messages
+        const lastUserMsg = userMessages[userMessages.length - 1];
+        return new Date(lastUserMsg.timestamp || session.timestamp);
+      };
+      
+      return getLastUserMessageTime(b) - getLastUserMessageTime(a); // Descending order
+    });
+    
+    // Load the most recent session (first in sorted array)
+    const mostRecentSession = sessionsWithUserMessages[0];
+    setCurrentSessionId(mostRecentSession.id);
+    
+    // Process messages to restore advisor_json format if needed
+    const processedMessages = mostRecentSession.messages.map(msg => {
+      // If it's an assistant message that looks like JSON advisor format, restore it
+      if (msg.type === 'assistant' && msg.content) {
+        let jsonContent = msg.content.trim();
+        
+        // Handle markdown code block format
+        if (jsonContent.startsWith('```json') && jsonContent.endsWith('```')) {
+          jsonContent = jsonContent.slice(7, -3).trim();
+        }
+        
+        // Check if it's valid advisor JSON
+        if (jsonContent.startsWith('{') && jsonContent.endsWith('}')) {
+          try {
+            const parsed = JSON.parse(jsonContent);
+            if (parsed.type === 'advisor_response' && parsed.advisors && Array.isArray(parsed.advisors)) {
+              // Restore as advisor_json type with parsedAdvisors
+              return {
+                ...msg,
+                type: 'advisor_json',
+                content: jsonContent,
+                parsedAdvisors: parsed
+              };
+            }
+          } catch (e) {
+            // Not valid JSON, keep as-is
+          }
+        }
+      }
+      
+      return msg;
+    });
+    
+    setMessages(processedMessages);
+    setMetaphors(mostRecentSession.metaphors || []);
+    setAdvisorSuggestions(mostRecentSession.advisorSuggestions || []);
+    setVoteHistory(mostRecentSession.voteHistory || []);
+    
+    console.log('🔄 Loaded most recent session with user messages:', mostRecentSession.id);
   };
 
 
