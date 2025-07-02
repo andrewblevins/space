@@ -249,7 +249,12 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
         if (advisorMatch) {
           const [, advisorName, partialResponse] = advisorMatch;
           // Clean up partial response - remove any incomplete escape sequences
-          const cleanResponse = (partialResponse || '').replace(/\\$/, '');
+          const cleanResponse = (partialResponse || '')
+            .replace(/\\$/, '') // Remove incomplete escape at end
+            .replace(/\\n/g, '\n') // Unescape newlines
+            .replace(/\\t/g, '\t') // Unescape tabs
+            .replace(/\\"/g, '"') // Unescape quotes
+            .replace(/\\\\/g, '\\'); // Unescape backslashes
           return {
             success: true,
             partial: true,
