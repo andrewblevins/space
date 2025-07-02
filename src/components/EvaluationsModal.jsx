@@ -16,11 +16,12 @@ const EvaluationsModal = ({ isOpen, onClose, advisors = [], onUpdateAdvisor, ini
   const { callGemini } = useGemini();
   
   // Create an isolated Claude hook instance for testing optimized prompts
-  // This uses isolated state that won't trigger the Terminal's auto-save useEffect
-  const [isolatedMessages, setIsolatedMessages] = useState([]);
+  // This uses no state updates to prevent triggering the Terminal's auto-save useEffect
+  const noOpSetMessages = () => {}; 
+  
   const { callClaude } = useClaude({ 
-    messages: isolatedMessages, 
-    setMessages: setIsolatedMessages, // Use isolated state to prevent database saves
+    messages: [], // Always empty to prevent any message history
+    setMessages: noOpSetMessages, // No-op to prevent any state updates
     maxTokens: 1000, 
     contextLimit: 16000, 
     memory: null, 

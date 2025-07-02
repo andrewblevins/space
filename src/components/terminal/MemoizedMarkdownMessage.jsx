@@ -39,7 +39,7 @@ export const MemoizedMarkdownMessage = memo(({ content, advisors = [], paragraph
     const processedParts = processContent(content);
     return (
       <div className="text-left font-serif w-full">
-        {processedParts.map((part, index) => 
+                {processedParts.map((part, index) => 
           typeof part === 'string' ? (
             <ReactMarkdown
               key={`md-${index}-${part.slice(0, 20)}`}

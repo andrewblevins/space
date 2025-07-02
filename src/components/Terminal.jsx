@@ -2958,6 +2958,16 @@ Example: {"position": "Option 2 text here", "confidence": 75, "reasoning": "This
           // Database storage: Save individual messages as they come
           const lastMessage = messages[messages.length - 1];
           if (lastMessage && !lastMessage.saved) {
+            // Validate that message has required fields before attempting to save
+            if (!lastMessage.type || !lastMessage.content || lastMessage.content.trim() === '') {
+              console.log('⏳ Skipping save of incomplete message:', { 
+                type: lastMessage.type, 
+                hasContent: !!lastMessage.content,
+                contentLength: lastMessage.content?.length || 0 
+              });
+              return; // Skip saving incomplete messages
+            }
+            
             try {
               await storage.addMessage(
                 currentConversationId,
