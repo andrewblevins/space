@@ -8,7 +8,7 @@ SPACE stands for Simple Perspective-Augmenting Conversation Environment (or, Sim
 
 ## What SPACE Does
 
-Traditional AI chat systems impose built-in biases and limitations on users. SPACE attempts to flip this relationship. You define where the AI can improve, and the AI adapts to meet your standards.
+Traditional AI chat systems impose hidden biases and limitations on users. SPACE attempts to flip this relationship. You define where the AI can improve, and the AI adapts to meet your standards.
 
 The interface invites you to create and "grow" AI advisors with distinct perspectives, swap them out freely as the conversation evolves, and improve them iteratively through the embedded Evaluation system.
 
