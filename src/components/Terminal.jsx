@@ -168,8 +168,8 @@ const Terminal = ({ theme, toggleTheme }) => {
 
   const [messages, setMessages] = useState(() => {
     const baseMessages = [
-      { type: 'system', content: 'SPACE Terminal - v0.2.3' },
-      { type: 'system', content: '🎉 New in v0.2.3:\n• Extended Thinking mode\n• High Council debate mode\n• Call a Vote\n• Improved tag analyzer' }
+      { type: 'system', content: 'SPACE Terminal - v0.2.4' },
+      { type: 'system', content: '🎉 New in v0.2.4:\n• Advisor evaluation system with Assert buttons\n• Automated scoring against test assertions\n• Optimization loop for iterative prompt improvement\n• Enhanced streaming with real-time formatting' }
     ];
     
     // Add auth-specific welcome message
@@ -827,8 +827,8 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
     }
     
     setMessages([
-      { type: 'system', content: 'SPACE Terminal - v0.2.3' },
-      { type: 'system', content: '🎉 New in v0.2.3:\n• Extended Thinking mode\n• High Council debate mode\n• Call a Vote\n• Improved tag analyzer' },
+      { type: 'system', content: 'SPACE Terminal - v0.2.4' },
+      { type: 'system', content: '🎉 New in v0.2.4:\n• Advisor evaluation system with Assert buttons\n• Automated scoring against test assertions\n• Optimization loop for iterative prompt improvement\n• Enhanced streaming with real-time formatting' },
       { type: 'system', content: 'Start a conversation, add an advisor (+), draw from the Prompt Library (↙), or type /help for instructions.' }
     ]);
     setMetaphors([]);
