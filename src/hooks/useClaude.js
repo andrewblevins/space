@@ -194,11 +194,53 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
     let buffer = '';
     let currentMessageContent = '';
     let thinkingContent = '';
+    let isJsonMode = false;
+    let isInCodeBlock = false;
 
     setMessages((prev) => [...prev, { type: 'assistant', content: '', thinking: (reasoningMode && !isCouncilMode) ? '' : undefined }]);
 
     const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
     const isPunctuation = (char) => ['.', '!', '?', '\n'].includes(char);
+    
+    // Helper function to detect if we're starting JSON advisor format
+    const detectJsonFormat = (content) => {
+      const trimmed = content.trim();
+      // Check for direct JSON start
+      if (trimmed.startsWith('{')) return true;
+      // Check for markdown code block start
+      if (trimmed.startsWith('```json')) return true;
+      return false;
+    };
+    
+    // Helper function to try parsing partial JSON for advisor structure
+    const tryParsePartialAdvisorJson = (content) => {
+      try {
+        let jsonContent = content.trim();
+        
+        // Handle markdown code block
+        if (jsonContent.startsWith('```json')) {
+          const endIndex = jsonContent.indexOf('```', 7);
+          if (endIndex === -1) {
+            // Code block not closed yet, extract what we have
+            jsonContent = jsonContent.slice(7).trim();
+          } else {
+            // Code block closed, extract the content
+            jsonContent = jsonContent.slice(7, endIndex).trim();
+          }
+        }
+        
+        // Try to parse - this will fail for incomplete JSON, which is expected
+        if (jsonContent.startsWith('{')) {
+          const parsed = JSON.parse(jsonContent);
+          if (parsed.type === 'advisor_response' && parsed.advisors && Array.isArray(parsed.advisors)) {
+            return { success: true, parsed, jsonContent };
+          }
+        }
+      } catch (e) {
+        // Expected for partial JSON - not an error
+      }
+      return { success: false };
+    };
 
     while (true) {
       const { done, value } = await reader.read();
@@ -221,14 +263,46 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
                 if (i > 0 && isPunctuation(text[i - 1])) delay += 0;
                 await sleep(delay);
                 currentMessageContent += char;
+                
+                // Early detection of JSON advisor format
+                if (!isJsonMode && detectJsonFormat(currentMessageContent)) {
+                  isJsonMode = true;
+                  console.log('🎭 Early JSON detection - switching to advisor streaming mode');
+                }
+                
+                // Update message with appropriate type
                 setMessages((prev) => {
                   const newMessages = [...prev];
                   if (newMessages.length > 0) {
-                    newMessages[newMessages.length - 1] = { 
-                      type: 'assistant', 
-                      content: currentMessageContent,
-                      thinking: (reasoningMode && !isCouncilMode) ? thinkingContent : undefined
-                    };
+                    if (isJsonMode) {
+                      // Try to parse partial JSON for better streaming experience
+                      const parseResult = tryParsePartialAdvisorJson(currentMessageContent);
+                      if (parseResult.success) {
+                        // We have valid partial advisor JSON - render as advisor_json
+                        newMessages[newMessages.length - 1] = {
+                          type: 'advisor_json',
+                          content: parseResult.jsonContent,
+                          parsedAdvisors: parseResult.parsed,
+                          thinking: (reasoningMode && !isCouncilMode) ? thinkingContent : undefined,
+                          isStreaming: true // Flag to indicate still streaming
+                        };
+                      } else {
+                        // JSON mode but not parseable yet - show as assistant with indicator
+                        newMessages[newMessages.length - 1] = {
+                          type: 'assistant',
+                          content: currentMessageContent,
+                          thinking: (reasoningMode && !isCouncilMode) ? thinkingContent : undefined,
+                          isJsonStreaming: true // Flag to indicate JSON is coming
+                        };
+                      }
+                    } else {
+                      // Regular assistant message
+                      newMessages[newMessages.length - 1] = { 
+                        type: 'assistant', 
+                        content: currentMessageContent,
+                        thinking: (reasoningMode && !isCouncilMode) ? thinkingContent : undefined
+                      };
+                    }
                   }
                   return newMessages;
                 });
@@ -287,7 +361,7 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
           parsedAdvisorResponse = parsed;
           console.log('🎭 JSON advisor response detected with', parsed.advisors.length, 'advisors');
           
-          // Update the message with parsed format
+          // Update the message with final parsed format (remove streaming flags)
           setMessages((prev) => {
             const newMessages = [...prev];
             if (newMessages.length > 0) {
@@ -296,6 +370,7 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
                 content: jsonContent, // Use clean JSON content instead of raw with markdown
                 parsedAdvisors: parsedAdvisorResponse,
                 thinking: (reasoningMode && !isCouncilMode) ? thinkingContent : undefined
+                // Remove isStreaming and isJsonStreaming flags
               };
             }
             return newMessages;
