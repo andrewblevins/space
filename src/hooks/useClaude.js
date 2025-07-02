@@ -286,9 +286,9 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
                 await sleep(delay);
                 currentMessageContent += char;
                 
-                // Debug: Log first few characters to understand the format
-                if (currentMessageContent.length <= 10) {
-                  console.log('🎭 First chars:', JSON.stringify(currentMessageContent));
+                // Debug: Log first few characters to understand the format (reduced logging)
+                if (currentMessageContent.length === 1) {
+                  console.log('🎭 First char:', JSON.stringify(currentMessageContent));
                 }
                 
                 // Early detection of JSON advisor format
@@ -323,12 +323,7 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
                         };
                       } else {
                         // JSON mode but not parseable yet - show as assistant with indicator
-                        if (currentMessageContent.length % 50 === 0) { // Log every 50 chars to avoid spam
-                          console.log('🎭 Progressive parsing failed, staying in assistant mode with indicator', {
-                            length: currentMessageContent.length,
-                            preview: currentMessageContent.substring(0, 100)
-                          });
-                        }
+                        // Reduced logging to prevent console spam
                         newMessages[newMessages.length - 1] = {
                           type: 'assistant',
                           content: currentMessageContent,
