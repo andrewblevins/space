@@ -376,6 +376,25 @@ const Terminal = ({ theme, toggleTheme }) => {
     }
   }, [modalController, hasCheckedKeys, useAuthSystem]);
 
+  // Auto-load most recent session after initialization
+  useEffect(() => {
+    if (!isInitializing && hasCheckedKeys && apiKeysSet && !showWelcome) {
+      console.log('🔄 Auto-loading most recent session...');
+      
+      // Get all sessions
+      const allSessions = loadSessions();
+      
+      if (allSessions.length > 0) {
+        // Load the most recent session (first in the sorted array)
+        const mostRecentSession = allSessions[0];
+        console.log('📂 Auto-loading session:', mostRecentSession.id, mostRecentSession.title);
+        handleLoadSession(mostRecentSession.id);
+      } else {
+        console.log('📭 No sessions found to auto-load');
+      }
+    }
+  }, [isInitializing, hasCheckedKeys, apiKeysSet, showWelcome]);
+
 // Shared JSON response format for advisor responses (without synthesis)
 const ADVISOR_JSON_FORMAT = `RESPONSE FORMAT: Return your response as JSON in this exact structure:
 
