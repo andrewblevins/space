@@ -26,7 +26,7 @@ const {
 
 function createFakeSession(id, title, messageCount = 3) {
   const messages = [
-    { type: 'system', content: 'SPACE Terminal - v0.2.3' },
+            { type: 'system', content: 'SPACE Terminal - v0.2.4' },
   ];
   
   // Add user/assistant messages

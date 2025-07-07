@@ -146,7 +146,7 @@ const WelcomeScreen = () => {
           >
             Jason Ganz
           </a>{' '}
-          • v0.2.3
+          • v0.2.4
         </p>
         <p className="text-xs mt-2">
           <button 
