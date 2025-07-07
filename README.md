@@ -8,7 +8,7 @@ SPACE stands for Simple Perspective-Augmenting Conversation Environment (or, Sim
 
 ## What SPACE Does
 
-Traditional AI chat systems impose built-in biases and limitations on users. SPACE attempts to flip this relationship. You define where the AI can improve, and the AI adapts to meet your standards.
+Traditional AI chat systems impose hidden biases and limitations on users. SPACE attempts to flip this relationship. You define where the AI can improve, and the AI adapts to meet your standards.
 
 The interface invites you to create and "grow" AI advisors with distinct perspectives, swap them out freely as the conversation evolves, and improve them iteratively through the embedded Evaluation system.
 
@@ -101,13 +101,13 @@ See [SETUP.md](SETUP.md) for development setup.
 
 ## Potential Use Cases
 
-- **Academic Research**: Create a panel with your field's leading theorist, a methodologist, and a constructive critic to pressure-test your arguments from multiple angles before publication
+- **Academic Research**: Create a panel with your field's leading theorist, a methodologist, and a constructive critic to pressure-test arguments from multiple angles
   
-- **Creative Writing**: Assemble different editorial voices—a brutal first reader, an encouraging mentor, a market-savvy agent—switching between them as your manuscript evolves
+- **Creative Writing**: Assemble different editorial voices—a first reader, a mentor, an agent—switching between them as your manuscript develops
   
-- **Business Strategy**: Build advisors representing different frameworks (Porter's Five Forces analyst, Blue Ocean strategist, Jobs-to-be-Done practitioner) to examine decisions through proven lenses
+- **Business Strategy**: Build advisors representing different frameworks (Porter's Five Forces analyst, Blue Ocean strategist, Jobs-to-be-Done practitioner) to examine decisions through tested frames
   
-- **Personal Decisions**: Design advisors who embody different aspects of wisdom—your wisest future self, a teacher in your preferred lineage, a devil's advocate—to explore life choices with integrity
+- **Personal Decisions**: Design advisors who embody different aspects of wisdom—your future self, a teacher in your preferred lineage, a devil's advocate—to explore life choices seriously
 
 ## Support
 
