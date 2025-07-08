@@ -102,7 +102,7 @@ export function useConversationStorage() {
       });
       
       const result = await handleResponse(response);
-      console.log('🗃️ Updated conversation:', conversationId);
+      // console.log('🗃️ Updated conversation:', conversationId);
       return result;
     } catch (err) {
       console.error('Failed to update conversation:', err);
@@ -164,7 +164,7 @@ export function useConversationStorage() {
       });
       
       const result = await handleResponse(response);
-      console.log('🗃️ Listed', result.length, 'conversations');
+      // console.log('🗃️ Listed', result.length, 'conversations');
       return result;
     } catch (err) {
       console.error('Failed to list conversations:', err);
