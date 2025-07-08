@@ -34,10 +34,10 @@ export async function onRequestPost(context) {
     }
 
     // Validate message type
-    if (!['system', 'user', 'assistant'].includes(type)) {
+    if (!['system', 'user', 'assistant', 'advisor_json'].includes(type)) {
       return new Response(JSON.stringify({
         error: 'Invalid message type',
-        message: 'Type must be system, user, or assistant'
+        message: 'Type must be system, user, assistant, or advisor_json'
       }), {
         status: 400,
         headers: {

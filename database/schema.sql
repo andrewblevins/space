@@ -25,7 +25,7 @@ CREATE POLICY "Users can manage own conversations" ON public.conversations
 CREATE TABLE public.messages (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   conversation_id UUID REFERENCES public.conversations(id) ON DELETE CASCADE,
-  type TEXT NOT NULL CHECK (type IN ('system', 'user', 'assistant')),
+  type TEXT NOT NULL CHECK (type IN ('system', 'user', 'assistant', 'advisor_json')),
   content TEXT NOT NULL,
   metadata JSONB DEFAULT '{}', -- For tags, timing, advisor info, etc.
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
