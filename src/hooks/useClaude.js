@@ -113,12 +113,10 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
     console.log('=' .repeat(80));
     
     // Log the conversation context messages
-    console.log('💬 CONVERSATION CONTEXT SENT TO CLAUDE:');
-    console.log('=' .repeat(60));
-    contextMessages.forEach((msg, i) => {
-      console.log(`${i + 1}. [${msg.role}]: ${msg.content.substring(0, 200)}${msg.content.length > 200 ? '...' : ''}`);
-    });
-    console.log('=' .repeat(60));
+    // console.log('💬 CONVERSATION CONTEXT SENT TO CLAUDE:');
+    // console.log('============================================================');
+    // console.log(conversationContext);
+    // console.log('============================================================');
 
     // Add native Extended Thinking if reasoning mode is enabled AND not in council mode
     const isCouncilMode = systemPromptText.includes('HIGH COUNCIL MODE');
@@ -315,16 +313,16 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
                 
                 // Debug: Log first few characters to understand the format (reduced logging)
                 if (currentMessageContent.length === 1) {
-                  console.log('🎭 First char:', JSON.stringify(currentMessageContent));
+                  // console.log('🎭 First char:', JSON.stringify(currentMessageContent));
                 }
                 
                 // Early detection of JSON advisor format
                 if (!isJsonMode && detectJsonFormat(currentMessageContent)) {
                   isJsonMode = true;
-                  console.log('🎭 Early JSON detection - switching to advisor streaming mode', {
-                    content: currentMessageContent.substring(0, 50),
-                    trimmed: currentMessageContent.trim().substring(0, 50)
-                  });
+                  // console.log('🎭 Early JSON detection - switching to advisor streaming mode', {
+                  //   content: currentMessageContent.substring(0, 50),
+                  //   trimmed: currentMessageContent.trim().substring(0, 50)
+                  // });
                 }
                 
                 // Update message with appropriate type
@@ -336,10 +334,10 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
                       const parseResult = tryParsePartialAdvisorJson(currentMessageContent);
                       if (parseResult.success) {
                         // We have valid partial advisor JSON - render as advisor_json
-                        console.log('🎭 Progressive parsing SUCCESS, switching to advisor_json mode', {
-                          isPartial: parseResult.partial,
-                          advisorCount: parseResult.parsed.advisors.length
-                        });
+                        // console.log('🎭 Progressive parsing SUCCESS, switching to advisor_json mode', {
+                        //   isPartial: parseResult.partial,
+                        //   advisorCount: parseResult.parsed.advisors.length
+                        // });
                         newMessages[newMessages.length - 1] = {
                           type: 'advisor_json',
                           content: parseResult.jsonContent,
@@ -398,31 +396,31 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
     // Check if response is JSON advisor format and parse it
     let parsedAdvisorResponse = null;
     
-    console.log('🎭 Checking if response is JSON...', {
-      content: currentMessageContent.substring(0, 100) + '...',
-      startsWithBrace: currentMessageContent.trim().startsWith('{'),
-      endsWithBrace: currentMessageContent.trim().endsWith('}'),
-      startsWithCodeBlock: currentMessageContent.trim().startsWith('```json'),
-      endsWithCodeBlock: currentMessageContent.trim().endsWith('```'),
-      length: currentMessageContent.length
-    });
+    // console.log('🎭 Checking if response is JSON...', {
+    //   content: currentMessageContent.substring(0, 100) + '...',
+    //   startsWithBrace: currentMessageContent.trim().startsWith('{'),
+    //   endsWithBrace: currentMessageContent.trim().endsWith('}'),
+    //   startsWithCodeBlock: currentMessageContent.trim().startsWith('```json'),
+    //   endsWithCodeBlock: currentMessageContent.trim().endsWith('```'),
+    //   length: currentMessageContent.length
+    // });
     
     // Check for JSON - either direct JSON or markdown code block
     let jsonContent = currentMessageContent.trim();
     if (jsonContent.startsWith('```json') && jsonContent.endsWith('```')) {
       // Extract JSON from markdown code block
       jsonContent = jsonContent.slice(7, -3).trim(); // Remove ```json and ```
-      console.log('🎭 Extracted JSON from code block:', jsonContent.substring(0, 100) + '...');
+      // console.log('🎭 Extracted JSON from code block:', jsonContent.substring(0, 100) + '...');
     }
     
     if (jsonContent.startsWith('{') && jsonContent.endsWith('}')) {
       try {
         const parsed = JSON.parse(jsonContent);
-        console.log('🎭 Successfully parsed JSON:', parsed);
+        // console.log('🎭 Successfully parsed JSON:', parsed);
         
         if (parsed.type === 'advisor_response' && parsed.advisors && Array.isArray(parsed.advisors)) {
           parsedAdvisorResponse = parsed;
-          console.log('🎭 JSON advisor response detected with', parsed.advisors.length, 'advisors');
+          // console.log('🎭 JSON advisor response detected with', parsed.advisors.length, 'advisors');
           
           // Update the message with final parsed format (remove streaming flags)
           setMessages((prev) => {
@@ -439,14 +437,14 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
             return newMessages;
           });
         } else {
-          console.log('🎭 JSON parsed but wrong structure:', {
-            type: parsed.type,
-            hasAdvisors: !!parsed.advisors,
-            advisorsIsArray: Array.isArray(parsed.advisors)
-          });
+          // console.log('🎭 JSON parsed but wrong structure:', {
+          //   type: parsed.type,
+          //   hasAdvisors: !!parsed.advisors,
+          //   advisorsIsArray: Array.isArray(parsed.advisors)
+          // });
         }
       } catch (e) {
-        console.log('🎭 Response looks like JSON but failed to parse:', e.message);
+        // console.log('🎭 Response looks like JSON but failed to parse:', e.message);
       }
     }
     

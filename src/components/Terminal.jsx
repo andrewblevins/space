@@ -3247,7 +3247,7 @@ Example: {"position": "Option 2 text here", "confidence": 75, "reasoning": "This
       const lastMessage = messages[messages.length - 1];
       // Only analyze after Claude responses (assistant messages)
       if (lastMessage.type === 'assistant') {
-        console.log('🔍 Triggering analysis after Claude response');
+        // console.log('🔍 Triggering analysis after Claude response');
         analyzeMetaphorsWithDuplicatePrevention(messages);
         // DEPRECATED: Questions feature temporarily disabled
         // analyzeForQuestions(messages, {

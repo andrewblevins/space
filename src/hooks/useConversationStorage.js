@@ -56,7 +56,7 @@ export function useConversationStorage() {
       });
       
       const result = await handleResponse(response);
-      console.log('🗃️ Created conversation:', result.id);
+      // console.log('🗃️ Created conversation:', result.id);
       return result;
     } catch (err) {
       console.error('Failed to create conversation:', err);
@@ -78,7 +78,7 @@ export function useConversationStorage() {
       });
       
       const result = await handleResponse(response);
-      console.log('🗃️ Loaded conversation:', conversationId, 'with', result.messages?.length || 0, 'messages');
+      // console.log('🗃️ Loaded conversation:', conversationId, 'with', result.messages?.length || 0, 'messages');
       return result;
     } catch (err) {
       console.error('Failed to load conversation:', err);
@@ -125,7 +125,7 @@ export function useConversationStorage() {
       });
       
       const result = await handleResponse(response);
-      console.log('💬 Added message to conversation:', conversationId, `(${type})`);
+      // console.log('💬 Added message to conversation:', conversationId, `(${type})`);
       return result;
     } catch (err) {
       console.error('Failed to add message:', err);
@@ -144,7 +144,7 @@ export function useConversationStorage() {
         const result = await addMessage(conversationId, message.type, message.content, message.metadata);
         results.push(result);
       }
-      console.log('💬 Added', messages.length, 'messages to conversation:', conversationId);
+      // console.log('💬 Added', messages.length, 'messages to conversation:', conversationId);
       return results;
     } catch (err) {
       console.error('Failed to add messages:', err);
