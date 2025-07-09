@@ -160,15 +160,21 @@ const AdvisorForm = ({ onSubmit, onCancel, initialName = '', existingAdvisors = 
           spellCheck="true"
           data-role="advisor-name"
         />
-        <textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Advisor description"
-          className="w-full h-40 bg-white text-gray-800 p-2 mb-4 border border-gray-300 focus:outline-none resize-none dark:bg-black dark:text-green-400 dark:border-green-400"
-          autoComplete="off"
-          spellCheck="true"
-          data-role="advisor-description"
-        />
+        
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Description (Optional):
+        </label>
+        <div className="relative">
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Leave blank to grow through assertions"
+            className="w-full h-40 bg-white text-gray-800 p-2 mb-2 border border-gray-300 focus:outline-none resize-none dark:bg-black dark:text-green-400 dark:border-green-400"
+            autoComplete="off"
+            spellCheck="true"
+            data-role="advisor-description"
+          />
+        </div>
         
         {/* Color Selection */}
         <div className="mb-4">
@@ -203,6 +209,16 @@ const AdvisorForm = ({ onSubmit, onCancel, initialName = '', existingAdvisors = 
                 />
               ))}
             </div>
+          </div>
+        </div>
+        
+        {/* Helpful tip */}
+        <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
+          <div className="flex items-start">
+            <span className="text-blue-500 mr-2">💡</span>
+            <p className="text-sm text-blue-700 dark:text-blue-300">
+              <strong>Tip:</strong> You can start with just a name and develop your advisor's personality through conversations and assertions in the evaluation system.
+            </p>
           </div>
         </div>
         
