@@ -242,28 +242,31 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
       
       // If full parsing fails, try to extract partial advisor data for progressive rendering
       if (content.includes('"type"') && content.includes('"advisor_response"') && content.includes('"advisors"')) {
-        // Try to extract any advisor data that's partially available
-        const advisorMatch = content.match(/"name":\s*"([^"]*)"(?:.*?"response":\s*"([^"]*(?:[^"\\]|\\.)*))/s);
-        if (advisorMatch) {
-          const [, advisorName, partialResponse] = advisorMatch;
-          // Clean up partial response - remove any incomplete escape sequences
-          const cleanResponse = (partialResponse || '')
-            .replace(/\\$/, '') // Remove incomplete escape at end
-            .replace(/\\n/g, '\n') // Unescape newlines
-            .replace(/\\t/g, '\t') // Unescape tabs
-            .replace(/\\"/g, '"') // Unescape quotes
-            .replace(/\\\\/g, '\\'); // Unescape backslashes
+        // Try to extract all advisor data that's partially available
+        const advisorMatches = [...content.matchAll(/"name":\s*"([^"]*)"(?:.*?"response":\s*"([^"]*(?:[^"\\]|\\.)*))/gs)];
+        if (advisorMatches.length > 0) {
+          const advisors = advisorMatches.map(([, advisorName, partialResponse]) => {
+            // Clean up partial response - remove any incomplete escape sequences
+            const cleanResponse = (partialResponse || '')
+              .replace(/\\$/, '') // Remove incomplete escape at end
+              .replace(/\\n/g, '\n') // Unescape newlines
+              .replace(/\\t/g, '\t') // Unescape tabs
+              .replace(/\\"/g, '"') // Unescape quotes
+              .replace(/\\\\/g, '\\'); // Unescape backslashes
+            return {
+              id: `streaming-${advisorName.toLowerCase().replace(/\s+/g, '-')}`,
+              name: advisorName || 'Loading...',
+              response: cleanResponse || 'Generating response...',
+              timestamp: new Date().toISOString()
+            };
+          });
+          
           return {
             success: true,
             partial: true,
             parsed: {
               type: 'advisor_response',
-                              advisors: [{
-                  id: `streaming-${advisorName.toLowerCase().replace(/\s+/g, '-')}`,
-                  name: advisorName || 'Loading...',
-                  response: cleanResponse || 'Generating response...',
-                  timestamp: new Date().toISOString()
-                }]
+              advisors: advisors
             },
             jsonContent: content.trim()
           };
