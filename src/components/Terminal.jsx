@@ -3602,6 +3602,7 @@ ${selectedText}
           }
           desktopLayout={
             <div
+              ref={terminalRef}
               className="w-full h-screen font-serif flex relative bg-gradient-to-b from-amber-50 to-amber-100 text-gray-800 dark:bg-gradient-to-b dark:from-gray-900 dark:to-black dark:text-green-400"
               onContextMenu={handleContextMenu}
               style={{
@@ -3811,8 +3812,9 @@ ${selectedText}
             </div>
           }
         />
+      )}
 
-          {showAdvisorForm && (
+      {showAdvisorForm && (
             <AdvisorForm
               initialName={suggestedAdvisorName}
               existingAdvisors={advisors}

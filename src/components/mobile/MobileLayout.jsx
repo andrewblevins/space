@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import MobileHeader from './MobileHeader';
 import MobileTabBar from './MobileTabBar';
+import { MemoizedMarkdownMessage } from '../terminal/MemoizedMarkdownMessage';
+import { AdvisorResponseCard } from '../terminal/AdvisorResponseCard';
+import ThinkingBlock from '../ThinkingBlock';
+import DebateBlock from '../DebateBlock';
 
 /**
  * MobileLayout component provides the main layout structure for mobile devices
@@ -24,7 +28,11 @@ const MobileLayout = ({
   setShowSessionPanel,
   setShowHelpModal,
   setShowInfoModal,
-  children
+  processCouncilDebates,
+  paragraphSpacing,
+  setSelectedAdvisorForAssertions,
+  setShowAssertionsModal,
+  getSystemPrompt
 }) => {
   const [activeTab, setActiveTab] = useState('chat');
 
@@ -34,13 +42,85 @@ const MobileLayout = ({
         return (
           <div className="flex-1 flex flex-col p-4">
             {/* Chat messages */}
-            <div className="flex-1 overflow-auto mb-4 break-words">
+            <div className="flex-1 overflow-auto mb-4 break-words px-4">
               {messages.map((msg, idx) => (
-                <div key={idx} className="mb-4 break-words">
-                  {/* Message rendering will be handled by parent component */}
-                  {children?.chatContent?.(msg, idx)}
+                <div 
+                  key={idx}
+                  id={`msg-${idx}`}
+                  className={`mb-4 break-words ${
+                    msg.type === 'user' ? 'text-green-600 dark:text-green-400 whitespace-pre-wrap' : 
+                    msg.type === 'assistant' ? 'text-gray-800 dark:text-gray-200' : 
+                    msg.type === 'system' ? 'text-gray-800 dark:text-gray-200' : 
+                    msg.type === 'debug' ? 'text-amber-600 dark:text-amber-400 whitespace-pre-wrap' : 'text-green-600 dark:text-green-400 whitespace-pre-wrap'
+                  }`}
+                >
+                  {msg.type === 'system' ? (
+                    <MemoizedMarkdownMessage content={msg.content} advisors={advisors} paragraphSpacing={paragraphSpacing} />
+                  ) : msg.type === 'advisor_json' ? (
+                    <div>
+                      {msg.thinking && <ThinkingBlock content={msg.thinking} />}
+                      {msg.isStreaming && (
+                        <div className="mb-2 text-sm text-green-600 dark:text-green-400 italic">
+                          ⚡ Streaming advisor responses...
+                        </div>
+                      )}
+                      {msg.parsedAdvisors.advisors.map((advisor, advisorIdx) => (
+                        <AdvisorResponseCard
+                          key={`${advisor.id || advisor.name}-${advisorIdx}`}
+                          advisor={advisor}
+                          allAdvisors={advisors}
+                          onAssertionsClick={(advisorData) => {
+                            console.log('🎯 Assertions clicked for:', advisorData);
+                            setSelectedAdvisorForAssertions({
+                              ...advisorData,
+                              conversationContext: {
+                                messages: [...messages],
+                                advisors: [...advisors],
+                                systemPrompt: getSystemPrompt(),
+                                timestamp: new Date().toISOString()
+                              }
+                            });
+                            setShowAssertionsModal(true);
+                          }}
+                        />
+                      ))}
+                      
+                      {/* Show synthesis if it exists (for council mode or other cases) */}
+                      {msg.parsedAdvisors.synthesis && (
+                        <div className="mt-4 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                          <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Synthesis</h4>
+                          <MemoizedMarkdownMessage content={msg.parsedAdvisors.synthesis} advisors={advisors} paragraphSpacing={paragraphSpacing} />
+                        </div>
+                      )}
+                    </div>
+                  ) : msg.type === 'assistant' ? (
+                    (() => {
+                      const { processedContent, debates } = processCouncilDebates(msg.content);
+                      return (
+                        <div>
+                          {msg.thinking && <ThinkingBlock content={msg.thinking} />}
+                          {msg.isJsonStreaming && (
+                            <div className="mb-2 text-sm text-blue-600 dark:text-blue-400 italic">
+                              ⚡ Streaming advisor responses...
+                            </div>
+                          )}
+                          {debates.map((debate, debateIdx) => (
+                            <DebateBlock key={debateIdx} content={debate} advisors={advisors} paragraphSpacing={paragraphSpacing} />
+                          ))}
+                          <MemoizedMarkdownMessage 
+                            content={processedContent.replace(/__DEBATE_PLACEHOLDER_\d+__/g, '')} 
+                            advisors={advisors} 
+                            paragraphSpacing={paragraphSpacing}
+                          />
+                        </div>
+                      );
+                    })()
+                  ) : (
+                    msg.content
+                  )}
                 </div>
               ))}
+              {isLoading && <div className="text-amber-600 dark:text-amber-400">Loading...</div>}
             </div>
             
             {/* Input area */}
