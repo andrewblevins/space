@@ -322,7 +322,7 @@ Only consider major rewrites if:
 - Multiple assertions require fundamentally incompatible approaches
 - The advisor's core identity prevents meeting the requirements
 
-IMPORTANT: Return ONLY the improved advisor description text itself. Do NOT include any headers, labels, or meta-commentary. Start directly with the advisor description (e.g., "I am fluent in the language of..." not "CURRENT ADVISOR DESCRIPTION for...")`;
+IMPORTANT: Return ONLY the improved advisor description text itself. Do NOT include any headers, labels, or meta-commentary. Write the description in second-person (addressing the advisor as "you") with instructions about their identity, expertise, and approach (e.g., "You are an expert in..." not "I am an expert in...")`;
 
         console.log(`🤖 Asking Gemini for prompt improvement (attempt ${iteration})...`);
         console.log(`📤 Sending optimization prompt to Gemini:`, optimizationPrompt);
