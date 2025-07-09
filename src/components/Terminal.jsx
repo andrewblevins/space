@@ -47,6 +47,8 @@ import { needsMigration } from '../utils/migrationHelper';
 import MigrationModal from './MigrationModal';
 import AssertionsModal from './AssertionsModal';
 import EvaluationsModal from './EvaluationsModal';
+import ResponsiveContainer from './responsive/ResponsiveContainer';
+import MobileLayout from './mobile/MobileLayout';
 
 
 
@@ -3569,216 +3571,246 @@ ${selectedText}
           }} 
         />
       ) : (
-        // Regular terminal UI
-        <div
-          ref={terminalRef}
-          className="w-full h-screen font-serif flex relative bg-gradient-to-b from-amber-50 to-amber-100 text-gray-800 dark:bg-gradient-to-b dark:from-gray-900 dark:to-black dark:text-green-400"
-          onContextMenu={handleContextMenu}
-          style={{
-            /* Custom scrollbar styling for webkit browsers */
-            scrollbarWidth: 'thin',
-            scrollbarColor: '#374151 transparent'
-          }}
-        >
-
-          {/* Left Column */}
-          <div className="w-1/4 p-4 border-r border-gray-300 dark:border-gray-800 overflow-y-auto scrollbar-terminal">
-            <GroupableModule
-                title="Advisors"
-                groups={advisorGroups}
-                items={advisors}
-                onItemClick={handleAdvisorClick}
-                onGroupClick={handleGroupClick}
-                activeItems={advisors.filter(a => a.active)}
-                activeGroups={activeGroups}
-                onAddClick={() => {
-                  setSuggestedAdvisorName('');
-                  setShowAdvisorForm(true);
-                }}
-                setEditingAdvisor={setEditingAdvisor}
-                setAdvisors={setAdvisors}
-                setMessages={setMessages}
-              />
-          </div>
-
-          {/* Middle Column */}
-          <div className="w-2/4 p-4 flex flex-col">
-            <div 
-              ref={messagesContainerRef} 
-              className="
-                flex-1 
-                overflow-auto 
-                mb-4 
-                break-words
-                px-6         // Even horizontal padding
-                py-4         // Vertical padding for balance
-                mx-auto      // Center the content
-                max-w-[90ch] // Limit line length for optimal readability
-                leading-relaxed     // Increased line height for better readability
-                tracking-wide       // Slightly increased letter spacing
-                scrollbar-terminal
-              "
+        // Regular terminal UI with responsive layout
+        <ResponsiveContainer
+          mobileLayout={
+            <MobileLayout
+              advisors={advisors}
+              setAdvisors={setAdvisors}
+              messages={messages}
+              setMessages={setMessages}
+              input={input}
+              setInput={setInput}
+              isLoading={isLoading}
+              handleSubmit={handleSubmit}
+              metaphors={metaphors}
+              advisorSuggestions={advisorSuggestions}
+              handleAdvisorSuggestionClick={handleAdvisorSuggestionClick}
+              setShowAdvisorForm={setShowAdvisorForm}
+              setShowSettingsMenu={setShowSettingsMenu}
+              setShowPromptLibrary={setShowPromptLibrary}
+              setShowSessionPanel={setShowSessionPanel}
+              setShowHelpModal={setShowHelpModal}
+              setShowInfoModal={setShowInfoModal}
+              // Pass message rendering functions
+              processCouncilDebates={processCouncilDebates}
+              paragraphSpacing={paragraphSpacing}
+              setSelectedAdvisorForAssertions={setSelectedAdvisorForAssertions}
+              setShowAssertionsModal={setShowAssertionsModal}
+              getSystemPrompt={getSystemPrompt}
+            />
+          }
+          desktopLayout={
+            <div
+              className="w-full h-screen font-serif flex relative bg-gradient-to-b from-amber-50 to-amber-100 text-gray-800 dark:bg-gradient-to-b dark:from-gray-900 dark:to-black dark:text-green-400"
+              onContextMenu={handleContextMenu}
+              style={{
+                /* Custom scrollbar styling for webkit browsers */
+                scrollbarWidth: 'thin',
+                scrollbarColor: '#374151 transparent'
+              }}
             >
-              {messages.map((msg, idx) => (
-                  <div 
-                    key={idx}
-                    id={`msg-${idx}`}
-                    className={`mb-4 break-words ${
-                      msg.type === 'user' ? 'text-green-600 dark:text-green-400 whitespace-pre-wrap' : 
-                      msg.type === 'assistant' ? 'text-gray-800 dark:text-gray-200' : 
-                      msg.type === 'system' ? 'text-gray-800 dark:text-gray-200' : 
-                      msg.type === 'debug' ? 'text-amber-600 dark:text-amber-400 whitespace-pre-wrap' : 'text-green-600 dark:text-green-400 whitespace-pre-wrap'
-                    }`}
-                  >
-                    {msg.type === 'system' ? (
-                      <MemoizedMarkdownMessage content={msg.content} advisors={advisors} paragraphSpacing={paragraphSpacing} />
-                    ) : msg.type === 'advisor_json' ? (
-                      <div>
-                        {msg.thinking && <ThinkingBlock content={msg.thinking} />}
-                        {msg.isStreaming && (
-                          <div className="mb-2 text-sm text-green-600 dark:text-green-400 italic">
-                            ⚡ Streaming advisor responses...
-                          </div>
-                        )}
-                        {msg.parsedAdvisors.advisors.map((advisor, advisorIdx) => (
-                          <AdvisorResponseCard
-                            key={`${advisor.id || advisor.name}-${advisorIdx}`}
-                            advisor={advisor}
-                            allAdvisors={advisors}
-                            onAssertionsClick={(advisorData) => {
-                              console.log('🎯 Assertions clicked for:', advisorData);
-                              setSelectedAdvisorForAssertions({
-                                ...advisorData,
-                                conversationContext: {
-                                  messages: [...messages],
-                                  advisors: [...advisors],
-                                  systemPrompt: getSystemPrompt(),
-                                  timestamp: new Date().toISOString()
-                                }
-                              });
-                              setShowAssertionsModal(true);
-                            }}
-                          />
-                        ))}
-                        
-                        {/* Show synthesis if it exists (for council mode or other cases) */}
-                        {msg.parsedAdvisors.synthesis && (
-                          <div className="mt-4 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
-                            <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Synthesis</h4>
-                            <MemoizedMarkdownMessage content={msg.parsedAdvisors.synthesis} advisors={advisors} paragraphSpacing={paragraphSpacing} />
-                          </div>
-                        )}
-                      </div>
-                    ) : msg.type === 'assistant' ? (
-                      (() => {
-                        const { processedContent, debates } = processCouncilDebates(msg.content);
-                        return (
+              {/* Left Column */}
+              <div className="w-1/4 p-4 border-r border-gray-300 dark:border-gray-800 overflow-y-auto scrollbar-terminal">
+                <GroupableModule
+                    title="Advisors"
+                    groups={advisorGroups}
+                    items={advisors}
+                    onItemClick={handleAdvisorClick}
+                    onGroupClick={handleGroupClick}
+                    activeItems={advisors.filter(a => a.active)}
+                    activeGroups={activeGroups}
+                    onAddClick={() => {
+                      setSuggestedAdvisorName('');
+                      setShowAdvisorForm(true);
+                    }}
+                    setEditingAdvisor={setEditingAdvisor}
+                    setAdvisors={setAdvisors}
+                    setMessages={setMessages}
+                  />
+              </div>
+
+              {/* Middle Column */}
+              <div className="w-2/4 p-4 flex flex-col">
+                <div 
+                  ref={messagesContainerRef} 
+                  className="
+                    flex-1 
+                    overflow-auto 
+                    mb-4 
+                    break-words
+                    px-6         // Even horizontal padding
+                    py-4         // Vertical padding for balance
+                    mx-auto      // Center the content
+                    max-w-[90ch] // Limit line length for optimal readability
+                    leading-relaxed     // Increased line height for better readability
+                    tracking-wide       // Slightly increased letter spacing
+                    scrollbar-terminal
+                  "
+                >
+                  {messages.map((msg, idx) => (
+                      <div 
+                        key={idx}
+                        id={`msg-${idx}`}
+                        className={`mb-4 break-words ${
+                          msg.type === 'user' ? 'text-green-600 dark:text-green-400 whitespace-pre-wrap' : 
+                          msg.type === 'assistant' ? 'text-gray-800 dark:text-gray-200' : 
+                          msg.type === 'system' ? 'text-gray-800 dark:text-gray-200' : 
+                          msg.type === 'debug' ? 'text-amber-600 dark:text-amber-400 whitespace-pre-wrap' : 'text-green-600 dark:text-green-400 whitespace-pre-wrap'
+                        }`}
+                      >
+                        {msg.type === 'system' ? (
+                          <MemoizedMarkdownMessage content={msg.content} advisors={advisors} paragraphSpacing={paragraphSpacing} />
+                        ) : msg.type === 'advisor_json' ? (
                           <div>
                             {msg.thinking && <ThinkingBlock content={msg.thinking} />}
-                            {msg.isJsonStreaming && (
-                              <div className="mb-2 text-sm text-blue-600 dark:text-blue-400 italic">
+                            {msg.isStreaming && (
+                              <div className="mb-2 text-sm text-green-600 dark:text-green-400 italic">
                                 ⚡ Streaming advisor responses...
                               </div>
                             )}
-                            {debates.map((debate, debateIdx) => (
-                              <DebateBlock key={debateIdx} content={debate} advisors={advisors} paragraphSpacing={paragraphSpacing} />
+                            {msg.parsedAdvisors.advisors.map((advisor, advisorIdx) => (
+                              <AdvisorResponseCard
+                                key={`${advisor.id || advisor.name}-${advisorIdx}`}
+                                advisor={advisor}
+                                allAdvisors={advisors}
+                                onAssertionsClick={(advisorData) => {
+                                  console.log('🎯 Assertions clicked for:', advisorData);
+                                  setSelectedAdvisorForAssertions({
+                                    ...advisorData,
+                                    conversationContext: {
+                                      messages: [...messages],
+                                      advisors: [...advisors],
+                                      systemPrompt: getSystemPrompt(),
+                                      timestamp: new Date().toISOString()
+                                    }
+                                  });
+                                  setShowAssertionsModal(true);
+                                }}
+                              />
                             ))}
-                            <MemoizedMarkdownMessage 
-                              content={processedContent.replace(/__DEBATE_PLACEHOLDER_\d+__/g, '')} 
-                              advisors={advisors} 
-                              paragraphSpacing={paragraphSpacing}
-                            />
+                            
+                            {/* Show synthesis if it exists (for council mode or other cases) */}
+                            {msg.parsedAdvisors.synthesis && (
+                              <div className="mt-4 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                                <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Synthesis</h4>
+                                <MemoizedMarkdownMessage content={msg.parsedAdvisors.synthesis} advisors={advisors} paragraphSpacing={paragraphSpacing} />
+                              </div>
+                            )}
                           </div>
-                        );
-                      })()
-                    ) : (
-                      msg.content
-                    )}
-                  </div>
-              ))}
-              {isLoading && <div className="text-amber-600 dark:text-amber-400">Loading...</div>}
-            </div>
-
-            <div className="mt-auto">
-              <form onSubmit={handleSubmit}>
-                <div className="flex items-center">
-                  {editingPrompt ? (
-                    <div className="flex-1">
-                      <textarea
-                        value={editText}
-                        onChange={(e) => setEditText(e.target.value)}
-                        onKeyDown={handleEditKeyDown}
-                        className="w-full h-40 bg-white text-gray-800 font-serif p-2 border border-gray-300 focus:outline-none resize-none dark:bg-black dark:text-green-400 dark:border-green-400"
-                        placeholder="Edit your prompt..."
-                        autoFocus
-                        autoComplete="off"
-                        spellCheck="true"
-                        data-role="text-editor"
-                      />
-                    </div>
-                  ) : editingAdvisor ? (
-                    <div className="flex-1">
-                      <textarea
-                        value={editAdvisorText}
-                        onChange={(e) => setEditAdvisorText(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && e.ctrlKey) {
-                            // Save changes
-                            setAdvisors(prev => prev.map(a => 
-                              a.name === editingAdvisor.name ? { ...a, description: editAdvisorText } : a
-                            ));
-                            setEditingAdvisor(null);
-                            setEditAdvisorText('');
-                          } else if (e.key === 'Escape') {
-                            // Cancel editing
-                            setEditingAdvisor(null);
-                            setEditAdvisorText('');
-                          }
-                        }}
-                        className="w-full h-40 bg-white text-gray-800 font-serif p-2 border border-gray-300 focus:outline-none resize-none dark:bg-black dark:text-green-400 dark:border-green-400"
-                        placeholder="Edit advisor description..."
-                        autoFocus
-                        autoComplete="off"
-                        spellCheck="true"
-                        data-role="text-editor"
-                      />
-                    </div>
-                  ) : (
-                    <>
-                      <span className="mr-2">&gt;</span>
-                      <ExpandingInput
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        onSubmit={handleSubmit}
-                        isLoading={isLoading}
-                        sessions={sessions}
-                        onSessionSelect={handleSessionSelect}
-                      />
-                    </>
-                  )}
+                        ) : msg.type === 'assistant' ? (
+                          (() => {
+                            const { processedContent, debates } = processCouncilDebates(msg.content);
+                            return (
+                              <div>
+                                {msg.thinking && <ThinkingBlock content={msg.thinking} />}
+                                {msg.isJsonStreaming && (
+                                  <div className="mb-2 text-sm text-blue-600 dark:text-blue-400 italic">
+                                    ⚡ Streaming advisor responses...
+                                  </div>
+                                )}
+                                {debates.map((debate, debateIdx) => (
+                                  <DebateBlock key={debateIdx} content={debate} advisors={advisors} paragraphSpacing={paragraphSpacing} />
+                                ))}
+                                <MemoizedMarkdownMessage 
+                                  content={processedContent.replace(/__DEBATE_PLACEHOLDER_\d+__/g, '')} 
+                                  advisors={advisors} 
+                                  paragraphSpacing={paragraphSpacing}
+                                />
+                              </div>
+                            );
+                          })()
+                        ) : (
+                          msg.content
+                        )}
+                      </div>
+                  ))}
+                  {isLoading && <div className="text-amber-600 dark:text-amber-400">Loading...</div>}
                 </div>
-              </form>
-            </div>
-          </div>
 
-          {/* Right Column */}
-          <div className="w-1/4 p-4 border-l border-gray-300 dark:border-gray-800 overflow-y-auto scrollbar-terminal">
-            <CollapsibleModule 
-              title="Metaphors" 
-              items={metaphors}
-              expanded={metaphorsExpanded}
-              onToggle={() => setMetaphorsExpanded(!metaphorsExpanded)}
-            />
-            <div className="mt-4">
-              <CollapsibleSuggestionsModule
-                title="Suggested Advisors"
-                items={advisorSuggestions}
-                expanded={advisorSuggestionsExpanded}
-                onToggle={() => setAdvisorSuggestionsExpanded(!advisorSuggestionsExpanded)}
-                onItemClick={(item) => handleAdvisorSuggestionClick(item)}
-              />
+                <div className="mt-auto">
+                  <form onSubmit={handleSubmit}>
+                    <div className="flex items-center">
+                      {editingPrompt ? (
+                        <div className="flex-1">
+                          <textarea
+                            value={editText}
+                            onChange={(e) => setEditText(e.target.value)}
+                            onKeyDown={handleEditKeyDown}
+                            className="w-full h-40 bg-white text-gray-800 font-serif p-2 border border-gray-300 focus:outline-none resize-none dark:bg-black dark:text-green-400 dark:border-green-400"
+                            placeholder="Edit your prompt..."
+                            autoFocus
+                            autoComplete="off"
+                            spellCheck="true"
+                            data-role="text-editor"
+                          />
+                        </div>
+                      ) : editingAdvisor ? (
+                        <div className="flex-1">
+                          <textarea
+                            value={editAdvisorText}
+                            onChange={(e) => setEditAdvisorText(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && e.ctrlKey) {
+                                // Save changes
+                                setAdvisors(prev => prev.map(a => 
+                                  a.name === editingAdvisor.name ? { ...a, description: editAdvisorText } : a
+                                ));
+                                setEditingAdvisor(null);
+                                setEditAdvisorText('');
+                              } else if (e.key === 'Escape') {
+                                // Cancel editing
+                                setEditingAdvisor(null);
+                                setEditAdvisorText('');
+                              }
+                            }}
+                            className="w-full h-40 bg-white text-gray-800 font-serif p-2 border border-gray-300 focus:outline-none resize-none dark:bg-black dark:text-green-400 dark:border-green-400"
+                            placeholder="Edit advisor description..."
+                            autoFocus
+                            autoComplete="off"
+                            spellCheck="true"
+                            data-role="text-editor"
+                          />
+                        </div>
+                      ) : (
+                        <>
+                          <span className="mr-2">&gt;</span>
+                          <ExpandingInput
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            onSubmit={handleSubmit}
+                            isLoading={isLoading}
+                            sessions={sessions}
+                            onSessionSelect={handleSessionSelect}
+                          />
+                        </>
+                      )}
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+              {/* Right Column */}
+              <div className="w-1/4 p-4 border-l border-gray-300 dark:border-gray-800 overflow-y-auto scrollbar-terminal">
+                <CollapsibleModule 
+                  title="Metaphors" 
+                  items={metaphors}
+                  expanded={metaphorsExpanded}
+                  onToggle={() => setMetaphorsExpanded(!metaphorsExpanded)}
+                />
+                <div className="mt-4">
+                  <CollapsibleSuggestionsModule
+                    title="Suggested Advisors"
+                    items={advisorSuggestions}
+                    expanded={advisorSuggestionsExpanded}
+                    onToggle={() => setAdvisorSuggestionsExpanded(!advisorSuggestionsExpanded)}
+                    onItemClick={(item) => handleAdvisorSuggestionClick(item)}
+                  />
+                </div>
+              </div>
             </div>
-          </div>
+          }
+        />
 
           {showAdvisorForm && (
             <AdvisorForm
