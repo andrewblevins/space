@@ -1,6 +1,5 @@
 import Terminal from './components/Terminal'
 import WelcomeScreen from './components/WelcomeScreen'
-import MobileWarning from './components/MobileWarning'
 import { ModalProvider } from './contexts/ModalContext'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { useState, useEffect } from 'react'
@@ -13,7 +12,6 @@ function AppContent() {
   const [theme, setTheme] = useState(() =>
     localStorage.getItem('theme') || 'dark'
   )
-  const [showMobileWarning, setShowMobileWarning] = useState(false)
 
   useEffect(() => {
     const root = document.documentElement
@@ -25,23 +23,8 @@ function AppContent() {
     localStorage.setItem('theme', theme)
   }, [theme])
 
-  // Check for mobile device on mount
-  useEffect(() => {
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    const hasSeenWarning = localStorage.getItem('space_mobile_warning_seen');
-    
-    if (isMobile && !hasSeenWarning) {
-      setShowMobileWarning(true);
-    }
-  }, [])
-
   const toggleTheme = () => {
     setTheme(prev => (prev === 'dark' ? 'light' : 'dark'))
-  }
-
-  const handleCloseMobileWarning = () => {
-    setShowMobileWarning(false);
-    localStorage.setItem('space_mobile_warning_seen', 'true');
   }
 
   if (loading) {
@@ -59,10 +42,6 @@ function AppContent() {
   return (
     <ModalProvider>
       <Terminal theme={theme} toggleTheme={toggleTheme} />
-      <MobileWarning 
-        isOpen={showMobileWarning} 
-        onClose={handleCloseMobileWarning} 
-      />
     </ModalProvider>
   )
 }
