@@ -44,7 +44,7 @@ const ResponsiveContainer = ({ children, mobileLayout, desktopLayout }) => {
   // If specific layouts are provided, use them
   if (mobileLayout && desktopLayout) {
     return (
-      <div className="w-full h-screen font-serif relative">
+      <div className="w-full h-screen font-serif relative bg-gradient-to-b from-amber-50 to-amber-100 text-gray-800 dark:bg-gradient-to-b dark:from-gray-900 dark:to-black dark:text-green-400">
         {/* Mobile Layout */}
         <div className={`${isMobile ? 'flex' : 'hidden'} flex-col h-full`}>
           {mobileLayout}
