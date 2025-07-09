@@ -5,6 +5,7 @@ import { MemoizedMarkdownMessage } from '../terminal/MemoizedMarkdownMessage';
 import { AdvisorResponseCard } from '../terminal/AdvisorResponseCard';
 import ThinkingBlock from '../ThinkingBlock';
 import DebateBlock from '../DebateBlock';
+import TouchInput from './TouchInput';
 
 /**
  * MobileLayout component provides the main layout structure for mobile devices
@@ -124,27 +125,19 @@ const MobileLayout = ({
             </div>
             
             {/* Input area */}
-            <div className="mt-auto">
+            <div className="mt-auto p-4 border-t border-gray-200 dark:border-gray-700 bg-amber-50 dark:bg-gray-900">
               <form onSubmit={handleSubmit}>
-                <div className="flex items-center">
-                  <span className="mr-2 text-green-400">&gt;</span>
-                  <textarea
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSubmit(e);
-                      }
-                    }}
-                    className="flex-1 min-h-[44px] max-h-[120px] font-serif p-3 border border-green-600 focus:outline-none rounded-md resize-none bg-amber-50 text-gray-800 dark:bg-black dark:text-green-400"
-                    placeholder={isLoading ? 'Waiting for response...' : 'Type your message...'}
-                    disabled={isLoading}
-                    autoComplete="off"
-                    autoCapitalize="off"
-                    autoCorrect="off"
-                    spellCheck="true"
-                  />
+                <div className="flex items-end gap-3">
+                  <span className="text-green-400 text-lg mb-3">&gt;</span>
+                  <div className="flex-1">
+                    <TouchInput
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onSubmit={handleSubmit}
+                      isLoading={isLoading}
+                      placeholder={isLoading ? 'Waiting for response...' : 'Type your message...'}
+                    />
+                  </div>
                 </div>
               </form>
             </div>

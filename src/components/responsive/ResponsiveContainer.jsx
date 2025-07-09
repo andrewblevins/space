@@ -13,18 +13,32 @@ const ResponsiveContainer = ({ children, mobileLayout, desktopLayout }) => {
   useEffect(() => {
     const checkScreenSize = () => {
       const width = window.innerWidth;
-      setIsMobile(width < 1024);
-      setIsTablet(width >= 768 && width < 1024);
+      const newIsMobile = width < 1024;
+      const newIsTablet = width >= 768 && width < 1024;
+      
+      // Only update if there's a change to prevent unnecessary re-renders
+      setIsMobile(prev => prev !== newIsMobile ? newIsMobile : prev);
+      setIsTablet(prev => prev !== newIsTablet ? newIsTablet : prev);
     };
 
     // Initial check
     checkScreenSize();
 
+    // Debounced resize handler to improve performance
+    let resizeTimeout;
+    const debouncedResize = () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(checkScreenSize, 100);
+    };
+
     // Listen for window resize
-    window.addEventListener('resize', checkScreenSize);
+    window.addEventListener('resize', debouncedResize);
 
     // Cleanup
-    return () => window.removeEventListener('resize', checkScreenSize);
+    return () => {
+      window.removeEventListener('resize', debouncedResize);
+      clearTimeout(resizeTimeout);
+    };
   }, []);
 
   // If specific layouts are provided, use them
