@@ -7,6 +7,7 @@ import InfoModal from './InfoModal';
 const ApiKeySetup = ({ onComplete }) => {
   const [anthropicKey, setAnthropicKey] = useState('');
   const [openaiKey, setOpenaiKey] = useState('');
+  const [openrouterKey, setOpenrouterKey] = useState('');
   const [error, setError] = useState('');
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [showApiKeysInfoModal, setShowApiKeysInfoModal] = useState(false);
@@ -21,9 +22,10 @@ const ApiKeySetup = ({ onComplete }) => {
 
     // Automation helper: expose functions globally for Puppeteer
     window.spaceAutomation = {
-      setApiKeys: (anthropicKey, openaiKey) => {
+      setApiKeys: (anthropicKey, openaiKey, openrouterKey) => {
         setAnthropicKey(anthropicKey);
         setOpenaiKey(openaiKey);
+        if (openrouterKey) setOpenrouterKey(openrouterKey);
         setError(''); // Clear any errors
         return { success: true };
       },
@@ -38,6 +40,7 @@ const ApiKeySetup = ({ onComplete }) => {
       getCurrentState: () => ({
         anthropicKey: anthropicKey ? '***set***' : '',
         openaiKey: openaiKey ? '***set***' : '',
+        openrouterKey: openrouterKey ? '***set***' : '',
         error,
         hasError: !!error
       })
@@ -47,17 +50,21 @@ const ApiKeySetup = ({ onComplete }) => {
     try {
       const envAnthropicKey = import.meta.env.VITE_ANTHROPIC_API_KEY;
       const envOpenaiKey = import.meta.env.VITE_OPENAI_API_KEY;
+      const envOpenrouterKey = import.meta.env.VITE_OPENROUTER_API_KEY;
       
       if (envAnthropicKey && envOpenaiKey) {
         console.log('🔑 Found API keys in environment, auto-filling...');
         setAnthropicKey(envAnthropicKey);
         setOpenaiKey(envOpenaiKey);
+        if (envOpenrouterKey) {
+          setOpenrouterKey(envOpenrouterKey);
+        }
       }
     } catch (error) {
       // Environment variables not available, continue normally
       console.log('No environment variables found for auto-fill');
     }
-  }, [anthropicKey, openaiKey, error]);
+  }, [anthropicKey, openaiKey, openrouterKey, error]);
 
   const handleInputChange = (setter) => (e) => {
     setError(''); // Clear error when user starts typing
@@ -68,7 +75,7 @@ const ApiKeySetup = ({ onComplete }) => {
     e.preventDefault();
     
     if (!anthropicKey || !openaiKey) {
-      setError('Both API keys required');
+      setError('Anthropic and OpenAI API keys are required');
       return;
     }
 
@@ -79,6 +86,11 @@ const ApiKeySetup = ({ onComplete }) => {
 
     if (!openaiKey.startsWith('sk-')) {
       setError('Invalid OpenAI API key format');
+      return;
+    }
+
+    if (openrouterKey && !openrouterKey.startsWith('sk-or-v1-')) {
+      setError('Invalid OpenRouter API key format');
       return;
     }
 
@@ -104,8 +116,11 @@ const ApiKeySetup = ({ onComplete }) => {
 
       await setEncrypted('space_anthropic_key', anthropicKey);
       await setEncrypted('space_openai_key', openaiKey);
+      if (openrouterKey) {
+        await setEncrypted('space_openrouter_key', openrouterKey);
+      }
 
-      onComplete({ anthropicKey, openaiKey });
+      onComplete({ anthropicKey, openaiKey, openrouterKey });
     } catch (error) {
       setError(`API key validation failed: ${error.message}`);
     }
@@ -176,13 +191,13 @@ const ApiKeySetup = ({ onComplete }) => {
           
           {/* Instructions */}
           <div className="bg-gray-900/30 border border-green-400/10 rounded-lg p-6 backdrop-blur-sm">
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid md:grid-cols-3 gap-4">
               <div>
                 <h3 className="text-green-400 font-medium mb-3 flex items-center gap-2">
                   <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  Anthropic (Claude)
+                  Anthropic (Claude) *
                 </h3>
                 <ol className="text-gray-300 text-sm space-y-1 list-decimal list-inside">
                   <li>Visit <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer" className="text-green-400 hover:text-green-300 underline transition-colors">console.anthropic.com</a></li>
@@ -196,13 +211,28 @@ const ApiKeySetup = ({ onComplete }) => {
                   <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  OpenAI
+                  OpenAI *
                 </h3>
                 <ol className="text-gray-300 text-sm space-y-1 list-decimal list-inside">
                   <li>Visit <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-green-400 hover:text-green-300 underline transition-colors">platform.openai.com</a></li>
                   <li>Sign up or log in</li>
                   <li>Create a new API key</li>
                 </ol>
+              </div>
+              
+              <div>
+                <h3 className="text-green-400 font-medium mb-3 flex items-center gap-2">
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  OpenRouter
+                </h3>
+                <ol className="text-gray-300 text-sm space-y-1 list-decimal list-inside">
+                  <li>Visit <a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer" className="text-green-400 hover:text-green-300 underline transition-colors">openrouter.ai</a></li>
+                  <li>Sign up or log in</li>
+                  <li>Create a new API key</li>
+                </ol>
+                <p className="text-xs text-gray-400 mt-2">Optional • 200+ AI models</p>
               </div>
             </div>
             
@@ -219,7 +249,7 @@ const ApiKeySetup = ({ onComplete }) => {
                      {/* Form */}
            <form onSubmit={handleSubmit} className="space-y-6" data-testid="api-key-form">
              <div className="text-center mb-4">
-               <p className="text-gray-400 text-xs">* Both API keys are required</p>
+               <p className="text-gray-400 text-xs">* Required: Anthropic and OpenAI • Optional: OpenRouter for additional models</p>
              </div>
              <div className="space-y-4">
                <div>
@@ -246,6 +276,20 @@ const ApiKeySetup = ({ onComplete }) => {
                    data-testid="openai-api-key"
                    id="openai-api-key"
                  />
+               </div>
+
+               <div>
+                 <label className="block mb-2 text-green-400 font-medium text-sm">OpenRouter API Key <span className="text-gray-400">(Optional)</span></label>
+                 <input
+                   type="password"
+                   value={openrouterKey}
+                   onChange={handleInputChange(setOpenrouterKey)}
+                   className="w-full bg-black text-green-400 border border-green-400/50 p-3 rounded focus:outline-none focus:border-green-400 transition-colors"
+                   placeholder="sk-or-v1-..."
+                   data-testid="openrouter-api-key"
+                   id="openrouter-api-key"
+                 />
+                 <p className="text-xs text-gray-400 mt-1">Access 200+ AI models including Claude, GPT, Gemini, and more</p>
                </div>
              </div>
 
@@ -302,7 +346,7 @@ const ApiKeySetup = ({ onComplete }) => {
                 <div>
                   <h3 className="text-green-400 font-medium mb-2">How SPACE uses your API keys</h3>
                   <p className="text-sm leading-relaxed">
-                    In SPACE, Claude (Anthropic) powers the main conversations, advisor generation, and roleplay. GPT (OpenAI) analyzes conversations behind the scenes for tagging, session summaries, metaphor tracking, and advisor suggestions.
+                    Claude (Anthropic) powers main conversations and advisor generation. GPT (OpenAI) handles background analysis. OpenRouter (optional) provides access to 200+ additional models for experimentation and cost optimization.
                   </p>                 
                 </div>
                 

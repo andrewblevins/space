@@ -16,6 +16,18 @@
     -moz-osx-font-smoothing: grayscale;
   }
   
+  /* Enable smooth touch scrolling */
+  * {
+    -webkit-overflow-scrolling: touch;
+    touch-action: manipulation;
+  }
+  
+  /* Specific touch-action for scrollable areas */
+  .scrollable-area {
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+  }
+  
   /* Prevent zoom on input focus on iOS */
   @media screen and (max-width: 1024px) {
     input, textarea, select {
@@ -40,6 +52,8 @@
   .scrollbar-terminal {
     scrollbar-width: thin;
     scrollbar-color: #374151 transparent;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
   }
   
   .scrollbar-terminal::-webkit-scrollbar {

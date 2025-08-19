@@ -97,7 +97,7 @@ The evaluation system creates isolated test environments to avoid interfering wi
 4. Test thoroughly
 5. Submit a pull request
 
-See [SETUP.md](SETUP.md) for development setup.
+See [SETUP.md](SETUP.md) for development setup and [docs/VERSION-LOGGING.md](docs/VERSION-LOGGING.md) for release process.
 
 ## Potential Use Cases
 

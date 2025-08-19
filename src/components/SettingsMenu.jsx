@@ -20,7 +20,9 @@ const SettingsMenu = ({
   toggleTheme,
   paragraphSpacing,
   setParagraphSpacing,
-  onMigrateConversations
+  onMigrateConversations,
+  openrouterModel,
+  setOpenrouterModel
 }) => {
   const [tempContextLimit, setTempContextLimit] = useState(contextLimit);
   const [tempMaxTokens, setTempMaxTokens] = useState(maxTokens);
@@ -29,11 +31,16 @@ const SettingsMenu = ({
   const [apiKeyStatus, setApiKeyStatus] = useState({ anthropic: false, openai: false });
   const [isCheckingKeys, setIsCheckingKeys] = useState(false);
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
+  const [openrouterModels, setOpenrouterModels] = useState([]);
+  const [isLoadingModels, setIsLoadingModels] = useState(false);
   
   // Auth system
   const useAuthSystem = import.meta.env.VITE_USE_AUTH === 'true';
   const authData = useAuthSystem ? useAuth() : { user: null, signOut: () => {} };
   const { user, signOut } = authData;
+  
+  // Check if we're in development mode
+  const isDevelopment = import.meta.env.DEV;
 
   // Check API keys when modal opens or when switching to API tab
   const checkApiKeys = async () => {
@@ -58,6 +65,13 @@ const SettingsMenu = ({
       checkApiKeys();
     }
   }, [isOpen, activeTab]);
+
+  // Fetch models when component mounts or modal opens (development only)
+  useEffect(() => {
+    if (isOpen && isDevelopment && openrouterModels.length === 0) {
+      fetchOpenRouterModels();
+    }
+  }, [isOpen, isDevelopment]);
 
   if (!isOpen) return null;
 
@@ -141,6 +155,73 @@ const SettingsMenu = ({
     { id: 'api', label: useAuthSystem ? 'Account & Usage' : 'API Keys' }
   ];
 
+  // Fetch available models from OpenRouter API
+  const fetchOpenRouterModels = async () => {
+    setIsLoadingModels(true);
+    try {
+      const response = await fetch('https://openrouter.ai/api/v1/models');
+      if (!response.ok) {
+        throw new Error(`Failed to fetch models: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      // Filter and format models for popular/recommended ones
+      const popularProviders = ['anthropic', 'openai', 'google', 'meta-llama', 'mistralai', 'cohere'];
+      const filteredModels = data.data
+        .filter(model => {
+          // Only include models from popular providers
+          const provider = model.id.split('/')[0];
+          return popularProviders.includes(provider);
+        })
+        .map(model => {
+          // Extract provider name and clean up model name
+          const provider = model.id.split('/')[0];
+          const providerNames = {
+            'anthropic': 'Anthropic',
+            'openai': 'OpenAI', 
+            'google': 'Google',
+            'meta-llama': 'Meta',
+            'mistralai': 'Mistral',
+            'cohere': 'Cohere'
+          };
+          
+          return {
+            id: model.id,
+            name: model.name,
+            provider: providerNames[provider] || provider
+          };
+        })
+        .sort((a, b) => {
+          // Sort by provider, then by name
+          if (a.provider !== b.provider) {
+            return a.provider.localeCompare(b.provider);
+          }
+          return a.name.localeCompare(b.name);
+        });
+      
+      setOpenrouterModels(filteredModels);
+    } catch (error) {
+      console.error('Failed to fetch OpenRouter models:', error);
+      // Fallback to a minimal list if API fails
+      setOpenrouterModels([
+        { id: 'anthropic/claude-3.5-sonnet', name: 'Claude 3.5 Sonnet', provider: 'Anthropic' },
+        { id: 'openai/gpt-4o', name: 'GPT-4o', provider: 'OpenAI' },
+        { id: 'google/gemini-pro-1.5', name: 'Gemini Pro 1.5', provider: 'Google' }
+      ]);
+    } finally {
+      setIsLoadingModels(false);
+    }
+  };
+
+  const handleModelChange = (model) => {
+    // Only allow model changes in development
+    if (isDevelopment) {
+      setOpenrouterModel(model);
+      localStorage.setItem('space_openrouter_model', model);
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-stone-100/70 dark:bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
       <div
@@ -181,6 +262,76 @@ const SettingsMenu = ({
         <div className="flex-1 overflow-y-auto p-6">
           {activeTab === 'general' && (
             <div className="space-y-6">
+              {/* AI Model Selection - Only show in development */}
+              {isDevelopment && (
+                <div>
+                  <label className="text-green-400 font-medium block mb-3">
+                    AI Model
+                  </label>
+                  <p className="text-gray-400 text-sm mb-4">
+                    Choose which AI model to use for conversations
+                  </p>
+                  <select
+                    value={openrouterModel}
+                    onChange={(e) => handleModelChange(e.target.value)}
+                    disabled={isLoadingModels}
+                    className="w-full bg-stone-50 text-gray-800 border border-stone-300 rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-green-600 dark:bg-black dark:text-green-400 dark:border-green-400 disabled:opacity-50"
+                  >
+                    {isLoadingModels ? (
+                      <option>Loading models...</option>
+                    ) : openrouterModels.length > 0 ? (
+                      openrouterModels.map((model) => (
+                        <option key={model.id} value={model.id}>
+                          {model.name} ({model.provider})
+                        </option>
+                      ))
+                    ) : (
+                      <option>No models available</option>
+                    )}
+                  </select>
+                  <div className="flex items-center justify-between mt-2">
+                    <p className="text-xs text-gray-400">
+                      Live from OpenRouter API • Pricing varies by model
+                    </p>
+                    {!isLoadingModels && (
+                      <button
+                        onClick={fetchOpenRouterModels}
+                        className="text-xs text-green-400 hover:text-green-300 underline"
+                      >
+                        Refresh Models
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Production Model Info */}
+              {!isDevelopment && (
+                <div>
+                  <label className="text-green-400 font-medium block mb-3">
+                    AI Model
+                  </label>
+                  <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded border">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-gray-800 dark:text-gray-200 font-medium">
+                          Claude Sonnet 4
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">
+                          Anthropic's latest model via OpenRouter
+                        </div>
+                      </div>
+                      <div className="text-green-400 text-sm font-medium">
+                        Active
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-2">
+                    Production uses Claude Sonnet 4 for optimal performance
+                  </p>
+                </div>
+              )}
+
               {/* Debug Mode */}
               <div className="flex items-center justify-between">
                 <div>
@@ -427,6 +578,7 @@ const SettingsMenu = ({
                             {apiKeyStatus.openai ? '✓ Set' : '✗ Not Set'}
                           </span>
                         </div>
+
                       </div>
                     )}
                   </div>
@@ -436,7 +588,7 @@ const SettingsMenu = ({
                       API Key Management
                     </label>
                     <p className="text-gray-400 text-sm mb-4">
-                      Manage your Anthropic and OpenAI API keys for SPACE Terminal.
+                      Manage your API keys for SPACE Terminal. All models are now provided via OpenRouter.
                     </p>
                     <div className="space-y-3">
                       <button

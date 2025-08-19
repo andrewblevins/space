@@ -41,9 +41,9 @@ const MobileLayout = ({
     switch (activeTab) {
       case 'chat':
         return (
-          <div className="flex-1 flex flex-col p-4">
+          <div className="flex-1 flex flex-col h-full">
             {/* Chat messages */}
-            <div className="flex-1 overflow-auto mb-4 break-words px-4">
+            <div className="flex-1 overflow-auto break-words px-4 scrollable-area min-h-0">
               {messages.map((msg, idx) => (
                 <div 
                   key={idx}
@@ -125,7 +125,7 @@ const MobileLayout = ({
             </div>
             
             {/* Input area */}
-            <div className="mt-auto p-4 border-t border-gray-200 dark:border-gray-700 bg-amber-50 dark:bg-gray-900">
+            <div className="flex-shrink-0 p-4 border-t border-gray-200 dark:border-gray-700 bg-amber-50 dark:bg-gray-900">
               <form onSubmit={handleSubmit}>
                 <div className="flex items-end gap-3">
                   <span className="text-green-400 text-lg mb-3">&gt;</span>
@@ -146,7 +146,7 @@ const MobileLayout = ({
       
       case 'advisors':
         return (
-          <div className="flex-1 p-4 overflow-y-auto">
+          <div className="flex-1 p-4 overflow-y-auto scrollable-area">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-green-400 text-xl font-semibold">Advisors</h2>
               <button
@@ -218,7 +218,7 @@ const MobileLayout = ({
       
       case 'insights':
         return (
-          <div className="flex-1 p-4 overflow-y-auto">
+          <div className="flex-1 p-4 overflow-y-auto scrollable-area">
             <h2 className="text-green-400 text-xl font-semibold mb-4">Insights</h2>
             
             {/* Metaphors */}
@@ -241,7 +241,7 @@ const MobileLayout = ({
       
       case 'tools':
         return (
-          <div className="flex-1 p-4 overflow-y-auto">
+          <div className="flex-1 p-4 overflow-y-auto scrollable-area">
             <h2 className="text-green-400 text-xl font-semibold mb-4">Tools</h2>
             
             {/* Tool buttons */}

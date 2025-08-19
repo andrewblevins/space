@@ -32,7 +32,7 @@ const ImportExportModal = ({ isOpen, onClose, advisors, onImport }) => {
     
     const exportData = {
       exportedAt: new Date().toISOString(),
-      appVersion: "0.2.0",
+      appVersion: "0.2.6",
       source: "SPACE Terminal",
       advisors: selectedAdvisorData
     };
