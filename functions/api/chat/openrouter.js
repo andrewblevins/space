@@ -36,6 +36,10 @@ export async function onRequestPost(context) {
       });
     }
 
+    // Debug: Log environment variable availability
+    console.log('OpenRouter API Key available:', !!context.env.OPENROUTER_API_KEY);
+    console.log('Environment keys:', Object.keys(context.env));
+    
     // Set default headers for OpenRouter
     const headers = {
       'Authorization': `Bearer ${context.env.OPENROUTER_API_KEY}`,
