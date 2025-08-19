@@ -340,14 +340,15 @@ const Terminal = ({ theme, toggleTheme }) => {
     return saved ? parseFloat(saved) : 0.25;
   }); // Spacing between paragraphs
 
-  // AI Provider Settings
-  const [aiProvider, setAiProvider] = useState(() => {
-    const saved = localStorage.getItem('space_ai_provider');
-    return saved || 'claude';
-  });
+  // AI Model Settings - Always use OpenRouter
   const [openrouterModel, setOpenrouterModel] = useState(() => {
+    // In production, always use Claude Sonnet 4
+    if (!import.meta.env.DEV) {
+      return 'anthropic/claude-sonnet-4-20250514';
+    }
+    // In development, allow user selection
     const saved = localStorage.getItem('space_openrouter_model');
-    return saved || 'anthropic/claude-3.5-sonnet';
+    return saved || 'anthropic/claude-sonnet-4-20250514';
   });
 
   // Check for API keys after modal controller is initialized
@@ -2650,12 +2651,8 @@ Gemini: ${geminiKey ? '✓ Set' : '✗ Not Set'}`
         const systemPrompt = getSystemPrompt({ councilMode, sessionContexts });
         // console.log('🏛️ High Council System Prompt:', systemPrompt);
       }
-      // Use selected AI provider
-      if (aiProvider === 'openrouter') {
-        await callOpenRouter(newMessage.content, () => getSystemPrompt({ councilMode, sessionContexts }));
-      } else {
-        await callClaude(newMessage.content, () => getSystemPrompt({ councilMode, sessionContexts }));
-      }
+      // Always use OpenRouter with selected model
+      await callOpenRouter(newMessage.content, () => getSystemPrompt({ councilMode, sessionContexts }));
 
       // Update message with tags after tag analysis completes (in background)
       tagAnalysisPromise.then(tags => {
@@ -2671,7 +2668,7 @@ Gemini: ${geminiKey ? '✓ Set' : '✗ Not Set'}`
       console.error('Error in handleSubmit:', error);
       
       // Provide better error messages based on error type
-      let errorMessage = `Error: Failed to get response from ${aiProvider === 'openrouter' ? 'OpenRouter' : 'Claude'}`;
+      let errorMessage = 'Error: Failed to get response from OpenRouter';
       
       if (error.message?.includes('rate limit') || error.message?.includes('429')) {
         errorMessage = "You've reached today's message limit (100 messages). Your limit will reset at midnight. Consider upgrading for more messages!";
@@ -3945,9 +3942,7 @@ ${selectedText}
         paragraphSpacing={paragraphSpacing}
         setParagraphSpacing={setParagraphSpacing}
         openrouterModel={openrouterModel}
-        setOpenrouterModel={setOpenrouterModel}
-        aiProvider={aiProvider}
-        setAiProvider={setAiProvider}
+        setOpenrouterModel={import.meta.env.DEV ? setOpenrouterModel : () => {}}
         onMigrateConversations={() => {
           // Always show modal when user clicks migrate button (even if no conversations)
           localStorage.removeItem('space_migration_status');
