@@ -150,14 +150,14 @@ const ChangelogContent = () => {
   return (
     <div className="space-y-6 text-gray-800 dark:text-gray-200">
       <div className="text-center border-b border-gray-300 dark:border-gray-600 pb-4">
-        <h3 className="text-green-400 text-lg font-semibold mb-2">SPACE Terminal v0.2.4</h3>
+        <h3 className="text-green-400 text-lg font-semibold mb-2">SPACE Terminal v0.2.6</h3>
         <p className="text-gray-600 dark:text-gray-300 text-sm">
-          Version 0.2.4 focuses on evaluation capabilities and streaming experience improvements.
+          Version 0.2.6 introduces mobile responsive design and enhanced OpenRouter integration with 200+ AI models.
         </p>
         
         <div className="mt-4 p-3 bg-gray-100 dark:bg-gray-800 rounded border-l-4 border-green-400">
           <p className="text-xs text-gray-600 dark:text-gray-400">
-            <strong>Total Changes:</strong> 4 major features • 8 technical enhancements • 6 bug fixes • 4 UI improvements
+            <strong>Total Changes:</strong> 3 major features • 12 technical enhancements • 4 bug fixes • 8 UI improvements
           </p>
         </div>
       </div>
