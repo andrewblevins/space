@@ -20,13 +20,17 @@ const SettingsMenu = ({
   toggleTheme,
   paragraphSpacing,
   setParagraphSpacing,
-  onMigrateConversations
+  onMigrateConversations,
+  openrouterModel,
+  setOpenrouterModel,
+  aiProvider,
+  setAiProvider
 }) => {
   const [tempContextLimit, setTempContextLimit] = useState(contextLimit);
   const [tempMaxTokens, setTempMaxTokens] = useState(maxTokens);
   const [showClearConfirmation, setShowClearConfirmation] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
-  const [apiKeyStatus, setApiKeyStatus] = useState({ anthropic: false, openai: false });
+  const [apiKeyStatus, setApiKeyStatus] = useState({ anthropic: false, openai: false, openrouter: false });
   const [isCheckingKeys, setIsCheckingKeys] = useState(false);
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
   
@@ -43,10 +47,10 @@ const SettingsMenu = ({
     setIsCheckingKeys(true);
     try {
       // In auth mode, we don't use local API keys
-      setApiKeyStatus({ anthropic: false, openai: false });
+      setApiKeyStatus({ anthropic: false, openai: false, openrouter: false });
     } catch (error) {
       console.error('Error checking API keys:', error);
-      setApiKeyStatus({ anthropic: false, openai: false });
+      setApiKeyStatus({ anthropic: false, openai: false, openrouter: false });
     } finally {
       setIsCheckingKeys(false);
     }
@@ -137,9 +141,34 @@ const SettingsMenu = ({
 
   const tabs = [
     { id: 'general', label: 'General' },
+    { id: 'ai', label: 'AI Provider' },
     { id: 'performance', label: 'Performance' },
     { id: 'api', label: useAuthSystem ? 'Account & Usage' : 'API Keys' }
   ];
+
+  // OpenRouter popular models
+  const openrouterModels = [
+    { id: 'anthropic/claude-3.5-sonnet', name: 'Claude 3.5 Sonnet', provider: 'Anthropic' },
+    { id: 'anthropic/claude-3-haiku', name: 'Claude 3 Haiku', provider: 'Anthropic' },
+    { id: 'openai/gpt-4o', name: 'GPT-4o', provider: 'OpenAI' },
+    { id: 'openai/gpt-4o-mini', name: 'GPT-4o Mini', provider: 'OpenAI' },
+    { id: 'google/gemini-pro-1.5', name: 'Gemini Pro 1.5', provider: 'Google' },
+    { id: 'meta-llama/llama-3.1-405b-instruct', name: 'Llama 3.1 405B', provider: 'Meta' },
+    { id: 'mistralai/mistral-large', name: 'Mistral Large', provider: 'Mistral' },
+    { id: 'cohere/command-r-plus', name: 'Command R+', provider: 'Cohere' },
+    { id: 'qwen/qwen-2.5-72b-instruct', name: 'Qwen 2.5 72B', provider: 'Alibaba' },
+    { id: 'deepseek/deepseek-chat', name: 'DeepSeek Chat', provider: 'DeepSeek' }
+  ];
+
+  const handleProviderChange = (provider) => {
+    setAiProvider(provider);
+    localStorage.setItem('space_ai_provider', provider);
+  };
+
+  const handleOpenrouterModelChange = (model) => {
+    setOpenrouterModel(model);
+    localStorage.setItem('space_openrouter_model', model);
+  };
 
   return (
     <div className="fixed inset-0 bg-stone-100/70 dark:bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
@@ -179,6 +208,96 @@ const SettingsMenu = ({
 
         {/* Tab Content */}
         <div className="flex-1 overflow-y-auto p-6">
+          {activeTab === 'ai' && (
+            <div className="space-y-6">
+              {/* AI Provider Selection */}
+              <div>
+                <label className="text-green-400 font-medium block mb-3">
+                  Primary AI Provider
+                </label>
+                <p className="text-gray-400 text-sm mb-4">
+                  Choose which AI service powers your main conversations
+                </p>
+                <div className="space-y-3">
+                  <label className="flex items-center space-x-3 p-3 border rounded cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                    <input
+                      type="radio"
+                      name="aiProvider"
+                      value="claude"
+                      checked={aiProvider === 'claude'}
+                      onChange={() => handleProviderChange('claude')}
+                      className="text-green-400"
+                    />
+                    <div>
+                      <div className="text-green-400 font-medium">Claude (Anthropic)</div>
+                      <div className="text-gray-400 text-sm">High-quality conversations, reasoning, and roleplay</div>
+                    </div>
+                  </label>
+                  <label className="flex items-center space-x-3 p-3 border rounded cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                    <input
+                      type="radio"
+                      name="aiProvider"
+                      value="openrouter"
+                      checked={aiProvider === 'openrouter'}
+                      onChange={() => handleProviderChange('openrouter')}
+                      className="text-green-400"
+                    />
+                    <div>
+                      <div className="text-green-400 font-medium">OpenRouter</div>
+                      <div className="text-gray-400 text-sm">Access to 200+ AI models from multiple providers</div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              {/* OpenRouter Model Selection */}
+              {aiProvider === 'openrouter' && (
+                <div>
+                  <label className="text-green-400 font-medium block mb-3">
+                    OpenRouter Model
+                  </label>
+                  <p className="text-gray-400 text-sm mb-4">
+                    Choose which model to use via OpenRouter
+                  </p>
+                  <select
+                    value={openrouterModel}
+                    onChange={(e) => handleOpenrouterModelChange(e.target.value)}
+                    className="w-full bg-stone-50 text-gray-800 border border-stone-300 rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-green-600 dark:bg-black dark:text-green-400 dark:border-green-400"
+                  >
+                    {openrouterModels.map((model) => (
+                      <option key={model.id} value={model.id}>
+                        {model.name} ({model.provider})
+                      </option>
+                    ))}
+                  </select>
+                  <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded text-xs text-blue-600 dark:text-blue-400">
+                    <p><strong>Note:</strong> OpenRouter requires a separate API key. Pricing varies by model.</p>
+                    <p className="mt-1">Visit <a href="https://openrouter.ai/models" target="_blank" rel="noopener noreferrer" className="underline hover:text-blue-500">openrouter.ai/models</a> for full model list and pricing.</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Provider Status */}
+              <div className="pt-4 border-t border-gray-300 dark:border-gray-600">
+                <label className="text-green-400 font-medium block mb-3">
+                  Provider Status
+                </label>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between p-2 bg-gray-100 dark:bg-gray-800 rounded text-sm">
+                    <span>Claude (Required)</span>
+                    <span className="text-green-400">✓ Available</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2 bg-gray-100 dark:bg-gray-800 rounded text-sm">
+                    <span>OpenRouter</span>
+                    <span className={apiKeyStatus.openrouter ? 'text-green-400' : 'text-gray-400'}>
+                      {apiKeyStatus.openrouter ? '✓ Available' : 'API key needed'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {activeTab === 'general' && (
             <div className="space-y-6">
               {/* Debug Mode */}
@@ -427,6 +546,12 @@ const SettingsMenu = ({
                             {apiKeyStatus.openai ? '✓ Set' : '✗ Not Set'}
                           </span>
                         </div>
+                        <div className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-800 rounded">
+                          <span className="text-gray-600 dark:text-gray-300 text-sm">OpenRouter</span>
+                          <span className={`text-sm font-medium ${apiKeyStatus.openrouter ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                            {apiKeyStatus.openrouter ? '✓ Set' : 'Optional'}
+                          </span>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -436,7 +561,7 @@ const SettingsMenu = ({
                       API Key Management
                     </label>
                     <p className="text-gray-400 text-sm mb-4">
-                      Manage your Anthropic and OpenAI API keys for SPACE Terminal.
+                      Manage your API keys for SPACE Terminal. OpenRouter is optional for additional models.
                     </p>
                     <div className="space-y-3">
                       <button

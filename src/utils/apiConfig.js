@@ -1,4 +1,4 @@
-export const getApiEndpoint = () => {
+export const getApiEndpoint = (provider = 'anthropic') => {
   // Check if we're using the new auth system
   const useAuth = import.meta.env.VITE_USE_AUTH === 'true';
   
@@ -8,5 +8,11 @@ export const getApiEndpoint = () => {
   }
   
   // Fallback to direct API access (legacy mode)
-  return 'https://api.anthropic.com';
+  switch (provider) {
+    case 'openrouter':
+      return 'https://openrouter.ai';
+    case 'anthropic':
+    default:
+      return 'https://api.anthropic.com';
+  }
 } 

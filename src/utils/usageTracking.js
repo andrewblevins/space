@@ -12,6 +12,10 @@ const PRICING = {
   gpt: {
     input: 0.15 / 1_000_000,   // $0.15 per million tokens
     output: 0.60 / 1_000_000   // $0.60 per million tokens
+  },
+  openrouter: {
+    input: 2.00 / 1_000_000,   // $2 per million tokens (average)
+    output: 6.00 / 1_000_000   // $6 per million tokens (average)
   }
 };
 
@@ -27,6 +31,7 @@ export const getUsageStats = () => {
       return {
         claude: { inputTokens: 0, outputTokens: 0, cost: 0 },
         gpt: { inputTokens: 0, outputTokens: 0, cost: 0 },
+        openrouter: { inputTokens: 0, outputTokens: 0, cost: 0 },
         total: { inputTokens: 0, outputTokens: 0, cost: 0 },
         sessions: 0,
         firstUse: new Date().toISOString(),
@@ -43,7 +48,7 @@ export const getUsageStats = () => {
 /**
  * Track usage for a specific API call
  */
-export const trackUsage = (provider, inputTokens, outputTokens) => {
+export const trackUsage = (provider, inputTokens, outputTokens, model = null) => {
   try {
     const stats = getUsageStats();
     const pricing = PRICING[provider];
@@ -56,6 +61,9 @@ export const trackUsage = (provider, inputTokens, outputTokens) => {
     const cost = (inputTokens * pricing.input) + (outputTokens * pricing.output);
     
     // Update provider-specific stats
+    if (!stats[provider]) {
+      stats[provider] = { inputTokens: 0, outputTokens: 0, cost: 0 };
+    }
     stats[provider].inputTokens += inputTokens;
     stats[provider].outputTokens += outputTokens;
     stats[provider].cost += cost;
@@ -140,8 +148,9 @@ export const getUsageSummary = () => {
     sessions: stats.sessions,
     avgCostPerSession: stats.sessions > 0 ? stats.total.cost / stats.sessions : 0,
     avgCostPerDay: stats.total.cost / daysSinceFirst,
-    claudeCost: stats.claude.cost,
-    gptCost: stats.gpt.cost,
+    claudeCost: stats.claude ? stats.claude.cost : 0,
+    gptCost: stats.gpt ? stats.gpt.cost : 0,
+    openrouterCost: stats.openrouter ? stats.openrouter.cost : 0,
     daysSinceFirst,
     firstUse: stats.firstUse,
     lastUse: stats.lastUse

@@ -39,6 +39,7 @@ import { MemoizedMarkdownMessage } from "./terminal/MemoizedMarkdownMessage";
 import { AdvisorResponseMessage } from "./terminal/AdvisorResponseMessage";
 import { AdvisorResponseCard } from "./terminal/AdvisorResponseCard";
 import useClaude from "../hooks/useClaude";
+import useOpenRouter from "../hooks/useOpenRouter";
 import { analyzeMetaphors, analyzeForQuestions, summarizeSession, generateSessionSummary } from "../utils/terminalHelpers";
 import { trackUsage, trackSession } from '../utils/usageTracking';
 import { worksheetQuestions, WORKSHEET_TEMPLATES } from "../utils/worksheetTemplates";
@@ -339,6 +340,16 @@ const Terminal = ({ theme, toggleTheme }) => {
     return saved ? parseFloat(saved) : 0.25;
   }); // Spacing between paragraphs
 
+  // AI Provider Settings
+  const [aiProvider, setAiProvider] = useState(() => {
+    const saved = localStorage.getItem('space_ai_provider');
+    return saved || 'claude';
+  });
+  const [openrouterModel, setOpenrouterModel] = useState(() => {
+    const saved = localStorage.getItem('space_openrouter_model');
+    return saved || 'anthropic/claude-3.5-sonnet';
+  });
+
   // Check for API keys after modal controller is initialized
   useEffect(() => {
     const checkKeys = async () => {
@@ -526,6 +537,7 @@ After the debate section, provide:
 }, [advisors, currentSessionContexts]);
 
 const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimit, memory, debugMode, reasoningMode, getSystemPrompt });
+const { callOpenRouter } = useOpenRouter({ messages, setMessages, maxTokens, contextLimit, memory, debugMode, getSystemPrompt, model: openrouterModel });
 
   // Generate a creative starting prompt for new conversations
   const generateStartingPrompt = async () => {
@@ -2638,7 +2650,12 @@ Gemini: ${geminiKey ? '✓ Set' : '✗ Not Set'}`
         const systemPrompt = getSystemPrompt({ councilMode, sessionContexts });
         // console.log('🏛️ High Council System Prompt:', systemPrompt);
       }
-      await callClaude(newMessage.content, () => getSystemPrompt({ councilMode, sessionContexts }));
+      // Use selected AI provider
+      if (aiProvider === 'openrouter') {
+        await callOpenRouter(newMessage.content, () => getSystemPrompt({ councilMode, sessionContexts }));
+      } else {
+        await callClaude(newMessage.content, () => getSystemPrompt({ councilMode, sessionContexts }));
+      }
 
       // Update message with tags after tag analysis completes (in background)
       tagAnalysisPromise.then(tags => {
@@ -2654,7 +2671,7 @@ Gemini: ${geminiKey ? '✓ Set' : '✗ Not Set'}`
       console.error('Error in handleSubmit:', error);
       
       // Provide better error messages based on error type
-      let errorMessage = 'Error: Failed to get response from Claude';
+      let errorMessage = `Error: Failed to get response from ${aiProvider === 'openrouter' ? 'OpenRouter' : 'Claude'}`;
       
       if (error.message?.includes('rate limit') || error.message?.includes('429')) {
         errorMessage = "You've reached today's message limit (100 messages). Your limit will reset at midnight. Consider upgrading for more messages!";
@@ -3927,6 +3944,10 @@ ${selectedText}
         toggleTheme={toggleTheme}
         paragraphSpacing={paragraphSpacing}
         setParagraphSpacing={setParagraphSpacing}
+        openrouterModel={openrouterModel}
+        setOpenrouterModel={setOpenrouterModel}
+        aiProvider={aiProvider}
+        setAiProvider={setAiProvider}
         onMigrateConversations={() => {
           // Always show modal when user clicks migrate button (even if no conversations)
           localStorage.removeItem('space_migration_status');
