@@ -1,6 +1,7 @@
 import { memo } from "react";
 import ReactMarkdown from 'react-markdown';
 import { ADVISOR_COLORS } from '../../lib/advisorColors';
+import { performanceLogger } from '../../utils/performanceLogger';
 
 /**
  * Render markdown content using ReactMarkdown with advisor name color-coding.
@@ -10,6 +11,8 @@ import { ADVISOR_COLORS } from '../../lib/advisorColors';
  * @param {number} props.paragraphSpacing - Spacing between paragraphs (default: 0.25)
  */
 export const MemoizedMarkdownMessage = memo(({ content, advisors = [], paragraphSpacing = 0.25 }) => {
+  const renderKey = performanceLogger.startRender('MemoizedMarkdownMessage', advisors.length);
+  
   // Parse and render advisor names with colors
   const processContent = (text) => {
     const parts = text.split(/(\[ADVISOR:\s*[^\]]+\])/);
@@ -37,7 +40,7 @@ export const MemoizedMarkdownMessage = memo(({ content, advisors = [], paragraph
   // If content has advisor markers, render with special processing
   if (content.includes('[ADVISOR:')) {
     const processedParts = processContent(content);
-    return (
+    const result = (
       <div className="text-left font-serif w-full">
                 {processedParts.map((part, index) => 
           typeof part === 'string' ? (
@@ -72,12 +75,14 @@ export const MemoizedMarkdownMessage = memo(({ content, advisors = [], paragraph
         )}
       </div>
     );
+    performanceLogger.endRender(renderKey, 'MemoizedMarkdownMessage');
+    return result;
   }
 
   // Regular content without advisor markers - use paragraph spacing setting
   const processedContent = content.replace(/\n\n+/g, '\n\n');
   
-  return (
+  const result = (
     <ReactMarkdown
       className="text-left font-serif w-full"
       components={{
@@ -105,6 +110,9 @@ export const MemoizedMarkdownMessage = memo(({ content, advisors = [], paragraph
       {processedContent}
     </ReactMarkdown>
   );
+  
+  performanceLogger.endRender(renderKey, 'MemoizedMarkdownMessage');
+  return result;
 });
 
 export default MemoizedMarkdownMessage;

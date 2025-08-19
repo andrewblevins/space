@@ -7,6 +7,7 @@ import { trackUsage, formatCost } from '../utils/usageTracking';
 import { useAuth } from '../contexts/AuthContext';
 import { useUsageTracking } from './useUsageTracking';
 import { trackMessage } from '../utils/analytics';
+import { performanceLogger } from '../utils/performanceLogger';
 
 /**
  * Hook providing the callClaude function used to stream responses from the API.
@@ -197,6 +198,9 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
 
     setMessages((prev) => [...prev, { type: 'assistant', content: '', thinking: (reasoningMode && !isCouncilMode) ? '' : undefined }]);
 
+    // Start performance tracking for streaming
+    performanceLogger.startStreaming();
+    
     const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
     const isPunctuation = (char) => ['.', '!', '?', '\n'].includes(char);
     
@@ -313,6 +317,9 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
                 if (i > 0 && isPunctuation(text[i - 1])) delay += 0;
                 await sleep(delay);
                 currentMessageContent += char;
+                
+                // Track streaming performance
+                performanceLogger.trackStreamingUpdate(messages.length + 1, char);
                 
                 // Debug: Log first few characters to understand the format (reduced logging)
                 if (currentMessageContent.length === 1) {
@@ -450,6 +457,9 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
         // console.log('🎭 Response looks like JSON but failed to parse:', e.message);
       }
     }
+    
+    // End performance tracking
+    performanceLogger.endStreaming();
     
     // Track usage after successful completion
     const outputTokens = estimateTokens(currentMessageContent);
