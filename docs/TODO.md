@@ -1,46 +1,19 @@
-# SPACE Terminal - TODO List
+UX: 
 
-**NOTE FOR CLAUDE: This file contains Andrew's personal notes and thoughts. Please do not modify the content below this line unless explicitly asked.**
+- Give the agents search abilities. 
 
----
+- Is there a way to limit the length of responses more elegantly? Does the current system actually do anything?
 
-FEATURES TO ADD/FIX:
+- File uploading should be easier and more automatic, e.g. texts pasted in over a certain word count should become attachments. 
 
-- Make the search function in the dossier work for searching specific terms (maybe also rethink the framing of that feature)
+- Wants an equivalent to "projects" in other chat interfaces.
 
-- Do more to keep advisors from appearing if not selected
+- Right now the system is not good at handling when advisors change. Advisors are too sticky. I'm not sure how to fix this. Could try just more emphatic prompting.
 
-- Give a warning message if user tries to use SPACE on phone (or just fix for mobile)
+- Voice? 
 
-- add option in settings for toggling shift+enter vs enter for new line (shift+enter is default)
+Bugs:
 
-- user should be able to input a tag in the chat and it sends the LLM all previous inputs associated with that tag
+- Text streaming in conversations gets progressively slower over the length of a conversation. 
 
-- generate style cues for advisor voices (5 ways this person might talk, example quotes, use as basis)
-
-- lightweight analytics: google analytics
-
-CURRENT STEPS
-
-- how to get 5 people using SPACE every day
-
-- can i see how much they're using it? follow up with them if they aren't? how can i create a relationship where they can be authentic about their revealed preferences? 
-
-- will probably need persistent storage for all conversations, so the trust question is already there
-  
-- how can SPACE signal competency? 
-
-    - having a similar web design to other services (create unconscious association with other trusted apps). idiosyncratic colors styles etc might actually work against SPACE's sense of trust/competency. think in terms of weirdness points, want to spend them strategically, max them out on the most important differences and everything else is boringly uncontroversial.
-    - blurbs/testimonials
-
-visibility in the logs allows me to SEE if people are doing strange/off things with SPACE. then can see about adjusting things. so the right balance of trust and risk is important for steering the ship. can naturally change the environment if anti-patterns are happening. 
-
-NEXT STEP FOR NEXT WEEK:
-
-A user comes to SPACE not knowing anything about it. What can be done in 5 minutes to deliver real tangible value to them? Whichever piece is most load-bearing in that, let's make an eval for that. 
-
-DISTANT:
-
-- "are there other people in your life who can help you with this? what about x who you've been talking to on linkedin?" 
-
-- adding "witness" personas that might be based on real people 
+- When two advisors in the list have the same name, deactivating one seems to activate the other. We can fix this by not allowing two advisors with the same name. 
