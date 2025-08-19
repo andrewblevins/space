@@ -99,7 +99,7 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
     }
 
     const requestBody = {
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4',
       messages: contextMessages,
       system: systemPromptText,
       max_tokens: maxTokens,

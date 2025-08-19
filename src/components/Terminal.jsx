@@ -344,11 +344,11 @@ const Terminal = ({ theme, toggleTheme }) => {
   const [openrouterModel, setOpenrouterModel] = useState(() => {
     // In production, always use Claude Sonnet 4
     if (!import.meta.env.DEV) {
-      return 'anthropic/claude-sonnet-4-20250514';
+      return 'anthropic/claude-sonnet-4';
     }
     // In development, allow user selection
     const saved = localStorage.getItem('space_openrouter_model');
-    return saved || 'anthropic/claude-sonnet-4-20250514';
+    return saved || 'anthropic/claude-sonnet-4';
   });
 
   // Check for API keys after modal controller is initialized
@@ -566,7 +566,7 @@ const { callOpenRouter } = useOpenRouter({ messages, setMessages, maxTokens, con
         method: 'POST',
         headers,
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-sonnet-4',
           messages: [{
             role: 'user',
             content: "Generate an interesting, thought-provoking question or scenario that would make for a great conversation starter. Something that would benefit from multiple perspectives and deep thinking."
@@ -700,7 +700,7 @@ Generate ONLY the user's message describing their situation, nothing else. Inclu
         method: 'POST',
         headers,
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-sonnet-4',
           messages: contextMessages,
           system: `You are helping test a conversational AI system. Based on the conversation history, generate a natural follow-up message that a user would likely say next. 
 
@@ -2452,7 +2452,7 @@ Gemini: ${geminiKey ? '✓ Set' : '✗ Not Set'}`
                         'anthropic-dangerous-direct-browser-access': 'true'
                       },
                       body: JSON.stringify({
-                        model: 'claude-sonnet-4-20250514',
+                        model: 'claude-sonnet-4',
                         messages: [{ role: 'user', content: 'Hello' }],
                         max_tokens: 10
                       })
