@@ -49,6 +49,7 @@ import AssertionsModal from './AssertionsModal';
 import EvaluationsModal from './EvaluationsModal';
 import ResponsiveContainer from './responsive/ResponsiveContainer';
 import MobileLayout from './mobile/MobileLayout';
+import { performanceLogger } from '../utils/performanceLogger';
 
 
 
@@ -3649,7 +3650,10 @@ ${selectedText}
                     scrollbar-terminal
                   "
                 >
-                  {messages.map((msg, idx) => (
+                  {(() => {
+                    // Track terminal rendering performance
+                    const renderKey = performanceLogger?.startRender('Terminal', messages.length);
+                    const result = messages.map((msg, idx) => (
                       <div 
                         key={idx}
                         id={`msg-${idx}`}
@@ -3725,7 +3729,12 @@ ${selectedText}
                           msg.content
                         )}
                       </div>
-                  ))}
+                    ));
+                    if (renderKey && performanceLogger) {
+                      performanceLogger.endRender(renderKey, 'Terminal');
+                    }
+                    return result;
+                  })()}
                   {isLoading && <div className="text-amber-600 dark:text-amber-400">Loading...</div>}
                 </div>
 

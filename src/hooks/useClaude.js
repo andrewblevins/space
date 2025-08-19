@@ -7,6 +7,8 @@ import { trackUsage, formatCost } from '../utils/usageTracking';
 import { useAuth } from '../contexts/AuthContext';
 import { useUsageTracking } from './useUsageTracking';
 import { trackMessage } from '../utils/analytics';
+import { performanceLogger } from '../utils/performanceLogger';
+import { createStreamingThrottle } from '../utils/throttleUtil';
 
 /**
  * Hook providing the callClaude function used to stream responses from the API.
@@ -197,6 +199,13 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
 
     setMessages((prev) => [...prev, { type: 'assistant', content: '', thinking: (reasoningMode && !isCouncilMode) ? '' : undefined }]);
 
+    // Start performance tracking for streaming
+    performanceLogger.startStreaming();
+    
+    // Create throttling mechanism for UI updates
+    const streamingThrottle = createStreamingThrottle(50); // 50ms throttle
+    streamingThrottle.adaptThrottleRate(messages.length);
+    
     const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
     const isPunctuation = (char) => ['.', '!', '?', '\n'].includes(char);
     
@@ -305,18 +314,35 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
           const data = JSON.parse(dataMatch[1]);
           if (data.type === 'content_block_delta') {
             if (data.delta.type === 'text_delta') {
-              // Regular text content
+              // Regular text content - OPTIMIZED: Batch processing instead of char-by-char
               const text = data.delta.text;
-              for (let i = 0; i < text.length; i++) {
-                const char = text[i];
-                let delay = Math.random() * 5;
-                if (i > 0 && isPunctuation(text[i - 1])) delay += 0;
-                await sleep(delay);
-                currentMessageContent += char;
+              
+              // Process text in chunks to reduce UI updates while maintaining smooth appearance
+              const CHUNK_SIZE = Math.max(1, Math.min(5, text.length / 10)); // Dynamic chunk size
+              const chunks = [];
+              for (let i = 0; i < text.length; i += CHUNK_SIZE) {
+                chunks.push(text.slice(i, i + CHUNK_SIZE));
+              }
+              
+              for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
+                const chunk = chunks[chunkIndex];
                 
-                // Debug: Log first few characters to understand the format (reduced logging)
-                if (currentMessageContent.length === 1) {
-                  // console.log('🎭 First char:', JSON.stringify(currentMessageContent));
+                // Adaptive delay based on conversation length (longer conversations = less delay)
+                const conversationLength = messages.length;
+                const baseDelay = Math.max(1, 15 - conversationLength); // Reduce delay as conversation grows
+                const delay = Math.random() * baseDelay;
+                
+                await sleep(delay);
+                currentMessageContent += chunk;
+                
+                // Track streaming performance (reduced frequency)
+                if (chunkIndex % 3 === 0) {
+                  performanceLogger.trackStreamingUpdate(messages.length + 1, chunk);
+                }
+                
+                // Debug: Log first chunk to understand the format (reduced logging)
+                if (chunkIndex === 0) {
+                  // console.log('🎭 First chunk:', JSON.stringify(chunk));
                 }
                 
                 // Early detection of JSON advisor format
@@ -328,47 +354,44 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
                   // });
                 }
                 
-                // Update message with appropriate type
-                setMessages((prev) => {
-                  const newMessages = [...prev];
-                  if (newMessages.length > 0) {
-                    if (isJsonMode) {
-                      // Try to parse partial JSON for better streaming experience
-                      const parseResult = tryParsePartialAdvisorJson(currentMessageContent);
-                      if (parseResult.success) {
-                        // We have valid partial advisor JSON - render as advisor_json
-                        // console.log('🎭 Progressive parsing SUCCESS, switching to advisor_json mode', {
-                        //   isPartial: parseResult.partial,
-                        //   advisorCount: parseResult.parsed.advisors.length
-                        // });
-                        newMessages[newMessages.length - 1] = {
-                          type: 'advisor_json',
-                          content: parseResult.jsonContent,
-                          parsedAdvisors: parseResult.parsed,
-                          thinking: (reasoningMode && !isCouncilMode) ? thinkingContent : undefined,
-                          isStreaming: true, // Flag to indicate still streaming
-                          isPartial: parseResult.partial // Flag to indicate partial/placeholder data
-                        };
+                // Update message with appropriate type - OPTIMIZED with throttling
+                streamingThrottle.throttledUpdate(() => {
+                  setMessages((prev) => {
+                    const newMessages = [...prev];
+                    if (newMessages.length > 0) {
+                      if (isJsonMode) {
+                        // Try to parse partial JSON for better streaming experience
+                        const parseResult = tryParsePartialAdvisorJson(currentMessageContent);
+                        if (parseResult.success) {
+                          // We have valid partial advisor JSON - render as advisor_json
+                          newMessages[newMessages.length - 1] = {
+                            type: 'advisor_json',
+                            content: parseResult.jsonContent,
+                            parsedAdvisors: parseResult.parsed,
+                            thinking: (reasoningMode && !isCouncilMode) ? thinkingContent : undefined,
+                            isStreaming: true, // Flag to indicate still streaming
+                            isPartial: parseResult.partial // Flag to indicate partial/placeholder data
+                          };
+                        } else {
+                          // JSON mode but not parseable yet - show as assistant with indicator
+                          newMessages[newMessages.length - 1] = {
+                            type: 'assistant',
+                            content: currentMessageContent,
+                            thinking: (reasoningMode && !isCouncilMode) ? thinkingContent : undefined,
+                            isJsonStreaming: true // Flag to indicate JSON is coming
+                          };
+                        }
                       } else {
-                        // JSON mode but not parseable yet - show as assistant with indicator
-                        // Reduced logging to prevent console spam
-                        newMessages[newMessages.length - 1] = {
-                          type: 'assistant',
+                        // Regular assistant message
+                        newMessages[newMessages.length - 1] = { 
+                          type: 'assistant', 
                           content: currentMessageContent,
-                          thinking: (reasoningMode && !isCouncilMode) ? thinkingContent : undefined,
-                          isJsonStreaming: true // Flag to indicate JSON is coming
+                          thinking: (reasoningMode && !isCouncilMode) ? thinkingContent : undefined
                         };
                       }
-                    } else {
-                      // Regular assistant message
-                      newMessages[newMessages.length - 1] = { 
-                        type: 'assistant', 
-                        content: currentMessageContent,
-                        thinking: (reasoningMode && !isCouncilMode) ? thinkingContent : undefined
-                      };
                     }
-                  }
-                  return newMessages;
+                    return newMessages;
+                  });
                 });
               }
             } else if (data.delta.type === 'thinking_delta' && reasoningMode && !isCouncilMode) {
@@ -450,6 +473,12 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
         // console.log('🎭 Response looks like JSON but failed to parse:', e.message);
       }
     }
+    
+    // Ensure any pending throttled updates are applied immediately
+    streamingThrottle.flush();
+    
+    // End performance tracking
+    performanceLogger.endStreaming();
     
     // Track usage after successful completion
     const outputTokens = estimateTokens(currentMessageContent);
