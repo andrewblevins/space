@@ -3857,8 +3857,23 @@ ${selectedText}
               initialName={suggestedAdvisorName}
               existingAdvisors={advisors}
               onSubmit={({ name, description, color }) => {
+                // Additional validation as backup
+                const trimmedName = name.trim();
+                if (!trimmedName) {
+                  console.error('Empty advisor name');
+                  return;
+                }
+                
+                const isDuplicate = advisors.some(advisor => 
+                  advisor.name.toLowerCase() === trimmedName.toLowerCase()
+                );
+                if (isDuplicate) {
+                  console.error('Duplicate advisor name detected');
+                  return;
+                }
+                
                 const newAdvisor = {
-                  name,
+                  name: trimmedName,
                   description,
                   color,
                   active: true
@@ -3877,10 +3892,28 @@ ${selectedText}
           {editingAdvisor && (
             <EditAdvisorForm
               advisor={editingAdvisor}
+              existingAdvisors={advisors}
               onSubmit={({ name, description, color }) => {
+                // Additional validation as backup
+                const trimmedName = name.trim();
+                if (!trimmedName) {
+                  console.error('Empty advisor name');
+                  return;
+                }
+                
+                // Check for duplicate names (but allow keeping the same name)
+                const isDuplicate = advisors.some(advisor => 
+                  advisor.name.toLowerCase() === trimmedName.toLowerCase() && 
+                  advisor.name !== editingAdvisor.name
+                );
+                if (isDuplicate) {
+                  console.error('Duplicate advisor name detected');
+                  return;
+                }
+                
                 setAdvisors(prev => prev.map(a => 
                   a.name === editingAdvisor.name 
-                    ? { ...a, name, description, color }
+                    ? { ...a, name: trimmedName, description, color }
                     : a
                 ));
                 setEditingAdvisor(null);

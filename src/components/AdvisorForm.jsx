@@ -128,6 +128,15 @@ const AdvisorForm = ({ onSubmit, onCancel, initialName = '', existingAdvisors = 
       return;
     }
     
+    // Check for duplicate names
+    const isDuplicate = existingAdvisors.some(advisor => 
+      advisor.name.toLowerCase() === name.trim().toLowerCase()
+    );
+    if (isDuplicate) {
+      setError('An advisor with this name already exists. Please choose a different name.');
+      return;
+    }
+    
     if (description.trim()) {
       setError('Clear the description field before generating a new description');
       return;
@@ -237,6 +246,20 @@ const AdvisorForm = ({ onSubmit, onCancel, initialName = '', existingAdvisors = 
           </button>
           <button
             onClick={() => {
+              if (!name.trim()) {
+                setError('Please enter an advisor name');
+                return;
+              }
+              
+              // Check for duplicate names
+              const isDuplicate = existingAdvisors.some(advisor => 
+                advisor.name.toLowerCase() === name.trim().toLowerCase()
+              );
+              if (isDuplicate) {
+                setError('An advisor with this name already exists. Please choose a different name.');
+                return;
+              }
+              
               trackAdvisorCreated(name);
               onSubmit({ name, description, color: selectedColor });
             }}
