@@ -888,8 +888,8 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
         setCurrentConversationId(conversation.id);
         setCurrentSessionId(conversation.id);
         
-        // Process messages to restore advisor_json format if needed
-        const processedMessages = (conversation.messages || []).map(msg => {
+        // Process messages to restore advisor_json format if needed and ensure timestamps
+        const processedMessages = (conversation.messages || []).map((msg, idx) => {
           // If it's an assistant message that looks like JSON advisor format, restore it
           if (msg.type === 'assistant' && msg.content) {
             let jsonContent = msg.content.trim();
@@ -909,7 +909,8 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
                     ...msg,
                     type: 'advisor_json',
                     content: jsonContent,
-                    parsedAdvisors: parsed
+                    parsedAdvisors: parsed,
+                    timestamp: msg.timestamp || new Date(Date.now() - (conversation.messages.length - idx) * 1000).toISOString()
                   };
                 }
               } catch (e) {
@@ -918,7 +919,11 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
             }
           }
           
-          return msg;
+          // Ensure each message has a timestamp for stable React keys
+          return {
+            ...msg,
+            timestamp: msg.timestamp || new Date(Date.now() - (conversation.messages.length - idx) * 1000).toISOString()
+          };
         });
         
         setMessages(processedMessages);
@@ -941,8 +946,8 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
         setCurrentSessionId(session.id);
         setCurrentConversationId(null);
         
-        // Process messages to restore advisor_json format if needed
-        const processedMessages = session.messages.map(msg => {
+        // Process messages to restore advisor_json format if needed and ensure timestamps
+        const processedMessages = session.messages.map((msg, idx) => {
           // If it's an assistant message that looks like JSON advisor format, restore it
           if (msg.type === 'assistant' && msg.content) {
             let jsonContent = msg.content.trim();
@@ -962,7 +967,8 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
                     ...msg,
                     type: 'advisor_json',
                     content: jsonContent,
-                    parsedAdvisors: parsed
+                    parsedAdvisors: parsed,
+                    timestamp: msg.timestamp || new Date(Date.now() - (session.messages.length - idx) * 1000).toISOString()
                   };
                 }
               } catch (e) {
@@ -971,7 +977,11 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
             }
           }
           
-          return msg;
+          // Ensure each message has a timestamp for stable React keys
+          return {
+            ...msg,
+            timestamp: msg.timestamp || new Date(Date.now() - (session.messages.length - idx) * 1000).toISOString()
+          };
         });
         
         setMessages(processedMessages);
@@ -3260,26 +3270,22 @@ Example: {"position": "Option 2 text here", "confidence": 75, "reasoning": "This
     }
   }, [messages, metaphors, advisorSuggestions, voteHistory, currentSessionId, currentConversationId, useDatabaseStorage, storage, openaiClient]);
 
-  // Trigger analysis when messages change and we have a Claude response
+  // Trigger analysis when messages change and we have a Claude response (debounced for performance)
   useEffect(() => {
     if (messages.length > 1 && !isLoading) {
       const lastMessage = messages[messages.length - 1];
-      // Only analyze after Claude responses (assistant messages)
-      if (lastMessage.type === 'assistant') {
-        // console.log('🔍 Triggering analysis after Claude response');
-        analyzeMetaphorsWithDuplicatePrevention(messages);
-        // DEPRECATED: Questions feature temporarily disabled
-        // analyzeForQuestions(messages, {
-        //   enabled: questionsExpanded,
-        //   openaiClient,
-        //   setQuestions,
-        //   debugMode,
-        //   setMessages
-        // });
-        analyzeAdvisorSuggestions(messages);
+      // Only analyze after Claude responses (assistant messages) and not during streaming
+      if (lastMessage.type === 'assistant' && !lastMessage.isStreaming && !lastMessage.isJsonStreaming) {
+        // Debounce analysis to avoid excessive calls during streaming updates
+        const debounceTimer = setTimeout(() => {
+          analyzeMetaphorsWithDuplicatePrevention(messages);
+          analyzeAdvisorSuggestions(messages);
+        }, 500); // 500ms debounce to wait for streaming to complete
+        
+        return () => clearTimeout(debounceTimer);
       }
     }
-  }, [messages, isLoading, metaphorsExpanded, /* questionsExpanded, */ advisorSuggestionsExpanded, openaiClient]);
+  }, [messages, isLoading, metaphorsExpanded, advisorSuggestionsExpanded, openaiClient]);
 
   // Trigger metaphors analysis when expanded state changes
   useEffect(() => {
@@ -3663,9 +3669,12 @@ ${selectedText}
                     scrollbar-terminal
                   "
                 >
-                  {messages.map((msg, idx) => (
+                  {messages.map((msg, idx) => {
+                    // Create stable keys based on content hash + index for better React performance
+                    const messageKey = msg.timestamp ? `${msg.timestamp}-${idx}` : `${idx}-${msg.content?.slice(0, 20) || 'empty'}`;
+                    return (
                       <div 
-                        key={idx}
+                        key={messageKey}
                         id={`msg-${idx}`}
                         className={`mb-4 break-words ${
                           msg.type === 'user' ? 'text-green-600 dark:text-green-400 whitespace-pre-wrap' : 
@@ -3739,7 +3748,8 @@ ${selectedText}
                           msg.content
                         )}
                       </div>
-                  ))}
+                    );
+                  })}
                   {isLoading && <div className="text-amber-600 dark:text-amber-400">Loading...</div>}
                 </div>
 
