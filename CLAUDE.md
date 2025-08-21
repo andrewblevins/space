@@ -1,343 +1,190 @@
-# SPACE Terminal - Claude Development Guidelines
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
-SPACE is a terminal-style AI conversation interface built with React, featuring advisors, metaphors analysis, questions generation, and comprehensive settings management. The application emphasizes automation-friendly development and testing.
 
-## 🤖 Automation-First Development
+SPACE Terminal is an open-source React-based interface for AI conversations featuring multi-perspective advisors, conversation analysis, and user-defined evaluation systems. Built with React 18, Vite, TailwindCSS, and Cloudflare Pages Functions.
 
-### ⚠️ CRITICAL SAFETY RULES
-1. **NEVER deploy to main branch** without explicit user permission
-2. **NEVER merge to main** or suggest merging without user approval
-3. **NEVER push directly to main** - always use feature branches
-4. **Use detached server startup**: `nohup npm run dev > /dev/null 2>&1 & echo "Server started"`
-5. **Use modern Puppeteer methods**: `page.locator().fill()` NOT `element.type()`
-6. **Use data-testid selectors first**, CSS selectors as fallback
-7. **Enable console logging** to monitor application behavior
+## Development Commands
 
-### Server Management for Automation
+### Core Development
 ```bash
-# ❌ WRONG - This hangs automation
-npm run dev
-
-# ✅ CORRECT - Start server detached
-nohup npm run dev > /dev/null 2>&1 & echo "Server started with PID $!"
-sleep 3  # Wait for server to start
-# Clean up: kill $(lsof -ti:3000)
-```
-
-### Essential Puppeteer Patterns
-```javascript
-// Setup with console logging (REQUIRED)
-page.on('console', (msg) => {
-  console.log(`[BROWSER:${msg.type().toUpperCase()}] ${msg.text()}`);
-});
-
-// Setup flow with data-testid selectors
-await page.locator('[data-testid="save-api-keys-button"]').click();
-await page.locator('[data-testid="password-input"]').fill('development123');
-await page.locator('[data-testid="password-submit-btn"]').click();
-
-// Settings menu automation
-await page.locator('.fixed.bottom-4.left-4 button').click(); // Gear icon
-await page.locator('.relative.inline-flex').click(); // Debug toggle
-
-// Text-based button selection for React components
-await page.evaluate(() => {
-  const buttons = document.querySelectorAll('button');
-  for (let button of buttons) {
-    if (button.textContent.trim() === 'Submit') {
-      button.click();
-      break;
-    }
-  }
-});
-```
-
-### Complete Setup Workflow (Copy-Paste Ready)
-```javascript
-// 1. Start detached server first
-// nohup npm run dev > /dev/null 2>&1 & echo "Server started with PID $!"
-// sleep 3
-
-// 2. Navigate and setup
-await page.goto('http://localhost:3000');
-await page.locator('[data-testid="save-api-keys-button"]').click();
-await page.locator('[data-testid="password-input"]').fill('development123');
-await page.locator('[data-testid="password-submit-btn"]').click();
-// Main interface should now be loaded
-```
-
-### Known Working Selectors
-- Settings gear: `.fixed.bottom-4.left-4 button`
-- Debug toggle: `.relative.inline-flex` (inside settings menu)
-- Theme toggle: `.relative.inline-flex` (second one in settings menu)
-- Password input: `input[type="password"]` or `[data-testid="password-input"]`
-- Number inputs: `input[type="number"]`
-- API key save: `[data-testid="save-api-keys-button"]`
-- Password submit: `[data-testid="password-submit-btn"]`
-
-### Automation Principles
-1. **Always use `page.locator().fill()`** - NOT `element.type()` (React incompatible)
-2. **Multi-selector fallbacks** - Try data-testid, then CSS, then text-based
-3. **Wait for dynamic content** - Use `.wait()` for async operations
-4. **Add `data-testid` attributes** to new interactive components
-
-## 🏗️ Development Workflow
-
-### Setup Commands
-```bash
-# RECOMMENDED: Full development with backend functions
+# Full development with backend functions (RECOMMENDED)
 npm run dev:functions
 
-# Legacy: Frontend only (will cause 404s in auth mode)
+# Build and watch mode (for production-like testing)
+npm run dev:watch
+
+# Frontend only (legacy, will cause 404s in auth mode)
 npm run dev
 
-# Automated development setup (Google OAuth, rate limiting)
+# Automated development setup with browser automation
 npm run dev:setup
-
-# Testing and validation
-npm run lint
-npm run build
-npm run preview  # Preview production build
 ```
 
-### ⚠️ **Important: Use npm run dev:functions for Auth Mode**
-
-**SPACE Terminal now uses authentication by default (`VITE_USE_AUTH=true`)**
-
-- **✅ CORRECT**: `npm run dev:functions` - Runs both frontend AND backend functions
-- **❌ WRONG**: `npm run dev` - Only frontend, backend functions return 404
-
-**Backend functions are required for:**
-- Google OAuth authentication
-- Claude API calls (server-side)
-- Rate limiting and usage tracking
-- User account management
-
-### Build Verification Best Practices
-- **Always run `npm run build`** after refactoring or major changes
-- **Catch syntax errors** before committing (especially after prop changes)
-- **Test builds** after component updates or interface modifications
-- **Verify production** builds work with `npm run preview`
-
-### Environment Variables Required
+### Testing
 ```bash
-ANTHROPIC_API_KEY=sk-ant-...
-OPENAI_API_KEY=sk-...
-VITE_ANTHROPIC_API_KEY=sk-ant-...  # For auto-fill
-VITE_OPENAI_API_KEY=sk-...         # For auto-fill  
-VITE_DEV_PASSWORD=development123   # Optional
+# Run all tests
+npm test
+npm run test:watch
+
+# API testing suites
+npm run test:api              # All API tests
+npm run test:real-api         # Real API integration tests
+npm run test:tag-analyzer     # Tag analysis tests
+npm run test:memory           # Memory system tests
+npm run test:integration      # Integration tests
+npm run test:performance      # Performance benchmarks
 ```
 
-## 🎯 Key Application Components
+### Build & Validation
+```bash
+npm run build                 # Production build
+npm run preview               # Preview production build
+npm run lint                  # ESLint validation
+```
 
-### Settings Menu (Bottom-Left Gear Icon)
-- **Selector**: `.fixed.bottom-4.left-4 button`
-- **Features**: Debug mode, theme toggle, context limit, max tokens, API key management
-- **State**: Changes persist immediately to localStorage
+## Architecture Overview
 
-### Terminal Interface
-- **Input area**: Main conversation interface with green border (all themes)
-- **Advisors panel**: Left sidebar for AI advisors (bordered modules)
-- **Metaphors/Questions**: Right sidebar analysis panels (bordered modules)
+### Core Components Structure
+```
+src/components/Terminal.jsx          # Central hub (~800 lines, main application state)
+├── terminal/                        # Terminal-specific UI modules
+│   ├── Module.jsx                   # Basic display module
+│   ├── CollapsibleModule.jsx        # Expandable panels
+│   ├── GroupableModule.jsx          # Advisor grouping system
+│   └── ExpandingInput.jsx           # Resizable text input
+├── [Modal Components]               # AdvisorForm, SettingsMenu, etc.
+└── mobile/                          # Mobile-responsive components
+```
+
+### Key Integration Points
+- **API Integration**: `src/hooks/useClaude.js` - Primary AI API hook with streaming
+- **Memory System**: `src/lib/memory.ts` - Conversation context management
+- **Analysis Pipeline**: `src/utils/terminalHelpers.js` - Metaphors/questions analysis
+- **Storage**: `src/utils/secureStorage.js` - Encrypted API key storage
+
+### Data Flow
+```
+User Input → Terminal.jsx → useClaude Hook → Claude API
+                ↓
+Message Processing ← Streaming Response ← API Response
+        ↓
+State Update → UI Refresh → Analysis Triggers (OpenAI GPT-4o-mini)
+```
+
+## Environment Configuration
+
+### Required Environment Variables
+```bash
+# Frontend (.env)
+VITE_USE_AUTH=true                    # Enable/disable authentication
+VITE_SUPABASE_URL=                    # Supabase database URL
+VITE_SUPABASE_ANON_KEY=               # Supabase anonymous key
+
+# Backend (wrangler.toml)
+ANTHROPIC_API_KEY=                    # Claude API (primary)
+OPENAI_API_KEY=                       # GPT-4o-mini (analysis)
+GEMINI_API_KEY=                       # Gemini (evaluation system)
+OPENROUTER_API_KEY=                   # OpenRouter (additional models)
+```
+
+### Development Modes
+- **Local-Only**: `VITE_USE_AUTH=false` - localStorage persistence
+- **Database Mode**: `VITE_USE_AUTH=true` - Supabase integration with Google OAuth
+
+## Key Architectural Patterns
+
+### State Management
+Terminal.jsx manages 20+ useState hooks organizing:
+- **Core State**: messages[], advisors[], input, isLoading
+- **UI State**: Modal visibility, panel expansion states
+- **Settings State**: maxTokens, contextLimit, debugMode
+- **Analysis State**: metaphors[], questions[], advisorSuggestions[]
+
+### API Integration Strategy
+- **Primary AI**: Claude Sonnet 4 via useClaude hook
+- **Analysis**: OpenAI GPT-4o-mini for metaphors/questions/suggestions
+- **Evaluation**: Gemini Pro for advisor improvement system
+- **Streaming**: Real-time response rendering with token estimation
+
+### Module System
+Terminal uses modular UI components:
+- `CollapsibleModule`: Basic expandable panels
+- `GroupableModule`: Advisor organization with color coding
+- `CollapsibleSuggestionsModule`: Interactive suggestion panels
+- All modules support consistent theming and responsive design
+
+## Testing & Development Guidelines
+
+### Browser Automation
+When working with Puppeteer/automation:
+- Use `data-testid` attributes for reliable selectors
+- Prefer `page.locator().fill()` over deprecated `element.type()`
+- Always include console logging: `page.on('console', (msg) => console.log(...))`
+- Use detached server startup: `nohup npm run dev:functions > /dev/null 2>&1 &`
+
+### Component Development
+- Follow React 18 patterns with hooks
+- Use TailwindCSS for styling (green terminal aesthetic)
+- Implement responsive design for mobile compatibility
+- Add TypeScript types in `src/types/` for complex data structures
+
+### API Error Handling
+- Use `src/utils/apiErrorHandler.js` for consistent error management
+- Implement graceful degradation for API failures
+- Provide user feedback through terminal system messages
+
+## Performance Considerations
+
+### Context Management
+- Token limit: 150,000 characters before context pruning
+- Memory system intelligently retains relevant messages
+- Streaming responses for real-time user feedback
+
+### React Optimizations
+- Memoized components for expensive renders (`MemoizedMarkdownMessage`)
+- `useCallback` hooks for function reference stability
+- State batching to reduce re-renders
+
+## Security Implementation
 
 ### API Key Management
-- **Setup flow**: Auto-fills from environment variables
-- **Password modal**: Can be persistent, use multiple selector approaches
-- **Status checking**: Adds system messages to terminal
+- AES-256 encryption for browser-stored keys
+- Password-protected secure storage system
+- Automatic cleanup on logout/session end
+- Backend proxy for authenticated API calls
 
-## 💬 Message Sending Patterns
+### Authentication Flow
+- Google OAuth via Supabase Auth
+- Session-based authentication for API access
+- Rate limiting and usage tracking
 
-### How Messages Are Sent in SPACE
-- **Correct**: Use existing form submission mechanism via `handleSubmit`
-- **Incorrect**: Don't call non-existent `handleSendMessage()` or create custom sending functions
-- **Pattern**: Set input with `setInput(message)` then trigger form submission programmatically
+## Extension Points
 
-```javascript
-// ✅ Correct pattern for programmatic message sending
-const sendMessage = (messageText) => {
-  setInput(messageText);
-  setTimeout(() => {
-    const form = document.querySelector('form');
-    if (form) {
-      const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
-      form.dispatchEvent(submitEvent);
-    }
-  }, 100);
-};
-```
+The modular architecture supports:
+- New terminal modules for custom panel types
+- Additional AI service integrations
+- Custom advisor personalities and evaluation criteria
+- Export formats and automation tools
 
-## 🔧 Browser Testing Guidelines
+## Common Development Tasks
 
-### Required Setup for Puppeteer
-```javascript
-// ALWAYS include console logging
-page.on('console', (msg) => {
-  const type = msg.type();
-  const text = msg.text();
-  const timestamp = new Date().toISOString().split('T')[1].slice(0, -1);
-  console.log(`[${timestamp}] [BROWSER:${type.toUpperCase()}] ${text}`);
-});
-```
+### Adding New Advisors
+1. Use AdvisorForm component for creation UI
+2. Store in localStorage (local mode) or Supabase (auth mode)
+3. Color assignment via `src/lib/advisorColors.js`
+4. System prompt generation in Terminal.jsx
 
-### Known Working Selectors
-Use these tested selectors from `/docs/AUTOMATION.md`:
-- Settings: `.fixed.bottom-4.left-4 button`
-- Debug toggle: `.relative.inline-flex`
-- Password input: `input[type="password"]`
-- Submit buttons: `button:last-child` or text-based evaluation
+### Implementing New Analysis Features
+1. Add analysis function to `src/utils/terminalHelpers.js`
+2. Integrate with OpenAI API call pattern
+3. Create corresponding UI module in `src/components/terminal/`
+4. Wire into Terminal.jsx state and useEffect hooks
 
-### React Component Interaction
-```javascript
-// For text-based button selection
-await page.evaluate(() => {
-  const buttons = document.querySelectorAll('button');
-  for (let button of buttons) {
-    if (button.textContent.trim() === 'Submit') {
-      button.click();
-      break;
-    }
-  }
-});
-```
-
-## 📁 Project Structure
-
-SPACE is a React-based terminal interface with dual-AI integration: Claude Sonnet 4 for main conversations and GPT-4o-mini for background analysis (metaphors, questions, suggestions).
-
-### Key Files
-- `src/components/Terminal.jsx` - Main terminal interface (central hub)
-- `src/components/SettingsMenu.jsx` - Settings panel
-- `src/components/ApiKeySetup.jsx` - Initial setup flow
-- `src/hooks/useClaude.js` - Claude API integration hook
-- `scripts/improved-setup.js` - Automated development setup
-
-- `docs/ARCHITECTURE.md` - Comprehensive technical architecture reference
-
-### Testing Scripts
-- `scripts/improved-setup.js` - Complete automated setup
-- `scripts/test-puppeteer.js` - Basic browser testing
-- `scripts/setup-dev-keys.js` - Legacy automation (deprecated)
-
-## 🚨 Important Reminders
-
-### Before Any Browser Work
-1. **Use detached server startup** - See automation section above
-2. **Enable console logging** - Monitor application behavior
-3. **Use documented selectors** - From Known Working Selectors section
-4. **Test with environment variables** - Use auto-fill for efficiency
-
-### When Adding New Components
-1. **Add `data-testid` attributes** to interactive elements
-2. **Test with Puppeteer** using modern `.locator()` methods
-3. **Update CLAUDE.md** with new patterns in Known Working Selectors
-4. **Consider automation during design** - not as an afterthought
-
-### Error Handling
-- **Password modal persistence**: Try multiple selector approaches
-- **React controlled components**: Use `page.evaluate()` when needed
-- **Form submission**: Always wait for state changes and validation
-
-## 🎛️ Settings Menu Integration
-
-The settings menu was designed to replace terminal commands with GUI controls:
-- `/debug` → Debug mode toggle
-- `/context limit N` → Context limit input field  
-- `/tokens N` → Max tokens input field
-- `/keys status` → "View API Key Status" button
-- `/keys clear` → "Clear API Keys" button
-
-**State Management**: All settings changes are immediately persisted to localStorage and application state. No manual save operations required.
-
-## 🎯 UI Component Organization
-
-### Where Functionality Belongs
-- **Settings Menu** (`SettingsMenu.jsx`): User preferences, configuration options, toggles
-- **Accordion Menu** (`AccordionMenu.jsx`): Action buttons, operations, modal triggers
-- **Terminal Interface**: Core conversation and advisor management
-
-### Component Purpose Guidelines
-- **Settings** = Configuration (debug mode, tokens, themes)
-- **Accordion** = Actions (vote, debate, export, new session)
-- **Don't mix** actions with settings
-
-### Console Logging Strategy
-- **Essential Logging**: System prompts being sent to AI, critical state changes
-- **Remove Noise**: Intermediate processing steps, streaming updates, debug traces
-- **Pattern**: Use meaningful prefixes like `🏛️` for specific features
-- **Focus**: Log what developers need to understand behavior, not every step
-
-```javascript
-// ✅ Essential for debugging
-if (councilMode) {
-  console.log('🏛️ High Council System Prompt:', systemPrompt);
-}
-
-// ❌ Too noisy - remove these
-console.log('DEBUG: Processing input step 1...');
-console.log('DEBUG: Checking condition X...');
-```
-
-## 📝 Documentation Writing Standards
-
-### Strunk and White Principles for SPACE Documentation
-
-**ALWAYS follow these rules when writing documentation for this project:**
-
-#### Rule 1: Omit Needless Words
-- ❌ "Comprehensive 23-color palette organized following ROYGBIV spectrum"
-- ✅ "23-color palette organized following ROYGBIV spectrum"
-
-#### Rule 2: Avoid Marketing Language
-- ❌ "Enhanced," "Improved," "Better," "Smart," "Powerful," "Comprehensive"
-- ✅ Direct descriptions of what the feature does
-
-#### Rule 3: Remove Bold Emphasis from Everything
-- ❌ "**Real-time API cost tracking** with current 2025 pricing"
-- ✅ "Real-time API cost tracking with 2025 pricing"
-
-#### Rule 4: Use Active Voice
-- ❌ "The interface has been streamlined"
-- ✅ "Interface streamlined" or "Streamlined interface"
-
-#### Rule 5: Cut Redundant Adjectives
-- ❌ "Smart autocomplete dropdown," "Automatic migration," "Seamless integration"
-- ✅ "Autocomplete dropdown," "Migration," "Integration"
-
-#### Rule 6: Make Every Word Count
-- ❌ "This represents a substantial evolution"
-- ✅ "This evolves"
-
-#### Quick Test
-If you can remove a word without changing the meaning, remove it. If you can simplify a phrase without losing information, simplify it.
-
-**Examples from CHANGELOG-v0.2.2.md revision:**
-- "Enhanced Tagging System with Knowledge Dossier" → "Tagging System with Knowledge Dossier"
-- "Comprehensive API Testing Framework" → "API Testing Framework"
-- "Progressive Summary Caching System" → "Summary Caching System"
-- "Better Information Architecture" → "Information Architecture"
-
-**Apply this to ALL documentation:** changelogs, READMEs, code comments, commit messages, and feature descriptions.
-
-## 🔄 Git Workflow
-
-### Branch Strategy
-- Feature branches: `feature/feature-name`
-- Bug fixes: `fix/bug-description`
-- Always create PRs for review before merging
-
-### Commit Guidelines
-- Use conventional commit format
-- Include automation testing when adding UI components
-- Update documentation for new interactive elements
-
-## 📚 Additional Resources
-
-- **Technical Architecture**: `/docs/ARCHITECTURE.md` - Comprehensive system overview
-- **Advisor System**: `/docs/ADVISOR-SYSTEM.md` - Implementation details for advisor features
-- **API Documentation**: Check component files for props and usage
-- **Environment Setup**: Use `npm run dev:setup` for quick start
-
----
-
-**Remember**: SPACE is built for automation. Always consider the automation impact of any changes and use the automation patterns documented above.
+### Testing New Features
+- Use `npm run test:api` for backend integration testing
+- Implement Jest tests for utility functions
+- Use automated setup script: `npm run dev:setup`
+- Test responsive design across viewport sizes
