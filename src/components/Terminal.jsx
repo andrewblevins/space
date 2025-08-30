@@ -292,7 +292,7 @@ const Terminal = ({ theme, toggleTheme }) => {
   const terminalRef = useRef(null);
   const [maxTokens, setMaxTokens] = useState(() => {
     const saved = localStorage.getItem('space_max_tokens');
-    return saved ? parseInt(saved) : 4096;
+    return saved ? parseInt(saved) : 2048;
   });
   const [metaphorsExpanded, setMetaphorsExpanded] = useState(false);
   const [lastMetaphorAnalysisContent, setLastMetaphorAnalysisContent] = useState('');
@@ -410,7 +410,10 @@ const Terminal = ({ theme, toggleTheme }) => {
   }, [isInitializing, hasCheckedKeys, apiKeysSet, showWelcome]);
 
 // Shared JSON response format for advisor responses (without synthesis)
-const ADVISOR_JSON_FORMAT = `RESPONSE FORMAT: Return your response as JSON in this exact structure:
+const ADVISOR_JSON_FORMAT = `
+
+=== CRITICAL RESPONSE FORMAT REQUIREMENTS ===
+YOU MUST RETURN YOUR RESPONSE AS VALID JSON IN THIS EXACT STRUCTURE:
 
 {
   "type": "advisor_response",
@@ -424,12 +427,16 @@ const ADVISOR_JSON_FORMAT = `RESPONSE FORMAT: Return your response as JSON in th
   ]
 }
 
-FORMATTING RULES:
+MANDATORY FORMATTING RULES - FAILURE TO FOLLOW WILL BREAK THE SYSTEM:
 1. Each advisor gets their own object in the advisors array
 2. Use the advisor's exact name as it appears in your persona list
 3. Include all response content in the "response" field
 4. Generate unique IDs using the pattern: resp-{advisor-name-lowercase}-{timestamp}
-5. Return valid JSON only - no additional text before or after`;
+5. Return ONLY valid JSON - absolutely NO additional text before or after
+6. NEVER use markdown code blocks around the JSON
+7. NEVER add explanatory text outside the JSON structure
+
+THIS FORMAT IS REQUIRED FOR EVERY RESPONSE - DO NOT DEVIATE`;
 
 const getSystemPrompt = useCallback(({ councilMode, sessionContexts } = {}) => {
   let prompt = "";
@@ -512,8 +519,6 @@ DO NOT FORGET THE <COUNCIL_DEBATE> TAGS. Without these tags, the debate will not
 After the debate section, provide:
 - One sentence per advisor summarizing their final position
 - Synthesis: 1-2 sentences on the overall outcome or remaining tensions`;
-    } else {
-      prompt += ADVISOR_JSON_FORMAT;
     }
   }
   // If no advisors are active, no system prompt is needed
@@ -532,6 +537,11 @@ After the debate section, provide:
     });
     
     prompt += "Use these conversation contexts to inform your response when relevant. The user's message may reference specific details from these conversations.\n";
+  }
+  
+  // Add JSON format instructions at the END to make them most prominent (only for non-council mode)
+  if (activeAdvisors.length > 0 && !councilMode) {
+    prompt += ADVISOR_JSON_FORMAT;
   }
   
   return prompt;
