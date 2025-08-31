@@ -38,6 +38,7 @@ import { ExpandingInput } from "./terminal/ExpandingInput";
 import { MemoizedMarkdownMessage } from "./terminal/MemoizedMarkdownMessage";
 import { AdvisorResponseMessage } from "./terminal/AdvisorResponseMessage";
 import { AdvisorResponseCard } from "./terminal/AdvisorResponseCard";
+import MessageRenderer from "./terminal/MessageRenderer";
 import useClaude from "../hooks/useClaude";
 import useOpenRouter from "../hooks/useOpenRouter";
 import { analyzeMetaphors, analyzeForQuestions, summarizeSession, generateSessionSummary } from "../utils/terminalHelpers";
@@ -3679,87 +3680,31 @@ ${selectedText}
                     scrollbar-terminal
                   "
                 >
-                  {messages.map((msg, idx) => {
-                    // Create stable keys based on content hash + index for better React performance
-                    const messageKey = msg.timestamp ? `${msg.timestamp}-${idx}` : `${idx}-${msg.content?.slice(0, 20) || 'empty'}`;
-                    return (
-                      <div 
-                        key={messageKey}
-                        id={`msg-${idx}`}
-                        className={`mb-4 break-words ${
-                          msg.type === 'user' ? 'text-green-600 dark:text-green-400 whitespace-pre-wrap' : 
-                          msg.type === 'assistant' ? 'text-gray-800 dark:text-gray-200' : 
-                          msg.type === 'system' ? 'text-gray-800 dark:text-gray-200' : 
-                          msg.type === 'debug' ? 'text-amber-600 dark:text-amber-400 whitespace-pre-wrap' : 'text-green-600 dark:text-green-400 whitespace-pre-wrap'
-                        }`}
-                      >
-                        {msg.type === 'system' ? (
-                          <MemoizedMarkdownMessage content={msg.content} advisors={advisors} paragraphSpacing={paragraphSpacing} />
-                        ) : msg.type === 'advisor_json' ? (
-                          <div>
-                            {msg.thinking && <ThinkingBlock content={msg.thinking} />}
-                            {msg.isStreaming && (
-                              <div className="mb-2 text-sm text-green-600 dark:text-green-400 italic">
-                                ⚡ Streaming advisor responses...
-                              </div>
-                            )}
-                            {msg.parsedAdvisors.advisors.map((advisor, advisorIdx) => (
-                              <AdvisorResponseCard
-                                key={`${advisor.id || advisor.name}-${advisorIdx}`}
-                                advisor={advisor}
-                                allAdvisors={advisors}
-                                onAssertionsClick={(advisorData) => {
-                                  console.log('🎯 Assertions clicked for:', advisorData);
-                                  setSelectedAdvisorForAssertions({
-                                    ...advisorData,
-                                    conversationContext: {
-                                      messages: [...messages],
-                                      advisors: [...advisors],
-                                      systemPrompt: getSystemPrompt(),
-                                      timestamp: new Date().toISOString()
-                                    }
-                                  });
-                                  setShowAssertionsModal(true);
-                                }}
-                              />
-                            ))}
-                            
-                            {/* Show synthesis if it exists (for council mode or other cases) */}
-                            {msg.parsedAdvisors.synthesis && (
-                              <div className="mt-4 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
-                                <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Synthesis</h4>
-                                <MemoizedMarkdownMessage content={msg.parsedAdvisors.synthesis} advisors={advisors} paragraphSpacing={paragraphSpacing} />
-                              </div>
-                            )}
-                          </div>
-                        ) : msg.type === 'assistant' ? (
-                          (() => {
-                            const { processedContent, debates } = processCouncilDebates(msg.content);
-                            return (
-                              <div>
-                                {msg.thinking && <ThinkingBlock content={msg.thinking} />}
-                                {msg.isJsonStreaming && (
-                                  <div className="mb-2 text-sm text-blue-600 dark:text-blue-400 italic">
-                                    ⚡ Streaming advisor responses...
-                                  </div>
-                                )}
-                                {debates.map((debate, debateIdx) => (
-                                  <DebateBlock key={debateIdx} content={debate} advisors={advisors} paragraphSpacing={paragraphSpacing} />
-                                ))}
-                                <MemoizedMarkdownMessage 
-                                  content={processedContent.replace(/__DEBATE_PLACEHOLDER_\d+__/g, '')} 
-                                  advisors={advisors} 
-                                  paragraphSpacing={paragraphSpacing}
-                                />
-                              </div>
-                            );
-                          })()
-                        ) : (
-                          msg.content
-                        )}
-                      </div>
-                    );
-                  })}
+                  {messages.map((msg, idx) => (
+                    <MessageRenderer
+                      key={msg.timestamp ? `${msg.timestamp}-${idx}` : `${idx}-${msg.content?.slice(0, 20) || 'empty'}`}
+                      msg={msg}
+                      idx={idx}
+                      advisors={advisors}
+                      paragraphSpacing={paragraphSpacing}
+                      onAssertionsClick={(advisorData, msgs, getPrompt) => {
+                        console.log('🎯 Assertions clicked for:', advisorData);
+                        setSelectedAdvisorForAssertions({
+                          ...advisorData,
+                          conversationContext: {
+                            messages: [...msgs],
+                            advisors: [...advisors],
+                            systemPrompt: getPrompt(),
+                            timestamp: new Date().toISOString()
+                          }
+                        });
+                        setShowAssertionsModal(true);
+                      }}
+                      processCouncilDebates={processCouncilDebates}
+                      messages={messages}
+                      getSystemPrompt={getSystemPrompt}
+                    />
+                  ))}
                   {isLoading && <div className="text-amber-600 dark:text-amber-400">Loading...</div>}
                 </div>
 
