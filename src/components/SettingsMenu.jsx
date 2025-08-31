@@ -127,7 +127,7 @@ const SettingsMenu = ({
   const handleRestoreDefaults = () => {
     // High-quality conversation defaults (not cost-optimized)
     const defaultContextLimit = 150000;  // High context for rich conversations
-    const defaultMaxTokens = 4096;       // Full response length
+    const defaultMaxTokens = 2048;       // Moderate response length
     const defaultDebugMode = false;      // Clean interface
     const defaultReasoningMode = false;  // No step-by-step reasoning
     const defaultParagraphSpacing = 0.25; // Default paragraph spacing
