@@ -201,11 +201,7 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
     const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
     const isPunctuation = (char) => ['.', '!', '?', '\n'].includes(char);
     
-    // Batching variables for performance optimization
-    let updateBuffer = '';
-    let lastUpdateTime = Date.now();
-    const BATCH_SIZE = 3; // Characters per batch
-    const MAX_DELAY = 50; // Max ms between updates
+    // Direct character-by-character updates for smooth streaming
     
     // Helper function to detect if we're starting JSON advisor format
     const detectJsonFormat = (content) => {
@@ -312,65 +308,50 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
           const data = JSON.parse(dataMatch[1]);
           if (data.type === 'content_block_delta') {
             if (data.delta.type === 'text_delta') {
-              // Regular text content with batched updates for performance
+              // Regular text content with character-by-character updates
               const text = data.delta.text;
               currentMessageContent += text;
-              updateBuffer += text;
               
               // Early detection of JSON advisor format
               if (!isJsonMode && detectJsonFormat(currentMessageContent)) {
                 isJsonMode = true;
               }
               
-              // Batch updates for better performance
-              const now = Date.now();
-              const shouldUpdate = updateBuffer.length >= BATCH_SIZE || 
-                                 (now - lastUpdateTime) > MAX_DELAY ||
-                                 text.includes('\n') || // Force update on line breaks
-                                 isPunctuation(text[text.length - 1]); // Force update on punctuation
-              
-              if (shouldUpdate) {
-                
-                // Update message with appropriate type
-                setMessages((prev) => {
-                  const newMessages = [...prev];
-                  if (newMessages.length > 0) {
-                    if (isJsonMode) {
-                      // Try to parse partial JSON for better streaming experience
-                      const parseResult = tryParsePartialAdvisorJson(currentMessageContent);
-                      if (parseResult.success) {
-                        newMessages[newMessages.length - 1] = {
-                          type: 'advisor_json',
-                          content: parseResult.jsonContent,
-                          parsedAdvisors: parseResult.parsed,
-                          thinking: (reasoningMode && !isCouncilMode) ? thinkingContent : undefined,
-                          isStreaming: true,
-                          isPartial: parseResult.partial
-                        };
-                      } else {
-                        newMessages[newMessages.length - 1] = {
-                          type: 'assistant',
-                          content: currentMessageContent,
-                          thinking: (reasoningMode && !isCouncilMode) ? thinkingContent : undefined,
-                          isJsonStreaming: true
-                        };
-                      }
+              // Update message with appropriate type
+              setMessages((prev) => {
+                const newMessages = [...prev];
+                if (newMessages.length > 0) {
+                  if (isJsonMode) {
+                    // Try to parse partial JSON for better streaming experience
+                    const parseResult = tryParsePartialAdvisorJson(currentMessageContent);
+                    if (parseResult.success) {
+                      newMessages[newMessages.length - 1] = {
+                        type: 'advisor_json',
+                        content: parseResult.jsonContent,
+                        parsedAdvisors: parseResult.parsed,
+                        thinking: (reasoningMode && !isCouncilMode) ? thinkingContent : undefined,
+                        isStreaming: true,
+                        isPartial: parseResult.partial
+                      };
                     } else {
-                      // Regular assistant message
-                      newMessages[newMessages.length - 1] = { 
-                        type: 'assistant', 
+                      newMessages[newMessages.length - 1] = {
+                        type: 'assistant',
                         content: currentMessageContent,
-                        thinking: (reasoningMode && !isCouncilMode) ? thinkingContent : undefined
+                        thinking: (reasoningMode && !isCouncilMode) ? thinkingContent : undefined,
+                        isJsonStreaming: true
                       };
                     }
+                  } else {
+                    // Regular assistant message
+                    newMessages[newMessages.length - 1] = { 
+                      type: 'assistant', 
+                      content: currentMessageContent,
+                      thinking: (reasoningMode && !isCouncilMode) ? thinkingContent : undefined
+                    };
                   }
-                  return newMessages;
-                });
-                
-                // Reset batching variables
-                updateBuffer = '';
-                lastUpdateTime = now;
-              }
+                }
+                return newMessages;
+              });
             } else if (data.delta.type === 'thinking_delta' && reasoningMode && !isCouncilMode) {
               // Thinking content (Extended Thinking) - only when not in council mode
               const thinkingText = data.delta.thinking || '';
@@ -399,41 +380,7 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
       }
     }
     
-    // Final flush for any remaining buffered content
-    if (updateBuffer.length > 0) {
-      setMessages((prev) => {
-        const newMessages = [...prev];
-        if (newMessages.length > 0) {
-          if (isJsonMode) {
-            const parseResult = tryParsePartialAdvisorJson(currentMessageContent);
-            if (parseResult.success) {
-              newMessages[newMessages.length - 1] = {
-                type: 'advisor_json',
-                content: parseResult.jsonContent,
-                parsedAdvisors: parseResult.parsed,
-                thinking: (reasoningMode && !isCouncilMode) ? thinkingContent : undefined,
-                isStreaming: true,
-                isPartial: parseResult.partial
-              };
-            } else {
-              newMessages[newMessages.length - 1] = {
-                type: 'assistant',
-                content: currentMessageContent,
-                thinking: (reasoningMode && !isCouncilMode) ? thinkingContent : undefined,
-                isJsonStreaming: true
-              };
-            }
-          } else {
-            newMessages[newMessages.length - 1] = { 
-              type: 'assistant', 
-              content: currentMessageContent,
-              thinking: (reasoningMode && !isCouncilMode) ? thinkingContent : undefined
-            };
-          }
-        }
-        return newMessages;
-      });
-    }
+    // No final flush needed since we update character-by-character
     
     // Check if response is JSON advisor format and parse it
     let parsedAdvisorResponse = null;
