@@ -330,10 +330,6 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
                                  isPunctuation(text[text.length - 1]); // Force update on punctuation
               
               if (shouldUpdate) {
-                // Add subtle streaming delay only on batched updates
-                if (updateBuffer.length > 1) {
-                  await sleep(Math.random() * 8 + 2);
-                }
                 
                 // Update message with appropriate type
                 setMessages((prev) => {
