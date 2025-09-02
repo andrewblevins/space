@@ -26,17 +26,7 @@ export const AdvisorResponseCard = memo(({ advisor, allAdvisors = [], onAssertio
     // ReactMarkdown needs proper markdown formatting, so ensure double newlines are preserved
     processed = processed.replace(/\n\n+/g, '\n\n');
     
-    // Handle incomplete sentences or broken formatting during streaming
-    // If the content doesn't end with proper punctuation and looks incomplete, add ellipsis
-    const trimmed = processed.trim();
-    if (trimmed.length > 0 && !trimmed.match(/[.!?]\s*$/) && !trimmed.endsWith('...')) {
-      // Check if it looks like streaming content (ends mid-word or with incomplete formatting)
-      const lastChar = trimmed.slice(-1);
-      if (lastChar && !lastChar.match(/[.!?]/) && processed.length > 10) {
-        processed = trimmed + '...';
-      }
-    }
-    
+    // No ellipsis added - let content stream naturally
     return processed;
   };
 
