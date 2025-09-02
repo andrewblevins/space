@@ -119,23 +119,9 @@ const MessageRenderer = memo(({
     </div>
   );
 }, (prevProps, nextProps) => {
-  // Custom comparison function - only re-render if message content actually changed
-  const prevMsg = prevProps.msg;
-  const nextMsg = nextProps.msg;
-  
-  // If this is the streaming message, allow re-renders
-  if (nextMsg.isStreaming || nextMsg.isJsonStreaming) {
-    return false; // Re-render
-  }
-  
-  // For non-streaming messages, only re-render if content changed
-  return (
-    prevMsg.content === nextMsg.content &&
-    prevMsg.type === nextMsg.type &&
-    prevMsg.thinking === nextMsg.thinking &&
-    JSON.stringify(prevMsg.parsedAdvisors) === JSON.stringify(nextMsg.parsedAdvisors) &&
-    prevProps.paragraphSpacing === nextProps.paragraphSpacing
-  );
+  // Simple reference check - if props are identical objects, skip render
+  return prevProps.msg === nextProps.msg && 
+         prevProps.paragraphSpacing === nextProps.paragraphSpacing;
 });
 
 MessageRenderer.displayName = 'MessageRenderer';
