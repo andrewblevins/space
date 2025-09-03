@@ -196,6 +196,12 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
     let isJsonMode = false;
     let isInCodeBlock = false;
 
+    // Streaming performance tracking
+    let streamStartTime = null;
+    let lastChunkTime = null;
+    let chunkCount = 0;
+    let totalBytesReceived = 0;
+
     setMessages((prev) => [...prev, { type: 'assistant', content: '', thinking: (reasoningMode && !isCouncilMode) ? '' : undefined }]);
 
     const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
@@ -298,6 +304,29 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
+      
+      // Track streaming performance
+      const now = performance.now();
+      if (streamStartTime === null) {
+        streamStartTime = now;
+        console.log('🚀 STREAMING: First chunk received at', new Date().toISOString());
+      }
+      
+      chunkCount++;
+      totalBytesReceived += value.length;
+      const timeSinceStart = now - streamStartTime;
+      const timeSinceLastChunk = lastChunkTime ? now - lastChunkTime : 0;
+      
+      console.log(`📦 STREAMING CHUNK #${chunkCount}:`, {
+        chunkSizeBytes: value.length,
+        totalBytesReceived,
+        timeSinceStartMs: Math.round(timeSinceStart),
+        timeSinceLastChunkMs: Math.round(timeSinceLastChunk),
+        avgBytesPerSecond: Math.round(totalBytesReceived / (timeSinceStart / 1000))
+      });
+      
+      lastChunkTime = now;
+      
       buffer += decoder.decode(value, { stream: true });
       const events = buffer.split('\n\n');
       buffer = events.pop() || '';
@@ -310,6 +339,16 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
             if (data.delta.type === 'text_delta') {
               // Regular text content with character-by-character updates
               const text = data.delta.text;
+              console.log('✍️ TEXT DELTA:', {
+                textLength: text.length,
+                textPreview: text.length > 50 ? text.substring(0, 50) + '...' : text,
+                totalContentLength: currentMessageContent.length + text.length,
+                timeSinceStreamStart: Math.round(performance.now() - streamStartTime)
+              });
+              
+              // Show actual text content as it arrives
+              console.log(`📝 STREAMING TEXT: "${text}"`);
+              process.stdout?.write?.(text) || console.log(`CHUNK: ${text}`);
               currentMessageContent += text;
               
               // Early detection of JSON advisor format
@@ -378,6 +417,19 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
           console.error('Error parsing event:', e);
         }
       }
+    }
+    
+    // Log streaming performance summary
+    if (streamStartTime !== null) {
+      const totalStreamTime = performance.now() - streamStartTime;
+      console.log('🏁 STREAMING COMPLETE:', {
+        totalChunks: chunkCount,
+        totalBytesReceived,
+        totalStreamTimeMs: Math.round(totalStreamTime),
+        avgBytesPerSecond: Math.round(totalBytesReceived / (totalStreamTime / 1000)),
+        finalContentLength: currentMessageContent.length,
+        contentToByteRatio: Math.round((currentMessageContent.length / totalBytesReceived) * 100) + '%'
+      });
     }
     
     // No final flush needed since we update character-by-character
