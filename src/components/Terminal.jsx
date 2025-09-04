@@ -105,7 +105,7 @@ const Terminal = ({ theme, toggleTheme }) => {
         modalState.openModal('migration');
       }
     }
-  }, [useAuthSystem, user, modalState]);
+  }, [useAuthSystem, user]); // Remove modalState dependency to prevent loop
 
 
   const getNextSessionId = () => {
