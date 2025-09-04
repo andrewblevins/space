@@ -41,6 +41,10 @@ import { AdvisorResponseCard } from "./terminal/AdvisorResponseCard";
 import MessageRenderer from "./terminal/MessageRenderer";
 import useClaude from "../hooks/useClaude";
 import useOpenRouter from "../hooks/useOpenRouter";
+import useMessages from "../hooks/useMessages";
+import useAdvisors from "../hooks/useAdvisors";
+import useModalState from "../hooks/useModalState";
+import useAppSettings from "../hooks/useAppSettings";
 import { analyzeMetaphors, analyzeForQuestions, summarizeSession, generateSessionSummary } from "../utils/terminalHelpers";
 import { trackUsage, trackSession } from '../utils/usageTracking';
 import { worksheetQuestions, WORKSHEET_TEMPLATES } from "../utils/worksheetTemplates";
@@ -62,6 +66,15 @@ const Terminal = ({ theme, toggleTheme }) => {
   const { user, session } = authData;
   const storage = useConversationStorage();
   
+  // Initialize memory system
+  const memory = useRef(new MemorySystem()).current;
+  
+  // Initialize our refactored hooks
+  const messageManager = useMessages({ memory, contextLimit: 150000 });
+  const advisorManager = useAdvisors();
+  const modalState = useModalState();
+  const settings = useAppSettings();
+  
   // Database storage state
   const [currentConversationId, setCurrentConversationId] = useState(null);
   const [useDatabaseStorage, setUseDatabaseStorage] = useState(() => {
@@ -69,10 +82,11 @@ const Terminal = ({ theme, toggleTheme }) => {
     console.log('🗃️ Database storage decision:', { useAuthSystem, user: !!user, useDatabaseStorage: useDb });
     return useDb;
   });
-  const [showMigrationModal, setShowMigrationModal] = useState(() => {
-    console.log('🔄 Initializing showMigrationModal to false');
-    return false;
-  });
+  // Migration modal state is now handled by modalState hook
+  // Initialize migration modal state with initial value
+  useEffect(() => {
+    console.log('🔄 Initializing migration modal to false');
+  }, []);
   
   // Initialize the modal controller for secureStorage
   useEffect(() => {
@@ -85,13 +99,13 @@ const Terminal = ({ theme, toggleTheme }) => {
   useEffect(() => {
     if (useAuthSystem && user) {
       const needs = needsMigration();
-      console.log('🔄 Migration check:', { needs, useAuthSystem, user: !!user, currentModalState: showMigrationModal });
-      if (needs && !showMigrationModal) {
+      console.log('🔄 Migration check:', { needs, useAuthSystem, user: !!user, currentModalState: modalState.modals.migration });
+      if (needs && !modalState.modals.migration) {
         console.log('🔄 Setting migration modal to TRUE (login check)');
-        setShowMigrationModal(true);
+        modalState.openModal('migration');
       }
     }
-  }, [useAuthSystem, user]);
+  }, [useAuthSystem, user, modalState]);
 
 
   const getNextSessionId = () => {
@@ -103,29 +117,16 @@ const Terminal = ({ theme, toggleTheme }) => {
   };
 
   const handleAdvisorImport = (importedAdvisors, mode) => {
+    const result = advisorManager.importAdvisors(importedAdvisors, mode);
+    
     if (mode === 'replace') {
-      setAdvisors(importedAdvisors);
-      setMessages(prev => [...prev, {
-        type: 'system',
-        content: `Replaced all advisors with ${importedAdvisors.length} imported advisors.`
-      }]);
+      messageManager.addSystemMessage(`Replaced all advisors with ${importedAdvisors.length} imported advisors.`);
     } else {
-      // Add mode - append to existing advisors, avoiding duplicates
-      const existingNames = new Set(advisors.map(a => a.name.toLowerCase()));
-      const newAdvisors = importedAdvisors.filter(a => !existingNames.has(a.name.toLowerCase()));
-      const duplicates = importedAdvisors.length - newAdvisors.length;
-      
-      setAdvisors(prev => [...prev, ...newAdvisors]);
-      
-      let message = `Added ${newAdvisors.length} new advisors.`;
-      if (duplicates > 0) {
-        message += ` Skipped ${duplicates} duplicate${duplicates > 1 ? 's' : ''}.`;
+      let message = `Added ${result.added} new advisors.`;
+      if (result.duplicates > 0) {
+        message += ` Skipped ${result.duplicates} duplicate${result.duplicates > 1 ? 's' : ''}.`;
       }
-      
-      setMessages(prev => [...prev, {
-        type: 'system',
-        content: message
-      }]);
+      messageManager.addSystemMessage(message);
     }
   };
 
@@ -170,83 +171,37 @@ const Terminal = ({ theme, toggleTheme }) => {
     return { processedContent, debates };
   };
 
-  const [messages, setMessages] = useState(() => {
-    const baseMessages = [
-      { type: 'system', content: 'SPACE Terminal - v0.2.4' },
-      { type: 'system', content: '🎉 New in v0.2.4:\n• Advisor evaluation system with Assert buttons\n• Automated scoring against test assertions\n• Optimization loop for iterative prompt improvement\n• Enhanced streaming with real-time formatting' }
-    ];
-    
-    // Add auth-specific welcome message
+  // Initialize messages with auth-specific welcome if needed
+  useEffect(() => {
     if (useAuthSystem && user) {
-      baseMessages.push({
-        type: 'system',
-        content: `Welcome back${user.email ? ', ' + user.email.split('@')[0] : ''}! You have 100 messages per day to explore complex problems with AI advisors. Your limit resets at midnight.`
-      });
+      messageManager.addSystemMessage(`Welcome back${user.email ? ', ' + user.email.split('@')[0] : ''}! You have 100 messages per day to explore complex problems with AI advisors. Your limit resets at midnight.`);
     }
-    
-    baseMessages.push({
-      type: 'system',
-      content: 'Start a conversation, add an advisor (+), draw from the Prompt Library (↙), or type /help for instructions.'
-    });
-    
-    return baseMessages;
-  });
+    messageManager.addSystemMessage('Start a conversation, add an advisor (+), draw from the Prompt Library (↙), or type /help for instructions.');
+  }, [useAuthSystem, user]); // Only run when auth state changes
+  
+  // Extract state from hooks for compatibility
+  const messages = messageManager.messages;
+  const setMessages = messageManager.setMessages;
   const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const isLoading = messageManager.isLoading;
+  const setIsLoading = messageManager.setIsLoading;
   const [metaphors, setMetaphors] = useState([]);
   // DEPRECATED: Questions feature temporarily disabled - can be reactivated by uncommenting
   // const [questions, setQuestions] = useState([]);
   const [currentSessionId, setCurrentSessionId] = useState(getNextSessionId());
-  const [advisors, setAdvisors] = useState(() => {
-    const saved = localStorage.getItem('space_advisors');
-    const savedAdvisors = saved ? JSON.parse(saved) : [];
-    
-    // Auto-assign colors to advisors that don't have them
-    let hasChanges = false;
-    const updatedAdvisors = [];
-    const assignedColors = [];
-    
-    // First pass: collect all existing colors
-    savedAdvisors.forEach(advisor => {
-      if (advisor.color) {
-        assignedColors.push(advisor.color);
-      }
-    });
-    
-    // Second pass: assign colors to advisors without them
-    savedAdvisors.forEach(advisor => {
-      if (!advisor.color) {
-        hasChanges = true;
-        // Find next available color that hasn't been assigned yet
-        const availableColors = ADVISOR_COLORS.filter(color => !assignedColors.includes(color));
-        const newColor = availableColors.length > 0 ? availableColors[0] : ADVISOR_COLORS[assignedColors.length % ADVISOR_COLORS.length];
-        assignedColors.push(newColor);
-        updatedAdvisors.push({
-          ...advisor,
-          color: newColor
-        });
-      } else {
-        updatedAdvisors.push(advisor);
-      }
-    });
-    
-    // If we made changes, save them back to localStorage
-    if (hasChanges) {
-      localStorage.setItem('space_advisors', JSON.stringify(updatedAdvisors));
-    }
-    
-    return updatedAdvisors;
-  });
-  const [advisorGroups, setAdvisorGroups] = useState(() => {
-    const saved = localStorage.getItem('space_advisor_groups');
-    return saved ? JSON.parse(saved) : [];
-  });
+  
+  // Extract advisor state from hook for compatibility
+  const advisors = advisorManager.advisors;
+  const setAdvisors = advisorManager.setAdvisors;
+  const advisorGroups = advisorManager.advisorGroups;
+  const setAdvisorGroups = advisorManager.setAdvisorGroups;
   const [activeGroups, setActiveGroups] = useState([]);
-  const [debugMode, setDebugMode] = useState(false);
-  const [reasoningMode, setReasoningMode] = useState(() => {
-    const saved = localStorage.getItem('space_reasoning_mode');
-    return saved ? saved === 'true' : false;
-  });
+  
+  // Extract settings from hook for compatibility  
+  const debugMode = settings.settings.debugMode;
+  const setDebugMode = (value) => settings.updateSetting('debugMode', value);
+  const reasoningMode = settings.settings.reasoningMode;
+  const setReasoningMode = (value) => settings.updateSetting('reasoningMode', value);
   const inputRef = useRef(null);
   const [savedPrompts, setSavedPrompts] = useState(() => {
     const saved = localStorage.getItem('space_prompts');
@@ -286,53 +241,86 @@ const Terminal = ({ theme, toggleTheme }) => {
   const [currentSection, setCurrentSection] = useState(0);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [currentWorksheetId, setCurrentWorksheetId] = useState(null);
-  const memory = new MemorySystem();
-  const messagesContainerRef = useRef(null);
-  const [showAdvisorForm, setShowAdvisorForm] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  // memory is already initialized from useMessages hook
+  const messagesContainerRef = messageManager.messagesContainerRef;
+  // Extract modal states from hook for compatibility
+  const showAdvisorForm = modalState.modals.advisorForm;
+  const setShowAdvisorForm = (value) => value ? modalState.openModal('advisorForm') : modalState.closeModal('advisorForm');
+  const isFullscreen = modalState.isFullscreen;
+  const setIsFullscreen = modalState.setIsFullscreen;
   const terminalRef = useRef(null);
-  const [maxTokens, setMaxTokens] = useState(() => {
-    const saved = localStorage.getItem('space_max_tokens');
-    return saved ? parseInt(saved) : 2048;
-  });
+  
+  // Extract settings for compatibility
+  const maxTokens = settings.settings.maxTokens;
+  const setMaxTokens = (value) => settings.updateMaxTokens(value);
+  const contextLimit = settings.settings.contextLimit;
+  const setContextLimit = (value) => settings.updateContextLimit(value);
+  
+  // Panel states from hook
   const [metaphorsExpanded, setMetaphorsExpanded] = useState(false);
   const [lastMetaphorAnalysisContent, setLastMetaphorAnalysisContent] = useState('');
-  // DEPRECATED: Questions feature temporarily disabled
-  // const [questionsExpanded, setQuestionsExpanded] = useState(false);
-  const [advisorSuggestionsExpanded, setAdvisorSuggestionsExpanded] = useState(false);
-  const [advisorSuggestions, setAdvisorSuggestions] = useState([]);
-  const [voteHistory, setVoteHistory] = useState([]);
-  const [showVotingModal, setShowVotingModal] = useState(false);
-  const [showHighCouncilModal, setShowHighCouncilModal] = useState(false);
+  
+  // Advisor suggestions from hook
+  const advisorSuggestionsExpanded = modalState.panels.advisorSuggestions;
+  const setAdvisorSuggestionsExpanded = (value) => value ? modalState.openPanel('advisorSuggestions') : modalState.closePanel('advisorSuggestions');
+  const advisorSuggestions = advisorManager.advisorSuggestions;
+  const setAdvisorSuggestions = advisorManager.setAdvisorSuggestions;
+  const voteHistory = advisorManager.voteHistory;
+  const setVoteHistory = advisorManager.setVoteHistory;
+  
+  // Modal states from hook
+  const showVotingModal = modalState.modals.voting;
+  const setShowVotingModal = (value) => value ? modalState.openModal('voting') : modalState.closeModal('voting');
+  const showHighCouncilModal = modalState.modals.highCouncil;
+  const setShowHighCouncilModal = (value) => value ? modalState.openModal('highCouncil') : modalState.closeModal('highCouncil');
+  
   const [lastAdvisorAnalysisContent, setLastAdvisorAnalysisContent] = useState('');
-  const [suggestedAdvisorName, setSuggestedAdvisorName] = useState('');
-  const [contextLimit, setContextLimit] = useState(150000);
-  // Already defined useAuthSystem at the top of component
-  const [apiKeysSet, setApiKeysSet] = useState(useAuthSystem);
-  const [showWelcome, setShowWelcome] = useState(false);
-  const [isInitializing, setIsInitializing] = useState(true);
+  const suggestedAdvisorName = modalState.suggestedAdvisorName;
+  const setSuggestedAdvisorName = modalState.setSuggestedAdvisorName;
+  
+  // API and initialization states
+  const apiKeysSet = settings.apiKeysSet;
+  const setApiKeysSet = settings.setApiKeysSet;
+  const showWelcome = modalState.modals.welcome;
+  const setShowWelcome = (value) => value ? modalState.openModal('welcome') : modalState.closeModal('welcome');
+  const isInitializing = modalState.isInitializing;
+  const setIsInitializing = (value) => modalState.setIsInitializing(value);
   const [hasCheckedKeys, setHasCheckedKeys] = useState(false);
   
   // Handler to reset to welcome screen
   const resetToWelcome = () => {
-    setShowWelcome(true);
+    modalState.openModal('welcome');
   };
   const [openaiClient, setOpenaiClient] = useState(null);
-  const [showSettingsMenu, setShowSettingsMenu] = useState(false);
-  const [showPromptLibrary, setShowPromptLibrary] = useState(false);
-  const [showSessionPanel, setShowSessionPanel] = useState(false);
+  
+  // More modal states from hook
+  const showSettingsMenu = modalState.modals.settings;
+  const setShowSettingsMenu = (value) => value ? modalState.openModal('settings') : modalState.closeModal('settings');
+  const showPromptLibrary = modalState.panels.promptLibrary;
+  const setShowPromptLibrary = (value) => value ? modalState.openPanel('promptLibrary') : modalState.closePanel('promptLibrary');
+  const showSessionPanel = modalState.panels.sessionPanel;
+  const setShowSessionPanel = (value) => value ? modalState.openPanel('sessionPanel') : modalState.closePanel('sessionPanel');
 
-
-  const [showAddPromptForm, setShowAddPromptForm] = useState(false);
-  const [showExportMenu, setShowExportMenu] = useState(false);
-  const [showDossierModal, setShowDossierModal] = useState(false);
-  const [showImportExportModal, setShowImportExportModal] = useState(false);
-  const [showHelpModal, setShowHelpModal] = useState(false);
-  const [showInfoModal, setShowInfoModal] = useState(false);
-  const [showAssertionsModal, setShowAssertionsModal] = useState(false);
-  const [selectedAdvisorForAssertions, setSelectedAdvisorForAssertions] = useState(null);
-  const [selectedResponseForEvaluation, setSelectedResponseForEvaluation] = useState(null);
-  const [showEvaluationsModal, setShowEvaluationsModal] = useState(false);
+  const showAddPromptForm = modalState.modals.addPrompt;
+  const setShowAddPromptForm = (value) => value ? modalState.openModal('addPrompt') : modalState.closeModal('addPrompt');
+  const showExportMenu = modalState.modals.exportMenu;
+  const setShowExportMenu = (value) => value ? modalState.openModal('exportMenu') : modalState.closeModal('exportMenu');
+  const showDossierModal = modalState.modals.dossier;
+  const setShowDossierModal = (value) => value ? modalState.openModal('dossier') : modalState.closeModal('dossier');
+  const showImportExportModal = modalState.modals.importExport;
+  const setShowImportExportModal = (value) => value ? modalState.openModal('importExport') : modalState.closeModal('importExport');
+  const showHelpModal = modalState.modals.help;
+  const setShowHelpModal = (value) => value ? modalState.openModal('help') : modalState.closeModal('help');
+  const showInfoModal = modalState.modals.info;
+  const setShowInfoModal = (value) => value ? modalState.openModal('info') : modalState.closeModal('info');
+  const showAssertionsModal = modalState.modals.assertions;
+  const setShowAssertionsModal = (value) => value ? modalState.openModal('assertions') : modalState.closeModal('assertions');
+  const selectedAdvisorForAssertions = modalState.selectedAdvisorForAssertions;
+  const setSelectedAdvisorForAssertions = modalState.setSelectedAdvisorForAssertions;
+  const selectedResponseForEvaluation = modalState.selectedResponseForEvaluation;
+  const setSelectedResponseForEvaluation = modalState.setSelectedResponseForEvaluation;
+  const showEvaluationsModal = modalState.modals.evaluations;
+  const setShowEvaluationsModal = (value) => value ? modalState.openModal('evaluations') : modalState.closeModal('evaluations');
   const [sessions, setSessions] = useState([]);
   const [sessionSelections, setSessionSelections] = useState(new Map()); // Map from title to session object
   const [currentSessionContexts, setCurrentSessionContexts] = useState([]); // Current @ reference contexts
@@ -341,16 +329,9 @@ const Terminal = ({ theme, toggleTheme }) => {
     return saved ? parseFloat(saved) : 0.25;
   }); // Spacing between paragraphs
 
-  // AI Model Settings - Always use OpenRouter
-  const [openrouterModel, setOpenrouterModel] = useState(() => {
-    // In production, always use Claude Sonnet 4
-    if (!import.meta.env.DEV) {
-      return 'anthropic/claude-sonnet-4';
-    }
-    // In development, allow user selection
-    const saved = localStorage.getItem('space_openrouter_model');
-    return saved || 'anthropic/claude-sonnet-4';
-  });
+  // AI Model Settings from hook
+  const openrouterModel = settings.settings.openrouterModel;
+  const setOpenrouterModel = (value) => settings.updateSetting('openrouterModel', value);
 
   // Check for API keys after modal controller is initialized
   useEffect(() => {
@@ -439,114 +420,13 @@ MANDATORY FORMATTING RULES - FAILURE TO FOLLOW WILL BREAK THE SYSTEM:
 
 THIS FORMAT IS REQUIRED FOR EVERY RESPONSE - DO NOT DEVIATE`;
 
-const getSystemPrompt = useCallback(({ councilMode, sessionContexts } = {}) => {
-  let prompt = "";
-  
-  // Add advisor personas
-  const activeAdvisors = advisors.filter(a => a.active);
-  if (activeAdvisors.length > 0) {
-    prompt += `You are currently embodying the following advisors:\n${activeAdvisors.map(a => `\n${a.name}: ${a.description}`).join('\n')}\n\n`;
-    
-    // Explicit instruction to include all advisors
-    prompt += `CRITICAL: You must include ALL advisors listed above in your response, even if some have empty or minimal descriptions. Every advisor name that appears in your persona list must have a response in your output. Do not exclude any advisor based on lack of description.\n\n`;
-    
-    // Add conversation continuity instructions
-    prompt += `## CONVERSATION CONTINUITY\n\nIMPORTANT: You are continuing an ongoing conversation with this user. Do not re-introduce topics, concepts, or ask questions that have already been addressed in the conversation history. Build upon what has been established rather than starting fresh each time. Reference previous exchanges naturally and maintain the flow of the conversation.\n\n`;
-    
-    if (councilMode) {
-      prompt += `\n\n## HIGH COUNCIL MODE
-IMPORTANT: Start your response with the exact text "<COUNCIL_DEBATE>" (this is required for the interface to work properly).
-
-The advisors will engage in a structured debate, each maintaining their unique perspective throughout. Each advisor should:
-
-- Stay true to their core philosophy and worldview
-- Respond authentically from their own perspective
-- Keep responses concise: 2-3 sentences maximum per turn
-- Be direct and punchy - avoid lengthy explanations 
-- Challenge other advisors when they genuinely disagree
-- Build on points that align with their own thinking
-- Never abandon their perspective just to reach agreement
-
-CRITICAL: This must be a true DEBATE where advisors directly engage with each other's arguments, not separate speeches.
-
-Structure the debate exactly as follows:
-
-## ROUND 1: Initial Positions
-Each advisor states their position on the question.
-
-## ROUND 2: Direct Responses
-Each advisor must directly address the other advisors by name, responding to specific points from Round 1:
-- "Elon, you're wrong about X because..."
-- "I agree with you, Sarah, but you're missing..."
-- "That's complete nonsense, Marcus. Here's why..."
-
-## ROUND 3: Final Positions
-Each advisor directly challenges or supports the others' Round 2 arguments, speaking TO each other, not about them.
-
-CRITICAL: Use ## for round headers (not **bold**). Always add a blank line before each round header. Example:
-
-[ADVISOR: Name] Final sentence of previous round.
-
-## ROUND 2: Direct Responses
-
-[ADVISOR: Next Name] First response...
-
-REQUIREMENTS:
-- Advisors must reference each other by name and quote/paraphrase specific arguments
-- No advisor can ignore what others have said
-- Each response must build on the conversation, not restart it
-- Use transition phrases that show you're responding: "But as [Name] just pointed out..." or "That contradicts [Name]'s argument that..."
-
-MANDATORY FORMAT REQUIREMENTS:
-- Each advisor speaks for 2-3 sentences maximum per turn
-- Be concise and impactful, not verbose
-- You MUST wrap the entire debate in these exact tags:
-
-<COUNCIL_DEBATE>
-**ROUND 1: Initial Positions**
-[ADVISOR: Name] content...
-
-**ROUND 2: Direct Responses** 
-[ADVISOR: Name] responds to [Other Advisor]...
-
-**ROUND 3: Final Positions**
-[ADVISOR: Name] presents final stance...
-</COUNCIL_DEBATE>
-
-DO NOT FORGET THE <COUNCIL_DEBATE> TAGS. Without these tags, the debate will not display properly.
-
-## Council Summary
-
-After the debate section, provide:
-- One sentence per advisor summarizing their final position
-- Synthesis: 1-2 sentences on the overall outcome or remaining tensions`;
-    }
-  }
-  // If no advisors are active, no system prompt is needed
-  
-  // Add session context from @ references  
-  const contextsToUse = sessionContexts || currentSessionContexts;
-  if (contextsToUse.length > 0) {
-    if (prompt) prompt += "\n\n";
-    prompt += "## REFERENCED CONVERSATION CONTEXTS\n\n";
-    prompt += "The user has referenced the following previous conversations for context:\n\n";
-    
-    contextsToUse.forEach((context, index) => {
-      const date = new Date(context.timestamp).toLocaleDateString();
-      prompt += `### Context ${index + 1}: "${context.title}" (Session ${context.sessionId}, ${date})\n`;
-      prompt += `${context.summary}\n\n`;
+  // Use system prompt from advisor manager
+  const getSystemPrompt = useCallback(({ councilMode, sessionContexts } = {}) => {
+    return advisorManager.getSystemPrompt({ 
+      councilMode, 
+      sessionContexts: sessionContexts || currentSessionContexts 
     });
-    
-    prompt += "Use these conversation contexts to inform your response when relevant. The user's message may reference specific details from these conversations.\n";
-  }
-  
-  // Add JSON format instructions at the END to make them most prominent (only for non-council mode)
-  if (activeAdvisors.length > 0 && !councilMode) {
-    prompt += ADVISOR_JSON_FORMAT;
-  }
-  
-  return prompt;
-}, [advisors, currentSessionContexts]);
+  }, [advisorManager, currentSessionContexts]);
 
 const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimit, memory, debugMode, reasoningMode, getSystemPrompt });
 const { callOpenRouter } = useOpenRouter({ messages, setMessages, maxTokens, contextLimit, memory, debugMode, getSystemPrompt, model: openrouterModel });
