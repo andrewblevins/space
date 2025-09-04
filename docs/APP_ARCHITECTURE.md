@@ -1,18 +1,30 @@
-# SPACE Terminal - Application Architecture
+# SPACE Terminal - Application Architecture (Post-Phase 1 Refactoring)
 
-This document provides a comprehensive architectural overview of the SPACE Terminal application, including all components, their relationships, and data flow.
+This document provides a comprehensive architectural overview of the SPACE Terminal application after the major Phase 1 refactoring that transformed the monolithic Terminal.jsx into a modular hook-based architecture.
 
-## High-Level Architecture Diagram
+## High-Level Architecture Diagram - **NEW MODULAR STRUCTURE**
 
 ```mermaid
 graph TB
     %% Top Level Application
-    subgraph "SPACE Terminal Application"
+    subgraph "SPACE Terminal Application - REFACTORED ARCHITECTURE"
         App[App.jsx<br/>Main Router & Theme Provider]
+        
+        %% NEW: Refactored Terminal Structure
+        subgraph "🎯 REFACTORED TERMINAL CORE"
+            Terminal[Terminal.jsx<br/>📦 LEAN ORCHESTRATOR<br/>~400 lines - Clean Integration]
+            
+            %% NEW: Phase 1 Custom Hooks
+            subgraph "⚡ PHASE 1 HOOKS - State Management"
+                useMessages[useMessages.js<br/>📨 Message Operations<br/>• Message CRUD & streaming<br/>• Context building<br/>• Load/save operations<br/>200 lines]
+                useAdvisors[useAdvisors.js<br/>👥 Advisor Management<br/>• Advisor CRUD & groups<br/>• System prompt generation<br/>• Individual contexts<br/>400 lines]
+                useModalState[useModalState.js<br/>🎛️ UI State Management<br/>• Modal/panel visibility<br/>• State navigation<br/>• Initialization flags<br/>200 lines]
+                useAppSettings[useAppSettings.js<br/>⚙️ Settings & Validation<br/>• App configuration<br/>• Validation & persistence<br/>• Multi-threaded mode<br/>300 lines]
+            end
+        end
         
         %% Core UI Layer
         subgraph "Core UI Layer"
-            Terminal[Terminal.jsx<br/>Central Application Hub<br/>~800 lines - Main State]
             MobileLayout[MobileLayout.jsx<br/>Mobile-Responsive Wrapper]
             ResponsiveContainer[ResponsiveContainer.jsx<br/>Adaptive UI Container]
         end
@@ -122,12 +134,32 @@ graph TB
             GeminiService[Google Gemini Pro<br/>Evaluation Service]
             OpenRouterService[OpenRouter<br/>Multi-Model Access]
         end
+        
+        %% FUTURE: Phase 2 Hooks (Ready for Multi-Threading)
+        subgraph "🚀 PHASE 2 HOOKS - Business Logic (Future)"
+            useConversationAnalysis[useConversationAnalysis.js<br/>📊 Analysis Pipeline<br/>• Metaphor generation<br/>• Question extraction<br/>• Session summaries]
+            useMessageSending[useMessageSending.js<br/>📤 Message Orchestration<br/>• Multi-threaded API calls<br/>• Individual advisor contexts<br/>• Parallel processing]
+        end
     end
     
-    %% Data Flow Connections
+    %% NEW: Hook-Based Data Flow
     App --> Terminal
     App --> AuthContext
     App --> ModalContext
+    
+    %% Terminal now uses hooks instead of direct state
+    Terminal -.->|uses| useMessages
+    Terminal -.->|uses| useAdvisors
+    Terminal -.->|uses| useModalState
+    Terminal -.->|uses| useAppSettings
+    Terminal -.->|future| useConversationAnalysis
+    Terminal -.->|future| useMessageSending
+    
+    %% Hook dependencies
+    useMessages --> MemorySystem
+    useAdvisors --> AdvisorColors
+    useAdvisors --> DefaultPrompts
+    useAppSettings --> SecureStorage
     
     Terminal --> MobileLayout
     Terminal --> ResponsiveContainer
@@ -173,15 +205,18 @@ graph TB
     AuthContext --> AuthUtils
     AuthUtils --> Supabase
     
-    Terminal --> TagAnalyzer
-    Terminal --> DefaultPrompts
-    Terminal --> AdvisorColors
-    
     TerminalHelpers --> MemorySystem
     SecureStorage --> ModalContext
     
-    %% Styling
+    %% Multi-Threading Ready Flow
+    useMessageSending -.->|future| useMessages
+    useMessageSending -.->|future| useAdvisors
+    useConversationAnalysis -.->|future| useMessages
+    
+    %% Updated Styling
     classDef coreComponent fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef newHook fill:#c8e6c9,stroke:#388e3c,stroke-width:3px
+    classDef futureHook fill:#fff3e0,stroke:#f57c00,stroke-width:2px,stroke-dasharray: 5 5
     classDef apiHook fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
     classDef utility fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
     classDef backend fill:#fff3e0,stroke:#e65100,stroke-width:2px
@@ -189,6 +224,8 @@ graph TB
     classDef modal fill:#f1f8e9,stroke:#33691e,stroke-width:2px
     
     class Terminal,MessageRenderer,MobileLayout coreComponent
+    class useMessages,useAdvisors,useModalState,useAppSettings newHook
+    class useConversationAnalysis,useMessageSending futureHook
     class useClaude,useOpenRouter,useOpenAI,useGemini apiHook
     class TerminalHelpers,SecureStorage,UsageTracking,MemorySystem utility
     class ClaudeAPI,OpenRouterAPI,ConversationsAPI,DatabaseUtils backend
@@ -198,14 +235,14 @@ graph TB
 
 ## Key Architectural Components
 
-### 1. **Terminal.jsx - Central Hub (~800 lines)**
-- **Role**: Main application state manager and coordinator
-- **State Management**: 20+ useState hooks organizing core, UI, settings, and analysis state
+### 1. **Terminal.jsx - Lean Orchestrator (~400 lines)**
+- **Role**: Clean integration hub using custom hooks
+- **State Management**: Delegates to specialized hooks instead of direct useState
 - **Key Responsibilities**:
-  - Message flow coordination
-  - Advisor management
-  - API orchestration
-  - UI state management
+  - Hook coordination and integration
+  - UI event handling
+  - Component rendering orchestration
+  - Minimal state management (UI flags only)
 
 ### 2. **API Integration Strategy**
 - **Primary AI**: Claude Sonnet 4 via `useClaude` hook
@@ -225,7 +262,8 @@ State Update → UI Refresh → Analysis Triggers
 
 ### 4. **Current Advisor System**
 - **Single-Thread**: All advisors combined in one system prompt
-- **System Prompt Generation**: `getSystemPrompt()` in Terminal.jsx:442-549
+- **System Prompt Generation**: `getSystemPrompt()` in useAdvisors.js hook
+- **Individual Context Ready**: `getIndividualSystemPrompt()` prepared for multi-threading
 - **Response Format**: JSON structure with all advisor responses
 - **Council Mode**: Structured debate format with rounds
 
@@ -247,25 +285,26 @@ State Update → UI Refresh → Analysis Triggers
 
 ## Multi-Threaded Advisor Implementation Points
 
-Based on this architecture, the multi-threaded advisor system would primarily modify:
+Based on this refactored architecture, the multi-threaded advisor system would primarily involve:
 
-1. **Terminal.jsx**: 
-   - `getSystemPrompt()` function (lines 442-549)
-   - Message handling and API orchestration
-   - Response processing and UI updates
+1. **Phase 2 Hooks Implementation**: 
+   - `useMessageSending.js`: Parallel API call orchestration for individual advisors
+   - `useConversationAnalysis.js`: Business logic for analysis pipeline
+   - Multi-threaded mode toggle in `useAppSettings.js`
 
-2. **useClaude.js**:
-   - Individual advisor context building
-   - Parallel API call management
-   - Response streaming coordination
+2. **Enhanced useAdvisors.js**:
+   - `getIndividualSystemPrompt()` already prepared for single-advisor contexts
+   - Individual advisor context building utilities
+   - Parallel response coordination logic
 
-3. **MessageRenderer.jsx**:
-   - Individual advisor response display
+3. **API Hook Modifications**:
+   - `useClaude.js`: Support for individual advisor API calls
+   - Streaming coordination for multiple parallel responses
+   - Response aggregation and UI update patterns
+
+4. **UI Enhancements**:
+   - `MessageRenderer.jsx`: Individual advisor response display
    - Threading-aware message organization
+   - Progressive response rendering
 
-4. **New Components Needed**:
-   - Thread management utilities
-   - Individual advisor context builders
-   - Parallel response coordinators
-
-The existing modular architecture provides a solid foundation for implementing multi-threaded conversations without major structural changes.
+The refactored modular architecture with focused custom hooks provides an ideal foundation for implementing multi-threaded conversations with minimal disruption to existing functionality.
