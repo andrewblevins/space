@@ -101,8 +101,8 @@ graph TB
             
             subgraph "Data Endpoints"
                 ConversationsAPI[conversations/index.js<br/>Conversation CRUD]
-                ConversationByID[conversations/[id].js<br/>Individual Conversations]
-                MessagesAPI[conversations/[id]/messages.js<br/>Message Management]
+                ConversationByID[conversations/id.js<br/>Individual Conversations]
+                MessagesAPI[conversations/id/messages.js<br/>Message Management]
                 UsageAPI[usage.js<br/>Usage Statistics]
                 HealthAPI[health.js<br/>System Status]
             end
