@@ -3794,8 +3794,8 @@ ${selectedText}
           localStorage.removeItem('space_migration_date');
           localStorage.removeItem('space_migration_summary');
           console.log('🔄 Setting migration modal to TRUE (settings button)');
-          setShowMigrationModal(true);
-          setShowSettingsMenu(false);
+          modalState.openModal('migration');
+          modalState.closeModal('settings');
         }}
       />
 
@@ -3889,18 +3889,18 @@ ${selectedText}
 
       {/* Migration Modal Component */}
       <MigrationModal
-        isOpen={showMigrationModal}
+        isOpen={modalState.modals.migration}
         onComplete={() => {
           console.log('🔄 Migration completed, closing modal');
-          console.log('🔄 Current showMigrationModal state:', showMigrationModal);
+          console.log('🔄 Current migration modal state:', modalState.modals.migration);
           // Mark migration as completed immediately to prevent re-opening
           localStorage.setItem('space_migration_status', 'completed');
           localStorage.setItem('space_migration_date', new Date().toISOString());
-          setShowMigrationModal(false);
-          console.log('🔄 Called setShowMigrationModal(false)');
+          modalState.closeModal('migration');
+          console.log('🔄 Called modalState.closeModal("migration")');
           // Force a check after state update
           setTimeout(() => {
-            console.log('🔄 showMigrationModal state after setState:', showMigrationModal);
+            console.log('🔄 Migration modal state after setState:', modalState.modals.migration);
           }, 100);
         }}
       />
