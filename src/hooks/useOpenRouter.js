@@ -128,11 +128,19 @@ export function useOpenRouter({ messages, setMessages, maxTokens, contextLimit, 
       ? `${getApiEndpoint()}/api/chat/openrouter`  // Backend proxy
       : 'https://openrouter.ai/api/v1/chat/completions';     // Direct API
     
+    console.log('🚀 OPENROUTER DEBUG: About to make API call with streaming=true');
+    console.log('🌐 OPENROUTER DEBUG: API URL:', apiUrl);
+    console.log('📋 OPENROUTER DEBUG: Request body stream setting:', requestBody.stream);
+    
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers,
       body: JSON.stringify(requestBody),
     });
+    
+    console.log('📡 OPENROUTER DEBUG: Got response status:', response.status);
+    console.log('📡 OPENROUTER DEBUG: Response ok:', response.ok);
+    console.log('📡 OPENROUTER DEBUG: About to start reading stream');
 
     // Update usage from response headers
     updateFromHeaders(response);
@@ -263,9 +271,38 @@ export function useOpenRouter({ messages, setMessages, maxTokens, contextLimit, 
       return { success: false };
     };
 
+    // Streaming performance tracking
+    let streamStartTime = null;
+    let lastChunkTime = null;
+    let chunkCount = 0;
+    let totalBytesReceived = 0;
+
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
+      
+      // Track streaming performance
+      const now = performance.now();
+      if (streamStartTime === null) {
+        streamStartTime = now;
+        console.log('🚀 OPENROUTER STREAMING: First chunk received at', new Date().toISOString());
+      }
+      
+      chunkCount++;
+      totalBytesReceived += value.length;
+      const timeSinceStart = now - streamStartTime;
+      const timeSinceLastChunk = lastChunkTime ? now - lastChunkTime : 0;
+      
+      console.log(`📦 OPENROUTER CHUNK #${chunkCount}:`, {
+        chunkSizeBytes: value.length,
+        totalBytesReceived,
+        timeSinceStartMs: Math.round(timeSinceStart),
+        timeSinceLastChunkMs: Math.round(timeSinceLastChunk),
+        avgBytesPerSecond: Math.round(totalBytesReceived / (timeSinceStart / 1000))
+      });
+      
+      lastChunkTime = now;
+      
       buffer += decoder.decode(value, { stream: true });
       const events = buffer.split('\n\n');
       buffer = events.pop() || '';
@@ -276,6 +313,15 @@ export function useOpenRouter({ messages, setMessages, maxTokens, contextLimit, 
           const data = JSON.parse(dataMatch[1]);
           if (data.choices && data.choices[0] && data.choices[0].delta && data.choices[0].delta.content) {
             const text = data.choices[0].delta.content;
+            
+            console.log('✍️ OPENROUTER TEXT DELTA:', {
+              textLength: text.length,
+              textPreview: text.length > 50 ? text.substring(0, 50) + '...' : text,
+              timeSinceStreamStart: Math.round(performance.now() - streamStartTime)
+            });
+            
+            // Show actual text content as it arrives
+            console.log(`📝 OPENROUTER STREAMING TEXT: "${text}"`);
             for (let i = 0; i < text.length; i++) {
               const char = text[i];
               let delay = Math.random() * 5;

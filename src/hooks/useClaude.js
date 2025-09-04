@@ -156,11 +156,15 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
       ? `${getApiEndpoint()}/api/chat/claude`  // Backend proxy
       : `${getApiEndpoint()}/v1/messages`;     // Direct API
     
+    console.log('🚀 STREAMING DEBUG: About to make API call with streaming=true');
+    
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers,
       body: JSON.stringify(requestBody),
     });
+    
+    console.log('📡 STREAMING DEBUG: Got response, about to start reading stream');
 
     // Update usage from response headers
     updateFromHeaders(response);
@@ -335,6 +339,7 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
         if (!dataMatch) continue;
         try {
           const data = JSON.parse(dataMatch[1]);
+          console.log('🔍 STREAMING DEBUG: Parsed event data:', data.type);
           if (data.type === 'content_block_delta') {
             if (data.delta.type === 'text_delta') {
               // Regular text content with character-by-character updates
