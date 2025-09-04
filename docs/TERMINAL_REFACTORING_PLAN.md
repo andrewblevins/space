@@ -58,11 +58,11 @@ const Terminal = ({ theme, toggleTheme }) => {
 
 ### 1. Custom Hooks (Separation of Concerns)
 
-#### **useMessageManager** 
+#### **useMessages** 
 **Purpose**: Handle all message-related state and operations
 ```javascript
-// hooks/useMessageManager.js
-export function useMessageManager({ memory, contextLimit }) {
+// hooks/useMessages.js
+export function useMessages({ memory, contextLimit }) {
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [streamingResponse, setStreamingResponse] = useState('');
@@ -84,11 +84,11 @@ export function useMessageManager({ memory, contextLimit }) {
 }
 ```
 
-#### **useAdvisorManager**
+#### **useAdvisors**
 **Purpose**: Manage advisor state, system prompt generation
 ```javascript
-// hooks/useAdvisorManager.js
-export function useAdvisorManager() {
+// hooks/useAdvisors.js
+export function useAdvisors() {
   const [advisors, setAdvisors] = useState([]);
   const [activeAdvisors, setActiveAdvisors] = useState([]);
   const [advisorGroups, setAdvisorGroups] = useState([]);
@@ -114,11 +114,11 @@ export function useAdvisorManager() {
 }
 ```
 
-#### **useUIStateManager**
+#### **useModalState**
 **Purpose**: Manage all modal and UI visibility states
 ```javascript
-// hooks/useUIStateManager.js
-export function useUIStateManager() {
+// hooks/useModalState.js
+export function useModalState() {
   const [modals, setModals] = useState({
     advisorForm: false,
     settings: false,
@@ -157,11 +157,11 @@ export function useUIStateManager() {
 }
 ```
 
-#### **useSettingsManager**
+#### **useAppSettings**
 **Purpose**: Handle all application settings and preferences
 ```javascript
-// hooks/useSettingsManager.js
-export function useSettingsManager() {
+// hooks/useAppSettings.js
+export function useAppSettings() {
   const [settings, setSettings] = useState({
     maxTokens: 4000,
     contextLimit: 150000,
@@ -189,11 +189,11 @@ export function useSettingsManager() {
 }
 ```
 
-#### **useAnalysisPipeline**
+#### **useConversationAnalysis**
 **Purpose**: Coordinate analysis features (metaphors, questions, suggestions)
 ```javascript
-// hooks/useAnalysisPipeline.js
-export function useAnalysisPipeline({ messages, advisors }) {
+// hooks/useConversationAnalysis.js
+export function useConversationAnalysis({ messages, advisors }) {
   const [metaphors, setMetaphors] = useState([]);
   const [questions, setQuestions] = useState([]);
   const [advisorSuggestions, setAdvisorSuggestions] = useState([]);
@@ -221,11 +221,11 @@ export function useAnalysisPipeline({ messages, advisors }) {
 }
 ```
 
-#### **useConversationOrchestrator**
+#### **useMessageSending**
 **Purpose**: Coordinate API calls and conversation flow
 ```javascript
-// hooks/useConversationOrchestrator.js
-export function useConversationOrchestrator({
+// hooks/useMessageSending.js
+export function useMessageSending({
   messageManager,
   advisorManager,
   settings,
@@ -284,17 +284,17 @@ export function useConversationOrchestrator({
 ```javascript
 // components/Terminal.jsx (New, much smaller)
 const Terminal = ({ theme, toggleTheme }) => {
-  // Initialize all managers
+  // Initialize all hooks
   const memory = useRef(new MemorySystem()).current;
-  const messageManager = useMessageManager({ memory, contextLimit: 150000 });
-  const advisorManager = useAdvisorManager();
-  const uiState = useUIStateManager();
-  const settings = useSettingsManager();
-  const analysis = useAnalysisPipeline({
+  const messageManager = useMessages({ memory, contextLimit: 150000 });
+  const advisorManager = useAdvisors();
+  const uiState = useModalState();
+  const settings = useAppSettings();
+  const analysis = useConversationAnalysis({
     messages: messageManager.messages,
     advisors: advisorManager.advisors
   });
-  const conversation = useConversationOrchestrator({
+  const conversation = useMessageSending({
     messageManager,
     advisorManager,
     settings,
@@ -375,26 +375,26 @@ components/
 │   ├── SettingsModal.jsx        (existing, but simpler)
 │   └── ...
 └── hooks/
-    ├── useMessageManager.js     (200 lines)
-    ├── useAdvisorManager.js     (150 lines)
-    ├── useUIStateManager.js     (100 lines)
-    ├── useSettingsManager.js    (100 lines)
-    ├── useAnalysisPipeline.js   (150 lines)
-    └── useConversationOrchestrator.js (200 lines)
+    ├── useMessages.js           (200 lines)
+    ├── useAdvisors.js           (150 lines)
+    ├── useModalState.js         (100 lines)
+    ├── useAppSettings.js        (100 lines)
+    ├── useConversationAnalysis.js (150 lines)
+    └── useMessageSending.js     (200 lines)
 ```
 
 ## Migration Strategy
 
 ### Phase 1: Extract State Management Hooks
-1. **Create `useMessageManager`** - Move message state and operations
-2. **Create `useAdvisorManager`** - Move advisor state and system prompt logic
-3. **Create `useUIStateManager`** - Move all modal/panel state
-4. **Create `useSettingsManager`** - Move all settings state
+1. **Create `useMessages`** - Move message state and operations
+2. **Create `useAdvisors`** - Move advisor state and system prompt logic
+3. **Create `useModalState`** - Move all modal/panel state
+4. **Create `useAppSettings`** - Move all settings state
 5. **Test**: Ensure Terminal.jsx still works with new hooks
 
 ### Phase 2: Extract Business Logic Hooks
-1. **Create `useAnalysisPipeline`** - Move analysis coordination logic
-2. **Create `useConversationOrchestrator`** - Move API orchestration
+1. **Create `useConversationAnalysis`** - Move analysis coordination logic
+2. **Create `useMessageSending`** - Move API orchestration
 3. **Test**: Ensure all functionality still works
 
 ### Phase 3: Simplify Terminal Component
@@ -404,16 +404,16 @@ components/
 4. **Performance testing** - ensure no regressions
 
 ### Phase 4: Multi-Threading Foundation
-1. **Add multi-threaded mode setting** to useSettingsManager
-2. **Implement individual system prompts** in useAdvisorManager
-3. **Add parallel API call support** to useConversationOrchestrator
+1. **Add multi-threaded mode setting** to useAppSettings
+2. **Implement individual system prompts** in useAdvisors
+3. **Add parallel API call support** to useMessageSending
 4. **Test**: Basic multi-threading functionality
 
 ## Benefits After Refactoring
 
 ### 1. **Easier Multi-Threading Implementation**
-- `useAdvisorManager.getIndividualSystemPrompt(advisor)` already isolated
-- `useConversationOrchestrator` can handle parallel vs sequential calls
+- `useAdvisors.getIndividualSystemPrompt(advisor)` already isolated
+- `useMessageSending` can handle parallel vs sequential calls
 - Individual advisor contexts become straightforward
 
 ### 2. **Better Performance** 
