@@ -1,13 +1,31 @@
 import React, { useState } from 'react';
 import { ADVISOR_COLORS } from '../lib/advisorColors';
 
-const EditAdvisorForm = ({ advisor, onSubmit, onCancel }) => {
+const EditAdvisorForm = ({ advisor, onSubmit, onCancel, existingAdvisors = [] }) => {
   const [name, setName] = useState(advisor.name);
   const [description, setDescription] = useState(advisor.description);
   const [selectedColor, setSelectedColor] = useState(advisor.color || ADVISOR_COLORS[0]);
+  const [error, setError] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    if (!name.trim()) {
+      setError('Please enter an advisor name');
+      return;
+    }
+    
+    // Check for duplicate names (but allow keeping the same name)
+    const isDuplicate = existingAdvisors.some(existingAdvisor => 
+      existingAdvisor.name.toLowerCase() === name.trim().toLowerCase() && 
+      existingAdvisor.name !== advisor.name
+    );
+    if (isDuplicate) {
+      setError('An advisor with this name already exists. Please choose a different name.');
+      return;
+    }
+    
+    setError('');
     onSubmit({ name, description, color: selectedColor });
   };
 
@@ -15,6 +33,9 @@ const EditAdvisorForm = ({ advisor, onSubmit, onCancel }) => {
     <div className="fixed inset-0 bg-white/70 dark:bg-black/50 flex items-center justify-center">
       <div className="bg-gray-100 p-6 rounded-lg border border-green-600 w-96 max-h-[80vh] overflow-y-auto overflow-x-hidden dark:bg-gray-900 dark:border-green-400">
         <h2 className="text-green-400 text-xl mb-4">Edit Advisor</h2>
+        {error && (
+          <div className="text-red-400 mb-4">{error}</div>
+        )}
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label className="block text-green-400 mb-2">Name:</label>
