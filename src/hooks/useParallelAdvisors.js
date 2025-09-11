@@ -41,8 +41,17 @@ export function useParallelAdvisors({ messages, setMessages, maxTokens, contextL
     const estimateTokens = (text) => Math.ceil(text.length / 4);
     const totalTokens = messages.reduce((sum, msg) => sum + estimateTokens(msg.content || ''), 0);
 
-    // Build conversation context (same as current system)
-    const contextMessages = [{ role: 'user', content: userMessage }];
+    // Create individual system prompt for this advisor only
+    const systemPromptText = `You are ${advisor.name}. ${advisor.description}
+
+IMPORTANT: You are responding as a single advisor, not multiple advisors. Provide your response directly without any JSON formatting or advisor names. Just respond naturally as ${advisor.name} would.
+
+Do not reference other advisors or say things like "I think" or "as ${advisor.name}". Just respond as this advisor naturally.`;
+
+    // Build conversation context with system prompt always first
+    const conversationMessages = [];
+    
+    // Add historical context
     if (totalTokens < contextLimit) {
       const historical = messages
         .filter((m) => (m.type === 'user' || m.type === 'assistant' || m.type === 'advisor_json') && m.content?.trim() !== '' && m.content !== userMessage)
@@ -62,28 +71,26 @@ export function useParallelAdvisors({ messages, setMessages, maxTokens, contextL
             content: m.timestamp ? `[${formatTimestamp(m.timestamp)}] ${content}` : content 
           };
         });
-      contextMessages.unshift(...historical);
+      conversationMessages.push(...historical);
     } else {
       const managed = buildConversationContext(userMessage, messages, memory);
-      if (managed?.length) contextMessages.unshift(...managed);
+      if (managed?.length) conversationMessages.push(...managed);
     }
-
-    // Create individual system prompt for this advisor only
-    const systemPromptText = `You are ${advisor.name}. ${advisor.description}
-
-IMPORTANT: You are responding as a single advisor, not multiple advisors. Provide your response directly without any JSON formatting or advisor names. Just respond naturally as ${advisor.name} would.
-
-Do not reference other advisors or say things like "I think" or "as ${advisor.name}". Just respond as this advisor naturally.`;
+    
+    // Add current user message
+    conversationMessages.push({ role: 'user', content: userMessage });
 
     // Calculate input tokens
     const systemTokens = estimateTokens(systemPromptText);
-    const contextTokens = contextMessages.reduce((s, m) => s + estimateTokens(m.content), 0);
+    const contextTokens = conversationMessages.reduce((s, m) => s + estimateTokens(m.content), 0);
     const inputTokens = systemTokens + contextTokens;
 
     const requestBody = {
       model: 'anthropic/claude-sonnet-4',
-      messages: contextMessages,
-      system: systemPromptText,
+      messages: [
+        { role: 'system', content: systemPromptText },
+        ...conversationMessages
+      ],
       max_tokens: maxTokens,
       stream: true,
     };
