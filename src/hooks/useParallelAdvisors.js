@@ -80,14 +80,14 @@ Do not reference other advisors or say things like "I think" or "as ${advisor.na
     const contextTokens = contextMessages.reduce((s, m) => s + estimateTokens(m.content), 0);
     const inputTokens = systemTokens + contextTokens;
 
-    if (debugMode) {
-      console.log(`🎭 ${advisor.name} API Call:`, {
-        inputTokens,
-        systemTokens,
-        contextTokens,
-        systemPrompt: systemPromptText.substring(0, 200) + '...'
-      });
-    }
+    console.log(`🎭 ${advisor.name} API Call Starting:`, {
+      inputTokens,
+      systemTokens,
+      contextTokens,
+      systemPrompt: systemPromptText.substring(0, 200) + '...',
+      apiUrl,
+      model: requestBody.model
+    });
 
     const requestBody = {
       model: 'anthropic/claude-sonnet-4',
@@ -133,6 +133,12 @@ Do not reference other advisors or say things like "I think" or "as ${advisor.na
       body: JSON.stringify(requestBody),
     });
 
+    console.log(`🎭 ${advisor.name} Response received:`, {
+      status: response.status,
+      statusText: response.statusText,
+      ok: response.ok
+    });
+
     updateFromHeaders(response);
 
     if (!response.ok) {
@@ -153,9 +159,14 @@ Do not reference other advisors or say things like "I think" or "as ${advisor.na
     let currentContent = '';
     let thinkingContent = '';
 
+    console.log(`🎭 ${advisor.name} Starting to read stream...`);
+
     while (true) {
       const { done, value } = await reader.read();
-      if (done) break;
+      if (done) {
+        console.log(`🎭 ${advisor.name} Stream completed. Total content length:`, currentContent.length);
+        break;
+      }
       
       buffer += decoder.decode(value, { stream: true });
       const events = buffer.split('\n\n');
@@ -176,6 +187,7 @@ Do not reference other advisors or say things like "I think" or "as ${advisor.na
             if (data.delta.type === 'text_delta') {
               const text = data.delta.text;
               currentContent += text;
+              console.log(`🎭 ${advisor.name} received text:`, `"${text}" (total so far: ${currentContent.length} chars)`);
               
               // Update the parallel message state for this advisor
               setMessages((prev) => {
@@ -183,6 +195,7 @@ Do not reference other advisors or say things like "I think" or "as ${advisor.na
                 const lastMessage = newMessages[newMessages.length - 1];
                 
                 if (lastMessage && lastMessage.type === 'parallel_advisor_response') {
+                  console.log(`🎭 ${advisor.name} updating UI with content:`, currentContent.substring(0, 50) + '...');
                   // Create new message object to trigger React re-render
                   newMessages[newMessages.length - 1] = {
                     ...lastMessage,
@@ -196,6 +209,8 @@ Do not reference other advisors or say things like "I think" or "as ${advisor.na
                       }
                     }
                   };
+                } else {
+                  console.warn(`🎭 ${advisor.name} could not find parallel message to update`);
                 }
                 
                 return newMessages;
