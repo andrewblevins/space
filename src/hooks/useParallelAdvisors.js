@@ -36,12 +36,7 @@ export function useParallelAdvisors({ messages, setMessages, maxTokens, contextL
       throw new Error('Not authenticated');
     }
     
-    // Get API key for legacy mode
-    let anthropicKey = null;
-    if (!useAuthSystem) {
-      anthropicKey = await getDecrypted('space_anthropic_key');
-      if (!anthropicKey) throw new Error('Anthropic API key not found');
-    }
+    // API key handling moved to headers section for proper routing
 
     const estimateTokens = (text) => Math.ceil(text.length / 4);
     const totalTokens = messages.reduce((sum, msg) => sum + estimateTokens(msg.content || ''), 0);
@@ -119,14 +114,18 @@ Do not reference other advisors or say things like "I think" or "as ${advisor.na
     if (useAuthSystem) {
       headers['Authorization'] = `Bearer ${session.access_token}`;
     } else {
-      headers['x-api-key'] = anthropicKey;
-      headers['anthropic-version'] = '2023-06-01';
-      headers['anthropic-dangerous-direct-browser-access'] = 'true';
+      // Legacy mode: get OpenRouter key and set appropriate headers
+      const openrouterKey = await getDecrypted('space_openrouter_key');
+      if (!openrouterKey) throw new Error('OpenRouter API key not found');
+      
+      headers['Authorization'] = `Bearer ${openrouterKey}`;
+      headers['HTTP-Referer'] = window.location.origin;
+      headers['X-Title'] = 'SPACE Terminal';
     }
     
     const apiUrl = useAuthSystem 
-      ? `${getApiEndpoint()}/api/chat/claude`
-      : `${getApiEndpoint()}/v1/messages`;
+      ? `${getApiEndpoint()}/api/chat/openrouter`
+      : 'https://openrouter.ai/api/v1/chat/completions';
     
     const response = await fetch(apiUrl, {
       method: 'POST',
