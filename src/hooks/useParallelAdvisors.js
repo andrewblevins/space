@@ -184,65 +184,68 @@ Do not reference other advisors or say things like "I think" or "as ${advisor.na
           }
           
           const data = JSON.parse(dataMatch[1]);
-          if (data.type === 'content_block_delta') {
-            if (data.delta.type === 'text_delta') {
-              const text = data.delta.text;
-              currentContent += text;
-              console.log(`🎭 ${advisor.name} received text:`, `"${text}" (total so far: ${currentContent.length} chars)`);
+          console.log(`🎭 ${advisor.name} received streaming data:`, data);
+          
+          // OpenRouter format: data.choices[0].delta.content
+          if (data.choices && data.choices[0] && data.choices[0].delta && data.choices[0].delta.content) {
+            const text = data.choices[0].delta.content;
+            currentContent += text;
+            console.log(`🎭 ${advisor.name} received text:`, `"${text}" (total so far: ${currentContent.length} chars)`);
+            
+            // Update the parallel message state for this advisor
+            setMessages((prev) => {
+              const newMessages = [...prev];
+              const lastMessage = newMessages[newMessages.length - 1];
               
-              // Update the parallel message state for this advisor
+              if (lastMessage && lastMessage.type === 'parallel_advisor_response') {
+                console.log(`🎭 ${advisor.name} updating UI with content:`, currentContent.substring(0, 50) + '...');
+                // Create new message object to trigger React re-render
+                newMessages[newMessages.length - 1] = {
+                  ...lastMessage,
+                  advisorResponses: {
+                    ...lastMessage.advisorResponses,
+                    [advisorId]: {
+                      ...lastMessage.advisorResponses[advisorId],
+                      content: currentContent,
+                      thinking: reasoningMode ? thinkingContent : undefined,
+                      completed: false
+                    }
+                  }
+                };
+              } else {
+                console.warn(`🎭 ${advisor.name} could not find parallel message to update`);
+              }
+              
+              return newMessages;
+            });
+          }
+          
+          // Handle thinking content if available (Anthropic format, might not be used with OpenRouter)
+          if (data.type === 'content_block_delta' && data.delta && data.delta.type === 'thinking_delta' && reasoningMode) {
+            const thinkingText = data.delta.thinking || '';
+            if (thinkingText) {
+              thinkingContent += thinkingText;
+              
+              // Update thinking content
               setMessages((prev) => {
                 const newMessages = [...prev];
                 const lastMessage = newMessages[newMessages.length - 1];
                 
                 if (lastMessage && lastMessage.type === 'parallel_advisor_response') {
-                  console.log(`🎭 ${advisor.name} updating UI with content:`, currentContent.substring(0, 50) + '...');
-                  // Create new message object to trigger React re-render
                   newMessages[newMessages.length - 1] = {
                     ...lastMessage,
                     advisorResponses: {
                       ...lastMessage.advisorResponses,
                       [advisorId]: {
                         ...lastMessage.advisorResponses[advisorId],
-                        content: currentContent,
-                        thinking: reasoningMode ? thinkingContent : undefined,
-                        completed: false
+                        thinking: thinkingContent
                       }
                     }
                   };
-                } else {
-                  console.warn(`🎭 ${advisor.name} could not find parallel message to update`);
                 }
                 
                 return newMessages;
               });
-              
-            } else if (data.delta.type === 'thinking_delta' && reasoningMode) {
-              const thinkingText = data.delta.thinking || '';
-              if (thinkingText) {
-                thinkingContent += thinkingText;
-                
-                // Update thinking content
-                setMessages((prev) => {
-                  const newMessages = [...prev];
-                  const lastMessage = newMessages[newMessages.length - 1];
-                  
-                  if (lastMessage && lastMessage.type === 'parallel_advisor_response') {
-                    newMessages[newMessages.length - 1] = {
-                      ...lastMessage,
-                      advisorResponses: {
-                        ...lastMessage.advisorResponses,
-                        [advisorId]: {
-                          ...lastMessage.advisorResponses[advisorId],
-                          thinking: thinkingContent
-                        }
-                      }
-                    };
-                  }
-                  
-                  return newMessages;
-                });
-              }
             }
           }
         } catch (e) {
