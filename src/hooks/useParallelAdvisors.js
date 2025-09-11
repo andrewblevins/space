@@ -183,11 +183,18 @@ Do not reference other advisors or say things like "I think" or "as ${advisor.na
                 const lastMessage = newMessages[newMessages.length - 1];
                 
                 if (lastMessage && lastMessage.type === 'parallel_advisor_response') {
-                  lastMessage.advisorResponses[advisorId] = {
-                    ...lastMessage.advisorResponses[advisorId],
-                    content: currentContent,
-                    thinking: reasoningMode ? thinkingContent : undefined,
-                    completed: false
+                  // Create new message object to trigger React re-render
+                  newMessages[newMessages.length - 1] = {
+                    ...lastMessage,
+                    advisorResponses: {
+                      ...lastMessage.advisorResponses,
+                      [advisorId]: {
+                        ...lastMessage.advisorResponses[advisorId],
+                        content: currentContent,
+                        thinking: reasoningMode ? thinkingContent : undefined,
+                        completed: false
+                      }
+                    }
                   };
                 }
                 
@@ -205,9 +212,15 @@ Do not reference other advisors or say things like "I think" or "as ${advisor.na
                   const lastMessage = newMessages[newMessages.length - 1];
                   
                   if (lastMessage && lastMessage.type === 'parallel_advisor_response') {
-                    lastMessage.advisorResponses[advisorId] = {
-                      ...lastMessage.advisorResponses[advisorId],
-                      thinking: thinkingContent
+                    newMessages[newMessages.length - 1] = {
+                      ...lastMessage,
+                      advisorResponses: {
+                        ...lastMessage.advisorResponses,
+                        [advisorId]: {
+                          ...lastMessage.advisorResponses[advisorId],
+                          thinking: thinkingContent
+                        }
+                      }
                     };
                   }
                   
@@ -228,14 +241,22 @@ Do not reference other advisors or say things like "I think" or "as ${advisor.na
       const lastMessage = newMessages[newMessages.length - 1];
       
       if (lastMessage && lastMessage.type === 'parallel_advisor_response') {
-        lastMessage.advisorResponses[advisorId] = {
-          ...lastMessage.advisorResponses[advisorId],
-          completed: true
+        const updatedAdvisorResponses = {
+          ...lastMessage.advisorResponses,
+          [advisorId]: {
+            ...lastMessage.advisorResponses[advisorId],
+            completed: true
+          }
         };
         
         // Check if all advisors are completed
-        const allCompleted = Object.values(lastMessage.advisorResponses).every(advisor => advisor.completed);
-        lastMessage.allCompleted = allCompleted;
+        const allCompleted = Object.values(updatedAdvisorResponses).every(advisor => advisor.completed);
+        
+        newMessages[newMessages.length - 1] = {
+          ...lastMessage,
+          advisorResponses: updatedAdvisorResponses,
+          allCompleted: allCompleted
+        };
       }
       
       return newMessages;
@@ -289,11 +310,17 @@ Do not reference other advisors or say things like "I think" or "as ${advisor.na
           const lastMessage = newMessages[newMessages.length - 1];
           
           if (lastMessage && lastMessage.type === 'parallel_advisor_response') {
-            lastMessage.advisorResponses[advisorId] = {
-              ...lastMessage.advisorResponses[advisorId],
-              content: `Error: ${error.message}`,
-              completed: true,
-              error: true
+            newMessages[newMessages.length - 1] = {
+              ...lastMessage,
+              advisorResponses: {
+                ...lastMessage.advisorResponses,
+                [advisorId]: {
+                  ...lastMessage.advisorResponses[advisorId],
+                  content: `Error: ${error.message}`,
+                  completed: true,
+                  error: true
+                }
+              }
             };
           }
           
