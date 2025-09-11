@@ -80,15 +80,6 @@ Do not reference other advisors or say things like "I think" or "as ${advisor.na
     const contextTokens = contextMessages.reduce((s, m) => s + estimateTokens(m.content), 0);
     const inputTokens = systemTokens + contextTokens;
 
-    console.log(`🎭 ${advisor.name} API Call Starting:`, {
-      inputTokens,
-      systemTokens,
-      contextTokens,
-      systemPrompt: systemPromptText.substring(0, 200) + '...',
-      apiUrl,
-      model: requestBody.model
-    });
-
     const requestBody = {
       model: 'anthropic/claude-sonnet-4',
       messages: contextMessages,
@@ -96,6 +87,14 @@ Do not reference other advisors or say things like "I think" or "as ${advisor.na
       max_tokens: maxTokens,
       stream: true,
     };
+
+    console.log(`🎭 ${advisor.name} API Call Starting:`, {
+      inputTokens,
+      systemTokens,
+      contextTokens,
+      systemPrompt: systemPromptText.substring(0, 200) + '...',
+      model: requestBody.model
+    });
 
     // Add Extended Thinking if enabled
     if (reasoningMode) {
@@ -126,6 +125,8 @@ Do not reference other advisors or say things like "I think" or "as ${advisor.na
     const apiUrl = useAuthSystem 
       ? `${getApiEndpoint()}/api/chat/openrouter`
       : 'https://openrouter.ai/api/v1/chat/completions';
+    
+    console.log(`🎭 ${advisor.name} Calling API:`, { apiUrl });
     
     const response = await fetch(apiUrl, {
       method: 'POST',
