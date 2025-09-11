@@ -50,33 +50,70 @@ Do not reference other advisors or say things like "I think" or "as ${advisor.na
 
 Keep your responses concise - aim for 1-2 short paragraphs per response. Be direct and focused rather than lengthy or verbose.`;
 
-    // Build conversation context with system prompt always first
+    // Build conversation context - user messages + this advisor's own responses only
     const conversationMessages = [];
     
-    // Add historical context
+    // Add historical conversation with proper context filtering
     if (totalTokens < contextLimit) {
       const historical = messages
-        .filter((m) => (m.type === 'user' || m.type === 'assistant' || m.type === 'advisor_json') && m.content?.trim() !== '' && m.content !== userMessage)
-        .map((m) => {
-          const role = m.type === 'advisor_json' ? 'assistant' : m.type;
-          let content = m.content;
-          if (m.type === 'advisor_json' && m.parsedAdvisors) {
-            // For parallel messages, extract only this advisor's previous responses
-            const advisorResponses = m.parsedAdvisors.advisors
-              .filter(a => a.name === advisor.name)
-              .map(a => `**${a.name}**: ${a.response}`)
-              .join('\n\n');
-            content = advisorResponses || content;
+        .filter((m) => {
+          // Always include user messages
+          if (m.type === 'user' && m.content?.trim() !== '' && m.content !== userMessage) return true;
+          
+          // Include only THIS advisor's previous responses (not other advisors)
+          if (m.type === 'parallel_advisor_response' && m.advisorResponses) {
+            return Object.values(m.advisorResponses).some(resp => resp.name === advisor.name);
           }
-          return { 
-            role, 
-            content: m.timestamp ? `[${formatTimestamp(m.timestamp)}] ${content}` : content 
+          
+          // For legacy advisor_json messages, include only if this advisor participated
+          if (m.type === 'advisor_json' && m.parsedAdvisors) {
+            return m.parsedAdvisors.advisors.some(a => a.name === advisor.name);
+          }
+          
+          return false;
+        })
+        .map((m) => {
+          let role = m.type;
+          let content = m.content;
+          
+          // Handle parallel advisor responses - extract only this advisor's response
+          if (m.type === 'parallel_advisor_response' && m.advisorResponses) {
+            const thisAdvisorResponse = Object.values(m.advisorResponses).find(resp => resp.name === advisor.name);
+            if (thisAdvisorResponse) {
+              role = 'assistant';
+              content = thisAdvisorResponse.content;
+            }
+          }
+          // Handle legacy advisor_json - extract only this advisor's response  
+          else if (m.type === 'advisor_json' && m.parsedAdvisors) {
+            const thisAdvisorResponse = m.parsedAdvisors.advisors.find(a => a.name === advisor.name);
+            if (thisAdvisorResponse) {
+              role = 'assistant';
+              content = thisAdvisorResponse.response;
+            }
+          }
+          // User messages stay as-is
+          else if (m.type === 'user') {
+            role = 'user';
+          }
+          
+          return {
+            role,
+            content: m.timestamp ? `[${formatTimestamp(m.timestamp)}] ${content}` : content
           };
         });
+      
       conversationMessages.push(...historical);
     } else {
-      const managed = buildConversationContext(userMessage, messages, memory);
-      if (managed?.length) conversationMessages.push(...managed);
+      // For memory-managed context, we might need to adapt buildConversationContext
+      // For now, fall back to simpler approach
+      const userMessages = messages
+        .filter((m) => m.type === 'user' && m.content?.trim() !== '' && m.content !== userMessage)
+        .map((m) => ({
+          role: 'user',
+          content: m.timestamp ? `[${formatTimestamp(m.timestamp)}] ${m.content}` : m.content
+        }));
+      conversationMessages.push(...userMessages);
     }
     
     // Add current user message
