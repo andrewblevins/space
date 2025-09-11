@@ -166,6 +166,11 @@ Do not reference other advisors or say things like "I think" or "as ${advisor.na
         if (!dataMatch) continue;
         
         try {
+          // Skip the final [DONE] marker
+          if (dataMatch[1] === '[DONE]') {
+            continue;
+          }
+          
           const data = JSON.parse(dataMatch[1]);
           if (data.type === 'content_block_delta') {
             if (data.delta.type === 'text_delta') {
