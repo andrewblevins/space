@@ -105,6 +105,12 @@ Keep your responses concise - aim for 1-2 short paragraphs per response. Be dire
       model: requestBody.model
     });
 
+    // Debug: Show the exact context being sent to this advisor
+    console.log(`🎭 ${advisor.name} CONTEXT MESSAGES:`, {
+      systemMessage: { role: 'system', content: systemPromptText.substring(0, 100) + '...' },
+      conversationMessages: conversationMessages
+    });
+
     // Add Extended Thinking if enabled
     if (reasoningMode) {
       const thinkingBudget = Math.floor(maxTokens * 0.6);
@@ -169,12 +175,10 @@ Keep your responses concise - aim for 1-2 short paragraphs per response. Be dire
     let currentContent = '';
     let thinkingContent = '';
 
-    console.log(`🎭 ${advisor.name} Starting to read stream...`);
 
     while (true) {
       const { done, value } = await reader.read();
       if (done) {
-        console.log(`🎭 ${advisor.name} Stream completed. Total content length:`, currentContent.length);
         break;
       }
       
@@ -193,13 +197,11 @@ Keep your responses concise - aim for 1-2 short paragraphs per response. Be dire
           }
           
           const data = JSON.parse(dataMatch[1]);
-          console.log(`🎭 ${advisor.name} received streaming data:`, data);
           
           // OpenRouter format: data.choices[0].delta.content
           if (data.choices && data.choices[0] && data.choices[0].delta && data.choices[0].delta.content) {
             const text = data.choices[0].delta.content;
             currentContent += text;
-            console.log(`🎭 ${advisor.name} received text:`, `"${text}" (total so far: ${currentContent.length} chars)`);
             
             // Update the parallel message state for this advisor
             setMessages((prev) => {
@@ -207,7 +209,6 @@ Keep your responses concise - aim for 1-2 short paragraphs per response. Be dire
               const lastMessage = newMessages[newMessages.length - 1];
               
               if (lastMessage && lastMessage.type === 'parallel_advisor_response') {
-                console.log(`🎭 ${advisor.name} updating UI with content:`, currentContent.substring(0, 50) + '...');
                 // Create new message object to trigger React re-render
                 newMessages[newMessages.length - 1] = {
                   ...lastMessage,
@@ -221,8 +222,6 @@ Keep your responses concise - aim for 1-2 short paragraphs per response. Be dire
                     }
                   }
                 };
-              } else {
-                console.warn(`🎭 ${advisor.name} could not find parallel message to update`);
               }
               
               return newMessages;
