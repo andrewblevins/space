@@ -95,7 +95,7 @@ Do not reference other advisors or say things like "I think" or "as ${advisor.na
     }
 
     const requestBody = {
-      model: 'claude-3-5-sonnet-20241022',
+      model: 'claude-sonnet-4',
       messages: contextMessages,
       system: systemPromptText,
       max_tokens: maxTokens,
