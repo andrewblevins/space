@@ -46,7 +46,9 @@ export function useParallelAdvisors({ messages, setMessages, maxTokens, contextL
 
 IMPORTANT: You are responding as a single advisor, not multiple advisors. Provide your response directly without any JSON formatting or advisor names. Just respond naturally as ${advisor.name} would.
 
-Do not reference other advisors or say things like "I think" or "as ${advisor.name}". Just respond as this advisor naturally.`;
+Do not reference other advisors or say things like "I think" or "as ${advisor.name}". Just respond as this advisor naturally.
+
+Keep your responses concise - aim for 1-2 short paragraphs per response. Be direct and focused rather than lengthy or verbose.`;
 
     // Build conversation context with system prompt always first
     const conversationMessages = [];
