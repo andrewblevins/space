@@ -94,6 +94,50 @@ const MobileLayout = ({
                         </div>
                       )}
                     </div>
+                  ) : msg.type === 'parallel_advisor_response' ? (
+                    <div>
+                      {!msg.allCompleted && (
+                        <div className="mb-2 text-sm text-green-600 dark:text-green-400 italic">
+                          ⚡ Parallel streaming in progress...
+                        </div>
+                      )}
+                      {Object.entries(msg.advisorResponses).map(([advisorId, advisorData]) => {
+                        const advisorForCard = {
+                          id: advisorId,
+                          name: advisorData.name,
+                          response: advisorData.content,
+                          timestamp: msg.timestamp
+                        };
+
+                        return (
+                          <div key={advisorId}>
+                            {advisorData.thinking && <ThinkingBlock content={advisorData.thinking} />}
+                            <AdvisorResponseCard
+                              advisor={advisorForCard}
+                              allAdvisors={advisors}
+                              onAssertionsClick={(advisorData) => {
+                                console.log('🎯 Assertions clicked for:', advisorData);
+                                setSelectedAdvisorForAssertions({
+                                  ...advisorData,
+                                  conversationContext: {
+                                    messages: [...messages],
+                                    advisors: [...advisors],
+                                    systemPrompt: getSystemPrompt(),
+                                    timestamp: new Date().toISOString()
+                                  }
+                                });
+                                setShowAssertionsModal(true);
+                              }}
+                            />
+                            {advisorData.error && (
+                              <div className="mb-2 text-sm text-red-600 dark:text-red-400 italic">
+                                ⚠ Error with this advisor
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
                   ) : msg.type === 'assistant' ? (
                     (() => {
                       const { processedContent, debates } = processCouncilDebates(msg.content);

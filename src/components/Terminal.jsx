@@ -41,6 +41,7 @@ import { AdvisorResponseCard } from "./terminal/AdvisorResponseCard";
 import MessageRenderer from "./terminal/MessageRenderer";
 import useClaude from "../hooks/useClaude";
 import useOpenRouter from "../hooks/useOpenRouter";
+import useParallelAdvisors from "../hooks/useParallelAdvisors";
 import { analyzeMetaphors, analyzeForQuestions, summarizeSession, generateSessionSummary } from "../utils/terminalHelpers";
 import { trackUsage, trackSession } from '../utils/usageTracking';
 import { worksheetQuestions, WORKSHEET_TEMPLATES } from "../utils/worksheetTemplates";
@@ -550,6 +551,7 @@ After the debate section, provide:
 
 const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimit, memory, debugMode, reasoningMode, getSystemPrompt });
 const { callOpenRouter } = useOpenRouter({ messages, setMessages, maxTokens, contextLimit, memory, debugMode, getSystemPrompt, model: openrouterModel });
+const { callParallelAdvisors } = useParallelAdvisors({ messages, setMessages, maxTokens, contextLimit, memory, debugMode, reasoningMode });
 
   // Generate a creative starting prompt for new conversations
   const generateStartingPrompt = async () => {
@@ -2665,15 +2667,22 @@ Gemini: ${geminiKey ? '✓ Set' : '✗ Not Set'}`
       // Add it to messages state
       await setMessages(prev => [...prev, newMessage]);
 
-      // Use the consolidated system prompt function with the session contexts
-
-      // Pass the content to Claude with enhanced system prompt (this starts immediately)
-      if (councilMode) {
-        const systemPrompt = getSystemPrompt({ councilMode, sessionContexts });
-        // console.log('🏛️ High Council System Prompt:', systemPrompt);
+      // Use parallel advisors if any are selected, otherwise fall back to current system
+      const activeAdvisors = advisors.filter(a => a.active);
+      
+      if (activeAdvisors.length > 0) {
+        // Use parallel advisor system
+        console.log('🎭 Using parallel advisors:', activeAdvisors.map(a => a.name));
+        await callParallelAdvisors(newMessage.content, activeAdvisors);
+      } else {
+        // Fall back to current system for non-advisor responses
+        console.log('🤖 No active advisors, using standard OpenRouter');
+        if (councilMode) {
+          const systemPrompt = getSystemPrompt({ councilMode, sessionContexts });
+          // console.log('🏛️ High Council System Prompt:', systemPrompt);
+        }
+        await callOpenRouter(newMessage.content, () => getSystemPrompt({ councilMode, sessionContexts }));
       }
-      // Always use OpenRouter with selected model
-      await callOpenRouter(newMessage.content, () => getSystemPrompt({ councilMode, sessionContexts }));
 
       // Update message with tags after tag analysis completes (in background)
       tagAnalysisPromise.then(tags => {

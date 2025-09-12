@@ -78,6 +78,42 @@ const MessageRenderer = memo(({
           </div>
         );
 
+      case 'parallel_advisor_response':
+        return (
+          <div>
+            {!msg.allCompleted && (
+              <div className="mb-2 text-sm text-green-600 dark:text-green-400 italic">
+                ⚡ Parallel streaming in progress...
+              </div>
+            )}
+            {Object.entries(msg.advisorResponses).map(([advisorId, advisorData]) => {
+              // Create advisor object compatible with AdvisorResponseCard
+              const advisorForCard = {
+                id: advisorId,
+                name: advisorData.name,
+                response: advisorData.content,
+                timestamp: msg.timestamp
+              };
+
+              return (
+                <div key={advisorId}>
+                  {advisorData.thinking && <ThinkingBlock content={advisorData.thinking} />}
+                  <AdvisorResponseCard
+                    advisor={advisorForCard}
+                    allAdvisors={advisors}
+                    onAssertionsClick={(advisorData) => onAssertionsClick(advisorData, messages, getSystemPrompt)}
+                  />
+                  {advisorData.error && (
+                    <div className="mb-2 text-sm text-red-600 dark:text-red-400 italic">
+                      ⚠ Error with this advisor
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        );
+
       case 'assistant':
         const { processedContent, debates } = processCouncilDebates(msg.content);
         return (
