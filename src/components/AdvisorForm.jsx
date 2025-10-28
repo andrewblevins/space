@@ -109,6 +109,7 @@ const AdvisorForm = ({ onSubmit, onCancel, initialName = '', existingAdvisors = 
   const [description, setDescription] = useState('');
   const [error, setError] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
     setName(initialName);
@@ -127,19 +128,22 @@ const AdvisorForm = ({ onSubmit, onCancel, initialName = '', existingAdvisors = 
       setError('Enter an advisor name first');
       return;
     }
-    
+
     if (description.trim()) {
       setError('Clear the description field before generating a new description');
       return;
     }
-    
+
     try {
       setError('');
+      setIsGenerating(true);
       await generateAdvisorDescription(name, (streamedText) => {
         setDescription(streamedText);
       });
     } catch (error) {
       setError('Failed to generate description: ' + error.message);
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -231,16 +235,18 @@ const AdvisorForm = ({ onSubmit, onCancel, initialName = '', existingAdvisors = 
           </button>
           <button
             onClick={handleGenerate}
-            className="px-4 py-2 mx-2 text-yellow-600 border border-yellow-600 rounded hover:bg-yellow-600 hover:text-white dark:text-yellow-400 dark:border-yellow-400 dark:hover:bg-yellow-400 dark:hover:text-black"
+            disabled={isGenerating}
+            className="px-4 py-2 mx-2 text-yellow-600 border border-yellow-600 rounded hover:bg-yellow-600 hover:text-white dark:text-yellow-400 dark:border-yellow-400 dark:hover:bg-yellow-400 dark:hover:text-black disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Generate Description
+            {isGenerating ? 'Generating...' : 'Generate Description'}
           </button>
           <button
             onClick={() => {
               trackAdvisorCreated(name);
               onSubmit({ name, description, color: selectedColor });
             }}
-            className="px-4 py-2 text-green-600 border border-green-600 rounded hover:bg-green-600 hover:text-white dark:text-green-400 dark:border-green-400 dark:hover:bg-green-400 dark:hover:text-black"
+            disabled={isGenerating}
+            className="px-4 py-2 text-green-600 border border-green-600 rounded hover:bg-green-600 hover:text-white dark:text-green-400 dark:border-green-400 dark:hover:bg-green-400 dark:hover:text-black disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Add Advisor
           </button>
