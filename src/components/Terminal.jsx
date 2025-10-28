@@ -30,10 +30,11 @@ import { Module } from "./terminal/Module";
 import { GroupableModule } from "./terminal/GroupableModule";
 import { CollapsibleModule } from "./terminal/CollapsibleModule";
 import { CollapsibleClickableModule } from "./terminal/CollapsibleClickableModule";
-import DebateBlock from './DebateBlock';
+// DEPRECATED: High Council Mode components
+// import DebateBlock from './DebateBlock';
 import { CollapsibleSuggestionsModule } from "./terminal/CollapsibleSuggestionsModule";
 import VotingModal from './VotingModal';
-import HighCouncilModal from './HighCouncilModal';
+// import HighCouncilModal from './HighCouncilModal';
 import { ExpandingInput } from "./terminal/ExpandingInput";
 import { MemoizedMarkdownMessage } from "./terminal/MemoizedMarkdownMessage";
 import { AdvisorResponseMessage } from "./terminal/AdvisorResponseMessage";
@@ -130,46 +131,47 @@ const Terminal = ({ theme, toggleTheme }) => {
     }
   };
 
+  // DEPRECATED: High Council debate processing - Replaced by parallel advisor streaming
   // Process council debate sections for streaming-friendly collapsible display
-  const processCouncilDebates = (content) => {
-    // Check if content starts with High Council debate format
-    if (content.startsWith('<COUNCIL_DEBATE>')) {
-      // Find where summary starts
-      const summaryMatch = content.match(/## Council Summary/i);
-      
-      if (summaryMatch) {
-        // Split at summary
-        const debateEnd = summaryMatch.index;
-        const debateContent = content.substring('<COUNCIL_DEBATE>'.length, debateEnd);
-        const summaryContent = content.substring(debateEnd);
-        return { 
-          processedContent: summaryContent, 
-          debates: [debateContent] 
-        };
-      } else {
-        // No summary yet (still streaming), treat everything after opening tag as debate
-        const debateContent = content.substring('<COUNCIL_DEBATE>'.length);
-        return { 
-          processedContent: '', 
-          debates: [debateContent] 
-        };
-      }
-    }
-    
-    // Fallback to original regex approach for completed responses
-    const debateRegex = /<COUNCIL_DEBATE>([\s\S]*?)<\/COUNCIL_DEBATE>/g;
-    const debates = [];
-    let processedContent = content;
-    let match;
-
-    while ((match = debateRegex.exec(content)) !== null) {
-      const debateContent = match[1].trim();
-      debates.push(debateContent);
-      processedContent = processedContent.replace(match[0], `__DEBATE_PLACEHOLDER_${debates.length - 1}__`);
-    }
-
-    return { processedContent, debates };
-  };
+  // const processCouncilDebates = (content) => {
+  //   // Check if content starts with High Council debate format
+  //   if (content.startsWith('<COUNCIL_DEBATE>')) {
+  //     // Find where summary starts
+  //     const summaryMatch = content.match(/## Council Summary/i);
+  //
+  //     if (summaryMatch) {
+  //       // Split at summary
+  //       const debateEnd = summaryMatch.index;
+  //       const debateContent = content.substring('<COUNCIL_DEBATE>'.length, debateEnd);
+  //       const summaryContent = content.substring(debateEnd);
+  //       return {
+  //         processedContent: summaryContent,
+  //         debates: [debateContent]
+  //       };
+  //     } else {
+  //       // No summary yet (still streaming), treat everything after opening tag as debate
+  //       const debateContent = content.substring('<COUNCIL_DEBATE>'.length);
+  //       return {
+  //         processedContent: '',
+  //         debates: [debateContent]
+  //       };
+  //     }
+  //   }
+  //
+  //   // Fallback to original regex approach for completed responses
+  //   const debateRegex = /<COUNCIL_DEBATE>([\s\S]*?)<\/COUNCIL_DEBATE>/g;
+  //   const debates = [];
+  //   let processedContent = content;
+  //   let match;
+  //
+  //   while ((match = debateRegex.exec(content)) !== null) {
+  //     const debateContent = match[1].trim();
+  //     debates.push(debateContent);
+  //     processedContent = processedContent.replace(match[0], `__DEBATE_PLACEHOLDER_${debates.length - 1}__`);
+  //   }
+  //
+  //   return { processedContent, debates };
+  // };
 
   const [messages, setMessages] = useState(() => {
     const baseMessages = [
@@ -304,7 +306,8 @@ const Terminal = ({ theme, toggleTheme }) => {
   const [advisorSuggestions, setAdvisorSuggestions] = useState([]);
   const [voteHistory, setVoteHistory] = useState([]);
   const [showVotingModal, setShowVotingModal] = useState(false);
-  const [showHighCouncilModal, setShowHighCouncilModal] = useState(false);
+  // DEPRECATED: High Council Mode state
+  // const [showHighCouncilModal, setShowHighCouncilModal] = useState(false);
   const [lastAdvisorAnalysisContent, setLastAdvisorAnalysisContent] = useState('');
   const [suggestedAdvisorName, setSuggestedAdvisorName] = useState('');
   const [contextLimit, setContextLimit] = useState(150000);
@@ -440,21 +443,22 @@ MANDATORY FORMATTING RULES - FAILURE TO FOLLOW WILL BREAK THE SYSTEM:
 
 THIS FORMAT IS REQUIRED FOR EVERY RESPONSE - DO NOT DEVIATE`;
 
-const getSystemPrompt = useCallback(({ councilMode, sessionContexts } = {}) => {
+const getSystemPrompt = useCallback(({ sessionContexts } = {}) => {
   let prompt = "";
-  
+
   // Add advisor personas
   const activeAdvisors = advisors.filter(a => a.active);
   if (activeAdvisors.length > 0) {
     prompt += `You are currently embodying the following advisors:\n${activeAdvisors.map(a => `\n${a.name}: ${a.description}`).join('\n')}\n\n`;
-    
+
     // Explicit instruction to include all advisors
     prompt += `CRITICAL: You must include ALL advisors listed above in your response, even if some have empty or minimal descriptions. Every advisor name that appears in your persona list must have a response in your output. Do not exclude any advisor based on lack of description.\n\n`;
-    
+
     // Add conversation continuity instructions
     prompt += `## CONVERSATION CONTINUITY\n\nIMPORTANT: You are continuing an ongoing conversation with this user. Do not re-introduce topics, concepts, or ask questions that have already been addressed in the conversation history. Build upon what has been established rather than starting fresh each time. Reference previous exchanges naturally and maintain the flow of the conversation.\n\n`;
-    
-    if (councilMode) {
+
+    // DEPRECATED: High Council Mode - Replaced by parallel advisor streaming
+    /* if (councilMode) {
       prompt += `\n\n## HIGH COUNCIL MODE
 IMPORTANT: Start your response with the exact text "<COUNCIL_DEBATE>" (this is required for the interface to work properly).
 
@@ -521,7 +525,7 @@ DO NOT FORGET THE <COUNCIL_DEBATE> TAGS. Without these tags, the debate will not
 After the debate section, provide:
 - One sentence per advisor summarizing their final position
 - Synthesis: 1-2 sentences on the overall outcome or remaining tensions`;
-    }
+    } */
   }
   // If no advisors are active, no system prompt is needed
   
@@ -541,8 +545,8 @@ After the debate section, provide:
     prompt += "Use these conversation contexts to inform your response when relevant. The user's message may reference specific details from these conversations.\n";
   }
   
-  // Add JSON format instructions at the END to make them most prominent (only for non-council mode)
-  if (activeAdvisors.length > 0 && !councilMode) {
+  // Add JSON format instructions at the END to make them most prominent
+  if (activeAdvisors.length > 0) {
     prompt += ADVISOR_JSON_FORMAT;
   }
   
@@ -2574,12 +2578,12 @@ Gemini: ${geminiKey ? '✓ Set' : '✗ Not Set'}`
       let processedInput = input;
       let sessionContexts = [];
 
-      // Detect High Council mode marker and remove it from the input
-      const councilRegex = /\/council\b/i;
-      const councilMode = councilRegex.test(processedInput);
-      if (councilMode) {
-        processedInput = processedInput.replace(councilRegex, '').trim();
-      }
+      // DEPRECATED: High Council mode detection - Replaced by parallel advisor streaming
+      // const councilRegex = /\/council\b/i;
+      // const councilMode = councilRegex.test(processedInput);
+      // if (councilMode) {
+      //   processedInput = processedInput.replace(councilRegex, '').trim();
+      // }
       
       // Handle new format: @"Session Title" - collect summaries for context injection
       const atTitleRegex = /@"([^"]+)"/g;
@@ -2677,11 +2681,12 @@ Gemini: ${geminiKey ? '✓ Set' : '✗ Not Set'}`
       } else {
         // Fall back to current system for non-advisor responses
         console.log('🤖 No active advisors, using standard OpenRouter');
-        if (councilMode) {
-          const systemPrompt = getSystemPrompt({ councilMode, sessionContexts });
-          // console.log('🏛️ High Council System Prompt:', systemPrompt);
-        }
-        await callOpenRouter(newMessage.content, () => getSystemPrompt({ councilMode, sessionContexts }));
+        // DEPRECATED: High Council mode removed
+        // if (councilMode) {
+        //   const systemPrompt = getSystemPrompt({ councilMode, sessionContexts });
+        //   // console.log('🏛️ High Council System Prompt:', systemPrompt);
+        // }
+        await callOpenRouter(newMessage.content, () => getSystemPrompt({ sessionContexts }));
       }
 
       // Update message with tags after tag analysis completes (in background)
@@ -3153,29 +3158,30 @@ Example: {"position": "Option 2 text here", "confidence": 75, "reasoning": "This
     }]);
   };
 
-  const handleStartHighCouncil = async (topic) => {
-    const active = advisors.filter(a => a.active);
-    if (active.length === 0) {
-      setMessages(prev => [...prev, {
-        type: 'system',
-        content: 'No active advisors for High Council debate. Please activate advisors first.'
-      }]);
-      return;
-    }
+  // DEPRECATED: High Council Mode handler - Replaced by parallel advisor streaming
+  // const handleStartHighCouncil = async (topic) => {
+  //   const active = advisors.filter(a => a.active);
+  //   if (active.length === 0) {
+  //     setMessages(prev => [...prev, {
+  //       type: 'system',
+  //       content: 'No active advisors for High Council debate. Please activate advisors first.'
+  //     }]);
+  //     return;
+  //   }
 
-    // Set the input and trigger form submission
-    const councilMessage = `/council ${topic}`;
-    setInput(councilMessage);
-    
-    // Trigger the form submission programmatically
-    setTimeout(() => {
-      const form = document.querySelector('form');
-      if (form) {
-        const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
-        form.dispatchEvent(submitEvent);
-      }
-    }, 100);
-  };
+  //   // Set the input and trigger form submission
+  //   const councilMessage = `/council ${topic}`;
+  //   setInput(councilMessage);
+  //
+  //   // Trigger the form submission programmatically
+  //   setTimeout(() => {
+  //     const form = document.querySelector('form');
+  //     if (form) {
+  //       const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
+  //       form.dispatchEvent(submitEvent);
+  //     }
+  //   }, 100);
+  // };
 
   // Auto-save to database when using auth system, localStorage as fallback
   useEffect(() => {
@@ -3807,7 +3813,8 @@ ${selectedText}
                   onEvaluationsClick={() => setShowEvaluationsModal(true)}
                   onImportExportAdvisorsClick={() => setShowImportExportModal(true)}
                   onVotingClick={() => setShowVotingModal(true)}
-                  onHighCouncilClick={() => setShowHighCouncilModal(true)}
+                  // DEPRECATED: High Council Mode
+                  // onHighCouncilClick={() => setShowHighCouncilModal(true)}
                   onHelpClick={() => setShowHelpModal(true)}
                   onFullscreenClick={toggleFullscreen}
                   isFullscreen={isFullscreen}
@@ -3947,12 +3954,12 @@ ${selectedText}
         onSubmitVote={handleModalVote}
       />
 
-      {/* High Council Modal Component */}
-      <HighCouncilModal
+      {/* DEPRECATED: High Council Modal - Replaced by parallel advisor streaming */}
+      {/* <HighCouncilModal
         isOpen={showHighCouncilModal}
         onClose={() => setShowHighCouncilModal(false)}
         onStartCouncil={handleStartHighCouncil}
-      />
+      /> */}
 
       {/* Add Prompt Form Component */}
       <AddPromptForm
