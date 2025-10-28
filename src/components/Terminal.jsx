@@ -3653,7 +3653,7 @@ ${selectedText}
               setShowHelpModal={setShowHelpModal}
               setShowInfoModal={setShowInfoModal}
               // Pass message rendering functions
-              processCouncilDebates={processCouncilDebates}
+              // DEPRECATED: processCouncilDebates removed with High Council mode
               paragraphSpacing={paragraphSpacing}
               setSelectedAdvisorForAssertions={setSelectedAdvisorForAssertions}
               setShowAssertionsModal={setShowAssertionsModal}
@@ -3729,7 +3729,6 @@ ${selectedText}
                         });
                         setShowAssertionsModal(true);
                       }}
-                      processCouncilDebates={processCouncilDebates}
                       messages={messages}
                       getSystemPrompt={getSystemPrompt}
                     />

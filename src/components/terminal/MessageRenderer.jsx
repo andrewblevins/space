@@ -2,19 +2,19 @@ import React, { memo } from 'react';
 import { MemoizedMarkdownMessage } from './MemoizedMarkdownMessage';
 import { AdvisorResponseCard } from './AdvisorResponseCard';
 import ThinkingBlock from '../ThinkingBlock';
-import DebateBlock from '../DebateBlock';
+// DEPRECATED: DebateBlock no longer used after High Council removal
+// import DebateBlock from '../DebateBlock';
 
 /**
  * Individual message renderer component with React.memo optimization
  * This prevents re-rendering of unchanged messages during streaming
  */
-const MessageRenderer = memo(({ 
-  msg, 
-  idx, 
-  advisors, 
-  paragraphSpacing, 
+const MessageRenderer = memo(({
+  msg,
+  idx,
+  advisors,
+  paragraphSpacing,
   onAssertionsClick,
-  processCouncilDebates,
   messages,
   getSystemPrompt
 }) => {
@@ -115,7 +115,8 @@ const MessageRenderer = memo(({
         );
 
       case 'assistant':
-        const { processedContent, debates } = processCouncilDebates(msg.content);
+        // DEPRECATED: High Council debate processing removed
+        // Just render as normal assistant message
         return (
           <div>
             {msg.thinking && <ThinkingBlock content={msg.thinking} />}
@@ -124,17 +125,9 @@ const MessageRenderer = memo(({
                 ⚡ Streaming advisor responses...
               </div>
             )}
-            {debates.map((debate, debateIdx) => (
-              <DebateBlock 
-                key={debateIdx} 
-                content={debate} 
-                advisors={advisors} 
-                paragraphSpacing={paragraphSpacing} 
-              />
-            ))}
-            <MemoizedMarkdownMessage 
-              content={processedContent.replace(/__DEBATE_PLACEHOLDER_\d+__/g, '')} 
-              advisors={advisors} 
+            <MemoizedMarkdownMessage
+              content={msg.content}
+              advisors={advisors}
               paragraphSpacing={paragraphSpacing}
             />
           </div>
