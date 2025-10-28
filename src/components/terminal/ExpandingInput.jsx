@@ -18,7 +18,9 @@ export function ExpandingInput({ value, onChange, onSubmit, isLoading, sessions 
   const [autocompleteSearch, setAutocompleteSearch] = useState('');
   const [autocompletePosition, setAutocompletePosition] = useState({ top: 0, left: 0 });
   const [atPosition, setAtPosition] = useState(-1); // Track where the @ symbol is
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const textareaRef = useRef(null);
+  const fullscreenTextareaRef = useRef(null);
 
   // Detect @ symbol and manage autocomplete
   const handleInputChange = (e) => {
@@ -145,8 +147,28 @@ export function ExpandingInput({ value, onChange, onSubmit, isLoading, sessions 
     }
   }, [showAutocomplete]);
 
+  // Focus fullscreen textarea when modal opens
+  useEffect(() => {
+    if (isFullscreen && fullscreenTextareaRef.current) {
+      fullscreenTextareaRef.current.focus();
+    }
+  }, [isFullscreen]);
+
   return (
-    <div className="flex-1">
+    <>
+      <div className="flex-1 relative">
+        {/* Fullscreen button */}
+        <button
+          onClick={() => setIsFullscreen(true)}
+          className="absolute -top-6 right-0 p-1 text-gray-400 hover:text-green-400 transition-colors z-10"
+          title="Expand writing area"
+          type="button"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M3 4a1 1 0 011-1h4a1 1 0 010 2H6.414l2.293 2.293a1 1 0 11-1.414 1.414L5 6.414V8a1 1 0 01-2 0V4zm9 1a1 1 0 010-2h4a1 1 0 011 1v4a1 1 0 01-2 0V6.414l-2.293 2.293a1 1 0 11-1.414-1.414L13.586 5H12zm-9 7a1 1 0 012 0v1.586l2.293-2.293a1 1 0 111.414 1.414L6.414 15H8a1 1 0 010 2H4a1 1 0 01-1-1v-4zm13-1a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 010-2h1.586l-2.293-2.293a1 1 0 111.414-1.414L15 13.586V12a1 1 0 011-1z" clipRule="evenodd" />
+          </svg>
+        </button>
+
       <div
         className="w-full h-1 cursor-ns-resize bg-green-400/10 hover:bg-green-400/20 transition-colors"
         onMouseDown={(e) => {
@@ -209,6 +231,78 @@ export function ExpandingInput({ value, onChange, onSubmit, isLoading, sessions 
         position={autocompletePosition}
       />
     </div>
+
+    {/* Fullscreen writing modal */}
+    {isFullscreen && (
+      <div
+        className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-8"
+        onClick={() => setIsFullscreen(false)}
+      >
+        <div
+          className="w-full max-w-4xl h-full flex flex-col bg-amber-50 dark:bg-gray-900 rounded-lg shadow-2xl border border-green-600"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 border-b border-green-600">
+            <h3 className="text-green-600 dark:text-green-400 font-medium">Focus Writing Mode</h3>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  setIsFullscreen(false);
+                  onSubmit(e);
+                }}
+                disabled={isLoading || !value.trim()}
+                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                type="button"
+              >
+                Send (⏎)
+              </button>
+              <button
+                onClick={() => setIsFullscreen(false)}
+                className="text-gray-400 hover:text-green-400 transition-colors"
+                title="Close (Esc)"
+                type="button"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          {/* Textarea */}
+          <textarea
+            ref={fullscreenTextareaRef}
+            value={value}
+            onChange={handleInputChange}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                setIsFullscreen(false);
+              } else if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                e.preventDefault();
+                setIsFullscreen(false);
+                onSubmit(e);
+              }
+            }}
+            className="flex-1 w-full p-6 font-serif text-lg resize-none focus:outline-none bg-amber-50 text-gray-800 dark:bg-gray-900 dark:text-green-400"
+            placeholder="Write your thoughts... (⌘/Ctrl+Enter to send, Esc to close)"
+            disabled={isLoading}
+            autoComplete="off"
+            autoCapitalize="off"
+            autoCorrect="off"
+            spellCheck="true"
+          />
+
+          {/* Footer info */}
+          <div className="p-3 border-t border-green-600 text-xs text-gray-500 dark:text-gray-400 flex justify-between items-center">
+            <span>Use @ to reference past sessions</span>
+            <span>{value.length} characters</span>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
 

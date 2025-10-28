@@ -79,13 +79,13 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
       ? `${baseSystemPrompt}\n\n## REASONING GUIDANCE\n\nWhen thinking through this problem, focus on the actual substance of the user's question rather than predicting what advisors would say. Use your thinking space to:\n\n1. **Analyze the core problem or question** - Break down what's really being asked\n2. **Consider multiple perspectives and approaches** - Explore different angles and potential solutions\n3. **Evaluate evidence and reasoning** - Think through the logic, assumptions, and implications\n4. **Synthesize insights** - Connect ideas and draw meaningful conclusions\n\nOnly after this substantive analysis should you consider how the advisors would present these insights to the user.`
       : baseSystemPrompt;
     
-    // Debug logging for High Council mode
-    if (systemPromptText.includes('HIGH COUNCIL MODE')) {
-      console.log('🏛️ DEBUG: System prompt contains High Council instructions');
-      console.log('🏛️ DEBUG: System prompt preview:', systemPromptText.substring(systemPromptText.indexOf('HIGH COUNCIL MODE'), systemPromptText.indexOf('HIGH COUNCIL MODE') + 200));
-    } else {
-      console.log('🏛️ DEBUG: System prompt does NOT contain High Council instructions');
-    }
+    // DEPRECATED: High Council mode debug logging
+    // if (systemPromptText.includes('HIGH COUNCIL MODE')) {
+    //   console.log('🏛️ DEBUG: System prompt contains High Council instructions');
+    //   console.log('🏛️ DEBUG: System prompt preview:', systemPromptText.substring(systemPromptText.indexOf('HIGH COUNCIL MODE'), systemPromptText.indexOf('HIGH COUNCIL MODE') + 200));
+    // } else {
+    //   console.log('🏛️ DEBUG: System prompt does NOT contain High Council instructions');
+    // }
     
     // Calculate input tokens for tracking
     const systemTokens = estimateTokens(systemPromptText);

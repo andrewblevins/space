@@ -73,11 +73,11 @@ export function useOpenRouter({ messages, setMessages, maxTokens, contextLimit, 
     }
 
     const systemPromptText = customGetSystemPrompt ? customGetSystemPrompt() : getSystemPrompt();
-    
-    // Debug logging for High Council mode
-    if (systemPromptText.includes('HIGH COUNCIL MODE')) {
-      console.log('🌐 OpenRouter DEBUG: System prompt contains High Council instructions');
-    }
+
+    // DEPRECATED: High Council mode debug logging
+    // if (systemPromptText.includes('HIGH COUNCIL MODE')) {
+    //   console.log('🌐 OpenRouter DEBUG: System prompt contains High Council instructions');
+    // }
     
     // Calculate input tokens for tracking
     const systemTokens = estimateTokens(systemPromptText);
