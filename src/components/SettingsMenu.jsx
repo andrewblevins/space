@@ -20,7 +20,8 @@ const SettingsMenu = ({
   toggleTheme,
   paragraphSpacing,
   setParagraphSpacing,
-  onMigrateConversations,
+  autoScroll,
+  setAutoScroll,
   openrouterModel,
   setOpenrouterModel
 }) => {
@@ -111,6 +112,12 @@ const SettingsMenu = ({
     const newMode = !reasoningMode;
     setReasoningMode(newMode);
     localStorage.setItem('space_reasoning_mode', newMode.toString());
+  };
+
+  const handleAutoScrollToggle = () => {
+    const newMode = !autoScroll;
+    setAutoScroll(newMode);
+    localStorage.setItem('space_auto_scroll', JSON.stringify(newMode));
   };
 
   const handleClearApiKeysClick = () => {
@@ -392,6 +399,26 @@ const SettingsMenu = ({
                 </button>
               </div>
 
+              {/* Auto-scroll */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <label className="text-green-400 font-medium">Auto-scroll</label>
+                  <p className="text-gray-400 text-sm">Automatically scroll to new messages</p>
+                </div>
+                <button
+                  onClick={handleAutoScrollToggle}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    autoScroll ? 'bg-green-400' : 'bg-gray-600'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      autoScroll ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+
               {/* Paragraph Spacing */}
               <div>
                 <label className="text-green-400 font-medium block mb-2">
@@ -521,12 +548,13 @@ const SettingsMenu = ({
                       Manage your SPACE Terminal account and authentication.
                     </p>
                     <div className="space-y-3">
-                      <button
+                      {/* DEPRECATED: Migration no longer needed */}
+                      {/* <button
                         onClick={onMigrateConversations}
                         className="w-full text-left px-3 py-2 bg-stone-50 border border-blue-600 rounded text-blue-600 hover:bg-blue-600 hover:text-white transition-colors dark:bg-black dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-400 dark:hover:text-black"
                       >
                         Migrate Local Conversations
-                      </button>
+                      </button> */}
                       <button
                         onClick={() => setShowPrivacyPolicy(true)}
                         className="w-full text-left px-3 py-2 bg-stone-50 border border-gray-600 rounded text-gray-600 hover:bg-gray-600 hover:text-white transition-colors dark:bg-black dark:border-gray-400 dark:text-gray-400 dark:hover:bg-gray-400 dark:hover:text-black"

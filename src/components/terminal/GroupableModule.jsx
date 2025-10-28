@@ -43,7 +43,7 @@ export function GroupableModule({
   };
 
   return (
-    <div 
+    <div
       className="border border-stone-300 dark:border-gray-700 rounded-md p-4 bg-amber-100 dark:bg-gray-800"
     >
       <div className="flex justify-between items-center mb-2">
@@ -85,60 +85,47 @@ export function GroupableModule({
                   return (
                     <li
                       key={advisorName}
-                      className={`text-gray-600 dark:text-gray-300 cursor-pointer hover:text-green-600 dark:hover:text-green-400 transition-colors ${activeItems.includes(advisor) ? 'text-green-600 dark:text-green-400' : ''}`}
-                      onClick={() => onItemClick && onItemClick(advisor)}
-                      onContextMenu={(e) => {
-                        e.preventDefault();
-                        try {
-                          const menu = document.createElement('div');
-                          menu.className = `absolute bg-gray-900 border border-green-400 rounded-md shadow-lg py-1 z-50`;
-                          menu.style.left = `${e.pageX}px`;
-                          menu.style.top = `${e.pageY}px`;
-
-                          const editButton = document.createElement('button');
-                          editButton.className = 'w-full px-4 py-2 text-left text-green-400 hover:bg-gray-800';
-                          editButton.textContent = 'Edit Advisor';
-                          editButton.onclick = () => {
+                      className={`group flex items-center justify-between text-gray-600 dark:text-gray-300 cursor-pointer hover:text-green-600 dark:hover:text-green-400 transition-colors ${activeItems.includes(advisor) ? 'text-green-600 dark:text-green-400' : ''}`}
+                    >
+                      <div
+                        onClick={() => onItemClick && onItemClick(advisor)}
+                        className="flex items-center space-x-2 flex-1"
+                      >
+                        {advisor.color && (
+                          <span className={`w-3 h-3 rounded-full ${advisor.color}`}></span>
+                        )}
+                        <span>{advisor.name}</span>
+                      </div>
+                      <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setEditingAdvisor && setEditingAdvisor(advisor);
-                            document.body.removeChild(menu);
-                          };
-
-                          const deleteButton = document.createElement('button');
-                          deleteButton.className = 'w-full px-4 py-2 text-left text-green-400 hover:bg-gray-800';
-                          deleteButton.textContent = 'Delete Advisor';
-                          deleteButton.onclick = () => {
+                          }}
+                          className="p-1 hover:text-blue-500 dark:hover:text-blue-400"
+                          title="Edit advisor"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setAdvisors && setAdvisors((prev) => prev.filter((a) => a.name !== advisor.name));
                             setMessages &&
                               setMessages((prev) => [
                                 ...prev,
                                 { type: 'system', content: `Deleted advisor: ${advisor.name}` },
                               ]);
-                            document.body.removeChild(menu);
-                          };
-
-                          menu.appendChild(editButton);
-                          menu.appendChild(deleteButton);
-                          document.body.appendChild(menu);
-
-                          const removeMenu = (ev) => {
-                            if (!menu.contains(ev.target)) {
-                              if (menu.parentNode) {
-                                document.body.removeChild(menu);
-                              }
-                              document.removeEventListener('click', removeMenu);
-                            }
-                          };
-                          document.addEventListener('click', removeMenu);
-                        } catch (error) {
-                          console.error('Error creating context menu:', error);
-                        }
-                      }}
-                    >
-                      <div className="flex items-center space-x-2">
-                        {advisor.color && (
-                          <span className={`w-3 h-3 rounded-full ${advisor.color}`}></span>
-                        )}
-                        <span>{advisor.name}</span>
+                          }}
+                          className="p-1 hover:text-red-500 dark:hover:text-red-400"
+                          title="Delete advisor"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                          </svg>
+                        </button>
                       </div>
                     </li>
                   );
@@ -152,60 +139,47 @@ export function GroupableModule({
           .map((item, idx) => (
             <li
               key={`item-${idx}`}
-              className={`text-gray-900 dark:text-gray-300 cursor-pointer hover:text-green-700 dark:hover:text-green-400 transition-colors ${activeItems.includes(item) ? 'text-green-700 dark:text-green-400' : ''}`}
-              onClick={() => onItemClick && onItemClick(item)}
-              onContextMenu={(e) => {
-                e.preventDefault();
-                try {
-                  const menu = document.createElement('div');
-                  menu.className = `absolute bg-gray-900 border border-green-400 rounded-md shadow-lg py-1 z-50`;
-                  menu.style.left = `${e.pageX}px`;
-                  menu.style.top = `${e.pageY}px`;
-
-                  const editButton = document.createElement('button');
-                  editButton.className = 'w-full px-4 py-2 text-left text-green-400 hover:bg-gray-800';
-                  editButton.textContent = 'Edit Advisor';
-                  editButton.onclick = () => {
+              className={`group flex items-center justify-between text-gray-900 dark:text-gray-300 cursor-pointer hover:text-green-700 dark:hover:text-green-400 transition-colors ${activeItems.includes(item) ? 'text-green-700 dark:text-green-400' : ''}`}
+            >
+              <div
+                onClick={() => onItemClick && onItemClick(item)}
+                className="flex items-center space-x-2 flex-1"
+              >
+                {item.color && (
+                  <span className={`w-3 h-3 rounded-full ${item.color}`}></span>
+                )}
+                <span>{item.name}</span>
+              </div>
+              <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
                     setEditingAdvisor && setEditingAdvisor(item);
-                    document.body.removeChild(menu);
-                  };
-
-                  const deleteButton = document.createElement('button');
-                  deleteButton.className = 'w-full px-4 py-2 text-left text-green-400 hover:bg-gray-800';
-                  deleteButton.textContent = 'Delete Advisor';
-                  deleteButton.onclick = () => {
+                  }}
+                  className="p-1 hover:text-blue-500 dark:hover:text-blue-400"
+                  title="Edit advisor"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                  </svg>
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
                     setAdvisors && setAdvisors((prev) => prev.filter((a) => a.name !== item.name));
                     setMessages &&
                       setMessages((prev) => [
                         ...prev,
                         { type: 'system', content: `Deleted advisor: ${item.name}` },
                       ]);
-                    document.body.removeChild(menu);
-                  };
-
-                  menu.appendChild(editButton);
-                  menu.appendChild(deleteButton);
-                  document.body.appendChild(menu);
-
-                  const removeMenu = (ev) => {
-                    if (!menu.contains(ev.target)) {
-                      if (menu.parentNode) {
-                        document.body.removeChild(menu);
-                      }
-                      document.removeEventListener('click', removeMenu);
-                    }
-                  };
-                  document.addEventListener('click', removeMenu);
-                } catch (error) {
-                  console.error('Error creating context menu:', error);
-                }
-              }}
-            >
-              <div className="flex items-center space-x-2">
-                {item.color && (
-                  <span className={`w-3 h-3 rounded-full ${item.color}`}></span>
-                )}
-                <span>{item.name}</span>
+                  }}
+                  className="p-1 hover:text-red-500 dark:hover:text-red-400"
+                  title="Delete advisor"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                </button>
               </div>
             </li>
           ))}

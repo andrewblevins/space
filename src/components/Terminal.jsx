@@ -47,8 +47,9 @@ import { analyzeMetaphors, analyzeForQuestions, summarizeSession, generateSessio
 import { trackUsage, trackSession } from '../utils/usageTracking';
 import { worksheetQuestions, WORKSHEET_TEMPLATES } from "../utils/worksheetTemplates";
 import { useConversationStorage } from '../hooks/useConversationStorage';
-import { needsMigration } from '../utils/migrationHelper';
-import MigrationModal from './MigrationModal';
+// DEPRECATED: Migration system no longer needed
+// import { needsMigration } from '../utils/migrationHelper';
+// import MigrationModal from './MigrationModal';
 import AssertionsModal from './AssertionsModal';
 import EvaluationsModal from './EvaluationsModal';
 import ResponsiveContainer from './responsive/ResponsiveContainer';
@@ -71,10 +72,11 @@ const Terminal = ({ theme, toggleTheme }) => {
     console.log('🗃️ Database storage decision:', { useAuthSystem, user: !!user, useDatabaseStorage: useDb });
     return useDb;
   });
-  const [showMigrationModal, setShowMigrationModal] = useState(() => {
-    console.log('🔄 Initializing showMigrationModal to false');
-    return false;
-  });
+  // DEPRECATED: Migration modal no longer needed
+  // const [showMigrationModal, setShowMigrationModal] = useState(() => {
+  //   console.log('🔄 Initializing showMigrationModal to false');
+  //   return false;
+  // });
   
   // Initialize the modal controller for secureStorage
   useEffect(() => {
@@ -83,17 +85,18 @@ const Terminal = ({ theme, toggleTheme }) => {
     }
   }, [modalController]);
 
-  // Check for migration when user logs in (only if there are actual conversations)
-  useEffect(() => {
-    if (useAuthSystem && user) {
-      const needs = needsMigration();
-      console.log('🔄 Migration check:', { needs, useAuthSystem, user: !!user, currentModalState: showMigrationModal });
-      if (needs && !showMigrationModal) {
-        console.log('🔄 Setting migration modal to TRUE (login check)');
-        setShowMigrationModal(true);
-      }
-    }
-  }, [useAuthSystem, user]);
+  // DEPRECATED: Migration check no longer needed
+  // // Check for migration when user logs in (only if there are actual conversations)
+  // useEffect(() => {
+  //   if (useAuthSystem && user) {
+  //     const needs = needsMigration();
+  //     console.log('🔄 Migration check:', { needs, useAuthSystem, user: !!user, currentModalState: showMigrationModal });
+  //     if (needs && !showMigrationModal) {
+  //       console.log('🔄 Setting migration modal to TRUE (login check)');
+  //       setShowMigrationModal(true);
+  //     }
+  //   }
+  // }, [useAuthSystem, user]);
 
 
   const getNextSessionId = () => {
@@ -316,6 +319,10 @@ const Terminal = ({ theme, toggleTheme }) => {
   const [showWelcome, setShowWelcome] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
   const [hasCheckedKeys, setHasCheckedKeys] = useState(false);
+  const [autoScroll, setAutoScroll] = useState(() => {
+    const saved = localStorage.getItem('space_auto_scroll');
+    return saved ? JSON.parse(saved) : false; // Default: off
+  });
   
   // Handler to reset to welcome screen
   const resetToWelcome = () => {
@@ -3341,6 +3348,13 @@ Example: {"position": "Option 2 text here", "confidence": 75, "reasoning": "This
     }
   }, [advisorSuggestionsExpanded, openaiClient]);
 
+  // Auto-scroll to bottom when new messages arrive (if enabled)
+  useEffect(() => {
+    if (autoScroll && messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
+  }, [messages, autoScroll]);
+
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
       terminalRef.current.requestFullscreen();
@@ -3922,17 +3936,10 @@ ${selectedText}
         toggleTheme={toggleTheme}
         paragraphSpacing={paragraphSpacing}
         setParagraphSpacing={setParagraphSpacing}
+        autoScroll={autoScroll}
+        setAutoScroll={setAutoScroll}
         openrouterModel={openrouterModel}
         setOpenrouterModel={import.meta.env.DEV ? setOpenrouterModel : () => {}}
-        onMigrateConversations={() => {
-          // Always show modal when user clicks migrate button (even if no conversations)
-          localStorage.removeItem('space_migration_status');
-          localStorage.removeItem('space_migration_date');
-          localStorage.removeItem('space_migration_summary');
-          console.log('🔄 Setting migration modal to TRUE (settings button)');
-          setShowMigrationModal(true);
-          setShowSettingsMenu(false);
-        }}
       />
 
       {/* Prompt Library Component */}
@@ -4023,8 +4030,8 @@ ${selectedText}
         onClose={() => setShowInfoModal(false)}
       />
 
-      {/* Migration Modal Component */}
-      <MigrationModal
+      {/* DEPRECATED: Migration Modal - No longer needed */}
+      {/* <MigrationModal
         isOpen={showMigrationModal}
         onComplete={() => {
           console.log('🔄 Migration completed, closing modal');
@@ -4039,7 +4046,7 @@ ${selectedText}
             console.log('🔄 showMigrationModal state after setState:', showMigrationModal);
           }, 100);
         }}
-      />
+      /> */}
 
       {/* Assertions Modal Component */}
       <AssertionsModal
