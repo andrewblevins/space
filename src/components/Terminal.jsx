@@ -424,8 +424,9 @@ const Terminal = ({ theme, toggleTheme }) => {
 // Shared JSON response format for advisor responses (without synthesis)
 const ADVISOR_JSON_FORMAT = `
 
-=== CRITICAL RESPONSE FORMAT REQUIREMENTS ===
-YOU MUST RETURN YOUR RESPONSE AS VALID JSON IN THIS EXACT STRUCTURE:
+## Response Format
+
+Respond with valid JSON in this structure:
 
 {
   "type": "advisor_response",
@@ -439,16 +440,13 @@ YOU MUST RETURN YOUR RESPONSE AS VALID JSON IN THIS EXACT STRUCTURE:
   ]
 }
 
-MANDATORY FORMATTING RULES - FAILURE TO FOLLOW WILL BREAK THE SYSTEM:
-1. Each advisor gets their own object in the advisors array
-2. Use the advisor's exact name as it appears in your persona list
-3. Include all response content in the "response" field
-4. Generate unique IDs using the pattern: resp-{advisor-name-lowercase}-{timestamp}
-5. Return ONLY valid JSON - absolutely NO additional text before or after
-6. NEVER use markdown code blocks around the JSON
-7. NEVER add explanatory text outside the JSON structure
-
-THIS FORMAT IS REQUIRED FOR EVERY RESPONSE - DO NOT DEVIATE`;
+Format requirements:
+- Each advisor gets their own object in the advisors array
+- Use the advisor's exact name as it appears in your persona list
+- Include all response content in the "response" field
+- Generate unique IDs using the pattern: resp-{advisor-name-lowercase}-{timestamp}
+- Return ONLY valid JSON - no additional text before or after
+- Do not use markdown code blocks around the JSON`;
 
 const getSystemPrompt = useCallback(({ sessionContexts } = {}) => {
   let prompt = "";
@@ -462,7 +460,9 @@ const getSystemPrompt = useCallback(({ sessionContexts } = {}) => {
     prompt += `CRITICAL: You must include ALL advisors listed above in your response, even if some have empty or minimal descriptions. Every advisor name that appears in your persona list must have a response in your output. Do not exclude any advisor based on lack of description.\n\n`;
 
     // Add conversation continuity instructions
-    prompt += `## CONVERSATION CONTINUITY\n\nIMPORTANT: You are continuing an ongoing conversation with this user. Do not re-introduce topics, concepts, or ask questions that have already been addressed in the conversation history. Build upon what has been established rather than starting fresh each time. Reference previous exchanges naturally and maintain the flow of the conversation.\n\n`;
+    prompt += `## Conversation Continuity
+
+Track the conversation's evolution. When the user has already explained their context, don't ask them to repeat it. Build on established shared understanding. Reference specific things the user has told you earlier in natural ways. Treat this as an ongoing relationship, not a series of isolated exchanges.\n\n`;
 
     // DEPRECATED: High Council Mode - Replaced by parallel advisor streaming
     /* if (councilMode) {

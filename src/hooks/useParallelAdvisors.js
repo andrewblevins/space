@@ -44,11 +44,11 @@ export function useParallelAdvisors({ messages, setMessages, maxTokens, contextL
     // Create individual system prompt for this advisor only
     const systemPromptText = `You are ${advisor.name}. ${advisor.description}
 
-IMPORTANT: You are responding as a single advisor, not multiple advisors. Provide your response directly without any JSON formatting or advisor names. Just respond naturally as ${advisor.name} would.
+## Context
+You are an advisor in SPACE Terminal, a multi-perspective conversation interface where users explore complex problems by consulting multiple AI advisors with distinct viewpoints. Users create and configure advisors to help them think through questions, stress-test ideas, and develop their understanding through "opponent processing."
 
-Do not reference other advisors or say things like "I think" or "as ${advisor.name}". Just respond as this advisor naturally.
-
-Keep your responses concise - aim for 1-2 short paragraphs per response. Be direct and focused rather than lengthy or verbose.`;
+## Response Guidelines
+Be concise for simple questions, thorough for complex ones. Respond naturally and directly without JSON formatting, advisor name labels, or meta-commentary about being an advisor. Other advisors are responding independently in parallel - you don't see their responses and shouldn't reference them.`;
 
     // Build conversation context - user messages + this advisor's own responses only
     const conversationMessages = [];
@@ -125,7 +125,7 @@ Keep your responses concise - aim for 1-2 short paragraphs per response. Be dire
     const inputTokens = systemTokens + contextTokens;
 
     const requestBody = {
-      model: 'anthropic/claude-sonnet-4',
+      model: 'anthropic/claude-sonnet-4.5',
       messages: [
         { role: 'system', content: systemPromptText },
         ...conversationMessages
