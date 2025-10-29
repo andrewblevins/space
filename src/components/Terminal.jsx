@@ -3982,21 +3982,21 @@ ${selectedText}
 
               {/* Right Column */}
               <div className="w-1/4 p-4 border-l border-gray-300 dark:border-gray-800 overflow-y-auto scrollbar-terminal">
-                <CollapsibleModule 
-                  title="Metaphors" 
+                {/* DEPRECATED: Metaphors feature - commented out but can be reactivated
+                <CollapsibleModule
+                  title="Metaphors"
                   items={metaphors}
                   expanded={metaphorsExpanded}
                   onToggle={() => setMetaphorsExpanded(!metaphorsExpanded)}
                 />
-                <div className="mt-4">
-                  <CollapsibleSuggestionsModule
-                    title="Suggested Advisors"
-                    items={advisorSuggestions}
-                    expanded={advisorSuggestionsExpanded}
-                    onToggle={() => setAdvisorSuggestionsExpanded(!advisorSuggestionsExpanded)}
-                    onItemClick={(item) => handleAdvisorSuggestionClick(item)}
-                  />
-                </div>
+                */}
+                <CollapsibleSuggestionsModule
+                  title="Suggested Perspectives"
+                  items={advisorSuggestions}
+                  expanded={advisorSuggestionsExpanded}
+                  onToggle={() => setAdvisorSuggestionsExpanded(!advisorSuggestionsExpanded)}
+                  onItemClick={(item) => handleAdvisorSuggestionClick(item)}
+                />
                 {/* Accordion Menu - Bottom Left */}
                 <AccordionMenu
                   onSettingsClick={() => setShowSettingsMenu(true)}

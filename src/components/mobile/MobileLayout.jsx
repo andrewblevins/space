@@ -240,10 +240,10 @@ const MobileLayout = ({
               ))}
             </div>
             
-            {/* Suggested advisors */}
+            {/* Suggested perspectives */}
             {advisorSuggestions.length > 0 && (
               <div className="mt-6">
-                <h3 className="text-green-400 text-lg font-medium mb-3">Suggested Advisors</h3>
+                <h3 className="text-green-400 text-lg font-medium mb-3">Suggested Perspectives</h3>
                 <div className="space-y-2">
                   {advisorSuggestions.map((suggestion, idx) => (
                     <button
