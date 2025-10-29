@@ -3958,7 +3958,6 @@ ${selectedText}
                   messages={messages}
                   existingAdvisors={advisors}
                   onAddPerspective={handleAddGeneratedPerspective}
-                  openaiClient={openaiClient}
                   trackUsage={trackUsage}
                 />
 

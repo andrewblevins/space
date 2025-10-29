@@ -6,14 +6,12 @@ import { useState } from 'react';
  * @param {Array} props.messages - Conversation messages for context
  * @param {Array} props.existingAdvisors - Currently saved advisors
  * @param {Function} props.onAddPerspective - Callback when adding a perspective
- * @param {object} props.openaiClient - OpenAI client for generation
  * @param {Function} props.trackUsage - Usage tracking function
  */
 export function PerspectiveGenerator({
   messages,
   existingAdvisors = [],
   onAddPerspective,
-  openaiClient,
   trackUsage
 }) {
   const [generatedPerspectives, setGeneratedPerspectives] = useState([]);
@@ -25,11 +23,51 @@ export function PerspectiveGenerator({
   const hasMessages = messages.filter(m => m.type === 'user' || m.type === 'assistant').length > 0;
 
   const generatePerspectives = async () => {
-    if (!openaiClient || !hasMessages) return;
+    if (!hasMessages) return;
 
     setIsGenerating(true);
 
     try {
+      const useAuthSystem = import.meta.env.VITE_USE_AUTH === 'true';
+
+      // Get auth session if using auth system
+      let session = null;
+      if (useAuthSystem) {
+        const { supabase } = await import('../lib/supabase');
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        session = currentSession;
+        if (!session) {
+          console.error('Not signed in');
+          return;
+        }
+      }
+
+      // Use OpenRouter API endpoint
+      const { getApiEndpoint } = await import('../utils/apiConfig');
+      const apiUrl = useAuthSystem
+        ? `${getApiEndpoint()}/api/chat/openrouter`
+        : 'https://openrouter.ai/api/v1/chat/completions';
+
+      // Set up headers
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+
+      if (useAuthSystem) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      } else {
+        // Get OpenRouter API key from secure storage
+        const { getDecryptedKey } = await import('../utils/secureStorage');
+        const openrouterKey = await getDecryptedKey('openrouter');
+        if (!openrouterKey) {
+          console.error('OpenRouter API key not set');
+          return;
+        }
+        headers['Authorization'] = `Bearer ${openrouterKey}`;
+        headers['HTTP-Referer'] = window.location.origin;
+        headers['X-Title'] = 'SPACE Terminal';
+      }
+
       const recentMessages = messages
         .slice(-6) // Last 6 messages (3 exchanges)
         .filter(msg => msg.type === 'assistant' || msg.type === 'user')
@@ -75,24 +113,35 @@ Respond with JSON: {
   ]
 }`;
 
-      const inputTokens = Math.ceil((100 + promptContent.length) / 4);
-      const response = await openaiClient.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [{
-          role: "system",
-          content: "You are a helpful assistant that responds only in valid JSON format."
-        }, {
-          role: "user",
-          content: promptContent
-        }],
-        max_tokens: 500,
-        response_format: { type: "json_object" }
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          model: 'openai/gpt-4o-mini',
+          messages: [{
+            role: 'system',
+            content: 'You are a helpful assistant that responds only in valid JSON format.'
+          }, {
+            role: 'user',
+            content: promptContent
+          }],
+          max_tokens: 500,
+          response_format: { type: 'json_object' }
+        })
       });
 
-      const result = JSON.parse(response.choices[0].message.content);
-      const outputTokens = Math.ceil(response.choices[0].message.content.length / 4);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`API Error (${response.status}): ${JSON.stringify(errorData)}`);
+      }
 
+      const data = await response.json();
+      const result = JSON.parse(data.choices[0].message.content);
+
+      // Track usage if handler provided
       if (trackUsage) {
+        const inputTokens = Math.ceil((100 + promptContent.length) / 4);
+        const outputTokens = Math.ceil(data.choices[0].message.content.length / 4);
         trackUsage('gpt', inputTokens, outputTokens);
       }
 
