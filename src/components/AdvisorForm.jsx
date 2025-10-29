@@ -7,14 +7,10 @@ import { trackAdvisorCreated } from '../utils/analytics';
 const generateAdvisorDescription = async (advisorName, onStream) => {
   try {
     const useAuthSystem = import.meta.env.VITE_USE_AUTH === 'true';
-    
+
     // Get auth session if using auth system
     let session = null;
     if (useAuthSystem) {
-      // Import the auth hook and get the current session
-      const { useAuth } = await import('../contexts/AuthContext');
-      // We need to get the session from React context, but we can't use hooks in async functions
-      // Instead, we'll get it from supabase directly
       const { supabase } = await import('../lib/supabase');
       const { data: { session: currentSession } } = await supabase.auth.getSession();
       session = currentSession;
@@ -23,35 +19,35 @@ const generateAdvisorDescription = async (advisorName, onStream) => {
       }
     }
 
-    // Use appropriate API endpoint
-    const apiUrl = useAuthSystem 
-      ? `${getApiEndpoint()}/api/chat/claude`  // Backend proxy
-      : `${getApiEndpoint()}/v1/messages`;     // Direct API
-    
+    // Use OpenRouter API endpoint
+    const apiUrl = useAuthSystem
+      ? `${getApiEndpoint()}/api/chat/openrouter`  // Backend proxy
+      : 'https://openrouter.ai/api/v1/chat/completions';  // Direct OpenRouter
+
     // Set up headers based on auth mode
     const headers = {
       'Content-Type': 'application/json'
     };
-    
+
     if (useAuthSystem) {
       headers['Authorization'] = `Bearer ${session.access_token}`;
     } else {
-      // In legacy mode, get API key from secure storage
+      // In legacy mode, get OpenRouter API key from secure storage
       const { getDecryptedKey } = await import('../utils/secureStorage');
-      const anthropicKey = await getDecryptedKey('anthropic');
-      if (!anthropicKey) {
-        throw new Error('Please set your Anthropic API key first');
+      const openrouterKey = await getDecryptedKey('openrouter');
+      if (!openrouterKey) {
+        throw new Error('Please set your OpenRouter API key first');
       }
-      headers['x-api-key'] = anthropicKey;
-      headers['anthropic-version'] = '2023-06-01';
-      headers['anthropic-dangerous-direct-browser-access'] = 'true';
+      headers['Authorization'] = `Bearer ${openrouterKey}`;
+      headers['HTTP-Referer'] = window.location.origin;
+      headers['X-Title'] = 'SPACE Terminal';
     }
 
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers,
       body: JSON.stringify({
-        model: 'claude-3-7-sonnet-20250219',
+        model: 'anthropic/claude-sonnet-4.5',
         messages: [{
           role: 'user',
           content: `You are generating a description of an AI advisor that will be used to instruct that entity in a conversation. You will receive a name and you will write instructions for that advisor based on that name. Your description should be written in second-person (addressing the advisor as "you") and should instruct them on their identity, expertise, and approach. Include instructions about any specific lineages, practices, or frameworks they should embody, and how they should approach problems. Imitate the advisor, writing in their own distinct voice, as gleaned from any writings or public communications they have made. Do not include the advisor's name in the description. Do not include action cues, stage directions, or physical descriptions.
@@ -87,7 +83,8 @@ The advisor's name is ${advisorName}.`
 
           try {
             const parsed = JSON.parse(data);
-            const content = parsed.delta?.text || '';
+            // OpenRouter uses OpenAI format: choices[0].delta.content
+            const content = parsed.choices?.[0]?.delta?.content || '';
             description += content;
             onStream(description);
           } catch (e) {
