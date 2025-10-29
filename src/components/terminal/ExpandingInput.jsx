@@ -13,7 +13,6 @@ import SessionAutocomplete from "./SessionAutocomplete";
  * @param {(session: object) => void} props.onSessionSelect - Called when user selects a session from autocomplete
  */
 export function ExpandingInput({ value, onChange, onSubmit, isLoading, sessions = [], onSessionSelect }) {
-  const [height, setHeight] = useState('100px');
   const [showAutocomplete, setShowAutocomplete] = useState(false);
   const [autocompleteSearch, setAutocompleteSearch] = useState('');
   const [autocompletePosition, setAutocompletePosition] = useState({ top: 0, left: 0 });
@@ -21,6 +20,17 @@ export function ExpandingInput({ value, onChange, onSubmit, isLoading, sessions 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const textareaRef = useRef(null);
   const fullscreenTextareaRef = useRef(null);
+
+  // Auto-resize textarea based on content
+  useEffect(() => {
+    if (textareaRef.current) {
+      // Reset height to auto to get the correct scrollHeight
+      textareaRef.current.style.height = 'auto';
+      // Set height to scrollHeight (content height)
+      const newHeight = Math.min(textareaRef.current.scrollHeight, 400); // Max 400px
+      textareaRef.current.style.height = `${newHeight}px`;
+    }
+  }, [value]);
 
   // Detect @ symbol and manage autocomplete
   const handleInputChange = (e) => {
@@ -157,10 +167,41 @@ export function ExpandingInput({ value, onChange, onSubmit, isLoading, sessions 
   return (
     <>
       <div className="flex-1 relative">
-        {/* Fullscreen button */}
+        <textarea
+          ref={textareaRef}
+          value={value}
+          onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
+          rows={1}
+          className={`
+            w-full
+            min-h-[56px]
+            max-h-[400px]
+            font-serif
+            p-4
+            pr-12
+            border-none
+            focus:outline-none
+            resize-none
+            bg-transparent text-gray-800 dark:text-green-400
+            ${isLoading ? 'opacity-50' : ''}
+          `}
+          placeholder={isLoading ? 'Waiting for response...' : 'Type your message... (use @ to reference past sessions)'}
+          disabled={isLoading}
+          autoComplete="off"
+          autoCapitalize="off"
+          autoCorrect="off"
+          spellCheck="true"
+          data-role="chat-input"
+          data-form-type="other"
+          data-lpignore="true"
+          data-1p-ignore="true"
+        />
+
+        {/* Fullscreen button - top right of textarea */}
         <button
           onClick={() => setIsFullscreen(true)}
-          className="absolute -top-6 right-0 p-1 text-gray-400 hover:text-green-400 transition-colors z-10"
+          className="absolute top-2 right-2 p-1 text-gray-400 hover:text-green-400 transition-colors z-10"
           title="Expand writing area"
           type="button"
         >
@@ -168,59 +209,6 @@ export function ExpandingInput({ value, onChange, onSubmit, isLoading, sessions 
             <path fillRule="evenodd" d="M3 4a1 1 0 011-1h4a1 1 0 010 2H6.414l2.293 2.293a1 1 0 11-1.414 1.414L5 6.414V8a1 1 0 01-2 0V4zm9 1a1 1 0 010-2h4a1 1 0 011 1v4a1 1 0 01-2 0V6.414l-2.293 2.293a1 1 0 11-1.414-1.414L13.586 5H12zm-9 7a1 1 0 012 0v1.586l2.293-2.293a1 1 0 111.414 1.414L6.414 15H8a1 1 0 010 2H4a1 1 0 01-1-1v-4zm13-1a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 010-2h1.586l-2.293-2.293a1 1 0 111.414-1.414L15 13.586V12a1 1 0 011-1z" clipRule="evenodd" />
           </svg>
         </button>
-
-      <div
-        className="w-full h-1 cursor-ns-resize bg-green-400/10 hover:bg-green-400/20 transition-colors"
-        onMouseDown={(e) => {
-          const startY = e.clientY;
-          const startHeight = parseInt(height);
-
-          const handleMouseMove = (moveEvent) => {
-            const deltaY = startY - moveEvent.clientY;
-            const newHeight = Math.min(400, Math.max(100, startHeight + deltaY));
-            setHeight(`${newHeight}px`);
-          };
-
-          const handleMouseUp = () => {
-            document.removeEventListener('mousemove', handleMouseMove);
-            document.removeEventListener('mouseup', handleMouseUp);
-          };
-
-          document.addEventListener('mousemove', handleMouseMove);
-          document.addEventListener('mouseup', handleMouseUp);
-        }}
-      />
-      <textarea
-        ref={textareaRef}
-        value={value}
-        onChange={handleInputChange}
-        onKeyDown={handleKeyDown}
-        style={{ height }}
-        className={`
-          w-full
-          min-h-[100px]
-          max-h-[400px]
-          font-serif
-          p-4
-          border
-          border-green-600
-          focus:outline-none
-          rounded-md
-          resize-none
-          bg-amber-50 text-gray-800 dark:bg-black dark:text-green-400
-          ${isLoading ? 'opacity-50' : ''}
-        `}
-        placeholder={isLoading ? 'Waiting for response...' : 'Type your message... (use @ to reference past sessions)'}
-        disabled={isLoading}
-        autoComplete="off"
-        autoCapitalize="off"
-        autoCorrect="off"
-        spellCheck="true"
-        data-role="chat-input"
-        data-form-type="other"
-        data-lpignore="true"
-        data-1p-ignore="true"
-      />
       
       <SessionAutocomplete
         show={showAutocomplete}

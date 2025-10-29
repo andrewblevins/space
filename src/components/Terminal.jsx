@@ -4002,8 +4002,8 @@ ${selectedText}
                       </div>
                     </div>
 
-                    <div className="border-t border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900">
-                      <div className="max-w-3xl mx-auto px-4 py-4">
+                    <div className="bg-gradient-to-b from-amber-50 to-amber-100 dark:bg-gradient-to-b dark:from-gray-900 dark:to-black">
+                      <div className="max-w-3xl mx-auto px-4 py-2">
                         <form onSubmit={handleSubmit}>
                           <div className="flex items-center">
                       {editingPrompt ? (
