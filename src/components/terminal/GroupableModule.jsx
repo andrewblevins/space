@@ -11,7 +11,6 @@ import { useState } from "react";
  * @param {Array<any>} [props.activeItems]
  * @param {Array<any>} [props.activeGroups]
  * @param {() => void} [props.onAddClick]
- * @param {() => void} [props.onCollapseClick]
  * @param {function} [props.setEditingAdvisor]
  * @param {function} [props.setAdvisors]
  * @param {function} [props.setMessages]
@@ -25,7 +24,6 @@ export function GroupableModule({
   activeItems = [],
   activeGroups = [],
   onAddClick,
-  onCollapseClick,
   setEditingAdvisor,
   setAdvisors,
   setMessages,
@@ -50,29 +48,16 @@ export function GroupableModule({
     >
       <div className="flex justify-between items-center mb-2">
         <h2 className="text-gray-800 dark:text-gray-200">{title}</h2>
-        <div className="flex items-center gap-1">
-          {onCollapseClick && (
-            <button
-              onClick={onCollapseClick}
-              className="p-1 rounded text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-              title="Collapse sidebar"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-              </svg>
-            </button>
-          )}
-          {onAddClick && (
-            <button
-              onClick={onAddClick}
-              className="text-green-700 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 transition-colors"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
-              </svg>
-            </button>
-          )}
-        </div>
+        {onAddClick && (
+          <button
+            onClick={onAddClick}
+            className="text-green-700 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+            </svg>
+          </button>
+        )}
       </div>
       <ul className="space-y-4">
         {groups.map((group, idx) => (

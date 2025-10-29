@@ -439,17 +439,11 @@ const Terminal = ({ theme, toggleTheme }) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const terminalRef = useRef(null);
 
-  // Sidebar resize and collapse state
+  // Sidebar collapse state
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     const saved = localStorage.getItem('space_sidebar_collapsed');
     return saved === 'true';
   });
-  const [sidebarWidth, setSidebarWidth] = useState(() => {
-    const saved = localStorage.getItem('space_sidebar_width');
-    return saved ? parseInt(saved) : 300; // Default 300px
-  });
-  const [isResizing, setIsResizing] = useState(false);
-  const sidebarRef = useRef(null);
   const [maxTokens, setMaxTokens] = useState(() => {
     const saved = localStorage.getItem('space_max_tokens');
     return saved ? parseInt(saved) : 2048;
@@ -3791,41 +3785,6 @@ ${selectedText}
     localStorage.setItem('space_sidebar_collapsed', newCollapsed.toString());
   };
 
-  // Sidebar resize handlers
-  const startResize = (e) => {
-    e.preventDefault();
-    setIsResizing(true);
-  };
-
-  // Handle resize via mouse move
-  React.useEffect(() => {
-    const handleMouseMove = (e) => {
-      if (!isResizing) return;
-
-      const newWidth = e.clientX;
-      // Constrain width between 200px and 600px
-      const constrainedWidth = Math.min(Math.max(newWidth, 200), 600);
-      setSidebarWidth(constrainedWidth);
-    };
-
-    const handleMouseUp = () => {
-      if (isResizing) {
-        setIsResizing(false);
-        localStorage.setItem('space_sidebar_width', sidebarWidth.toString());
-      }
-    };
-
-    if (isResizing) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-    }
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isResizing, sidebarWidth]);
-
   const getCurrentQuestionId = () => {
     const template = WORKSHEET_TEMPLATES[currentWorksheetId];
     if (template.type === 'basic') {
@@ -3929,65 +3888,81 @@ ${selectedText}
                 scrollbarColor: '#374151 transparent'
               }}
             >
-              {/* Left Sidebar - Collapsible and Resizable */}
+              {/* Left Sidebar - Collapsible */}
               {!sidebarCollapsed && (
-                <div
-                  ref={sidebarRef}
-                  style={{ width: `${sidebarWidth}px` }}
-                  className="relative p-4 border-r border-gray-300 dark:border-gray-800 overflow-y-auto scrollbar-terminal flex-shrink-0"
-                >
-                  <GroupableModule
-                    title="Perspectives"
-                    groups={advisorGroups}
-                    items={advisors}
-                    onItemClick={handleAdvisorClick}
-                    onGroupClick={handleGroupClick}
-                    activeItems={advisors.filter(a => a.active)}
-                    activeGroups={activeGroups}
-                    onAddClick={() => {
-                      setSuggestedAdvisorName('');
-                      setShowAdvisorForm(true);
-                    }}
-                    onCollapseClick={toggleSidebar}
-                    setEditingAdvisor={setEditingAdvisor}
-                    setAdvisors={setAdvisors}
-                    setMessages={setMessages}
-                  />
+                <div className="w-64 border-r border-gray-300 dark:border-gray-800 overflow-y-auto scrollbar-terminal flex-shrink-0 flex flex-col">
+                  {/* Header with title and collapse button */}
+                  <div className="flex items-center justify-between p-4 border-b border-gray-300 dark:border-gray-700">
+                    <h1 className="text-xl font-bold text-gray-800 dark:text-gray-200">SPACE</h1>
+                    <button
+                      onClick={toggleSidebar}
+                      className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                      title="Close sidebar"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600 dark:text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  </div>
 
-                <PerspectiveGenerator
-                  messages={messages}
-                  existingAdvisors={advisors}
-                  onAddPerspective={handleAddGeneratedPerspective}
-                  trackUsage={trackUsage}
-                />
+                  {/* New Chat Button */}
+                  <div className="p-4">
+                    <button
+                      onClick={handleNewSession}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white font-medium transition-colors"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                      </svg>
+                      New Chat
+                    </button>
+                  </div>
 
-                {/* Accordion Menu */}
-                <div className="mt-6">
-                  <AccordionMenu
-                    onSettingsClick={() => setShowSettingsMenu(true)}
-                    onPromptLibraryClick={() => setShowPromptLibrary(true)}
-                    onSessionManagerClick={() => setShowSessionPanel(true)}
-                    onNewSessionClick={handleNewSession}
-                    onExportClick={() => setShowExportMenu(true)}
-                    onDossierClick={() => setShowDossierModal(true)}
-                    onEvaluationsClick={() => setShowEvaluationsModal(true)}
-                    onImportExportAdvisorsClick={() => setShowImportExportModal(true)}
-                    onVotingClick={() => setShowVotingModal(true)}
-                    onHelpClick={() => setShowHelpModal(true)}
-                    onFullscreenClick={toggleFullscreen}
-                    isFullscreen={isFullscreen}
-                  />
+                  {/* Scrollable content */}
+                  <div className="flex-1 overflow-y-auto px-4">
+                    <GroupableModule
+                      title="Perspectives"
+                      groups={advisorGroups}
+                      items={advisors}
+                      onItemClick={handleAdvisorClick}
+                      onGroupClick={handleGroupClick}
+                      activeItems={advisors.filter(a => a.active)}
+                      activeGroups={activeGroups}
+                      onAddClick={() => {
+                        setSuggestedAdvisorName('');
+                        setShowAdvisorForm(true);
+                      }}
+                      setEditingAdvisor={setEditingAdvisor}
+                      setAdvisors={setAdvisors}
+                      setMessages={setMessages}
+                    />
+
+                    <PerspectiveGenerator
+                      messages={messages}
+                      existingAdvisors={advisors}
+                      onAddPerspective={handleAddGeneratedPerspective}
+                      trackUsage={trackUsage}
+                    />
+
+                    {/* Accordion Menu */}
+                    <div className="mt-6 mb-4">
+                      <AccordionMenu
+                        onSettingsClick={() => setShowSettingsMenu(true)}
+                        onPromptLibraryClick={() => setShowPromptLibrary(true)}
+                        onSessionManagerClick={() => setShowSessionPanel(true)}
+                        onNewSessionClick={handleNewSession}
+                        onExportClick={() => setShowExportMenu(true)}
+                        onDossierClick={() => setShowDossierModal(true)}
+                        onEvaluationsClick={() => setShowEvaluationsModal(true)}
+                        onImportExportAdvisorsClick={() => setShowImportExportModal(true)}
+                        onVotingClick={() => setShowVotingModal(true)}
+                        onHelpClick={() => setShowHelpModal(true)}
+                        onFullscreenClick={toggleFullscreen}
+                        isFullscreen={isFullscreen}
+                      />
+                    </div>
+                  </div>
                 </div>
-
-                {/* Resize Handle */}
-                <div
-                  onMouseDown={startResize}
-                  className="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-green-500 dark:hover:bg-green-600 transition-colors group"
-                  title="Drag to resize sidebar"
-                >
-                  <div className="absolute top-1/2 right-0 w-1 h-12 -translate-y-1/2 bg-gray-400 dark:bg-gray-600 group-hover:bg-green-500 dark:group-hover:bg-green-600 transition-colors"></div>
-                </div>
-              </div>
               )}
 
               {/* Expand Button (when sidebar is collapsed) */}
