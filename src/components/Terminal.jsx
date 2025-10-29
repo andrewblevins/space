@@ -143,8 +143,13 @@ const Terminal = ({ theme, toggleTheme }) => {
     try {
       setIsGeneratingSuggestions(true);
 
-      // Add the journal entry as the first user message
-      setMessages(prev => [...prev, {
+      // Generate a new session ID for this new conversation
+      const newSessionId = getNextSessionId();
+      setCurrentSessionId(newSessionId);
+      console.log('📝 Starting new session after journal submit:', newSessionId);
+
+      // Clear any existing messages and add the journal entry as the first user message
+      setMessages([{
         type: 'user',
         content: journalText
       }]);
@@ -176,8 +181,18 @@ const Terminal = ({ theme, toggleTheme }) => {
     }
   };
 
-  const handleJournalSkip = () => {
+  const handleJournalSkip = (text) => {
     setShowJournalOnboarding(false);
+    // Clear any existing messages to start fresh
+    setMessages([]);
+    // Generate a new session ID to ensure we don't save to the old conversation
+    const newSessionId = getNextSessionId();
+    setCurrentSessionId(newSessionId);
+    console.log('📝 Starting new session after journal skip:', newSessionId);
+    // Set the text from journal into the input field
+    if (text && text.trim()) {
+      setInput(text.trim());
+    }
   };
 
   const handleAddSuggestedAdvisors = async (selectedAdvisors) => {
@@ -200,24 +215,8 @@ const Terminal = ({ theme, toggleTheme }) => {
     const finalAdvisors = [...updatedAdvisors, ...newAdvisorsWithActive];
     setAdvisors(finalAdvisors);
 
-    // Build system message
-    const activated = toActivate.map(a => a.name);
-    const added = toAdd.map(a => a.name);
-    let message = '';
-    if (activated.length > 0) {
-      message += `Activated: ${activated.join(', ')}`;
-    }
-    if (added.length > 0) {
-      if (message) message += '. ';
-      message += `Added: ${added.join(', ')}`;
-    }
-
-    if (message) {
-      setMessages(prev => [...prev, {
-        type: 'system',
-        content: message
-      }]);
-    }
+    // Don't show system message about added/activated advisors
+    // Just silently add them and let them respond
 
     // Close modal
     setShowJournalSuggestions(false);
@@ -231,7 +230,8 @@ const Terminal = ({ theme, toggleTheme }) => {
 
       try {
         // Call parallel advisors with the journal entry
-        await callParallelAdvisors(finalAdvisors.filter(a => a.active), journalMessage.content);
+        // Note: callParallelAdvisors expects (userMessage, activeAdvisors)
+        await callParallelAdvisors(journalMessage.content, finalAdvisors.filter(a => a.active));
       } catch (error) {
         console.error('Error generating advisor responses:', error);
         setMessages(prev => [...prev, {
@@ -1003,10 +1003,10 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
   // Session management functions for SessionPanel
   const handleNewSession = async () => {
     const prevSessionId = currentSessionId;
-    
+
     // Auto-generate summary for the session we're leaving
     generateSummaryForPreviousSession(prevSessionId);
-    
+
     if (useDatabaseStorage) {
       // Create new conversation in database
       try {
@@ -1019,7 +1019,7 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
             created: new Date().toISOString()
           }
         );
-        
+
         setCurrentConversationId(conversation.id);
         setCurrentSessionId(conversation.id); // Use conversation ID as session ID
         console.log('🗃️ Created new database conversation:', conversation.id);
@@ -1036,11 +1036,14 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
       setCurrentSessionId(newSessionId);
       setCurrentConversationId(null);
     }
-    
+
     setMessages([]);
     setMetaphors([]);
     setAdvisorSuggestions([]);
     setVoteHistory([]);
+
+    // Show journal onboarding for new chat
+    setShowJournalOnboarding(true);
 
     // Deactivate all advisors to trigger journal onboarding
     setAdvisors(prev => prev.map(a => ({ ...a, active: false })));
@@ -3491,28 +3494,61 @@ Example: {"position": "Option 2 text here", "confidence": 75, "reasoning": "This
 
   // Auto-scroll is now handled by browser's natural scroll behavior
 
-  // Show journal onboarding when starting fresh
+  // On mount: Load most recent session or show onboarding
   useEffect(() => {
-    // Count real user/assistant messages (not system messages)
-    const realMessages = messages.filter(m => m.type === 'user' || m.type === 'assistant');
-    const activeAdvisors = advisors.filter(a => a.active);
+    // Only run once on mount
+    let mounted = true;
 
-    // Show onboarding if:
-    // 1. No real messages yet
-    // 2. No active advisors
-    // 3. API keys are set
-    // 4. Not already showing onboarding or suggestions modal
-    const shouldShow =
-      realMessages.length === 0 &&
-      activeAdvisors.length === 0 &&
-      apiKeysSet &&
-      !showJournalOnboarding &&
-      !showJournalSuggestions;
+    const initializeApp = async () => {
+      if (!apiKeysSet) return; // Wait for API keys to be set
 
-    if (shouldShow) {
-      setShowJournalOnboarding(true);
-    }
-  }, [messages, advisors, apiKeysSet, showJournalOnboarding, showJournalSuggestions]);
+      // Check for most recent session
+      const sessionKeys = Object.keys(localStorage).filter(key => key.startsWith('space_session_'));
+
+      if (sessionKeys.length > 0) {
+        // Find most recent session
+        const sessions = sessionKeys.map(key => {
+          const sessionData = localStorage.getItem(key);
+          try {
+            const data = JSON.parse(sessionData);
+            const sessionId = parseInt(key.replace('space_session_', ''));
+            return { id: sessionId, data, timestamp: data.timestamp || 0 };
+          } catch {
+            return null;
+          }
+        }).filter(Boolean);
+
+        if (sessions.length > 0) {
+          // Sort by timestamp (most recent first) or by ID if no timestamp
+          sessions.sort((a, b) => (b.timestamp || b.id) - (a.timestamp || a.id));
+          const mostRecent = sessions[0];
+
+          console.log('📂 Found most recent session:', mostRecent.id);
+
+          // Only auto-load if we're starting fresh (no messages except system messages)
+          const realMessages = messages.filter(m => m.type === 'user' || m.type === 'assistant');
+          if (realMessages.length === 0 && mounted) {
+            // Load the most recent session
+            await handleLoadSession(mostRecent.id.toString());
+            return;
+          }
+        }
+      }
+
+      // No sessions found or couldn't load - show onboarding
+      const realMessages = messages.filter(m => m.type === 'user' || m.type === 'assistant');
+      if (realMessages.length === 0 && mounted && !showJournalOnboarding) {
+        console.log('📝 No previous sessions found, showing journal onboarding');
+        setShowJournalOnboarding(true);
+      }
+    };
+
+    initializeApp();
+
+    return () => {
+      mounted = false;
+    };
+  }, [apiKeysSet]); // Only run when API keys are set
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -3921,6 +3957,7 @@ ${selectedText}
                       existingAdvisors={advisors}
                       onAddPerspective={handleAddGeneratedPerspective}
                       trackUsage={trackUsage}
+                      onEditAdvisor={setEditingAdvisor}
                     />
 
                     {/* Accordion Menu */}
@@ -3998,66 +4035,57 @@ ${selectedText}
                       </div>
                     </div>
 
-                    <div className="max-w-3xl mx-auto px-4 py-6">
-                      <form onSubmit={handleSubmit}>
-                        <div className="flex items-start gap-2">
+                    <form onSubmit={handleSubmit} className="py-6">
+                      <div className="max-w-3xl mx-auto px-4">
                       {editingPrompt ? (
-                        <div className="flex-1">
-                          <textarea
-                            value={editText}
-                            onChange={(e) => setEditText(e.target.value)}
-                            onKeyDown={handleEditKeyDown}
-                            className="w-full h-40 bg-white text-gray-800 font-serif p-2 border border-gray-300 focus:outline-none resize-none dark:bg-black dark:text-green-400 dark:border-green-400"
-                            placeholder="Edit your prompt..."
-                            autoFocus
-                            autoComplete="off"
-                            spellCheck="true"
-                            data-role="text-editor"
-                          />
-                        </div>
+                        <textarea
+                          value={editText}
+                          onChange={(e) => setEditText(e.target.value)}
+                          onKeyDown={handleEditKeyDown}
+                          className="w-full h-40 bg-white text-gray-800 font-serif p-2 border border-gray-300 focus:outline-none resize-none dark:bg-black dark:text-green-400 dark:border-green-400"
+                          placeholder="Edit your prompt..."
+                          autoFocus
+                          autoComplete="off"
+                          spellCheck="true"
+                          data-role="text-editor"
+                        />
                       ) : editingAdvisor ? (
-                        <div className="flex-1">
-                          <textarea
-                            value={editAdvisorText}
-                            onChange={(e) => setEditAdvisorText(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' && e.ctrlKey) {
-                                // Save changes
-                                setAdvisors(prev => prev.map(a =>
-                                  a.name === editingAdvisor.name ? { ...a, description: editAdvisorText } : a
-                                ));
-                                setEditingAdvisor(null);
-                                setEditAdvisorText('');
-                              } else if (e.key === 'Escape') {
-                                // Cancel editing
-                                setEditingAdvisor(null);
-                                setEditAdvisorText('');
-                              }
-                            }}
-                            className="w-full h-40 bg-white text-gray-800 font-serif p-2 border border-gray-300 focus:outline-none resize-none dark:bg-black dark:text-green-400 dark:border-green-400"
-                            placeholder="Edit advisor description..."
-                            autoFocus
-                            autoComplete="off"
-                            spellCheck="true"
-                            data-role="text-editor"
-                          />
-                        </div>
+                        <textarea
+                          value={editAdvisorText}
+                          onChange={(e) => setEditAdvisorText(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && e.ctrlKey) {
+                              // Save changes
+                              setAdvisors(prev => prev.map(a =>
+                                a.name === editingAdvisor.name ? { ...a, description: editAdvisorText } : a
+                              ));
+                              setEditingAdvisor(null);
+                              setEditAdvisorText('');
+                            } else if (e.key === 'Escape') {
+                              // Cancel editing
+                              setEditingAdvisor(null);
+                              setEditAdvisorText('');
+                            }
+                          }}
+                          className="w-full h-40 bg-white text-gray-800 font-serif p-2 border border-gray-300 focus:outline-none resize-none dark:bg-black dark:text-green-400 dark:border-green-400"
+                          placeholder="Edit advisor description..."
+                          autoFocus
+                          autoComplete="off"
+                          spellCheck="true"
+                          data-role="text-editor"
+                        />
                       ) : (
-                        <>
-                          <span className="text-green-400 pt-4">&gt;</span>
-                          <ExpandingInput
-                            value={input}
-                            onChange={(e) => setInput(e.target.value)}
-                            onSubmit={handleSubmit}
-                            isLoading={isLoading}
-                            sessions={sessions}
-                            onSessionSelect={handleSessionSelect}
-                          />
-                        </>
+                        <ExpandingInput
+                          value={input}
+                          onChange={(e) => setInput(e.target.value)}
+                          onSubmit={handleSubmit}
+                          isLoading={isLoading}
+                          sessions={sessions}
+                          onSessionSelect={handleSessionSelect}
+                        />
                       )}
-                        </div>
-                      </form>
-                    </div>
+                      </div>
+                    </form>
                   </>
                 )}
               </div>

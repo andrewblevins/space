@@ -1,30 +1,33 @@
 import { useState } from 'react';
+import AdvisorSuggestionsModal from './AdvisorSuggestionsModal';
 
 /**
- * Component for actively generating perspective suggestions with inline quick-edit
+ * Component for generating perspective suggestions in a modal
  * @param {object} props
  * @param {Array} props.messages - Conversation messages for context
  * @param {Array} props.existingAdvisors - Currently saved advisors
- * @param {Function} props.onAddPerspective - Callback when adding a perspective
+ * @param {Function} props.onAddPerspective - Callback when adding perspectives
  * @param {Function} props.trackUsage - Usage tracking function
+ * @param {Function} props.onEditAdvisor - Callback when editing an advisor
  */
 export function PerspectiveGenerator({
   messages,
   existingAdvisors = [],
   onAddPerspective,
-  trackUsage
+  trackUsage,
+  onEditAdvisor
 }) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [generatedPerspectives, setGeneratedPerspectives] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [lastGenerationTimestamp, setLastGenerationTimestamp] = useState(null);
-  const [editingId, setEditingId] = useState(null);
-  const [editedNames, setEditedNames] = useState({});
 
   const hasMessages = messages.filter(m => m.type === 'user' || m.type === 'assistant').length > 0;
 
   const generatePerspectives = async () => {
     if (!hasMessages) return;
 
+    // Open modal and start generating
+    setIsModalOpen(true);
     setIsGenerating(true);
 
     try {
@@ -81,13 +84,11 @@ export function PerspectiveGenerator({
 
       const promptContent = `Based on this recent conversation exchange, suggest exactly 5 specific perspectives that could add valuable insight to this discussion.
 
-You may suggest perspectives from any of these categories:
-1. Real historical figures, thinkers, or experts (living or dead)
-2. Mythic figures, gods/goddesses, or legendary characters from various cultures
-3. Professional roles or archetypal figures that bring useful frameworks
-4. Fictional characters whose wisdom or approach would be illuminating
-
-Choose the categories most appropriate, tonally and practically, for the conversation. *When in doubt,* focus on professional roles.
+IMPORTANT: Include a diverse mix across these categories:
+- At least 1-2 real historical figures, thinkers, or experts (living or dead)
+- At least 1-2 role-based perspectives (professional roles, archetypes, or frameworks)
+- At least 1 perspective from wisdom traditions, philosophical schools, or cultural approaches
+- At least 1 perspective that is antagonistic to the user's apparent values and/or framing - someone who would challenge their assumptions in an abrasive or uncomfortable way
 
 Be sensitive to the content and tone of the conversation. If the conversation is a serious discussion of a difficult situation, make serious, practical suggestions. If the conversation is playful or humorous, make playful, original perspective suggestions.
 
@@ -102,13 +103,13 @@ Do NOT include parenthetical descriptions of the perspectives, or anything other
 Recent conversation:
 ${recentMessages}
 
-For each perspective, provide:
-1. name: The perspective name/title (concise)
-2. rationale: Brief explanation (1-2 sentences) of why this perspective is relevant to the current conversation
+For each perspective, generate a description using these instructions:
+
+You are generating a description of an AI advisor that will be used to instruct that entity in a conversation. Your description should be written in second-person (addressing the advisor as "you") and should instruct them on their identity, expertise, and approach. Include instructions about any specific lineages, practices, or frameworks they should embody, and how they should approach problems. Imitate the advisor, writing in their own distinct voice, as gleaned from any writings or public communications they have made. Do not include the advisor's name in the description. Do not include action cues, stage directions, or physical descriptions.
 
 Respond with JSON: {
   "perspectives": [
-    {"name": "Perspective Name", "rationale": "Why this perspective is valuable here"},
+    {"name": "Perspective Name", "description": "Second-person description instructing this perspective on their identity, expertise, and approach..."},
     ...
   ]
 }`;
@@ -125,7 +126,7 @@ Respond with JSON: {
             role: 'user',
             content: promptContent
           }],
-          max_tokens: 500,
+          max_tokens: 2000,
           response_format: { type: 'json_object' }
         })
       });
@@ -152,155 +153,73 @@ Respond with JSON: {
       }));
 
       setGeneratedPerspectives(perspectivesWithIds);
-      setLastGenerationTimestamp(Date.now());
-      setEditedNames({});
-      setEditingId(null);
 
     } catch (error) {
       console.error('Error generating perspectives:', error);
+      setIsModalOpen(false); // Close modal on error
     } finally {
       setIsGenerating(false);
     }
   };
 
-  const handleAddPerspective = (perspective) => {
-    const finalName = editedNames[perspective.id] || perspective.name;
-    onAddPerspective({
-      name: finalName,
-      rationale: perspective.rationale
+  const handleAddSelected = (selectedPerspectives) => {
+    // Add all selected perspectives
+    selectedPerspectives.forEach(p => {
+      onAddPerspective({
+        name: p.name,
+        description: p.description || ''
+      });
     });
 
-    // Remove from list after adding
-    setGeneratedPerspectives(prev => prev.filter(p => p.id !== perspective.id));
+    setIsModalOpen(false);
+    setGeneratedPerspectives([]);
   };
 
-  const handleDismiss = (perspectiveId) => {
-    setGeneratedPerspectives(prev => prev.filter(p => p.id !== perspectiveId));
-  };
-
-  const handleNameEdit = (perspectiveId, newName) => {
-    setEditedNames(prev => ({ ...prev, [perspectiveId]: newName }));
-  };
-
-  const getTimeSince = (timestamp) => {
-    if (!timestamp) return null;
-    const seconds = Math.floor((Date.now() - timestamp) / 1000);
-    if (seconds < 60) return 'just now';
-    const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return `${minutes}m ago`;
-    const hours = Math.floor(minutes / 60);
-    return `${hours}h ago`;
+  const handleSkip = () => {
+    setIsModalOpen(false);
+    setGeneratedPerspectives([]);
   };
 
   return (
-    <div className="mt-6 border-t border-gray-300 dark:border-gray-700 pt-4">
-      {/* Generate Button */}
-      <button
-        onClick={generatePerspectives}
-        disabled={!hasMessages || isGenerating}
-        className={`
-          w-full p-3 rounded-lg border transition-colors text-left
-          ${hasMessages && !isGenerating
-            ? 'border-green-600 dark:border-green-500 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 cursor-pointer'
-            : 'border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 cursor-not-allowed opacity-50'
-          }
-        `}
-      >
-        <div className="flex items-center justify-between">
-          <span className="font-medium text-gray-800 dark:text-gray-200">
-            {isGenerating ? 'Generating Perspectives...' : 'Generate Perspectives'}
-          </span>
-          {isGenerating && (
-            <svg className="animate-spin h-5 w-5 text-green-600 dark:text-green-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+    <>
+      <div className="mt-6 border-t border-gray-300 dark:border-gray-700 pt-4">
+        {/* Generate Button */}
+        <button
+          onClick={generatePerspectives}
+          disabled={!hasMessages}
+          className={`
+            w-full p-3 rounded-lg border transition-colors text-left
+            ${hasMessages
+              ? 'border-green-600 dark:border-green-500 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 cursor-pointer'
+              : 'border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 cursor-not-allowed opacity-50'
+            }
+          `}
+        >
+          <div className="flex items-center justify-between">
+            <span className="font-medium text-gray-800 dark:text-gray-200">
+              Generate Perspectives
+            </span>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-600 dark:text-green-400" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
             </svg>
-          )}
-        </div>
-        {lastGenerationTimestamp && !isGenerating && (
-          <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Last generated {getTimeSince(lastGenerationTimestamp)}
           </div>
-        )}
-      </button>
+        </button>
+      </div>
 
-      {/* Generated Perspectives */}
-      {generatedPerspectives.length > 0 && (
-        <div className="mt-4 space-y-3">
-          {generatedPerspectives.map((perspective) => {
-            const isEditing = editingId === perspective.id;
-            const displayName = editedNames[perspective.id] || perspective.name;
-
-            return (
-              <div
-                key={perspective.id}
-                className="p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
-              >
-                {/* Name (editable) */}
-                {isEditing ? (
-                  <input
-                    type="text"
-                    value={displayName}
-                    onChange={(e) => handleNameEdit(perspective.id, e.target.value)}
-                    onBlur={() => setEditingId(null)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') setEditingId(null);
-                      if (e.key === 'Escape') {
-                        setEditedNames(prev => {
-                          const newEdited = { ...prev };
-                          delete newEdited[perspective.id];
-                          return newEdited;
-                        });
-                        setEditingId(null);
-                      }
-                    }}
-                    autoFocus
-                    className="w-full px-2 py-1 rounded border border-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500"
-                  />
-                ) : (
-                  <div
-                    onClick={() => setEditingId(perspective.id)}
-                    className="font-medium text-gray-900 dark:text-gray-100 cursor-text hover:text-green-600 dark:hover:text-green-400 transition-colors"
-                  >
-                    {displayName}
-                  </div>
-                )}
-
-                {/* Rationale */}
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  {perspective.rationale}
-                </p>
-
-                {/* Action Buttons */}
-                <div className="flex items-center gap-2 mt-2">
-                  <button
-                    onClick={() => handleAddPerspective(perspective)}
-                    className="flex-1 px-3 py-1 text-sm rounded bg-green-600 hover:bg-green-700 text-white transition-colors"
-                  >
-                    Add
-                  </button>
-                  <button
-                    onClick={() => handleDismiss(perspective.id)}
-                    className="px-3 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors"
-                  >
-                    Dismiss
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-
-          {/* Regenerate Button */}
-          <button
-            onClick={generatePerspectives}
-            disabled={isGenerating}
-            className="w-full px-3 py-2 text-sm rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Generate New Set
-          </button>
-        </div>
-      )}
-    </div>
+      {/* Suggestions Modal - without existing advisors */}
+      <AdvisorSuggestionsModal
+        isOpen={isModalOpen}
+        suggestions={generatedPerspectives}
+        existingAdvisors={[]} // Don't show existing advisors section
+        onAddSelected={handleAddSelected}
+        onRegenerate={generatePerspectives}
+        onSkip={handleSkip}
+        isRegenerating={isGenerating}
+        hideSkipButton={true} // Hide "Start Without" button
+        generatingText="Generating..." // Show "Generating..." instead of "Regenerating..."
+        onEditAdvisor={onEditAdvisor}
+      />
+    </>
   );
 }
 

@@ -61,9 +61,9 @@ export const MemoizedMarkdownMessage = memo(({ content, advisors = [], paragraph
                      </code>
                    );
                  },
-                 p: ({ children }) => <p className="font-serif w-full text-base text-gray-800 dark:text-gray-200" style={{ marginBottom: `${paragraphSpacing}rem`, lineHeight: '1.7' }}>{children}</p>,
-                 ul: ({ children }) => <ul className="list-disc pl-4 space-y-1 w-full text-base text-gray-800 dark:text-gray-200" style={{ marginBottom: `${paragraphSpacing}rem` }}>{children}</ul>,
-                 li: ({ children }) => <li className="text-base text-gray-800 dark:text-gray-200">{children}</li>,
+                 p: ({ children }) => <p className="font-serif w-full text-lg text-gray-800 dark:text-gray-200" style={{ marginBottom: `${paragraphSpacing}rem`, lineHeight: '1.7' }}>{children}</p>,
+                 ul: ({ children }) => <ul className="list-disc pl-4 space-y-1 w-full text-lg text-gray-800 dark:text-gray-200" style={{ marginBottom: `${paragraphSpacing}rem` }}>{children}</ul>,
+                 li: ({ children }) => <li className="text-lg text-gray-800 dark:text-gray-200">{children}</li>,
                }}
              >
                {part.replace(/\n\n+/g, '\n\n')}
@@ -97,9 +97,9 @@ export const MemoizedMarkdownMessage = memo(({ content, advisors = [], paragraph
             </code>
           );
         },
-        p: ({ children }) => <p className="font-serif w-full text-base text-gray-800 dark:text-gray-200" style={{ marginBottom: `${paragraphSpacing}rem`, lineHeight: '1.7' }}>{children}</p>,
-        ul: ({ children }) => <ul className="list-disc pl-4 space-y-1 w-full text-base text-gray-800 dark:text-gray-200" style={{ marginBottom: `${paragraphSpacing}rem` }}>{children}</ul>,
-        li: ({ children }) => <li className="text-base text-gray-800 dark:text-gray-200">{children}</li>,
+        p: ({ children }) => <p className="font-serif w-full text-lg text-gray-800 dark:text-gray-200" style={{ marginBottom: `${paragraphSpacing}rem`, lineHeight: '1.7' }}>{children}</p>,
+        ul: ({ children }) => <ul className="list-disc pl-4 space-y-1 w-full text-lg text-gray-800 dark:text-gray-200" style={{ marginBottom: `${paragraphSpacing}rem` }}>{children}</ul>,
+        li: ({ children }) => <li className="text-lg text-gray-800 dark:text-gray-200">{children}</li>,
       }}
     >
       {processedContent}

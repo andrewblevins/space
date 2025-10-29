@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const AdvisorSuggestionsModal = ({ suggestions, existingAdvisors, onAddSelected, onRegenerate, onSkip, isOpen, isRegenerating, onEditAdvisor }) => {
+const AdvisorSuggestionsModal = ({ suggestions, existingAdvisors, onAddSelected, onRegenerate, onSkip, isOpen, isRegenerating, onEditAdvisor, hideSkipButton = false, generatingText = 'Regenerating...' }) => {
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [expandedIds, setExpandedIds] = useState(new Set());
 
@@ -106,7 +106,7 @@ const AdvisorSuggestionsModal = ({ suggestions, existingAdvisors, onAddSelected,
                             </div>
 
                             {advisor.description && (
-                              <p className="text-gray-700 dark:text-gray-300 mb-2">
+                              <p className="text-gray-700 dark:text-gray-300 mb-2 whitespace-pre-line">
                                 {shouldTruncate && !isExpanded
                                   ? advisor.description.slice(0, 150) + '...'
                                   : advisor.description}
@@ -173,7 +173,7 @@ const AdvisorSuggestionsModal = ({ suggestions, existingAdvisors, onAddSelected,
           {suggestions.map((advisor) => {
             const isSelected = selectedIds.has(advisor.id);
             const isExpanded = expandedIds.has(advisor.id);
-            const shouldTruncate = advisor.description.length > 150;
+            const shouldTruncate = advisor.description && advisor.description.length > 150;
 
             return (
               <div
@@ -195,46 +195,55 @@ const AdvisorSuggestionsModal = ({ suggestions, existingAdvisors, onAddSelected,
                       </h3>
                     </div>
 
-                    <p className="text-gray-700 dark:text-gray-300 mb-2">
-                      {shouldTruncate && !isExpanded
-                        ? advisor.description.slice(0, 150) + '...'
-                        : advisor.description}
-                      {shouldTruncate && (
-                        <button
-                          onClick={() => toggleExpanded(advisor.id)}
-                          className="ml-2 text-green-600 dark:text-green-400 hover:underline text-sm"
-                        >
-                          {isExpanded ? 'Show less' : 'Show more'}
-                        </button>
-                      )}
-                    </p>
-
-                    {advisor.rationale && (
-                      <p className="text-sm text-gray-500 dark:text-gray-400 italic">
-                        → {advisor.rationale}
+                    {advisor.description && (
+                      <p className="text-gray-700 dark:text-gray-300 mb-2 whitespace-pre-line">
+                        {shouldTruncate && !isExpanded
+                          ? advisor.description.slice(0, 150) + '...'
+                          : advisor.description}
+                        {shouldTruncate && (
+                          <button
+                            onClick={() => toggleExpanded(advisor.id)}
+                            className="ml-2 text-green-600 dark:text-green-400 hover:underline text-sm"
+                          >
+                            {isExpanded ? 'Show less' : 'Show more'}
+                          </button>
+                        )}
                       </p>
                     )}
                   </div>
 
-                  <button
-                    onClick={() => toggleSelection(advisor.id)}
-                    className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
-                      isSelected
-                        ? 'bg-green-600 dark:bg-green-700 text-white'
-                        : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-600'
-                    }`}
-                    title={isSelected ? 'Remove from selection' : 'Add to selection'}
-                  >
-                    {isSelected ? (
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                    ) : (
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                      </svg>
+                  <div className="flex items-center gap-2">
+                    {onEditAdvisor && (
+                      <button
+                        onClick={() => onEditAdvisor(advisor)}
+                        className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-colors bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-600"
+                        title="Edit perspective"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
                     )}
-                  </button>
+                    <button
+                      onClick={() => toggleSelection(advisor.id)}
+                      className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
+                        isSelected
+                          ? 'bg-green-600 dark:bg-green-700 text-white'
+                          : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-600'
+                      }`}
+                      title={isSelected ? 'Remove from selection' : 'Add to selection'}
+                    >
+                      {isSelected ? (
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : (
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
             );
@@ -249,14 +258,16 @@ const AdvisorSuggestionsModal = ({ suggestions, existingAdvisors, onAddSelected,
               disabled={isRegenerating}
               className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {isRegenerating ? 'Regenerating...' : 'Regenerate'}
+              {isRegenerating ? generatingText : 'Regenerate'}
             </button>
-            <button
-              onClick={onSkip}
-              className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
-            >
-              Start Without
-            </button>
+            {!hideSkipButton && (
+              <button
+                onClick={onSkip}
+                className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+              >
+                Start Without
+              </button>
+            )}
           </div>
 
           <div className="flex gap-3">
