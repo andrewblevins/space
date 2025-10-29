@@ -4002,10 +4002,9 @@ ${selectedText}
                       </div>
                     </div>
 
-                    <div className="bg-gradient-to-b from-amber-50 to-amber-100 dark:bg-gradient-to-b dark:from-gray-900 dark:to-black">
-                      <div className="max-w-3xl mx-auto px-4 py-2">
-                        <form onSubmit={handleSubmit}>
-                          <div className="flex items-center">
+                    <div className="max-w-3xl mx-auto px-4 py-6">
+                      <form onSubmit={handleSubmit}>
+                        <div className="flex items-center">
                       {editingPrompt ? (
                         <div className="flex-1">
                           <textarea
@@ -4060,9 +4059,8 @@ ${selectedText}
                           />
                         </>
                       )}
-                          </div>
-                        </form>
-                      </div>
+                        </div>
+                      </form>
                     </div>
                   </>
                 )}
