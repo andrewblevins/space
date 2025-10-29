@@ -1,6 +1,7 @@
 import React, { memo } from 'react';
 import { MemoizedMarkdownMessage } from './MemoizedMarkdownMessage';
 import { AdvisorResponseCard } from './AdvisorResponseCard';
+import { ParallelAdvisorGrid } from './ParallelAdvisorGrid';
 import ThinkingBlock from '../ThinkingBlock';
 // DEPRECATED: DebateBlock no longer used after High Council removal
 // import DebateBlock from '../DebateBlock';
@@ -80,38 +81,13 @@ const MessageRenderer = memo(({
 
       case 'parallel_advisor_response':
         return (
-          <div>
-            {!msg.allCompleted && (
-              <div className="mb-2 text-sm text-green-600 dark:text-green-400 italic">
-                ⚡ Parallel streaming in progress...
-              </div>
-            )}
-            {Object.entries(msg.advisorResponses).map(([advisorId, advisorData]) => {
-              // Create advisor object compatible with AdvisorResponseCard
-              const advisorForCard = {
-                id: advisorId,
-                name: advisorData.name,
-                response: advisorData.content,
-                timestamp: msg.timestamp
-              };
-
-              return (
-                <div key={advisorId}>
-                  {advisorData.thinking && <ThinkingBlock content={advisorData.thinking} />}
-                  <AdvisorResponseCard
-                    advisor={advisorForCard}
-                    allAdvisors={advisors}
-                    onAssertionsClick={(advisorData) => onAssertionsClick(advisorData, messages, getSystemPrompt)}
-                  />
-                  {advisorData.error && (
-                    <div className="mb-2 text-sm text-red-600 dark:text-red-400 italic">
-                      ⚠ Error with this advisor
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+          <ParallelAdvisorGrid
+            message={msg}
+            advisors={advisors}
+            onAssertionsClick={onAssertionsClick}
+            messages={messages}
+            getSystemPrompt={getSystemPrompt}
+          />
         );
 
       case 'assistant':
