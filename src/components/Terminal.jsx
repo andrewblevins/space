@@ -4071,7 +4071,7 @@ ${selectedText}
               {/* Info Button - Top Right */}
               <div className="fixed top-4 right-4 z-50">
                 <button
-                  className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                  className="flex items-center justify-center w-8 h-8 rounded-full bg-black border border-green-400 text-green-400 hover:bg-green-400 hover:text-black transition-colors"
                   title="About SPACE Terminal"
                   onClick={() => setShowInfoModal(true)}
                 >
