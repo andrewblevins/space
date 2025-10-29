@@ -52,6 +52,8 @@ export function useParallelAdvisors({ messages, setMessages, maxTokens, contextL
       return false;
     }).length;
 
+    console.log(`🔢 ${advisor.name} turn count:`, conversationTurns, 'Early protocol active:', conversationTurns < 3);
+
     // Create individual system prompt for this advisor only
     const systemPromptText = `You are ${advisor.name}. ${advisor.description}
 
@@ -165,7 +167,9 @@ Respond naturally and directly without JSON formatting, name labels, or meta-com
       inputTokens,
       systemTokens,
       contextTokens,
-      systemPrompt: systemPromptText.substring(0, 200) + '...',
+      conversationTurns,
+      earlyProtocolActive: conversationTurns < 3,
+      systemPrompt: systemPromptText.substring(0, 400) + '...',
       model: requestBody.model
     });
 
