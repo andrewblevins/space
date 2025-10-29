@@ -54,6 +54,9 @@ import AssertionsModal from './AssertionsModal';
 import EvaluationsModal from './EvaluationsModal';
 import ResponsiveContainer from './responsive/ResponsiveContainer';
 import MobileLayout from './mobile/MobileLayout';
+import JournalOnboarding from './JournalOnboarding';
+import AdvisorSuggestionsModal from './AdvisorSuggestionsModal';
+import { generateAdvisorSuggestions } from '../utils/advisorSuggestions';
 
 
 
@@ -119,19 +122,156 @@ const Terminal = ({ theme, toggleTheme }) => {
       const existingNames = new Set(advisors.map(a => a.name.toLowerCase()));
       const newAdvisors = importedAdvisors.filter(a => !existingNames.has(a.name.toLowerCase()));
       const duplicates = importedAdvisors.length - newAdvisors.length;
-      
+
       setAdvisors(prev => [...prev, ...newAdvisors]);
-      
+
       let message = `Added ${newAdvisors.length} new advisors.`;
       if (duplicates > 0) {
         message += ` Skipped ${duplicates} duplicate${duplicates > 1 ? 's' : ''}.`;
       }
-      
+
       setMessages(prev => [...prev, {
         type: 'system',
         content: message
       }]);
     }
+  };
+
+  // Journal onboarding handlers
+  const handleJournalSubmit = async (journalText) => {
+    try {
+      setIsGeneratingSuggestions(true);
+
+      // Add the journal entry as the first user message
+      setMessages(prev => [...prev, {
+        type: 'user',
+        content: journalText
+      }]);
+
+      // Generate advisor suggestions, excluding existing advisor names
+      const existingNames = advisors.map(a => a.name);
+      const suggestions = await generateAdvisorSuggestions(journalText, advisors, existingNames);
+      setJournalSuggestions(suggestions);
+
+      // Track these names for future regenerations (combine existing + new suggestions)
+      setPreviousSuggestionNames([...existingNames, ...suggestions.map(s => s.name)]);
+
+      // Hide onboarding, show suggestions modal
+      setShowJournalOnboarding(false);
+      setShowJournalSuggestions(true);
+      setIsGeneratingSuggestions(false);
+    } catch (error) {
+      console.error('Error generating advisor suggestions:', error);
+      setIsGeneratingSuggestions(false);
+
+      // Show error message
+      setMessages(prev => [...prev, {
+        type: 'system',
+        content: `Failed to generate advisor suggestions: ${error.message}. You can still add advisors manually using the + button.`
+      }]);
+
+      // Close onboarding
+      setShowJournalOnboarding(false);
+    }
+  };
+
+  const handleJournalSkip = () => {
+    setShowJournalOnboarding(false);
+  };
+
+  const handleAddSuggestedAdvisors = async (selectedAdvisors) => {
+    // Separate existing advisors (to activate) from new advisors (to add)
+    const existingNames = new Set(advisors.map(a => a.name));
+    const toActivate = selectedAdvisors.filter(a => existingNames.has(a.name));
+    const toAdd = selectedAdvisors.filter(a => !existingNames.has(a.name));
+
+    // Activate existing advisors + add new advisors
+    const updatedAdvisors = advisors.map(a =>
+      toActivate.some(ta => ta.name === a.name) ? { ...a, active: true } : a
+    );
+
+    // Add completely new advisors
+    const newAdvisorsWithActive = toAdd.map(advisor => ({
+      ...advisor,
+      active: true
+    }));
+
+    const finalAdvisors = [...updatedAdvisors, ...newAdvisorsWithActive];
+    setAdvisors(finalAdvisors);
+
+    // Build system message
+    const activated = toActivate.map(a => a.name);
+    const added = toAdd.map(a => a.name);
+    let message = '';
+    if (activated.length > 0) {
+      message += `Activated: ${activated.join(', ')}`;
+    }
+    if (added.length > 0) {
+      if (message) message += '. ';
+      message += `Added: ${added.join(', ')}`;
+    }
+
+    if (message) {
+      setMessages(prev => [...prev, {
+        type: 'system',
+        content: message
+      }]);
+    }
+
+    // Close modal
+    setShowJournalSuggestions(false);
+
+    // Trigger parallel advisor responses to the journal entry
+    // Get the journal entry (first user message)
+    const journalMessage = messages.find(m => m.type === 'user');
+    if (journalMessage && finalAdvisors.filter(a => a.active).length > 0) {
+      // Set loading state
+      setIsLoading(true);
+
+      try {
+        // Call parallel advisors with the journal entry
+        await callParallelAdvisors(finalAdvisors.filter(a => a.active), journalMessage.content);
+      } catch (error) {
+        console.error('Error generating advisor responses:', error);
+        setMessages(prev => [...prev, {
+          type: 'system',
+          content: `Failed to generate advisor responses: ${error.message}`
+        }]);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
+
+  const handleRegenerateSuggestions = async () => {
+    try {
+      setIsGeneratingSuggestions(true);
+
+      // Get the first user message (journal entry)
+      const journalMessage = messages.find(m => m.type === 'user');
+      if (journalMessage) {
+        // Pass previous names to avoid duplicates
+        const suggestions = await generateAdvisorSuggestions(journalMessage.content, advisors, previousSuggestionNames);
+        setJournalSuggestions(suggestions);
+
+        // Add these new names to the previous list
+        setPreviousSuggestionNames(prev => [...prev, ...suggestions.map(s => s.name)]);
+      }
+
+      setIsGeneratingSuggestions(false);
+    } catch (error) {
+      console.error('Error regenerating suggestions:', error);
+      setIsGeneratingSuggestions(false);
+
+      setMessages(prev => [...prev, {
+        type: 'system',
+        content: `Failed to regenerate suggestions: ${error.message}`
+      }]);
+    }
+  };
+
+  const handleSkipSuggestions = () => {
+    setShowJournalSuggestions(false);
   };
 
   // DEPRECATED: High Council debate processing - Replaced by parallel advisor streaming
@@ -344,6 +484,13 @@ const Terminal = ({ theme, toggleTheme }) => {
   const [selectedAdvisorForAssertions, setSelectedAdvisorForAssertions] = useState(null);
   const [selectedResponseForEvaluation, setSelectedResponseForEvaluation] = useState(null);
   const [showEvaluationsModal, setShowEvaluationsModal] = useState(false);
+
+  // Journal onboarding state
+  const [showJournalOnboarding, setShowJournalOnboarding] = useState(false);
+  const [journalSuggestions, setJournalSuggestions] = useState([]);
+  const [showJournalSuggestions, setShowJournalSuggestions] = useState(false);
+  const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false);
+  const [previousSuggestionNames, setPreviousSuggestionNames] = useState([]);
   const [sessions, setSessions] = useState([]);
   const [sessionSelections, setSessionSelections] = useState(new Map()); // Map from title to session object
   const [currentSessionContexts, setCurrentSessionContexts] = useState([]); // Current @ reference contexts
@@ -895,7 +1042,10 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
     setMetaphors([]);
     setAdvisorSuggestions([]);
     setVoteHistory([]);
-    
+
+    // Deactivate all advisors to trigger journal onboarding
+    setAdvisors(prev => prev.map(a => ({ ...a, active: false })));
+
     // Track new session
     trackSession();
   };
@@ -3355,6 +3505,29 @@ Example: {"position": "Option 2 text here", "confidence": 75, "reasoning": "This
     }
   }, [messages, autoScroll]);
 
+  // Show journal onboarding when starting fresh
+  useEffect(() => {
+    // Count real user/assistant messages (not system messages)
+    const realMessages = messages.filter(m => m.type === 'user' || m.type === 'assistant');
+    const activeAdvisors = advisors.filter(a => a.active);
+
+    // Show onboarding if:
+    // 1. No real messages yet
+    // 2. No active advisors
+    // 3. API keys are set
+    // 4. Not already showing onboarding or suggestions modal
+    const shouldShow =
+      realMessages.length === 0 &&
+      activeAdvisors.length === 0 &&
+      apiKeysSet &&
+      !showJournalOnboarding &&
+      !showJournalSuggestions;
+
+    if (shouldShow) {
+      setShowJournalOnboarding(true);
+    }
+  }, [messages, advisors, apiKeysSet, showJournalOnboarding, showJournalSuggestions]);
+
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
       terminalRef.current.requestFullscreen();
@@ -3693,23 +3866,30 @@ ${selectedText}
 
               {/* Middle Column */}
               <div className="w-2/4 p-4 flex flex-col">
-                <div 
-                  ref={messagesContainerRef} 
-                  className="
-                    flex-1 
-                    overflow-auto 
-                    mb-4 
-                    break-words
-                    px-6         // Even horizontal padding
-                    py-4         // Vertical padding for balance
-                    mx-auto      // Center the content
-                    max-w-[90ch] // Limit line length for optimal readability
-                    leading-relaxed     // Increased line height for better readability
-                    tracking-wide       // Slightly increased letter spacing
-                    scrollbar-terminal
-                  "
-                >
-                  {messages.map((msg, idx) => (
+                {showJournalOnboarding ? (
+                  <JournalOnboarding
+                    onSubmit={handleJournalSubmit}
+                    onSkip={handleJournalSkip}
+                  />
+                ) : (
+                  <>
+                    <div
+                      ref={messagesContainerRef}
+                      className="
+                        flex-1
+                        overflow-auto
+                        mb-4
+                        break-words
+                        px-6         // Even horizontal padding
+                        py-4         // Vertical padding for balance
+                        mx-auto      // Center the content
+                        max-w-[90ch] // Limit line length for optimal readability
+                        leading-relaxed     // Increased line height for better readability
+                        tracking-wide       // Slightly increased letter spacing
+                        scrollbar-terminal
+                      "
+                    >
+                      {messages.map((msg, idx) => (
                     <MessageRenderer
                       key={msg.timestamp ? `${msg.timestamp}-${idx}` : `${idx}-${msg.content?.slice(0, 20) || 'empty'}`}
                       msg={msg}
@@ -3796,6 +3976,8 @@ ${selectedText}
                     </div>
                   </form>
                 </div>
+                  </>
+                )}
               </div>
 
               {/* Right Column */}
@@ -4083,8 +4265,8 @@ ${selectedText}
         initialResponse={selectedResponseForEvaluation}
         advisors={advisors}
         onUpdateAdvisor={(advisorName, updatedProperties) => {
-          setAdvisors(prev => prev.map(a => 
-            a.name === advisorName 
+          setAdvisors(prev => prev.map(a =>
+            a.name === advisorName
               ? { ...a, ...updatedProperties }
               : a
           ));
@@ -4093,6 +4275,17 @@ ${selectedText}
             content: `Updated advisor "${advisorName}" with optimized prompt.`
           }]);
         }}
+      />
+
+      <AdvisorSuggestionsModal
+        isOpen={showJournalSuggestions}
+        suggestions={journalSuggestions}
+        existingAdvisors={advisors}
+        onAddSelected={handleAddSuggestedAdvisors}
+        onRegenerate={handleRegenerateSuggestions}
+        onSkip={handleSkipSuggestions}
+        isRegenerating={isGeneratingSuggestions}
+        onEditAdvisor={setEditingAdvisor}
       />
     </>
   );

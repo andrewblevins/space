@@ -85,7 +85,7 @@ export function GroupableModule({
                   return (
                     <li
                       key={advisorName}
-                      className={`group flex items-center justify-between text-gray-600 dark:text-gray-300 cursor-pointer hover:text-green-600 dark:hover:text-green-400 transition-colors ${activeItems.includes(advisor) ? 'text-green-600 dark:text-green-400' : ''}`}
+                      className={`group flex items-center justify-between text-gray-600 dark:text-gray-300 ${activeItems.includes(advisor) ? 'text-green-600 dark:text-green-400' : ''}`}
                     >
                       <div
                         onClick={() => onItemClick && onItemClick(advisor)}
@@ -139,7 +139,7 @@ export function GroupableModule({
           .map((item, idx) => (
             <li
               key={`item-${idx}`}
-              className={`group flex items-center justify-between text-gray-900 dark:text-gray-300 cursor-pointer hover:text-green-700 dark:hover:text-green-400 transition-colors ${activeItems.includes(item) ? 'text-green-700 dark:text-green-400' : ''}`}
+              className={`group flex items-center justify-between text-gray-900 dark:text-gray-300 ${activeItems.includes(item) ? 'text-green-700 dark:text-green-400' : ''}`}
             >
               <div
                 onClick={() => onItemClick && onItemClick(item)}
