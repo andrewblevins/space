@@ -431,7 +431,6 @@ const Terminal = ({ theme, toggleTheme }) => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [currentWorksheetId, setCurrentWorksheetId] = useState(null);
   const memory = new MemorySystem();
-  const messagesContainerRef = useRef(null);
   const [showAdvisorForm, setShowAdvisorForm] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const terminalRef = useRef(null);
@@ -3494,12 +3493,7 @@ Example: {"position": "Option 2 text here", "confidence": 75, "reasoning": "This
     }
   }, [advisorSuggestionsExpanded, openaiClient]);
 
-  // Auto-scroll to bottom when new messages arrive (if enabled)
-  useEffect(() => {
-    if (autoScroll && messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
-    }
-  }, [messages, autoScroll]);
+  // Auto-scroll is now handled by browser's natural scroll behavior
 
   // Show journal onboarding when starting fresh
   useEffect(() => {
@@ -3968,60 +3962,50 @@ ${selectedText}
               )}
 
               {/* Main Column */}
-              <div className="flex-1 p-4 flex flex-col">
+              <div className="flex-1 flex flex-col min-h-0">
                 {showJournalOnboarding ? (
-                  <JournalOnboarding
-                    onSubmit={handleJournalSubmit}
-                    onSkip={handleJournalSkip}
-                  />
+                  <div className="flex-1 flex items-center justify-center p-8">
+                    <JournalOnboarding
+                      onSubmit={handleJournalSubmit}
+                      onSkip={handleJournalSkip}
+                    />
+                  </div>
                 ) : (
                   <>
-                    <div
-                      ref={messagesContainerRef}
-                      className="
-                        flex-1
-                        overflow-auto
-                        mb-4
-                        break-words
-                        px-6         // Even horizontal padding
-                        py-4         // Vertical padding for balance
-                        mx-auto      // Center the content
-                        max-w-[90ch] // Limit line length for optimal readability
-                        leading-relaxed     // Increased line height for better readability
-                        tracking-wide       // Slightly increased letter spacing
-                        scrollbar-terminal
-                      "
-                    >
-                      {messages.map((msg, idx) => (
-                    <MessageRenderer
-                      key={msg.timestamp ? `${msg.timestamp}-${idx}` : `${idx}-${msg.content?.slice(0, 20) || 'empty'}`}
-                      msg={msg}
-                      idx={idx}
-                      advisors={advisors}
-                      paragraphSpacing={paragraphSpacing}
-                      onAssertionsClick={(advisorData, msgs, getPrompt) => {
-                        console.log('🎯 Assertions clicked for:', advisorData);
-                        setSelectedAdvisorForAssertions({
-                          ...advisorData,
-                          conversationContext: {
-                            messages: [...msgs],
-                            advisors: [...advisors],
-                            systemPrompt: getPrompt(),
-                            timestamp: new Date().toISOString()
-                          }
-                        });
-                        setShowAssertionsModal(true);
-                      }}
-                      messages={messages}
-                      getSystemPrompt={getSystemPrompt}
-                    />
-                  ))}
-                  {isLoading && <div className="text-amber-600 dark:text-amber-400">Loading...</div>}
-                </div>
+                    <div className="flex-1 overflow-y-auto">
+                      <div className="max-w-3xl mx-auto px-4 py-8">
+                        {messages.map((msg, idx) => (
+                          <MessageRenderer
+                            key={msg.timestamp ? `${msg.timestamp}-${idx}` : `${idx}-${msg.content?.slice(0, 20) || 'empty'}`}
+                            msg={msg}
+                            idx={idx}
+                            advisors={advisors}
+                            paragraphSpacing={paragraphSpacing}
+                            onAssertionsClick={(advisorData, msgs, getPrompt) => {
+                              console.log('🎯 Assertions clicked for:', advisorData);
+                              setSelectedAdvisorForAssertions({
+                                ...advisorData,
+                                conversationContext: {
+                                  messages: [...msgs],
+                                  advisors: [...advisors],
+                                  systemPrompt: getPrompt(),
+                                  timestamp: new Date().toISOString()
+                                }
+                              });
+                              setShowAssertionsModal(true);
+                            }}
+                            messages={messages}
+                            getSystemPrompt={getSystemPrompt}
+                          />
+                        ))}
+                        {isLoading && <div className="text-amber-600 dark:text-amber-400 my-4">Loading...</div>}
+                      </div>
+                    </div>
 
-                <div className="mt-auto">
-                  <form onSubmit={handleSubmit}>
-                    <div className="flex items-center">
+                    <div className="border-t border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900">
+                      <div className="max-w-3xl mx-auto px-4 py-4">
+                        <form onSubmit={handleSubmit}>
+                          <div className="flex items-center">
                       {editingPrompt ? (
                         <div className="flex-1">
                           <textarea
@@ -4076,17 +4060,18 @@ ${selectedText}
                           />
                         </>
                       )}
+                          </div>
+                        </form>
+                      </div>
                     </div>
-                  </form>
-                </div>
                   </>
                 )}
               </div>
 
-              {/* Info Button - Bottom Right */}
-              <div className="fixed bottom-4 right-4 z-50">
+              {/* Info Button - Top Right */}
+              <div className="fixed top-4 right-4 z-50">
                 <button
-                  className="flex items-center justify-center w-8 h-8 rounded-full bg-black border border-green-400 text-green-400 hover:bg-green-400 hover:text-black transition-colors"
+                  className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
                   title="About SPACE Terminal"
                   onClick={() => setShowInfoModal(true)}
                 >
