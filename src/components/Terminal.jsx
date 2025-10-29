@@ -148,11 +148,11 @@ const Terminal = ({ theme, toggleTheme }) => {
       setCurrentSessionId(newSessionId);
       console.log('📝 Starting new session after journal submit:', newSessionId);
 
-      // Clear any existing messages and add the journal entry as the first user message
-      setMessages([{
-        type: 'user',
-        content: journalText
-      }]);
+      // Clear any existing messages (don't add journal text yet - it goes in input on skip)
+      setMessages([]);
+
+      // Store journal text temporarily for when user skips
+      setInput(journalText);
 
       // Generate perspective suggestions, excluding existing advisor names
       const existingNames = advisors.map(a => a.name);
