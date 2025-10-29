@@ -438,6 +438,18 @@ const Terminal = ({ theme, toggleTheme }) => {
   const [showAdvisorForm, setShowAdvisorForm] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const terminalRef = useRef(null);
+
+  // Sidebar resize and collapse state
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    const saved = localStorage.getItem('space_sidebar_collapsed');
+    return saved === 'true';
+  });
+  const [sidebarWidth, setSidebarWidth] = useState(() => {
+    const saved = localStorage.getItem('space_sidebar_width');
+    return saved ? parseInt(saved) : 300; // Default 300px
+  });
+  const [isResizing, setIsResizing] = useState(false);
+  const sidebarRef = useRef(null);
   const [maxTokens, setMaxTokens] = useState(() => {
     const saved = localStorage.getItem('space_max_tokens');
     return saved ? parseInt(saved) : 2048;
@@ -3772,6 +3784,48 @@ ${selectedText}
     }
   };
 
+  // Sidebar collapse/expand handler
+  const toggleSidebar = () => {
+    const newCollapsed = !sidebarCollapsed;
+    setSidebarCollapsed(newCollapsed);
+    localStorage.setItem('space_sidebar_collapsed', newCollapsed.toString());
+  };
+
+  // Sidebar resize handlers
+  const startResize = (e) => {
+    e.preventDefault();
+    setIsResizing(true);
+  };
+
+  // Handle resize via mouse move
+  React.useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (!isResizing) return;
+
+      const newWidth = e.clientX;
+      // Constrain width between 200px and 600px
+      const constrainedWidth = Math.min(Math.max(newWidth, 200), 600);
+      setSidebarWidth(constrainedWidth);
+    };
+
+    const handleMouseUp = () => {
+      if (isResizing) {
+        setIsResizing(false);
+        localStorage.setItem('space_sidebar_width', sidebarWidth.toString());
+      }
+    };
+
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing, sidebarWidth]);
+
   const getCurrentQuestionId = () => {
     const template = WORKSHEET_TEMPLATES[currentWorksheetId];
     if (template.type === 'basic') {
@@ -3875,9 +3929,25 @@ ${selectedText}
                 scrollbarColor: '#374151 transparent'
               }}
             >
-              {/* Left Column */}
-              <div className="w-1/4 p-4 border-r border-gray-300 dark:border-gray-800 overflow-y-auto scrollbar-terminal">
-                <GroupableModule
+              {/* Left Sidebar - Collapsible and Resizable */}
+              {!sidebarCollapsed && (
+                <div
+                  ref={sidebarRef}
+                  style={{ width: `${sidebarWidth}px` }}
+                  className="relative p-4 border-r border-gray-300 dark:border-gray-800 overflow-y-auto scrollbar-terminal flex-shrink-0"
+                >
+                  {/* Collapse Button */}
+                  <button
+                    onClick={toggleSidebar}
+                    className="absolute top-2 right-2 z-10 p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                    title="Collapse sidebar"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-600 dark:text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+
+                  <GroupableModule
                     title="Perspectives"
                     groups={advisorGroups}
                     items={advisors}
@@ -3919,10 +3989,33 @@ ${selectedText}
                     isFullscreen={isFullscreen}
                   />
                 </div>
+
+                {/* Resize Handle */}
+                <div
+                  onMouseDown={startResize}
+                  className="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-green-500 dark:hover:bg-green-600 transition-colors group"
+                  title="Drag to resize sidebar"
+                >
+                  <div className="absolute top-1/2 right-0 w-1 h-12 -translate-y-1/2 bg-gray-400 dark:bg-gray-600 group-hover:bg-green-500 dark:group-hover:bg-green-600 transition-colors"></div>
+                </div>
               </div>
+              )}
+
+              {/* Expand Button (when sidebar is collapsed) */}
+              {sidebarCollapsed && (
+                <button
+                  onClick={toggleSidebar}
+                  className="absolute top-2 left-2 z-10 p-2 rounded bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors shadow-md"
+                  title="Expand sidebar"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-700 dark:text-gray-300" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              )}
 
               {/* Main Column */}
-              <div className="w-3/4 p-4 flex flex-col">
+              <div className="flex-1 p-4 flex flex-col">
                 {showJournalOnboarding ? (
                   <JournalOnboarding
                     onSubmit={handleJournalSubmit}
