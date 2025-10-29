@@ -119,14 +119,18 @@ Return ONLY valid JSON with no additional text, in this exact format:
 
     // Assign colors and IDs to advisors
     const assignedColors = existingAdvisors.map(a => a.color).filter(Boolean);
-    const suggestions = parsedData.advisors.map((advisor, index) => ({
-      id: `suggestion-${Date.now()}-${index}`,
-      name: advisor.name,
-      description: advisor.description,
-      rationale: advisor.rationale,
-      color: getNextAvailableColor(assignedColors),
-      active: false
-    }));
+    const suggestions = parsedData.advisors.map((advisor, index) => {
+      const newColor = getNextAvailableColor(assignedColors);
+      assignedColors.push(newColor); // Track this color so the next advisor gets a different one
+      return {
+        id: `suggestion-${Date.now()}-${index}`,
+        name: advisor.name,
+        description: advisor.description,
+        rationale: advisor.rationale,
+        color: newColor,
+        active: false
+      };
+    });
 
     return suggestions;
 

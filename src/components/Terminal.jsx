@@ -56,6 +56,7 @@ import ResponsiveContainer from './responsive/ResponsiveContainer';
 import MobileLayout from './mobile/MobileLayout';
 import JournalOnboarding from './JournalOnboarding';
 import AdvisorSuggestionsModal from './AdvisorSuggestionsModal';
+import PerspectiveGenerator from './PerspectiveGenerator';
 import { generateAdvisorSuggestions } from '../utils/advisorSuggestions';
 
 
@@ -3741,6 +3742,36 @@ ${selectedText}
     setShowAdvisorForm(true);
   };
 
+  const handleAddGeneratedPerspective = async (perspective) => {
+    // Assign unique color
+    const assignedColors = advisors.map(a => a.color).filter(Boolean);
+    const newColor = getNextAvailableColor(assignedColors);
+
+    // Create new perspective with default system prompt
+    const newPerspective = {
+      name: perspective.name,
+      description: perspective.rationale,
+      color: newColor,
+      active: true,
+      systemPrompt: `You are ${perspective.name}. ${perspective.rationale} Provide your perspective based on this viewpoint.`
+    };
+
+    // Add to advisors list
+    setAdvisors(prev => [...prev, newPerspective]);
+
+    // Add system message
+    setMessages(prev => [...prev, {
+      type: 'system',
+      content: `Added perspective: ${perspective.name}`
+    }]);
+
+    // Trigger immediate response if there are messages
+    const lastUserMessage = messages.filter(m => m.type === 'user').slice(-1)[0];
+    if (lastUserMessage) {
+      await callParallelAdvisors([newPerspective], lastUserMessage.content);
+    }
+  };
+
   const getCurrentQuestionId = () => {
     const template = WORKSHEET_TEMPLATES[currentWorksheetId];
     if (template.type === 'basic') {
@@ -3862,10 +3893,36 @@ ${selectedText}
                     setAdvisors={setAdvisors}
                     setMessages={setMessages}
                   />
+
+                <PerspectiveGenerator
+                  messages={messages}
+                  existingAdvisors={advisors}
+                  onAddPerspective={handleAddGeneratedPerspective}
+                  openaiClient={openaiClient}
+                  trackUsage={trackUsage}
+                />
+
+                {/* Accordion Menu */}
+                <div className="mt-6">
+                  <AccordionMenu
+                    onSettingsClick={() => setShowSettingsMenu(true)}
+                    onPromptLibraryClick={() => setShowPromptLibrary(true)}
+                    onSessionManagerClick={() => setShowSessionPanel(true)}
+                    onNewSessionClick={handleNewSession}
+                    onExportClick={() => setShowExportMenu(true)}
+                    onDossierClick={() => setShowDossierModal(true)}
+                    onEvaluationsClick={() => setShowEvaluationsModal(true)}
+                    onImportExportAdvisorsClick={() => setShowImportExportModal(true)}
+                    onVotingClick={() => setShowVotingModal(true)}
+                    onHelpClick={() => setShowHelpModal(true)}
+                    onFullscreenClick={toggleFullscreen}
+                    isFullscreen={isFullscreen}
+                  />
+                </div>
               </div>
 
-              {/* Middle Column */}
-              <div className="w-2/4 p-4 flex flex-col">
+              {/* Main Column */}
+              <div className="w-3/4 p-4 flex flex-col">
                 {showJournalOnboarding ? (
                   <JournalOnboarding
                     onSubmit={handleJournalSubmit}
@@ -3980,62 +4037,26 @@ ${selectedText}
                 )}
               </div>
 
-              {/* Right Column */}
-              <div className="w-1/4 p-4 border-l border-gray-300 dark:border-gray-800 overflow-y-auto scrollbar-terminal">
-                {/* DEPRECATED: Metaphors feature - commented out but can be reactivated
-                <CollapsibleModule
-                  title="Metaphors"
-                  items={metaphors}
-                  expanded={metaphorsExpanded}
-                  onToggle={() => setMetaphorsExpanded(!metaphorsExpanded)}
-                />
-                */}
-                <CollapsibleSuggestionsModule
-                  title="Suggested Perspectives"
-                  items={advisorSuggestions}
-                  expanded={advisorSuggestionsExpanded}
-                  onToggle={() => setAdvisorSuggestionsExpanded(!advisorSuggestionsExpanded)}
-                  onItemClick={(item) => handleAdvisorSuggestionClick(item)}
-                />
-                {/* Accordion Menu - Bottom Left */}
-                <AccordionMenu
-                  onSettingsClick={() => setShowSettingsMenu(true)}
-                  onPromptLibraryClick={() => setShowPromptLibrary(true)}
-                  onSessionManagerClick={() => setShowSessionPanel(true)}
-                  onNewSessionClick={handleNewSession}
-                  onExportClick={() => setShowExportMenu(true)}
-                  onDossierClick={() => setShowDossierModal(true)}
-                  onEvaluationsClick={() => setShowEvaluationsModal(true)}
-                  onImportExportAdvisorsClick={() => setShowImportExportModal(true)}
-                  onVotingClick={() => setShowVotingModal(true)}
-                  // DEPRECATED: High Council Mode
-                  // onHighCouncilClick={() => setShowHighCouncilModal(true)}
-                  onHelpClick={() => setShowHelpModal(true)}
-                  onFullscreenClick={toggleFullscreen}
-                  isFullscreen={isFullscreen}
-                />
-
-                {/* Info Button - Bottom Right */}
-                <div className="fixed bottom-4 right-4 z-50">
-                  <button
-                    className="flex items-center justify-center w-8 h-8 rounded-full bg-black border border-green-400 text-green-400 hover:bg-green-400 hover:text-black transition-colors"
-                    title="About SPACE Terminal"
-                    onClick={() => setShowInfoModal(true)}
+              {/* Info Button - Bottom Right */}
+              <div className="fixed bottom-4 right-4 z-50">
+                <button
+                  className="flex items-center justify-center w-8 h-8 rounded-full bg-black border border-green-400 text-green-400 hover:bg-green-400 hover:text-black transition-colors"
+                  title="About SPACE Terminal"
+                  onClick={() => setShowInfoModal(true)}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
                   >
-                    <svg 
-                      xmlns="http://www.w3.org/2000/svg" 
-                      className="h-5 w-5" 
-                      viewBox="0 0 20 20" 
-                      fill="currentColor"
-                    >
-                      <path 
-                        fillRule="evenodd" 
-                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" 
-                        clipRule="evenodd" 
-                      />
-                    </svg>
-                  </button>
-                </div>
+                    <path
+                      fillRule="evenodd"
+                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </button>
               </div>
             </div>
           }
