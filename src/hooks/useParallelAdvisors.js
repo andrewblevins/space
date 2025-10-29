@@ -131,7 +131,8 @@ Respond naturally and directly without JSON formatting, name labels, or meta-com
           
           return {
             role,
-            content: m.timestamp ? `[${formatTimestamp(m.timestamp)}] ${content}` : content
+            // Only add timestamps to user messages, not assistant responses
+            content: (role === 'user' && m.timestamp) ? `[${formatTimestamp(m.timestamp)}] ${content}` : content
           };
         });
       
