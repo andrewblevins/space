@@ -115,7 +115,7 @@ const Terminal = ({ theme, toggleTheme }) => {
       setAdvisors(importedAdvisors);
       setMessages(prev => [...prev, {
         type: 'system',
-        content: `Replaced all advisors with ${importedAdvisors.length} imported advisors.`
+        content: `Replaced all perspectives with ${importedAdvisors.length} imported perspectives.`
       }]);
     } else {
       // Add mode - append to existing advisors, avoiding duplicates
@@ -148,7 +148,7 @@ const Terminal = ({ theme, toggleTheme }) => {
         content: journalText
       }]);
 
-      // Generate advisor suggestions, excluding existing advisor names
+      // Generate perspective suggestions, excluding existing advisor names
       const existingNames = advisors.map(a => a.name);
       const suggestions = await generateAdvisorSuggestions(journalText, advisors, existingNames);
       setJournalSuggestions(suggestions);
@@ -161,13 +161,13 @@ const Terminal = ({ theme, toggleTheme }) => {
       setShowJournalSuggestions(true);
       setIsGeneratingSuggestions(false);
     } catch (error) {
-      console.error('Error generating advisor suggestions:', error);
+      console.error('Error generating perspective suggestions:', error);
       setIsGeneratingSuggestions(false);
 
       // Show error message
       setMessages(prev => [...prev, {
         type: 'system',
-        content: `Failed to generate advisor suggestions: ${error.message}. You can still add advisors manually using the + button.`
+        content: `Failed to generate perspective suggestions: ${error.message}. You can still add perspectives manually using the + button.`
       }]);
 
       // Close onboarding
@@ -332,7 +332,7 @@ const Terminal = ({ theme, toggleTheme }) => {
     
     baseMessages.push({
       type: 'system',
-      content: 'Start a conversation, add an advisor (+), draw from the Prompt Library (↙), or type /help for instructions.'
+      content: 'Start a conversation, add a perspective (+), draw from the Prompt Library (↙), or type /help for instructions.'
     });
     
     return baseMessages;
@@ -1037,7 +1037,7 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
     setMessages([
       { type: 'system', content: 'SPACE Terminal - v0.2.4' },
       { type: 'system', content: '🎉 New in v0.2.4:\n• Advisor evaluation system with Assert buttons\n• Automated scoring against test assertions\n• Optimization loop for iterative prompt improvement\n• Enhanced streaming with real-time formatting' },
-      { type: 'system', content: 'Start a conversation, add an advisor (+), draw from the Prompt Library (↙), or type /help for instructions.' }
+      { type: 'system', content: 'Start a conversation, add a perspective (+), draw from the Prompt Library (↙), or type /help for instructions.' }
     ]);
     setMetaphors([]);
     setAdvisorSuggestions([]);
@@ -1392,7 +1392,7 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
           setMessages([
             { type: 'system', content: 'SPACE Terminal - v0.2.4' },
             { type: 'system', content: '🎉 New in v0.2.4:\n• Advisor evaluation system with Assert buttons\n• Automated scoring against test assertions\n• Optimization loop for iterative prompt improvement\n• Enhanced streaming with real-time formatting' },
-            { type: 'system', content: 'Start a conversation, add an advisor (+), draw from the Prompt Library (↙), or type /help for instructions.' }
+            { type: 'system', content: 'Start a conversation, add a perspective (+), draw from the Prompt Library (↙), or type /help for instructions.' }
           ]);
           setMetaphors([]);
           // DEPRECATED: Questions feature temporarily disabled
@@ -1517,7 +1517,7 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
 /advisor edit     - Edit an advisor
 /advisor delete   - Delete an advisor
 /advisor list     - List all advisors
-/advisor generate - Generate advisor suggestions from worksheet
+/advisor generate - Generate perspective suggestions from worksheet
 /advisor finalize - Get detailed profiles for chosen advisors
 
 Note: Advisor sharing is now available through the GUI menu (bottom-left → Import/Export Advisors)`
@@ -1552,7 +1552,7 @@ Note: Advisor sharing is now available through the GUI menu (bottom-left → Imp
 
 Attached is a worksheet filled out with information about myself. Read the worksheet, think carefully about what it reveals, and assemble a list of 10 potential advisors you think I would benefit from having an extended conversation with. 
 
-There are no formal limits on advisor suggestions. 
+There are no formal limits on perspective suggestions. 
 * They can be real people or inspired by real people
 * They can be fictional characters 
 * They can be archetypal
@@ -1761,7 +1761,7 @@ Now, I'd like to generate the final output. Please include the following aspects
           ));
           setMessages(prev => [...prev, {
             type: 'system',
-            content: `Deleted advisor: ${advisorToDelete.name}`
+            content: `Deleted perspective: ${advisorToDelete.name}`
           }]);
           return true;
 
@@ -2361,7 +2361,7 @@ This setting controls when SPACE switches to managed context:
               content: `Group Management Commands:
 
 /group create <group_name>         - Create a new advisor group
-/group add <group_name> <advisor>  - Add an advisor to a group
+/group add <group_name> <advisor>  - Add a perspective to a group
 /group remove <group_name> <advisor> - Remove an advisor from a group
 /group list                        - List all advisor groups
 
@@ -3118,7 +3118,7 @@ Exported on: ${timestamp}\n\n`;
     setLastAdvisorAnalysisContent(recentMessages);
 
     try {
-      console.log('🔍 Advisor suggestions analysis starting, recent messages chars:', recentMessages.length);
+      console.log('🔍 Perspective suggestions analysis starting, recent messages chars:', recentMessages.length);
       const promptContent = `Based on this recent conversation exchange, suggest exactly 5 specific advisors who could add valuable perspective to this discussion.
 
 You may provide advisors in any of these categories:
@@ -3129,7 +3129,7 @@ You may provide advisors in any of these categories:
 
 Choose the categories most appropriate, tonally and practically, for the conversation. *When in doubt,* focus on professional roles.
 
-Be sensitive to the content and tone of the conversation. If the conversation is a serious discussion of a difficult situation, make serious, practical suggestions. If the conversation is playful or humorous, make playful, original advisor suggestions.
+Be sensitive to the content and tone of the conversation. If the conversation is a serious discussion of a difficult situation, make serious, practical suggestions. If the conversation is playful or humorous, make playful, original perspective suggestions.
 
 Always assume the user is highly intelligent, well-educated, and wants the most targeted and effective advisor for their situation.
 
@@ -3166,7 +3166,7 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
       
       setAdvisorSuggestions(suggestions.suggestions || []);
     } catch (error) {
-      console.error('Error generating advisor suggestions:', error);
+      console.error('Error generating perspective suggestions:', error);
     }
   };
 
@@ -3376,7 +3376,7 @@ Example: {"position": "Option 2 text here", "confidence": 75, "reasoning": "This
                 idx === prev.length - 1 ? { ...msg, saved: true } : msg
               ));
               
-              // Update conversation metadata (metaphors, advisor suggestions, etc.)
+              // Update conversation metadata (metaphors, perspective suggestions, etc.)
               await storage.saveSessionMetadata(currentConversationId, {
                 metaphors,
                 advisorSuggestions,
@@ -3491,7 +3491,7 @@ Example: {"position": "Option 2 text here", "confidence": 75, "reasoning": "This
   //   }
   // }, [questionsExpanded, openaiClient]);
 
-  // Trigger advisor suggestions analysis when expanded state changes
+  // Trigger perspective suggestions analysis when expanded state changes
   useEffect(() => {
     if (advisorSuggestionsExpanded && messages.length > 0 && openaiClient) {
       analyzeAdvisorSuggestions(messages);
@@ -3847,7 +3847,7 @@ ${selectedText}
               {/* Left Column */}
               <div className="w-1/4 p-4 border-r border-gray-300 dark:border-gray-800 overflow-y-auto scrollbar-terminal">
                 <GroupableModule
-                    title="Advisors"
+                    title="Perspectives"
                     groups={advisorGroups}
                     items={advisors}
                     onItemClick={handleAdvisorClick}

@@ -50,11 +50,11 @@ export const generateAdvisorSuggestions = async (journalEntry, existingAdvisors 
 
 ${journalEntry}
 
-Based on this entry, suggest 4-5 AI advisors who would provide valuable perspectives. For each advisor:${excludeNames}
+Based on this entry, suggest 4-5 perspectives that would provide valuable viewpoints. For each perspective:${excludeNames}
 
 1. Choose a name that represents a real or archetypal perspective (e.g., "Stoic Philosopher", "Systems Thinker", "Creative Disruptor", or specific figures like "Seneca" or "Ursula K. Le Guin")
 
-2. Write a 2-3 sentence description in second-person that will instruct that advisor on their identity, expertise, and approach
+2. Write a 2-3 sentence description in second-person that will instruct that perspective on their identity, expertise, and approach
 
 3. Briefly explain (1 sentence) why this advisor is relevant to the user's entry
 

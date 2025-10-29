@@ -53,7 +53,7 @@ const AdvisorSuggestionsModal = ({ suggestions, existingAdvisors, onAddSelected,
         <div className="p-6 border-b border-gray-300 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-serif text-gray-800 dark:text-green-400">
-              Suggested Advisors
+              Suggested Perspectives
             </h2>
             <button
               onClick={onSkip}
@@ -66,7 +66,7 @@ const AdvisorSuggestionsModal = ({ suggestions, existingAdvisors, onAddSelected,
             </button>
           </div>
           <p className="mt-2 text-gray-600 dark:text-gray-400">
-            Based on your entry, here are some advisors who might offer valuable perspectives:
+            Based on your entry, here are some perspectives that might be valuable:
           </p>
         </div>
 
@@ -77,7 +77,7 @@ const AdvisorSuggestionsModal = ({ suggestions, existingAdvisors, onAddSelected,
             <>
               <div className="mb-4">
                 <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
-                  Your Existing Advisors
+                  Your Existing Perspectives
                 </h3>
                 <div className="space-y-3">
                   {existingAdvisors.map((advisor) => {
@@ -127,7 +127,7 @@ const AdvisorSuggestionsModal = ({ suggestions, existingAdvisors, onAddSelected,
                               <button
                                 onClick={() => onEditAdvisor(advisor)}
                                 className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-colors bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-600"
-                                title="Edit advisor"
+                                title="Edit perspective"
                               >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -165,7 +165,7 @@ const AdvisorSuggestionsModal = ({ suggestions, existingAdvisors, onAddSelected,
               <div className="border-t border-gray-300 dark:border-gray-700 my-4"></div>
 
               <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
-                New Advisor Suggestions
+                New Perspective Suggestions
               </h3>
             </>
           )}

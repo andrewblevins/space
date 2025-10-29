@@ -164,7 +164,7 @@ const AccordionMenu = ({
     },
     {
       id: 'import-export-advisors',
-      label: 'Import/Export Advisors',
+      label: 'Import/Export Perspectives',
       onClick: onImportExportAdvisorsClick,
       icon: (
         <svg 

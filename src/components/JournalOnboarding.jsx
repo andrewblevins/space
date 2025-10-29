@@ -54,9 +54,9 @@ const JournalOnboarding = ({ onSubmit, onSkip }) => {
         <div className="flex items-center justify-between mt-4">
           <div className="text-sm text-gray-500 dark:text-gray-400">
             {wordCount < 25 ? (
-              <span>Write at least 25 words to generate advisors ({wordCount}/25)</span>
+              <span>Write at least 25 words to generate perspectives ({wordCount}/25)</span>
             ) : (
-              <span className="text-green-600 dark:text-green-400">✓ Ready to generate advisors</span>
+              <span className="text-green-600 dark:text-green-400">✓ Ready to generate perspectives</span>
             )}
           </div>
 
@@ -74,7 +74,7 @@ const JournalOnboarding = ({ onSubmit, onSkip }) => {
               disabled={!canGenerate || isGenerating}
               className="px-6 py-2 bg-green-600 dark:bg-green-700 text-white rounded-lg hover:bg-green-700 dark:hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {isGenerating ? 'Generating...' : 'Generate Advisors'}
+              {isGenerating ? 'Generating...' : 'Generate Perspectives'}
             </button>
           </div>
         </div>
