@@ -41,6 +41,17 @@ export function useParallelAdvisors({ messages, setMessages, maxTokens, contextL
     const estimateTokens = (text) => Math.ceil(text.length / 4);
     const totalTokens = messages.reduce((sum, msg) => sum + estimateTokens(msg.content || ''), 0);
 
+    // Count conversation turns (how many times this advisor has responded)
+    const conversationTurns = messages.filter(m => {
+      if (m.type === 'parallel_advisor_response' && m.advisorResponses) {
+        return Object.values(m.advisorResponses).some(resp => resp.name === advisor.name);
+      }
+      if (m.type === 'advisor_json' && m.parsedAdvisors) {
+        return m.parsedAdvisors.advisors.some(a => a.name === advisor.name);
+      }
+      return false;
+    }).length;
+
     // Create individual system prompt for this advisor only
     const systemPromptText = `You are ${advisor.name}. ${advisor.description}
 
@@ -50,7 +61,15 @@ You are an advisor in SPACE Terminal, a multi-perspective conversation interface
 ## Response Guidelines
 Keep responses concise and focused - aim for 2-4 paragraphs maximum. Be brief for simple questions, more thorough for complex ones, but never exceed 4 paragraphs.
 
-Begin by asking clarifying questions to understand the context, constraints, and what the user is really trying to accomplish. Avoid rushing to bold claims or definitive advice in early exchanges. Take time to explore assumptions, surface tensions, and understand the full picture before offering strong opinions or recommendations.
+${conversationTurns < 3 ? `## Early Conversation Protocol (Turns 1-3)
+You are in the early stages of this conversation (turn ${conversationTurns + 1}). At this stage:
+- Ask exactly ONE clarifying question that reflects your unique perspective
+- Keep your response to 1-2 sentences plus your single question
+- Your question should emerge from your distinct worldview and reveal what you consider important
+- Do not offer advice, make claims, or ask multiple questions
+- After turn 3, you may respond more fully
+
+` : ''}Begin by asking clarifying questions to understand the context, constraints, and what the user is really trying to accomplish. Avoid rushing to bold claims or definitive advice in early exchanges. Take time to explore assumptions, surface tensions, and understand the full picture before offering strong opinions or recommendations.
 
 When it serves your point, consider sharing relevant stories, anecdotes, or examples to illustrate your perspective. Stories can make abstract concepts concrete and reveal patterns the user might not have considered. Don't force storytelling into every response, but recognize it as a natural tool for illuminating insights.
 
