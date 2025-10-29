@@ -114,11 +114,6 @@ export function GroupableModule({
                             e.stopPropagation();
                             if (window.confirm(`Are you sure you want to delete "${advisor.name}"? This cannot be undone.`)) {
                               setAdvisors && setAdvisors((prev) => prev.filter((a) => a.name !== advisor.name));
-                              setMessages &&
-                                setMessages((prev) => [
-                                  ...prev,
-                                  { type: 'system', content: `Deleted perspective: ${advisor.name}` },
-                                ]);
                             }
                           }}
                           className="p-1 hover:text-red-500 dark:hover:text-red-400"
@@ -170,11 +165,6 @@ export function GroupableModule({
                     e.stopPropagation();
                     if (window.confirm(`Are you sure you want to delete "${item.name}"? This cannot be undone.`)) {
                       setAdvisors && setAdvisors((prev) => prev.filter((a) => a.name !== item.name));
-                      setMessages &&
-                        setMessages((prev) => [
-                          ...prev,
-                          { type: 'system', content: `Deleted perspective: ${item.name}` },
-                        ]);
                     }
                   }}
                   className="p-1 hover:text-red-500 dark:hover:text-red-400"

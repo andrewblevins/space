@@ -1754,10 +1754,6 @@ Now, I'd like to generate the final output. Please include the following aspects
           setAdvisors(prev => prev.filter(a =>
             a.name.toLowerCase() !== nameToDelete.toLowerCase()
           ));
-          setMessages(prev => [...prev, {
-            type: 'system',
-            content: `Deleted perspective: ${advisorToDelete.name}`
-          }]);
           return true;
 
         }
@@ -4004,7 +4000,7 @@ ${selectedText}
 
                     <div className="max-w-3xl mx-auto px-4 py-6">
                       <form onSubmit={handleSubmit}>
-                        <div className="flex items-center">
+                        <div className="flex items-start gap-2">
                       {editingPrompt ? (
                         <div className="flex-1">
                           <textarea
@@ -4027,7 +4023,7 @@ ${selectedText}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter' && e.ctrlKey) {
                                 // Save changes
-                                setAdvisors(prev => prev.map(a => 
+                                setAdvisors(prev => prev.map(a =>
                                   a.name === editingAdvisor.name ? { ...a, description: editAdvisorText } : a
                                 ));
                                 setEditingAdvisor(null);
@@ -4048,7 +4044,7 @@ ${selectedText}
                         </div>
                       ) : (
                         <>
-                          <span className="mr-2">&gt;</span>
+                          <span className="text-green-400 pt-4">&gt;</span>
                           <ExpandingInput
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
