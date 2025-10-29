@@ -318,10 +318,7 @@ const Terminal = ({ theme, toggleTheme }) => {
   // };
 
   const [messages, setMessages] = useState(() => {
-    const baseMessages = [
-      { type: 'system', content: 'SPACE Terminal - v0.2.4' },
-      { type: 'system', content: '🎉 New in v0.2.4:\n• Advisor evaluation system with Assert buttons\n• Automated scoring against test assertions\n• Optimization loop for iterative prompt improvement\n• Enhanced streaming with real-time formatting' }
-    ];
+    const baseMessages = [];
     
     // Add auth-specific welcome message
     if (useAuthSystem && user) {
@@ -1041,11 +1038,7 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
       setCurrentConversationId(null);
     }
     
-    setMessages([
-      { type: 'system', content: 'SPACE Terminal - v0.2.4' },
-      { type: 'system', content: '🎉 New in v0.2.4:\n• Advisor evaluation system with Assert buttons\n• Automated scoring against test assertions\n• Optimization loop for iterative prompt improvement\n• Enhanced streaming with real-time formatting' },
-      { type: 'system', content: 'Start a conversation, add a perspective (+), draw from the Prompt Library (↙), or type /help for instructions.' }
-    ]);
+    setMessages([]);
     setMetaphors([]);
     setAdvisorSuggestions([]);
     setVoteHistory([]);
@@ -1396,11 +1389,7 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
           generateSummaryForPreviousSession(prevSessionId);
           
           setCurrentSessionId(newSessionId);
-          setMessages([
-            { type: 'system', content: 'SPACE Terminal - v0.2.4' },
-            { type: 'system', content: '🎉 New in v0.2.4:\n• Advisor evaluation system with Assert buttons\n• Automated scoring against test assertions\n• Optimization loop for iterative prompt improvement\n• Enhanced streaming with real-time formatting' },
-            { type: 'system', content: 'Start a conversation, add a perspective (+), draw from the Prompt Library (↙), or type /help for instructions.' }
-          ]);
+          setMessages([]);
           setMetaphors([]);
           // DEPRECATED: Questions feature temporarily disabled
           // setQuestions([]);
@@ -3893,7 +3882,7 @@ ${selectedText}
                 <div className="w-64 border-r border-gray-300 dark:border-gray-800 overflow-y-auto scrollbar-terminal flex-shrink-0 flex flex-col">
                   {/* Header with title and collapse button */}
                   <div className="flex items-center justify-between p-4 border-b border-gray-300 dark:border-gray-700">
-                    <h1 className="text-xl font-bold text-gray-800 dark:text-gray-200">SPACE</h1>
+                    <h1 className="text-xl font-bold text-gray-800 dark:text-gray-200">SPACE Terminal</h1>
                     <button
                       onClick={toggleSidebar}
                       className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
