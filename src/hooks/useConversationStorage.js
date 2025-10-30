@@ -76,7 +76,8 @@ export function useConversationStorage() {
 
   // Throttled fetch with retry logic and circuit breaker
   const throttledFetch = useCallback(async (url, options = {}, maxRetries = 3) => {
-    const endpoint = new URL(url).pathname;
+    // Handle both relative and absolute URLs
+    const endpoint = url.startsWith('http') ? new URL(url).pathname : url;
     
     // Check circuit breaker
     if (isCircuitBreakerOpen(endpoint)) {

@@ -106,10 +106,18 @@ export default class TagAnalyzer {
         });
 
         if (!response.ok) {
-          throw new Error(`Backend API call failed: ${response.status}`);
+          const errorData = await response.json();
+          throw new Error(`Backend API call failed: ${response.status} - ${JSON.stringify(errorData)}`);
         }
 
         const apiResponse = await response.json();
+
+        // Check if response has the expected OpenAI structure
+        if (!apiResponse.choices || !apiResponse.choices[0] || !apiResponse.choices[0].message) {
+          console.error('🔍 TagAnalyzer - Unexpected API response structure:', apiResponse);
+          throw new Error(`Unexpected API response structure: ${JSON.stringify(apiResponse)}`);
+        }
+
         console.log('🔍 TagAnalyzer - Raw backend response:', apiResponse.choices[0].message.content);
 
         const result = JSON.parse(apiResponse.choices[0].message.content || '{}');
