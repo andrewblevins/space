@@ -139,27 +139,19 @@ const MobileLayout = ({
                       })}
                     </div>
                   ) : msg.type === 'assistant' ? (
-                    (() => {
-                      const { processedContent, debates } = processCouncilDebates(msg.content);
-                      return (
-                        <div>
-                          {msg.thinking && <ThinkingBlock content={msg.thinking} />}
-                          {msg.isJsonStreaming && (
-                            <div className="mb-2 text-sm text-blue-600 dark:text-blue-400 italic">
-                              ⚡ Streaming advisor responses...
-                            </div>
-                          )}
-                          {debates.map((debate, debateIdx) => (
-                            <DebateBlock key={debateIdx} content={debate} advisors={advisors} paragraphSpacing={paragraphSpacing} />
-                          ))}
-                          <MemoizedMarkdownMessage 
-                            content={processedContent.replace(/__DEBATE_PLACEHOLDER_\d+__/g, '')} 
-                            advisors={advisors} 
-                            paragraphSpacing={paragraphSpacing}
-                          />
+                    <div>
+                      {msg.thinking && <ThinkingBlock content={msg.thinking} />}
+                      {msg.isJsonStreaming && (
+                        <div className="mb-2 text-sm text-blue-600 dark:text-blue-400 italic">
+                          ⚡ Streaming advisor responses...
                         </div>
-                      );
-                    })()
+                      )}
+                      <MemoizedMarkdownMessage
+                        content={msg.content}
+                        advisors={advisors}
+                        paragraphSpacing={paragraphSpacing}
+                      />
+                    </div>
                   ) : (
                     msg.content
                   )}
