@@ -141,28 +141,127 @@ const Terminal = ({ theme, toggleTheme }) => {
   // Journal onboarding handlers
   const handleJournalSubmit = async (journalText) => {
     try {
+      // Start context question flow
+      const { generateContextQuestion } = await import('../utils/contextQuestions');
+
+      // Generate first question
+      const firstQuestion = await generateContextQuestion(journalText);
+
+      // Set up context flow state
+      setContextFlow({
+        active: true,
+        initialEntry: journalText,
+        questions: [firstQuestion],
+        answers: [],
+        currentQuestionIndex: 0
+      });
+
+    } catch (error) {
+      console.error('Error starting context question flow:', error);
+      // Fall back to old behavior - generate perspectives directly
+      await generatePerspectivesFromContext(journalText, []);
+    }
+  };
+
+  // Handle answer to context question
+  const handleAnswerQuestion = async (answer, skipToGenerate) => {
+    const currentAnswers = [...contextFlow.answers];
+
+    // Add answer if not empty
+    if (answer && answer.trim()) {
+      currentAnswers.push(answer.trim());
+    }
+
+    // If user wants to skip to generate, or we've reached 3 questions
+    if (skipToGenerate || contextFlow.currentQuestionIndex >= 2) {
+      // Generate perspectives with all collected context
+      await generatePerspectivesFromContext(contextFlow.initialEntry, currentAnswers);
+      return;
+    }
+
+    // Generate next question
+    try {
+      const { generateContextQuestion } = await import('../utils/contextQuestions');
+      const nextQuestion = await generateContextQuestion(
+        contextFlow.initialEntry,
+        currentAnswers
+      );
+
+      setContextFlow({
+        ...contextFlow,
+        questions: [...contextFlow.questions, nextQuestion],
+        answers: currentAnswers,
+        currentQuestionIndex: contextFlow.currentQuestionIndex + 1
+      });
+    } catch (error) {
+      console.error('Error generating next question:', error);
+      // Fall back to generating perspectives with current context
+      await generatePerspectivesFromContext(contextFlow.initialEntry, currentAnswers);
+    }
+  };
+
+  // Handle skip question
+  const handleSkipQuestion = async () => {
+    // Move to next question or generate if at end
+    if (contextFlow.currentQuestionIndex >= 2) {
+      await generatePerspectivesFromContext(contextFlow.initialEntry, contextFlow.answers);
+      return;
+    }
+
+    // Generate next question
+    try {
+      const { generateContextQuestion } = await import('../utils/contextQuestions');
+      const nextQuestion = await generateContextQuestion(
+        contextFlow.initialEntry,
+        contextFlow.answers
+      );
+
+      setContextFlow({
+        ...contextFlow,
+        questions: [...contextFlow.questions, nextQuestion],
+        currentQuestionIndex: contextFlow.currentQuestionIndex + 1
+      });
+    } catch (error) {
+      console.error('Error generating next question:', error);
+      await generatePerspectivesFromContext(contextFlow.initialEntry, contextFlow.answers);
+    }
+  };
+
+  // Generate perspectives with full context (journal + answers)
+  const generatePerspectivesFromContext = async (journalText, answers) => {
+    try {
       setIsGeneratingSuggestions(true);
 
       // Generate a new session ID for this new conversation
       const newSessionId = getNextSessionId();
       setCurrentSessionId(newSessionId);
-      console.log('📝 Starting new session after journal submit:', newSessionId);
+      console.log('📝 Starting new session after context gathering:', newSessionId);
 
-      // Clear any existing messages (don't add journal text yet - it goes in input on skip)
+      // Clear any existing messages
       setMessages([]);
 
-      // Store journal text temporarily for when user skips
-      setInput(journalText);
+      // Concatenate journal entry and answers (without questions)
+      const fullContext = [journalText, ...answers].filter(text => text && text.trim()).join('\n\n');
 
-      // Generate perspective suggestions, excluding existing advisor names
+      // Store full context in input field
+      setInput(fullContext);
+
+      // Generate perspective suggestions with full context
       const existingNames = advisors.map(a => a.name);
-      const suggestions = await generateAdvisorSuggestions(journalText, advisors, existingNames);
+      const suggestions = await generateAdvisorSuggestions(fullContext, advisors, existingNames);
       setJournalSuggestions(suggestions);
 
-      // Track these names for future regenerations (combine existing + new suggestions)
+      // Track these names for future regenerations
       setPreviousSuggestionNames([...existingNames, ...suggestions.map(s => s.name)]);
 
-      // Hide onboarding, show suggestions modal
+      // Reset context flow and hide onboarding
+      setContextFlow({
+        active: false,
+        initialEntry: '',
+        questions: [],
+        answers: [],
+        currentQuestionIndex: 0
+      });
       setShowJournalOnboarding(false);
       setShowJournalSuggestions(true);
       setIsGeneratingSuggestions(false);
@@ -176,7 +275,14 @@ const Terminal = ({ theme, toggleTheme }) => {
         content: `Failed to generate perspective suggestions: ${error.message}. You can still add perspectives manually using the + button.`
       }]);
 
-      // Close onboarding
+      // Close onboarding and reset context flow
+      setContextFlow({
+        active: false,
+        initialEntry: '',
+        questions: [],
+        answers: [],
+        currentQuestionIndex: 0
+      });
       setShowJournalOnboarding(false);
     }
   };
@@ -516,6 +622,16 @@ const Terminal = ({ theme, toggleTheme }) => {
   const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false);
   const [customPerspectives, setCustomPerspectives] = useState([]);
   const [previousSuggestionNames, setPreviousSuggestionNames] = useState([]);
+
+  // Context question flow state
+  const [contextFlow, setContextFlow] = useState({
+    active: false,
+    initialEntry: '',
+    questions: [],
+    answers: [],
+    currentQuestionIndex: 0
+  });
+
   const [sessions, setSessions] = useState([]);
   const [sessionSelections, setSessionSelections] = useState(new Map()); // Map from title to session object
   const [currentSessionContexts, setCurrentSessionContexts] = useState([]); // Current @ reference contexts
@@ -4023,6 +4139,13 @@ ${selectedText}
                     <JournalOnboarding
                       onSubmit={handleJournalSubmit}
                       onSkip={handleJournalSkip}
+                      contextFlow={contextFlow.active ? {
+                        phase: 'questions',
+                        currentQuestion: contextFlow.questions[contextFlow.currentQuestionIndex],
+                        questionIndex: contextFlow.currentQuestionIndex
+                      } : null}
+                      onAnswerQuestion={handleAnswerQuestion}
+                      onSkipQuestion={handleSkipQuestion}
                     />
                   </div>
                 ) : (
