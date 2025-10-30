@@ -125,9 +125,9 @@ const JournalOnboarding = ({
         <div className="flex items-center justify-between mt-4">
           <div className="text-sm text-gray-500 dark:text-gray-400">
             {wordCount < 25 ? (
-              <span>Write at least 25 words to generate perspectives ({wordCount}/25)</span>
+              <span>Write at least 25 words to continue ({wordCount}/25)</span>
             ) : (
-              <span className="text-green-600 dark:text-green-400">✓ Ready to generate perspectives</span>
+              <span className="text-green-600 dark:text-green-400">✓ Ready to continue</span>
             )}
           </div>
 
@@ -137,7 +137,7 @@ const JournalOnboarding = ({
               disabled={isGenerating}
               className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              Skip - I'll add my own
+              Skip to Chat
             </button>
 
             <button
@@ -145,7 +145,7 @@ const JournalOnboarding = ({
               disabled={!canGenerate || isGenerating}
               className="px-6 py-2 bg-green-600 dark:bg-green-700 text-white rounded-lg hover:bg-green-700 dark:hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {isGenerating ? 'Generating...' : 'Generate Perspectives'}
+              {isGenerating ? 'Loading...' : 'Continue'}
             </button>
           </div>
         </div>
