@@ -86,7 +86,7 @@ export function PerspectiveGenerator({
 
 IMPORTANT: Include a diverse mix across these categories:
 - At least 1-2 real historical figures, thinkers, or experts (living or dead)
-- At least 1-2 role-based perspectives (professional roles, archetypes, or frameworks)
+- At least 1-2 role-based perspectives (professional roles, mythological figures, or frameworks)
 - At least 1 perspective from wisdom traditions, philosophical schools, or cultural approaches
 - At least 1 perspective that is antagonistic to the user's apparent values and/or framing - someone who would challenge their assumptions in an abrasive or uncomfortable way
 
@@ -96,7 +96,7 @@ Always assume the user is highly intelligent, well-educated, and wants the most 
 
 Focus on perspectives that would bring genuinely different viewpoints, challenge assumptions, or offer specialized knowledge that could deepen the exploration.
 
-When writing role-based titles, write them simply without articles. Use as much specificity as the context warrants. Always use title case.
+When writing role-based titles, write them simply without articles. Use as much specificity as the context warrants. Always use title case. For mythological or symbolic figures, use only the figure name itself without any suffix like "Archetype" or "Figure".
 
 Do NOT include parenthetical descriptions of the perspectives, or anything other than a name or role.${excludeClause}
 
