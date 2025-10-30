@@ -260,7 +260,7 @@ const Terminal = ({ theme, toggleTheme }) => {
     }
   };
 
-  // Generate perspectives with full context (journal + answers)
+  // Generate perspectives with full context (journal + questions + answers)
   const generatePerspectivesFromContext = async (journalText, answers) => {
     try {
       setIsGeneratingSuggestions(true);
@@ -273,8 +273,23 @@ const Terminal = ({ theme, toggleTheme }) => {
       // Clear any existing messages
       setMessages([]);
 
-      // Concatenate journal entry and answers (without questions)
-      const fullContext = [journalText, ...answers].filter(text => text && text.trim()).join('\n\n');
+      // Build full context with questions and answers interleaved
+      const contextParts = [journalText];
+
+      // Add question/answer pairs
+      for (let i = 0; i < contextFlow.questions.length; i++) {
+        const question = contextFlow.questions[i];
+        const answer = answers[i];
+
+        if (question) {
+          contextParts.push(question);
+          if (answer && answer.trim()) {
+            contextParts.push(answer);
+          }
+        }
+      }
+
+      const fullContext = contextParts.filter(text => text && text.trim()).join('\n\n');
 
       // Store full context in input field
       setInput(fullContext);
@@ -2874,7 +2889,7 @@ Gemini: ${geminiKey ? '✓ Set' : '✗ Not Set'}`
   const handleSubmit = async (e) => {
     e.preventDefault();
     console.log('handleSubmit called with input:', input);
-    
+
     if (!input.trim() || isLoading) {
       console.log('Empty input or loading, returning');
       return;
@@ -2891,13 +2906,19 @@ Gemini: ${geminiKey ? '✓ Set' : '✗ Not Set'}`
       }
     }
 
+    // Store input value before clearing
+    const userInput = input;
+
+    // Clear input immediately
+    setInput('');
+
     // Existing message handling
     console.log('No command handled, proceeding to Claude response');
     try {
       setIsLoading(true);
 
       // Process @ references for context injection
-      let processedInput = input;
+      let processedInput = userInput;
       let sessionContexts = [];
 
       // DEPRECATED: High Council mode detection - Replaced by parallel advisor streaming
@@ -3045,7 +3066,6 @@ Gemini: ${geminiKey ? '✓ Set' : '✗ Not Set'}`
       setCurrentSessionContexts([]);
     } finally {
       setIsLoading(false);
-      setInput('');
       focusInput();
     }
   };
