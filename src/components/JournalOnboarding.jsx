@@ -51,6 +51,10 @@ const JournalOnboarding = ({
   // Handle context question flow
   const handleContinue = () => {
     if (onAnswerQuestion) {
+      // Check if this is the last question (will trigger generation)
+      if (contextFlow && contextFlow.questionIndex === 2) {
+        setIsGenerating(true);
+      }
       onAnswerQuestion(text, false);
     }
   };
@@ -63,6 +67,7 @@ const JournalOnboarding = ({
 
   const handleGenerateNow = () => {
     if (onAnswerQuestion) {
+      setIsGenerating(true);
       onAnswerQuestion(text, true); // skipToGenerate = true
     }
   };
@@ -139,7 +144,8 @@ const JournalOnboarding = ({
             {!isLastQuestion && (
               <button
                 onClick={handleGenerateNow}
-                className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors underline"
+                disabled={isGenerating}
+                className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors underline"
               >
                 Generate Perspectives Now
               </button>
@@ -149,16 +155,18 @@ const JournalOnboarding = ({
             <div className="flex gap-3">
               <button
                 onClick={handleSkipQuestionClick}
-                className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+                disabled={isGenerating}
+                className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Skip Question
               </button>
 
               <button
                 onClick={handleContinue}
-                className="px-6 py-2 bg-green-600 dark:bg-green-700 text-white rounded-lg hover:bg-green-700 dark:hover:bg-green-600 transition-colors"
+                disabled={isGenerating}
+                className="px-6 py-2 bg-green-600 dark:bg-green-700 text-white rounded-lg hover:bg-green-700 dark:hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {isLastQuestion ? 'Generate Perspectives' : 'Continue'}
+                {isGenerating ? 'Generating...' : (isLastQuestion ? 'Generate Perspectives' : 'Continue')}
               </button>
             </div>
           </div>
