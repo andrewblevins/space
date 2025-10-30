@@ -85,6 +85,7 @@ const JournalOnboarding = ({
   if (contextFlow && contextFlow.phase === 'questions') {
     const canGoBack = contextFlow.questionIndex > 0;
     const canGoForward = contextFlow.questionIndex < 2 && contextFlow.hasNextQuestion;
+    const isLastQuestion = contextFlow.questionIndex === 2;
 
     return (
       <div className="flex-1 flex items-center justify-center p-8">
@@ -111,6 +112,14 @@ const JournalOnboarding = ({
                 )}
               </div>
             </div>
+
+            {/* Explanation text for question 1 */}
+            {contextFlow.questionIndex === 0 && (
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                The following questions will be used to suggest relevant perspectives. This exchange will also build the starting context for your conversation.
+              </p>
+            )}
+
             <h2 className="text-xl font-serif text-gray-700 dark:text-gray-300">
               {contextFlow.currentQuestion}
             </h2>
@@ -126,12 +135,16 @@ const JournalOnboarding = ({
           />
 
           <div className="flex items-center justify-between mt-4">
-            <button
-              onClick={handleGenerateNow}
-              className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors underline"
-            >
-              Generate Perspectives Now
-            </button>
+            {/* Only show "Generate Perspectives Now" if NOT on last question */}
+            {!isLastQuestion && (
+              <button
+                onClick={handleGenerateNow}
+                className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors underline"
+              >
+                Generate Perspectives Now
+              </button>
+            )}
+            {isLastQuestion && <div></div>}
 
             <div className="flex gap-3">
               <button
@@ -145,7 +158,7 @@ const JournalOnboarding = ({
                 onClick={handleContinue}
                 className="px-6 py-2 bg-green-600 dark:bg-green-700 text-white rounded-lg hover:bg-green-700 dark:hover:bg-green-600 transition-colors"
               >
-                Continue
+                {isLastQuestion ? 'Generate Perspectives' : 'Continue'}
               </button>
             </div>
           </div>
@@ -166,7 +179,7 @@ const JournalOnboarding = ({
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Take a moment to write freely about what you're thinking about, working on, or struggling with. This will initiate a short series of further questions."
+          placeholder="Take a moment to write freely about what you're thinking about, working on, or struggling with."
           className="w-full h-64 p-4 font-serif text-lg bg-amber-50 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-2 border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:border-green-400 dark:focus:border-green-400 resize-none"
           disabled={isGenerating}
         />
