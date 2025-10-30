@@ -275,6 +275,14 @@ const Terminal = ({ theme, toggleTheme }) => {
     setShowJournalSuggestions(false);
   };
 
+  // Helper to create advisor object from form data
+  const createAdvisorObject = ({ name, description, color }, active = true) => ({
+    name,
+    description,
+    color,
+    active
+  });
+
   // Handler for creating custom perspective (opens AdvisorForm modal)
   const handleCreateCustomPerspective = () => {
     // Set a flag to indicate this is for the suggestions modal
@@ -4134,13 +4142,8 @@ ${selectedText}
             <AdvisorForm
               initialName={suggestedAdvisorName}
               existingAdvisors={advisors}
-              onSubmit={({ name, description, color }) => {
-                const newAdvisor = {
-                  name,
-                  description,
-                  color,
-                  active: true
-                };
+              onSubmit={(formData) => {
+                const newAdvisor = createAdvisorObject(formData, true);
                 setAdvisors(prev => [...prev, newAdvisor]);
                 setShowAdvisorForm(false);
                 setSuggestedAdvisorName('');
@@ -4157,13 +4160,8 @@ ${selectedText}
             <AdvisorForm
               initialName=""
               existingAdvisors={advisors}
-              onSubmit={({ name, description, color }) => {
-                const newAdvisor = {
-                  name,
-                  description,
-                  color,
-                  active: false // Don't auto-add to sidebar, just to custom perspectives
-                };
+              onSubmit={(formData) => {
+                const newAdvisor = createAdvisorObject(formData, false);
                 handleSaveCustomPerspective(newAdvisor);
                 setEditingAdvisor(null);
               }}
