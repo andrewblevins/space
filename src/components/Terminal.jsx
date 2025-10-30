@@ -275,6 +275,29 @@ const Terminal = ({ theme, toggleTheme }) => {
     setShowJournalSuggestions(false);
   };
 
+  // Handler for generating custom perspective description
+  const handleGenerateCustomDescription = async (name) => {
+    setIsGeneratingCustomDescription(true);
+    try {
+      // Import the description generator function
+      const { generateAdvisorDescription } = await import('./AdvisorForm');
+      const description = await generateAdvisorDescription(name);
+      return description;
+    } catch (error) {
+      console.error('Error generating custom description:', error);
+      return null;
+    } finally {
+      setIsGeneratingCustomDescription(false);
+    }
+  };
+
+  // Handler for adding custom perspective to suggestions
+  const handleAddCustomPerspective = (customPerspective) => {
+    // Add custom perspective to journal suggestions array
+    setJournalSuggestions(prev => [...prev, customPerspective]);
+    console.log('Added custom perspective:', customPerspective);
+  };
+
   // DEPRECATED: High Council debate processing - Replaced by parallel advisor streaming
   // Process council debate sections for streaming-friendly collapsible display
   // const processCouncilDebates = (content) => {
@@ -493,6 +516,7 @@ const Terminal = ({ theme, toggleTheme }) => {
   const [journalSuggestions, setJournalSuggestions] = useState([]);
   const [showJournalSuggestions, setShowJournalSuggestions] = useState(false);
   const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false);
+  const [isGeneratingCustomDescription, setIsGeneratingCustomDescription] = useState(false);
   const [previousSuggestionNames, setPreviousSuggestionNames] = useState([]);
   const [sessions, setSessions] = useState([]);
   const [sessionSelections, setSessionSelections] = useState(new Map()); // Map from title to session object
@@ -4360,6 +4384,9 @@ ${selectedText}
         onSkip={handleSkipSuggestions}
         isRegenerating={isGeneratingSuggestions}
         onEditAdvisor={setEditingAdvisor}
+        onGenerateCustomDescription={handleGenerateCustomDescription}
+        onAddCustomPerspective={handleAddCustomPerspective}
+        isGeneratingCustom={isGeneratingCustomDescription}
       />
     </>
   );

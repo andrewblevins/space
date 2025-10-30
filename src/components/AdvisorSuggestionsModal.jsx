@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
+import { CustomPerspectiveCreator } from './CustomPerspectiveCreator';
 
-const AdvisorSuggestionsModal = ({ suggestions, existingAdvisors, onAddSelected, onRegenerate, onSkip, isOpen, isRegenerating, onEditAdvisor, hideSkipButton = false, generatingText = 'Regenerating...' }) => {
+const AdvisorSuggestionsModal = ({ suggestions, existingAdvisors, onAddSelected, onRegenerate, onSkip, isOpen, isRegenerating, onEditAdvisor, hideSkipButton = false, generatingText = 'Regenerating...', onGenerateCustomDescription, onAddCustomPerspective, isGeneratingCustom }) => {
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [expandedIds, setExpandedIds] = useState(new Set());
 
@@ -248,6 +249,15 @@ const AdvisorSuggestionsModal = ({ suggestions, existingAdvisors, onAddSelected,
               </div>
             );
           })}
+
+          {/* Custom Perspective Creator */}
+          {onGenerateCustomDescription && onAddCustomPerspective && (
+            <CustomPerspectiveCreator
+              onAdd={onAddCustomPerspective}
+              onGenerateDescription={onGenerateCustomDescription}
+              isGenerating={isGeneratingCustom}
+            />
+          )}
         </div>
 
         {/* Footer Actions */}
