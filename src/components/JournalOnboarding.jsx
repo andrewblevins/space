@@ -157,7 +157,7 @@ const JournalOnboarding = ({
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Take a moment to write freely about what you're thinking about, working on, or struggling with."
+          placeholder="Take a moment to write freely about what you're thinking about, working on, or struggling with. This will initiate a short series of further questions."
           className="w-full h-64 p-4 font-serif text-lg bg-amber-50 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-2 border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:border-green-400 dark:focus:border-green-400 resize-none"
           disabled={isGenerating}
         />
