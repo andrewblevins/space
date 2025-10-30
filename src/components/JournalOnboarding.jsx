@@ -3,12 +3,20 @@ import React, { useState } from 'react';
 const JournalOnboarding = ({
   onSubmit,
   onSkip,
-  contextFlow = null, // { phase: 'initial' | 'questions', currentQuestion: string, questionIndex: number }
+  contextFlow = null, // { phase: 'initial' | 'questions', currentQuestion: string, questionIndex: number, currentAnswer: string }
   onAnswerQuestion = null, // (answer, skipToGenerate) => void
-  onSkipQuestion = null // () => void
+  onSkipQuestion = null, // () => void
+  onNavigateQuestion = null // (direction: 'back' | 'forward') => void
 }) => {
   const [text, setText] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+
+  // Load current answer when question changes
+  React.useEffect(() => {
+    if (contextFlow && contextFlow.phase === 'questions') {
+      setText(contextFlow.currentAnswer || '');
+    }
+  }, [contextFlow?.questionIndex]);
 
   const wordCount = text.trim().split(/\s+/).filter(w => w.length > 0).length;
   const canGenerate = wordCount >= 25;
@@ -35,32 +43,64 @@ const JournalOnboarding = ({
   const handleContinue = () => {
     if (onAnswerQuestion) {
       onAnswerQuestion(text, false);
-      setText('');
     }
   };
 
   const handleSkipQuestionClick = () => {
     if (onSkipQuestion) {
       onSkipQuestion();
-      setText('');
     }
   };
 
   const handleGenerateNow = () => {
     if (onAnswerQuestion) {
       onAnswerQuestion(text, true); // skipToGenerate = true
-      setText('');
+    }
+  };
+
+  const handleBack = () => {
+    if (onNavigateQuestion) {
+      // Save current answer before going back
+      onNavigateQuestion('back', text);
+    }
+  };
+
+  const handleForward = () => {
+    if (onNavigateQuestion) {
+      // Save current answer before going forward
+      onNavigateQuestion('forward', text);
     }
   };
 
   // Show question flow if in questions phase
   if (contextFlow && contextFlow.phase === 'questions') {
+    const canGoBack = contextFlow.questionIndex > 0;
+    const canGoForward = contextFlow.questionIndex < 2 && contextFlow.hasNextQuestion;
+
     return (
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="max-w-2xl w-full">
           <div className="mb-4">
-            <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-              Question {contextFlow.questionIndex + 1} of 3
+            <div className="text-sm text-gray-500 dark:text-gray-400 mb-2 flex items-center justify-between">
+              <span>Question {contextFlow.questionIndex + 1} of 3</span>
+              <div className="flex gap-2">
+                {canGoBack && (
+                  <button
+                    onClick={handleBack}
+                    className="text-xs px-2 py-1 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    ← Back
+                  </button>
+                )}
+                {canGoForward && (
+                  <button
+                    onClick={handleForward}
+                    className="text-xs px-2 py-1 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    Forward →
+                  </button>
+                )}
+              </div>
             </div>
             <h2 className="text-xl font-serif text-gray-700 dark:text-gray-300">
               {contextFlow.currentQuestion}

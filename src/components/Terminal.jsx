@@ -147,12 +147,12 @@ const Terminal = ({ theme, toggleTheme }) => {
       // Generate first question
       const firstQuestion = await generateContextQuestion(journalText);
 
-      // Set up context flow state
+      // Set up context flow state with empty answer slots
       setContextFlow({
         active: true,
         initialEntry: journalText,
         questions: [firstQuestion],
-        answers: [],
+        answers: ['', '', ''], // Pre-allocate 3 answer slots
         currentQuestionIndex: 0
       });
 
@@ -165,38 +165,71 @@ const Terminal = ({ theme, toggleTheme }) => {
 
   // Handle answer to context question
   const handleAnswerQuestion = async (answer, skipToGenerate) => {
-    const currentAnswers = [...contextFlow.answers];
-
-    // Add answer if not empty
-    if (answer && answer.trim()) {
-      currentAnswers.push(answer.trim());
-    }
+    // Update answer at current index
+    const newAnswers = [...contextFlow.answers];
+    newAnswers[contextFlow.currentQuestionIndex] = answer && answer.trim() ? answer.trim() : '';
 
     // If user wants to skip to generate, or we've reached 3 questions
     if (skipToGenerate || contextFlow.currentQuestionIndex >= 2) {
-      // Generate perspectives with all collected context
-      await generatePerspectivesFromContext(contextFlow.initialEntry, currentAnswers);
+      // Generate perspectives with all collected context (filter out empty answers)
+      const filledAnswers = newAnswers.filter(a => a);
+      await generatePerspectivesFromContext(contextFlow.initialEntry, filledAnswers);
       return;
     }
 
-    // Generate next question
-    try {
-      const { generateContextQuestion } = await import('../utils/contextQuestions');
-      const nextQuestion = await generateContextQuestion(
-        contextFlow.initialEntry,
-        currentAnswers
-      );
+    // Generate next question if we don't have it yet
+    if (!contextFlow.questions[contextFlow.currentQuestionIndex + 1]) {
+      try {
+        const { generateContextQuestion } = await import('../utils/contextQuestions');
+        const filledAnswers = newAnswers.filter(a => a);
+        const nextQuestion = await generateContextQuestion(
+          contextFlow.initialEntry,
+          filledAnswers
+        );
 
+        setContextFlow({
+          ...contextFlow,
+          questions: [...contextFlow.questions, nextQuestion],
+          answers: newAnswers,
+          currentQuestionIndex: contextFlow.currentQuestionIndex + 1
+        });
+      } catch (error) {
+        console.error('Error generating next question:', error);
+        const filledAnswers = newAnswers.filter(a => a);
+        await generatePerspectivesFromContext(contextFlow.initialEntry, filledAnswers);
+      }
+    } else {
+      // Just navigate to next question
       setContextFlow({
         ...contextFlow,
-        questions: [...contextFlow.questions, nextQuestion],
-        answers: currentAnswers,
+        answers: newAnswers,
         currentQuestionIndex: contextFlow.currentQuestionIndex + 1
       });
-    } catch (error) {
-      console.error('Error generating next question:', error);
-      // Fall back to generating perspectives with current context
-      await generatePerspectivesFromContext(contextFlow.initialEntry, currentAnswers);
+    }
+  };
+
+  // Handle navigation between questions
+  const handleNavigateQuestion = async (direction, currentAnswer) => {
+    // Save current answer
+    const newAnswers = [...contextFlow.answers];
+    newAnswers[contextFlow.currentQuestionIndex] = currentAnswer && currentAnswer.trim() ? currentAnswer.trim() : '';
+
+    if (direction === 'back') {
+      // Go to previous question
+      setContextFlow({
+        ...contextFlow,
+        answers: newAnswers,
+        currentQuestionIndex: contextFlow.currentQuestionIndex - 1
+      });
+    } else if (direction === 'forward') {
+      // Go to next question (if it exists)
+      if (contextFlow.questions[contextFlow.currentQuestionIndex + 1]) {
+        setContextFlow({
+          ...contextFlow,
+          answers: newAnswers,
+          currentQuestionIndex: contextFlow.currentQuestionIndex + 1
+        });
+      }
     }
   };
 
@@ -4142,10 +4175,13 @@ ${selectedText}
                       contextFlow={contextFlow.active ? {
                         phase: 'questions',
                         currentQuestion: contextFlow.questions[contextFlow.currentQuestionIndex],
-                        questionIndex: contextFlow.currentQuestionIndex
+                        questionIndex: contextFlow.currentQuestionIndex,
+                        currentAnswer: contextFlow.answers[contextFlow.currentQuestionIndex] || '',
+                        hasNextQuestion: !!contextFlow.questions[contextFlow.currentQuestionIndex + 1]
                       } : null}
                       onAnswerQuestion={handleAnswerQuestion}
                       onSkipQuestion={handleSkipQuestion}
+                      onNavigateQuestion={handleNavigateQuestion}
                     />
                   </div>
                 ) : (
