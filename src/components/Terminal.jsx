@@ -275,27 +275,17 @@ const Terminal = ({ theme, toggleTheme }) => {
     setShowJournalSuggestions(false);
   };
 
-  // Handler for generating custom perspective description
-  const handleGenerateCustomDescription = async (name) => {
-    setIsGeneratingCustomDescription(true);
-    try {
-      // Import the description generator function
-      const { generateAdvisorDescription } = await import('./AdvisorForm');
-      const description = await generateAdvisorDescription(name);
-      return description;
-    } catch (error) {
-      console.error('Error generating custom description:', error);
-      return null;
-    } finally {
-      setIsGeneratingCustomDescription(false);
-    }
+  // Handler for creating custom perspective (opens AdvisorForm modal)
+  const handleCreateCustomPerspective = () => {
+    // Set a flag to indicate this is for the suggestions modal
+    setEditingAdvisor({ isNewForSuggestions: true });
   };
 
-  // Handler for adding custom perspective to suggestions
-  const handleAddCustomPerspective = (customPerspective) => {
-    // Add custom perspective to journal suggestions array
-    setJournalSuggestions(prev => [...prev, customPerspective]);
-    console.log('Added custom perspective:', customPerspective);
+  // Handler when custom perspective is saved from AdvisorForm
+  const handleSaveCustomPerspective = (newAdvisor) => {
+    // Add to custom perspectives array (auto-selected)
+    setCustomPerspectives(prev => [...prev, newAdvisor]);
+    console.log('Added custom perspective:', newAdvisor);
   };
 
   // DEPRECATED: High Council debate processing - Replaced by parallel advisor streaming
@@ -516,7 +506,7 @@ const Terminal = ({ theme, toggleTheme }) => {
   const [journalSuggestions, setJournalSuggestions] = useState([]);
   const [showJournalSuggestions, setShowJournalSuggestions] = useState(false);
   const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false);
-  const [isGeneratingCustomDescription, setIsGeneratingCustomDescription] = useState(false);
+  const [customPerspectives, setCustomPerspectives] = useState([]);
   const [previousSuggestionNames, setPreviousSuggestionNames] = useState([]);
   const [sessions, setSessions] = useState([]);
   const [sessionSelections, setSessionSelections] = useState(new Map()); // Map from title to session object
@@ -4162,7 +4152,28 @@ ${selectedText}
             />
           )}
 
-          {editingAdvisor && (
+          {/* AdvisorForm for creating custom perspectives in suggestions modal */}
+          {editingAdvisor?.isNewForSuggestions && (
+            <AdvisorForm
+              initialName=""
+              existingAdvisors={advisors}
+              onSubmit={({ name, description, color }) => {
+                const newAdvisor = {
+                  name,
+                  description,
+                  color,
+                  active: false // Don't auto-add to sidebar, just to custom perspectives
+                };
+                handleSaveCustomPerspective(newAdvisor);
+                setEditingAdvisor(null);
+              }}
+              onCancel={() => {
+                setEditingAdvisor(null);
+              }}
+            />
+          )}
+
+          {editingAdvisor && !editingAdvisor.isNewForSuggestions && (
             <EditAdvisorForm
               advisor={editingAdvisor}
               onSubmit={({ name, description, color }) => {
@@ -4384,9 +4395,8 @@ ${selectedText}
         onSkip={handleSkipSuggestions}
         isRegenerating={isGeneratingSuggestions}
         onEditAdvisor={setEditingAdvisor}
-        onGenerateCustomDescription={handleGenerateCustomDescription}
-        onAddCustomPerspective={handleAddCustomPerspective}
-        isGeneratingCustom={isGeneratingCustomDescription}
+        customPerspectives={customPerspectives}
+        onCreateCustom={handleCreateCustomPerspective}
       />
     </>
   );

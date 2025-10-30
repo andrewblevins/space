@@ -1,9 +1,22 @@
-import React, { useState } from 'react';
-import { CustomPerspectiveCreator } from './CustomPerspectiveCreator';
+import React, { useState, useEffect } from 'react';
 
-const AdvisorSuggestionsModal = ({ suggestions, existingAdvisors, onAddSelected, onRegenerate, onSkip, isOpen, isRegenerating, onEditAdvisor, hideSkipButton = false, generatingText = 'Regenerating...', onGenerateCustomDescription, onAddCustomPerspective, isGeneratingCustom }) => {
+const AdvisorSuggestionsModal = ({ suggestions, existingAdvisors, onAddSelected, onRegenerate, onSkip, isOpen, isRegenerating, onEditAdvisor, hideSkipButton = false, generatingText = 'Regenerating...', customPerspectives = [], onCreateCustom }) => {
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [expandedIds, setExpandedIds] = useState(new Set());
+
+  // Auto-select custom perspectives when they're added
+  useEffect(() => {
+    if (customPerspectives.length > 0) {
+      setSelectedIds(prev => {
+        const newSet = new Set(prev);
+        customPerspectives.forEach(advisor => {
+          const advisorId = advisor.id || advisor.name.toLowerCase().replace(/\s+/g, '-');
+          newSet.add(advisorId);
+        });
+        return newSet;
+      });
+    }
+  }, [customPerspectives]);
 
   if (!isOpen) return null;
 
@@ -250,13 +263,104 @@ const AdvisorSuggestionsModal = ({ suggestions, existingAdvisors, onAddSelected,
             );
           })}
 
-          {/* Custom Perspective Creator */}
-          {onGenerateCustomDescription && onAddCustomPerspective && (
-            <CustomPerspectiveCreator
-              onAdd={onAddCustomPerspective}
-              onGenerateDescription={onGenerateCustomDescription}
-              isGenerating={isGeneratingCustom}
-            />
+          {/* Your Custom Perspectives Section */}
+          {customPerspectives.length > 0 && (
+            <>
+              <div className="mt-6 pt-4 border-t border-gray-300 dark:border-gray-700">
+                <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3">Your Custom Perspectives</h3>
+              </div>
+
+              {customPerspectives.map((advisor) => {
+                const advisorId = advisor.id || advisor.name.toLowerCase().replace(/\s+/g, '-');
+                const isSelected = selectedIds.has(advisorId);
+                const isExpanded = expandedIds.has(advisorId);
+                const shouldTruncate = advisor.description && advisor.description.length > 150;
+
+                return (
+                  <div
+                    key={advisorId}
+                    className={`p-4 rounded-lg border-2 transition-colors ${
+                      isSelected
+                        ? 'border-green-600 dark:border-green-400 bg-green-50 dark:bg-green-900/20'
+                        : 'border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="font-bold text-gray-800 dark:text-gray-200">{advisor.name}</h3>
+                        </div>
+
+                        {advisor.description && (
+                          <p className="text-gray-700 dark:text-gray-300 mb-2 whitespace-pre-line">
+                            {shouldTruncate && !isExpanded
+                              ? advisor.description.slice(0, 150) + '...'
+                              : advisor.description}
+                          </p>
+                        )}
+
+                        {shouldTruncate && (
+                          <button
+                            onClick={() => toggleExpanded(advisorId)}
+                            className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                          >
+                            {isExpanded ? 'Show less' : 'Show more'}
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        {onEditAdvisor && (
+                          <button
+                            onClick={() => onEditAdvisor(advisor)}
+                            className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-colors bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-600"
+                            title="Edit perspective"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                          </button>
+                        )}
+
+                        <button
+                          onClick={() => toggleSelection(advisorId)}
+                          className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
+                            isSelected
+                              ? 'bg-green-600 dark:bg-green-700 text-white'
+                              : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-600'
+                          }`}
+                        >
+                          {isSelected ? (
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                          ) : (
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </>
+          )}
+
+          {/* Create Your Own Perspective Button */}
+          {onCreateCustom && (
+            <div className="mt-4 pt-4 border-t border-gray-300 dark:border-gray-700">
+              <button
+                onClick={onCreateCustom}
+                className="w-full px-4 py-3 text-left text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
+              >
+                <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                <span className="font-medium">Create Your Own Perspective</span>
+              </button>
+            </div>
           )}
         </div>
 
