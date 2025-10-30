@@ -125,13 +125,6 @@ export const AdvisorResponseCard = memo(({ advisor, allAdvisors = [], onAssertio
       <div className="text-gray-800 dark:text-gray-200">
         <StreamingMarkdownRenderer content={advisor.response} />
       </div>
-
-      {/* Metadata */}
-      {advisor.timestamp && (
-        <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-          {new Date(advisor.timestamp).toLocaleTimeString()}
-        </div>
-      )}
     </div>
   );
 });

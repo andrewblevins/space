@@ -25,7 +25,7 @@ const MessageRenderer = memo(({
   const getMessageClassName = (type) => {
     switch (type) {
       case 'user':
-        return 'text-green-600 dark:text-green-400 whitespace-pre-wrap';
+        return 'text-gray-900 dark:text-gray-100 whitespace-pre-wrap border-l-4 border-gray-300 dark:border-gray-600 pl-4';
       case 'assistant':
         return 'text-gray-800 dark:text-gray-200';
       case 'system':
@@ -115,10 +115,10 @@ const MessageRenderer = memo(({
   };
 
   return (
-    <div 
+    <div
       key={messageKey}
       id={`msg-${idx}`}
-      className={`mb-4 break-words ${getMessageClassName(msg.type)}`}
+      className={`mb-4 break-words text-lg ${getMessageClassName(msg.type)}`}
     >
       {renderMessageContent()}
     </div>
