@@ -33,9 +33,18 @@ const JournalOnboarding = ({
   };
 
   const handleKeyDown = (e) => {
-    // Prevent form submission on Enter alone
+    // Handle Enter to proceed
     if (e.key === 'Enter' && !e.shiftKey && !e.metaKey && !e.ctrlKey) {
       e.preventDefault();
+
+      // In question phase, proceed to next question
+      if (contextFlow && contextFlow.phase === 'questions') {
+        handleContinue();
+      }
+      // In initial phase, proceed if we have enough words
+      else if (canGenerate && !isGenerating) {
+        handleGenerate();
+      }
     }
   };
 
