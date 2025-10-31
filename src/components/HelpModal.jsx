@@ -28,8 +28,8 @@ const HelpModal = ({ isOpen, onClose }) => {
             <section>
               <h3 className="text-green-400 font-semibold mb-3">What is SPACE Terminal?</h3>
               <p className="text-gray-600 dark:text-gray-300 mb-3">
-                SPACE is a terminal-style interface for conversations with AI advisors. Create different AI personas, 
-                have them collaborate on problems, and build up knowledge over time through enhanced memory and tagging.
+                SPACE is a multi-perspective AI conversation interface. Create diverse AI perspectives that respond simultaneously
+                in parallel, helping you stress-test ideas, explore complex problems, and build interconnected knowledge over time.
               </p>
             </section>
 
@@ -37,8 +37,10 @@ const HelpModal = ({ isOpen, onClose }) => {
             <section>
               <h3 className="text-green-400 font-semibold mb-3">Getting Started</h3>
               <div className="space-y-2 text-gray-600 dark:text-gray-300">
-                <p><strong>1. Create advisors:</strong> Click the + button to add AI advisors with different perspectives</p>
-                <p><strong>2. Start chatting:</strong> Type in the terminal to have conversations with your active advisors</p>
+                <p><strong>1. Journal Entry:</strong> Start a new chat to be guided through a context-gathering flow</p>
+                <p><strong>2. Generate Perspectives:</strong> Answer 3 brief questions, then get AI-suggested perspectives (or add your own)</p>
+                <p><strong>3. Multi-Perspective Chat:</strong> Active perspectives respond simultaneously in a parallel card grid</p>
+                <p><strong>4. Manage & Refine:</strong> Toggle perspectives on/off, edit them, or optimize through the evaluation system</p>
               </div>
             </section>
 
@@ -65,12 +67,12 @@ const HelpModal = ({ isOpen, onClose }) => {
                   </ul>
                 </div>
                 <div>
-                  <h4 className="text-green-400 font-medium mb-2">👥 Advisors</h4>
+                  <h4 className="text-green-400 font-medium mb-2">👥 Perspectives</h4>
                   <ul className="space-y-1 text-gray-600 dark:text-gray-300">
-                    <li>• Create advisors with unique perspectives</li>
-                    <li>• Import/export advisor profiles</li>
-                    <li>• Share advisor profiles via file export</li>
-                    <li>• Toggle advisors on/off for conversations</li>
+                    <li>• AI-generated perspective suggestions based on context</li>
+                    <li>• Create custom perspectives with unique viewpoints</li>
+                    <li>• Parallel responses displayed side-by-side in grid</li>
+                    <li>• Import/export and share perspective profiles</li>
                   </ul>
                 </div>
                 <div>
@@ -120,7 +122,7 @@ const HelpModal = ({ isOpen, onClose }) => {
             {/* Footer */}
             <section className="pt-4 border-t border-gray-300 dark:border-gray-600">
               <p className="text-center text-xs text-gray-500">
-                SPACE Terminal v0.2.4 • All features accessible through GUI menus
+                SPACE Terminal v0.2.6+ • All features accessible through GUI menus
               </p>
             </section>
           </div>

@@ -16,12 +16,12 @@ The result is a fluid, modular, deliberately developmental environment that aims
 
 ## Key Features
 
-- Create and manage AI advisors with distinct personalities
-- Define quality criteria ("assertions") for responses
-- Automatically optimize advisor responses through improve-and-test loops
-- High Council mode: Have multiple advisors debate complex topics
-- Export conversations and manage sessions
-- See exactly what's sent to AI models in Debug mode
+- **Multi-Perspective Conversations**: Create and manage AI advisors with distinct personalities that respond simultaneously in parallel
+- **Quality Criteria System**: Define assertions for responses and iteratively optimize advisors through improve-and-test loops
+- **Knowledge Dossier**: Track conversation history, search past sessions, and build interconnected knowledge over time
+- **Journal Onboarding**: Smart context-gathering flow that asks follow-up questions before generating relevant perspectives
+- **Session Management**: Export conversations, reference past sessions with @-mentions, and maintain conversation continuity
+- **Full Transparency**: See exactly what's sent to AI models in Debug mode
   
 ## Why SPACE Exists
 
