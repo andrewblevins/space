@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SPACE Terminal - Collapsible Perspective Cards Mockup</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+    }
+    .truncated {
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .show-more-btn {
+      transition: all 0.2s ease;
+    }
+    .show-more-btn:hover {
+      transform: translateY(1px);
+    }
+    /* Smooth height transition */
+    .card-content {
+      transition: max-height 0.3s ease-out;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body class="bg-gray-950 text-gray-200 p-8">
+
+  <div class="max-w-7xl mx-auto">
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-green-400 mb-2">Collapsible Perspective Cards</h1>
+      <p class="text-gray-400">Mockup demonstrating "Show more" pattern for SPACE Terminal perspective responses</p>
+    </div>
+
+    <!-- User Message -->
+    <div class="mb-8 border-l-4 border-gray-600 pl-4">
+      <p class="text-gray-100 text-lg">
+        I'm struggling to decide whether to pursue this startup idea or keep my stable job. The opportunity seems promising but the risk feels overwhelming.
+      </p>
+    </div>
+
+    <!-- Parallel streaming indicator -->
+    <div class="mb-3 text-sm text-green-400 italic">
+      ⚡ Parallel streaming in progress...
+    </div>
+
+    <!-- Grid of Perspective Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+
+      <!-- Card 1: Collapsed State Example -->
+      <div class="border border-gray-700 rounded-lg p-4 bg-gray-900 hover:shadow-lg hover:shadow-green-400/10 transition-shadow">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-bold text-base text-gray-200 flex items-center">
+            <span class="w-2 h-2 rounded-full bg-blue-500 mr-2"></span>
+            The Pragmatist
+          </h3>
+          <button class="flex items-center px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded hover:bg-blue-200 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+            </svg>
+            Assert
+          </button>
+        </div>
+
+        <!-- Content (Collapsed - shows ~3 lines) -->
+        <div id="content-1" class="text-gray-200 text-base leading-relaxed">
+          <div class="truncated">
+            <p>Let's break this down into concrete numbers first. What's your current runway? Do you have 6-12 months of living expenses saved? The stability you mention isn't just emotional comfort—it's your risk buffer. Before we discuss vision or passion, we need to know if you can afford to fail.</p>
+          </div>
+        </div>
+
+        <!-- Show More Button -->
+        <button
+          onclick="toggleCard(1)"
+          class="show-more-btn mt-3 text-sm text-gray-400 hover:text-gray-200 flex items-center transition-colors"
+        >
+          <span id="btn-text-1">Show more</span>
+          <svg id="icon-1" class="w-4 h-4 ml-1 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Card 2: Expanded State Example -->
+      <div class="border border-gray-700 rounded-lg p-4 bg-gray-900 hover:shadow-lg hover:shadow-green-400/10 transition-shadow">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-bold text-base text-gray-200 flex items-center">
+            <span class="w-2 h-2 rounded-full bg-purple-500 mr-2"></span>
+            The Visionary
+          </h3>
+          <button class="flex items-center px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded hover:bg-blue-200 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+            </svg>
+            Assert
+          </button>
+        </div>
+
+        <!-- Content (Expanded - full text visible) -->
+        <div id="content-2" class="text-gray-200 text-base leading-relaxed">
+          <p class="mb-3">Every paradigm shift starts with someone willing to step into uncertainty. The "stable job" you're clinging to—is it truly stable, or just familiar? In ten years, which decision will you regret more: trying and failing, or never knowing?</p>
+
+          <p class="mb-3">The risk you're feeling isn't a warning sign. It's information. Your nervous system is telling you this matters. That discomfort is precisely what separates transformative opportunities from incremental ones.</p>
+
+          <p>Consider this: the overwhelming feeling isn't about the decision itself. It's about who you're becoming by making it. Who do you need to be to build this? That question is more important than the startup's success.</p>
+        </div>
+
+        <!-- Show Less Button -->
+        <button
+          onclick="toggleCard(2)"
+          class="show-more-btn mt-3 text-sm text-gray-400 hover:text-gray-200 flex items-center transition-colors"
+        >
+          <span id="btn-text-2">Show less</span>
+          <svg id="icon-2" class="w-4 h-4 ml-1 transform rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Card 3: Short Response (No collapse needed) -->
+      <div class="border border-gray-700 rounded-lg p-4 bg-gray-900 hover:shadow-lg hover:shadow-green-400/10 transition-shadow">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-bold text-base text-gray-200 flex items-center">
+            <span class="w-2 h-2 rounded-full bg-amber-500 mr-2"></span>
+            Socrates
+          </h3>
+          <button class="flex items-center px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded hover:bg-blue-200 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+            </svg>
+            Assert
+          </button>
+        </div>
+
+        <!-- Content (Short - no collapse button needed) -->
+        <div class="text-gray-200 text-base leading-relaxed">
+          <p>What is it you fear losing? And what might you gain that you haven't yet named?</p>
+        </div>
+      </div>
+
+      <!-- Card 4: Streaming State Example -->
+      <div class="border border-gray-700 rounded-lg p-4 bg-gray-900 hover:shadow-lg hover:shadow-green-400/10 transition-shadow">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-bold text-base text-gray-200 flex items-center">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 mr-2 animate-pulse"></span>
+            The Devil's Advocate
+          </h3>
+          <button class="flex items-center px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded hover:bg-blue-200 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+            </svg>
+            Assert
+          </button>
+        </div>
+
+        <!-- Content (Streaming - partial with cursor) -->
+        <div class="text-gray-200 text-base leading-relaxed">
+          <p>You say "promising opportunity" but I notice you haven't mentioned traction, customers, or revenue. Is this promise based on market validation or enthusiasm? Because most startup ideas fail not from lack of passion, but from<span class="inline-block w-1 h-5 bg-green-400 ml-1 animate-pulse"></span></p>
+        </div>
+      </div>
+
+      <!-- Card 5: Collapsed with longer preview -->
+      <div class="border border-gray-700 rounded-lg p-4 bg-gray-900 hover:shadow-lg hover:shadow-green-400/10 transition-shadow">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-bold text-base text-gray-200 flex items-center">
+            <span class="w-2 h-2 rounded-full bg-rose-500 mr-2"></span>
+            Carl Jung
+          </h3>
+          <button class="flex items-center px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded hover:bg-blue-200 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+            </svg>
+            Assert
+          </button>
+        </div>
+
+        <!-- Content -->
+        <div id="content-5" class="text-gray-200 text-base leading-relaxed">
+          <div class="truncated">
+            <p>This struggle you describe—the pull between safety and risk—is the tension between your persona and your Self. The "stable job" represents not just financial security, but your ego's construction of who you've been. The startup represents the unlived life, the unrealized potential that calls from...</p>
+          </div>
+        </div>
+
+        <!-- Show More Button -->
+        <button
+          onclick="toggleCard(5)"
+          class="show-more-btn mt-3 text-sm text-gray-400 hover:text-gray-200 flex items-center transition-colors"
+        >
+          <span id="btn-text-5">Show more</span>
+          <svg id="icon-5" class="w-4 h-4 ml-1 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Card 6: Another collapsed example -->
+      <div class="border border-gray-700 rounded-lg p-4 bg-gray-900 hover:shadow-lg hover:shadow-green-400/10 transition-shadow">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-bold text-base text-gray-200 flex items-center">
+            <span class="w-2 h-2 rounded-full bg-cyan-500 mr-2"></span>
+            Stoic Mentor
+          </h3>
+          <button class="flex items-center px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded hover:bg-blue-200 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+            </svg>
+            Assert
+          </button>
+        </div>
+
+        <!-- Content -->
+        <div id="content-6" class="text-gray-200 text-base leading-relaxed">
+          <div class="truncated">
+            <p>The overwhelm you feel is not the problem—it's your attachment to a particular outcome. What if neither path is "correct"? Both contain hardship. Both contain opportunity. The question isn't which path to choose, but who you need to become to walk it well...</p>
+          </div>
+        </div>
+
+        <!-- Show More Button -->
+        <button
+          onclick="toggleCard(6)"
+          class="show-more-btn mt-3 text-sm text-gray-400 hover:text-gray-200 flex items-center transition-colors"
+        >
+          <span id="btn-text-6">Show more</span>
+          <svg id="icon-6" class="w-4 h-4 ml-1 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Design Notes -->
+    <div class="mt-12 p-6 bg-gray-900 border border-green-400 rounded-lg">
+      <h2 class="text-xl font-bold text-green-400 mb-4">Design Notes</h2>
+
+      <div class="space-y-4 text-sm text-gray-300">
+        <div>
+          <h3 class="font-semibold text-gray-200 mb-1">📐 Layout</h3>
+          <ul class="list-disc list-inside space-y-1 ml-4">
+            <li>Grid maintains parallel scanning capability (2-3 columns on desktop)</li>
+            <li>All perspectives visible simultaneously</li>
+            <li>Responsive: 1 column mobile, 2 tablet, 3 desktop</li>
+          </ul>
+        </div>
+
+        <div>
+          <h3 class="font-semibold text-gray-200 mb-1">✂️ Truncation Logic</h3>
+          <ul class="list-disc list-inside space-y-1 ml-4">
+            <li>Show first ~3 lines (or 200-250 characters)</li>
+            <li>Short responses (&lt;3 lines) show in full, no button</li>
+            <li>Streaming responses auto-expand as they grow past threshold</li>
+            <li>State persists: once expanded, stays expanded for that turn</li>
+          </ul>
+        </div>
+
+        <div>
+          <h3 class="font-semibold text-gray-200 mb-1">🎨 Visual Indicators</h3>
+          <ul class="list-disc list-inside space-y-1 ml-4">
+            <li>Subtle gradient fade at truncation point (optional)</li>
+            <li>Chevron rotates on expand/collapse</li>
+            <li>Streaming: pulsing color dot + text cursor</li>
+            <li>Hover effect on cards (subtle glow)</li>
+          </ul>
+        </div>
+
+        <div>
+          <h3 class="font-semibold text-gray-200 mb-1">🎯 User Benefits</h3>
+          <ul class="list-disc list-inside space-y-1 ml-4">
+            <li>Scan all perspectives at a glance (addresses "too much text")</li>
+            <li>Choose which perspectives to engage deeply</li>
+            <li>Reduces cognitive overwhelm while preserving information</li>
+            <li>Maintains multi-perspective "council" feeling</li>
+          </ul>
+        </div>
+
+        <div>
+          <h3 class="font-semibold text-gray-200 mb-1">⚡ Implementation Notes</h3>
+          <ul class="list-disc list-inside space-y-1 ml-4">
+            <li>No Framer Motion needed - CSS transitions sufficient</li>
+            <li>Add <code>isExpanded</code> state to each advisor response</li>
+            <li>Use CSS <code>-webkit-line-clamp</code> for clean truncation</li>
+            <li>Keyboard accessible: Enter/Space to toggle</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Simulate card expansion toggle
+    const fullTexts = {
+      1: `<p class="mb-3">Let's break this down into concrete numbers first. What's your current runway? Do you have 6-12 months of living expenses saved? The stability you mention isn't just emotional comfort—it's your risk buffer. Before we discuss vision or passion, we need to know if you can afford to fail.</p>
+          <p class="mb-3">Now, market timing: Are you solving a problem people are actively trying to solve today? "Promising" often means "interesting" rather than "urgent." Urgent problems get customers. Interesting problems get LinkedIn likes.</p>
+          <p>Here's the test: If you had to make this startup profitable in 90 days with zero outside funding, what would change about your approach? That thought experiment reveals whether this is a business or a bet.</p>`,
+      5: `<p class="mb-3">This struggle you describe—the pull between safety and risk—is the tension between your persona and your Self. The "stable job" represents not just financial security, but your ego's construction of who you've been. The startup represents the unlived life, the unrealized potential that calls from the unconscious.</p>
+          <p class="mb-3">The overwhelming feeling? That's the numinous—the presence of something larger than your current identity trying to break through. Your psyche is reorganizing around a new center. This isn't comfortable. Individuation never is.</p>
+          <p>But notice: you're not asking whether to pursue the startup. You're asking permission to become someone new. No one can give you that permission except yourself. What aspect of you must die for this new self to be born?</p>`,
+      6: `<p class="mb-3">The overwhelm you feel is not the problem—it's your attachment to a particular outcome. What if neither path is "correct"? Both contain hardship. Both contain opportunity. The question isn't which path to choose, but who you need to become to walk it well.</p>
+          <p class="mb-3">Marcus Aurelius led an empire while maintaining his philosophical practice. He didn't choose between duty and growth—he integrated them. You're creating a false binary. Perhaps the real question is: how can you pursue this startup idea while maintaining the security that allows you to think clearly?</p>
+          <p>Start small. Test the idea nights and weekends. Risk only what you can afford to lose. Then you're not making one irreversible choice—you're gathering information. The universe rewards action, not agonizing.</p>`
+    };
+
+    const expandedStates = {};
+
+    function toggleCard(cardId) {
+      const content = document.getElementById(`content-${cardId}`);
+      const btnText = document.getElementById(`btn-text-${cardId}`);
+      const icon = document.getElementById(`icon-${cardId}`);
+
+      const isExpanded = expandedStates[cardId];
+
+      if (isExpanded) {
+        // Collapse
+        content.innerHTML = '<div class="truncated">' + content.querySelector('p').outerHTML + '</div>';
+        btnText.textContent = 'Show more';
+        icon.classList.remove('rotate-180');
+        expandedStates[cardId] = false;
+      } else {
+        // Expand
+        content.innerHTML = fullTexts[cardId];
+        btnText.textContent = 'Show less';
+        icon.classList.add('rotate-180');
+        expandedStates[cardId] = true;
+      }
+    }
+  </script>
+
+</body>
+</html>
