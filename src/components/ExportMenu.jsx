@@ -110,7 +110,7 @@ const ExportMenu = ({
                   Export all saved sessions with complete conversation history
                 </p>
                 <p className="text-gray-500 group-hover:text-gray-600 text-xs mt-1 transition-colors">
-                  Downloads: all-sessions.json
+                  Downloads: space-all-sessions-[date].json
                 </p>
               </div>
             </div>

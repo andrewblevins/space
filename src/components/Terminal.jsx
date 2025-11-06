@@ -153,7 +153,8 @@ const Terminal = ({ theme, toggleTheme }) => {
         initialEntry: journalText,
         questions: [firstQuestion],
         answers: ['', '', ''], // Pre-allocate 3 answer slots
-        currentQuestionIndex: 0
+        currentQuestionIndex: 0,
+        hasNextQuestion: false // Initialize hasNextQuestion tracking
       });
 
     } catch (error) {
@@ -180,8 +181,11 @@ const Terminal = ({ theme, toggleTheme }) => {
     // Generate next question if we don't have it yet
     if (!contextFlow.questions[contextFlow.currentQuestionIndex + 1]) {
       try {
-        const { generateContextQuestion } = await import('../utils/contextQuestions');
+        console.log('Generating question', contextFlow.currentQuestionIndex + 2, 'of 3');
         const filledAnswers = newAnswers.filter(a => a);
+        console.log('Previous answers:', filledAnswers);
+        
+        const { generateContextQuestion } = await import('../utils/contextQuestions');
         const nextQuestion = await generateContextQuestion(
           contextFlow.initialEntry,
           filledAnswers
@@ -191,10 +195,16 @@ const Terminal = ({ theme, toggleTheme }) => {
           ...contextFlow,
           questions: [...contextFlow.questions, nextQuestion],
           answers: newAnswers,
-          currentQuestionIndex: contextFlow.currentQuestionIndex + 1
+          currentQuestionIndex: contextFlow.currentQuestionIndex + 1,
+          hasNextQuestion: contextFlow.currentQuestionIndex + 1 < 2 // Track if there will be another question after this one
         });
       } catch (error) {
         console.error('Error generating next question:', error);
+        // Show error to user instead of silent fallback
+        setMessages(prev => [...prev, {
+          type: 'system',
+          content: 'Unable to generate next question. Proceeding with collected context.'
+        }]);
         const filledAnswers = newAnswers.filter(a => a);
         await generatePerspectivesFromContext(contextFlow.initialEntry, filledAnswers);
       }
@@ -203,7 +213,8 @@ const Terminal = ({ theme, toggleTheme }) => {
       setContextFlow({
         ...contextFlow,
         answers: newAnswers,
-        currentQuestionIndex: contextFlow.currentQuestionIndex + 1
+        currentQuestionIndex: contextFlow.currentQuestionIndex + 1,
+        hasNextQuestion: contextFlow.currentQuestionIndex + 1 < 2 // Update hasNextQuestion when navigating
       });
     }
   };
@@ -219,7 +230,8 @@ const Terminal = ({ theme, toggleTheme }) => {
       setContextFlow({
         ...contextFlow,
         answers: newAnswers,
-        currentQuestionIndex: contextFlow.currentQuestionIndex - 1
+        currentQuestionIndex: contextFlow.currentQuestionIndex - 1,
+        hasNextQuestion: contextFlow.questions[contextFlow.currentQuestionIndex] !== undefined // Update hasNextQuestion when going back
       });
     } else if (direction === 'forward') {
       // Go to next question (if it exists)
@@ -227,7 +239,8 @@ const Terminal = ({ theme, toggleTheme }) => {
         setContextFlow({
           ...contextFlow,
           answers: newAnswers,
-          currentQuestionIndex: contextFlow.currentQuestionIndex + 1
+          currentQuestionIndex: contextFlow.currentQuestionIndex + 1,
+          hasNextQuestion: contextFlow.currentQuestionIndex + 1 < 2 && contextFlow.questions[contextFlow.currentQuestionIndex + 2] !== undefined // Update hasNextQuestion when going forward
         });
       }
     }
@@ -243,6 +256,7 @@ const Terminal = ({ theme, toggleTheme }) => {
 
     // Generate next question
     try {
+      console.log('Generating question', contextFlow.currentQuestionIndex + 2, 'of 3 (after skip)');
       const { generateContextQuestion } = await import('../utils/contextQuestions');
       const nextQuestion = await generateContextQuestion(
         contextFlow.initialEntry,
@@ -252,10 +266,16 @@ const Terminal = ({ theme, toggleTheme }) => {
       setContextFlow({
         ...contextFlow,
         questions: [...contextFlow.questions, nextQuestion],
-        currentQuestionIndex: contextFlow.currentQuestionIndex + 1
+        currentQuestionIndex: contextFlow.currentQuestionIndex + 1,
+        hasNextQuestion: contextFlow.currentQuestionIndex + 1 < 2 // Track if there will be another question after this one
       });
     } catch (error) {
       console.error('Error generating next question:', error);
+      // Show error to user instead of silent fallback
+      setMessages(prev => [...prev, {
+        type: 'system',
+        content: 'Unable to generate next question. Proceeding with collected context.'
+      }]);
       await generatePerspectivesFromContext(contextFlow.initialEntry, contextFlow.answers);
     }
   };
@@ -756,6 +776,146 @@ const Terminal = ({ theme, toggleTheme }) => {
       }
     }
   }, [isInitializing, hasCheckedKeys, apiKeysSet, showWelcome]);
+
+  // Storage event listener to sync state across tabs and mobile/desktop views
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (debugMode) {
+        console.log('[State Sync] Storage event detected:', {
+          key: e.key,
+          oldValue: e.oldValue?.substring(0, 50),
+          newValue: e.newValue?.substring(0, 50),
+          timestamp: Date.now()
+        });
+      }
+
+      // Sync advisors across tabs/views
+      if (e.key === 'space_advisors' && e.newValue) {
+        try {
+          const newAdvisors = JSON.parse(e.newValue);
+          setAdvisors(newAdvisors);
+          if (debugMode) {
+            console.log('[State Sync] Advisors updated from storage:', {
+              count: newAdvisors.length,
+              active: newAdvisors.filter(a => a.active).length
+            });
+          }
+        } catch (error) {
+          console.error('[State Sync] Failed to parse advisors:', error);
+        }
+      }
+
+      // Sync current session if it changed in another tab
+      if (e.key === `space_session_${currentSessionId}` && e.newValue) {
+        try {
+          const session = JSON.parse(e.newValue);
+          if (session.messages) {
+            setMessages(session.messages);
+            if (session.metaphors) setMetaphors(session.metaphors);
+            if (session.advisorSuggestions) setAdvisorSuggestions(session.advisorSuggestions);
+            if (session.voteHistory) setVoteHistory(session.voteHistory);
+            
+            if (debugMode) {
+              console.log('[State Sync] Session reloaded from storage:', {
+                sessionId: currentSessionId,
+                messageCount: session.messages.length,
+                metaphorCount: session.metaphors?.length || 0
+              });
+            }
+          }
+        } catch (error) {
+          console.error('[State Sync] Failed to parse session:', error);
+        }
+      }
+
+      // Sync advisor groups
+      if (e.key === 'space_advisor_groups' && e.newValue) {
+        try {
+          const newGroups = JSON.parse(e.newValue);
+          setAdvisorGroups(newGroups);
+          if (debugMode) {
+            console.log('[State Sync] Advisor groups updated:', newGroups.length);
+          }
+        } catch (error) {
+          console.error('[State Sync] Failed to parse advisor groups:', error);
+        }
+      }
+
+      // Sync settings
+      if (e.key === 'space_reasoning_mode' && e.newValue !== null) {
+        setReasoningMode(e.newValue === 'true');
+      }
+      if (e.key === 'space_sidebar_collapsed' && e.newValue !== null) {
+        setSidebarCollapsed(e.newValue === 'true');
+      }
+      if (e.key === 'space_max_tokens' && e.newValue !== null) {
+        setMaxTokens(parseInt(e.newValue));
+      }
+      if (e.key === 'space_auto_scroll' && e.newValue !== null) {
+        setAutoScroll(JSON.parse(e.newValue));
+      }
+      if (e.key === 'space_paragraph_spacing' && e.newValue !== null) {
+        setParagraphSpacing(parseFloat(e.newValue));
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [currentSessionId, debugMode]);
+
+  // Debounced state persistence for advisors
+  useEffect(() => {
+    if (!isInitializing && advisors.length > 0) {
+      const timeoutId = setTimeout(() => {
+        localStorage.setItem('space_advisors', JSON.stringify(advisors));
+        if (debugMode) {
+          console.log('[State Sync] Advisors persisted to localStorage:', {
+            count: advisors.length,
+            active: advisors.filter(a => a.active).length,
+            timestamp: Date.now()
+          });
+        }
+      }, 500); // Debounce writes by 500ms
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [advisors, isInitializing, debugMode]);
+
+  // Debounced state persistence for advisor groups
+  useEffect(() => {
+    if (!isInitializing && advisorGroups.length > 0) {
+      const timeoutId = setTimeout(() => {
+        localStorage.setItem('space_advisor_groups', JSON.stringify(advisorGroups));
+        if (debugMode) {
+          console.log('[State Sync] Advisor groups persisted to localStorage:', {
+            count: advisorGroups.length,
+            timestamp: Date.now()
+          });
+        }
+      }, 500);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [advisorGroups, isInitializing, debugMode]);
+
+  // Debug logging for state divergence tracking
+  useEffect(() => {
+    if (debugMode) {
+      const interval = setInterval(() => {
+        console.log('[State Sync] Current state snapshot:', {
+          advisorCount: advisors.length,
+          activeAdvisors: advisors.filter(a => a.active).map(a => a.name),
+          messageCount: messages.length,
+          sessionId: currentSessionId,
+          metaphorCount: metaphors.length,
+          timestamp: Date.now(),
+          isMobile: window.innerWidth < 768
+        });
+      }, 10000); // Log every 10 seconds when debug mode is on
+
+      return () => clearInterval(interval);
+    }
+  }, [debugMode, advisors, messages, currentSessionId, metaphors]);
 
 // Shared JSON response format for advisor responses (without synthesis)
 const ADVISOR_JSON_FORMAT = `
@@ -1480,22 +1640,47 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
   // Export functions for GUI buttons
   const handleExportSession = () => {
     try {
-      const markdown = formatSessionAsMarkdown(messages);
+      // Load from localStorage to get complete session data
+      const sessionData = localStorage.getItem(`space_session_${currentSessionId}`);
+      if (!sessionData) {
+        throw new Error('Session not found');
+      }
+      
+      const session = JSON.parse(sessionData);
+      
+      // Validate session has messages
+      if (!session.messages || !Array.isArray(session.messages)) {
+        throw new Error('Session has no messages to export');
+      }
+      
+      // Format session as markdown with metadata
+      const markdown = formatSessionAsMarkdown(session.messages, {
+        title: session.title,
+        advisors: session.advisors || [],
+        timestamp: session.timestamp
+      });
+      
+      // Validate markdown content
+      if (!markdown || markdown.length === 0) {
+        throw new Error('Generated export is empty');
+      }
+      
       const blob = new Blob([markdown], { type: 'text/markdown' });
+      
+      // Validate blob creation
+      if (blob.size === 0) {
+        throw new Error('Export file is empty');
+      }
+      
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       
-      // Use session title if available, otherwise use session ID
-      const sessionData = localStorage.getItem(`space_session_${currentSessionId}`);
+      // Use session title for filename, sanitized
       let filename = `space-session-${currentSessionId}`;
-      if (sessionData) {
-        const session = JSON.parse(sessionData);
-        if (session.title) {
-          // Sanitize title for filename
-          const sanitizedTitle = session.title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-          filename = `space-${sanitizedTitle}`;
-        }
+      if (session.title) {
+        const sanitizedTitle = session.title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        filename = `space-${sanitizedTitle}`;
       }
       
       a.download = `${filename}.md`;
@@ -1506,7 +1691,7 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
       
       setMessages(prev => [...prev, {
         type: 'system',
-        content: 'Session exported successfully'
+        content: `Session exported successfully (${blob.size} bytes)`
       }]);
     } catch (error) {
       setMessages(prev => [...prev, {
@@ -3195,29 +3380,48 @@ Gemini: ${geminiKey ? '✓ Set' : '✗ Not Set'}`
   };
 
   // Add this helper function to format messages as markdown
-  const formatSessionAsMarkdown = (messages) => {
-    // Add timestamp at the beginning
-    const timestamp = new Date().toLocaleString();
-    let markdown = `# SPACE Terminal Session Export
-Exported on: ${timestamp}\n\n`;
+  const formatSessionAsMarkdown = (messages, metadata = {}) => {
+    const { title, advisors = [], timestamp } = metadata;
+    const date = timestamp ? new Date(timestamp).toLocaleString() : new Date().toLocaleString();
     
+    let markdown = `# ${title || 'SPACE Terminal Session'}\n`;
+    markdown += `Exported: ${date}\n\n`;
+    
+    // Include active perspectives if present
+    if (advisors.length > 0) {
+      markdown += `## Active Perspectives\n`;
+      advisors.forEach(advisor => {
+        markdown += `- **${advisor.name}**: ${advisor.description || 'No description'}\n`;
+      });
+      markdown += `\n`;
+    }
+    
+    // Format messages with proper attribution
     messages.forEach((msg) => {
       // Skip help command outputs
-      if (msg.content.includes('SPACE Terminal v0.1 - Command Reference')) {
+      if (msg.content && msg.content.includes('SPACE Terminal v0.1 - Command Reference')) {
         return;
       }
       
       switch(msg.type) {
         case 'user':
-          markdown += `**User:** \`${msg.content}\`\n\n`;
+          markdown += `\n### User\n${msg.content}\n`;
           break;
         case 'assistant':
-          markdown += `**Claude:** ${msg.content}\n\n`;
+          markdown += `\n### Assistant\n${msg.content}\n`;
+          break;
+        case 'advisor_response':
+          // Handle advisor responses with proper attribution
+          if (msg.advisorData) {
+            markdown += `\n### ${msg.advisorData.name}\n${msg.advisorData.content}\n`;
+          } else if (msg.content) {
+            markdown += `\n### Advisor\n${msg.content}\n`;
+          }
           break;
         case 'system':
           // Only include non-help system messages
-          if (!msg.content.includes('/help')) {
-            markdown += `> ${msg.content}\n\n`;
+          if (!msg.content || !msg.content.includes('/help')) {
+            markdown += `\n> ${msg.content || ''}\n`;
           }
           break;
       }
@@ -3971,12 +4175,6 @@ ${selectedText}
     // Add to advisors list
     setAdvisors(prev => [...prev, newPerspective]);
 
-    // Add system message
-    setMessages(prev => [...prev, {
-      type: 'system',
-      content: `Added perspective: ${perspective.name}`
-    }]);
-
     // Trigger immediate response if there are messages
     const lastUserMessage = messages.filter(m => m.type === 'user').slice(-1)[0];
     if (lastUserMessage) {
@@ -4001,29 +4199,73 @@ ${selectedText}
 
 
   const exportAllSessions = () => {
-    const sessions = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key.startsWith('space_session_')) {
-        const session = JSON.parse(localStorage.getItem(key));
-        sessions.push(session);
+    try {
+      const sessions = [];
+      
+      // Iterate through localStorage to find all session keys
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key?.startsWith('space_session_')) {
+          try {
+            const sessionData = localStorage.getItem(key);
+            const session = JSON.parse(sessionData);
+            
+            // Validate session has required fields
+            if (session && session.messages && Array.isArray(session.messages)) {
+              sessions.push(session);
+            } else {
+              console.warn(`Skipping invalid session: ${key}`);
+            }
+          } catch (parseError) {
+            console.error(`Failed to parse session ${key}:`, parseError);
+          }
+        }
       }
+      
+      // Check if we found any valid sessions
+      if (sessions.length === 0) {
+        throw new Error('No valid sessions found to export');
+      }
+      
+      // Create export data
+      const exportData = JSON.stringify(sessions, null, 2);
+      
+      // Validate export data
+      if (!exportData || exportData.length === 0) {
+        throw new Error('Generated export is empty');
+      }
+      
+      const blob = new Blob([exportData], { type: 'application/json' });
+      
+      // Validate blob creation
+      if (blob.size === 0) {
+        throw new Error('Export file is empty');
+      }
+      
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      
+      // Add timestamp to filename
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
+      a.download = `space-all-sessions-${timestamp}.json`;
+      
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      setMessages(prev => [...prev, {
+        type: 'system',
+        content: `All sessions exported successfully (${sessions.length} sessions, ${blob.size} bytes)`
+      }]);
+    } catch (error) {
+      console.error('Export all failed:', error);
+      setMessages(prev => [...prev, {
+        type: 'system',
+        content: `Export failed: ${error.message}`
+      }]);
     }
-
-    const blob = new Blob([JSON.stringify(sessions, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'all-sessions.json';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-
-    setMessages(prev => [...prev, {
-      type: 'system',
-      content: 'All sessions exported successfully.'
-    }]);
   };
 
   return (
