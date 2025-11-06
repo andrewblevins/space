@@ -69,8 +69,11 @@ const Terminal = ({ theme, toggleTheme }) => {
   const { user, session } = authData;
   const storage = useConversationStorage();
   
-  // Database storage state
-  const [currentConversationId, setCurrentConversationId] = useState(null);
+  // Database storage state - initialize from persisted value
+  const [currentConversationId, setCurrentConversationId] = useState(() => {
+    const persisted = loadPersistedCurrentSession();
+    return persisted.conversationId || null;
+  });
   const [useDatabaseStorage, setUseDatabaseStorage] = useState(() => {
     const useDb = useAuthSystem && !!user;
     console.log('🗃️ Database storage decision:', { useAuthSystem, user: !!user, useDatabaseStorage: useDb });
@@ -109,6 +112,39 @@ const Terminal = ({ theme, toggleTheme }) => {
     
     const ids = keys.map(key => parseInt(key.replace('space_session_', '')));
     return Math.max(...ids) + 1;
+  };
+
+  // Persist current session/conversation ID so it survives page refreshes
+  const persistCurrentSession = (sessionId, conversationId) => {
+    try {
+      if (conversationId) {
+        // Database storage: persist conversation ID
+        localStorage.setItem('space_current_conversation_id', conversationId);
+        localStorage.setItem('space_current_session_id', conversationId); // Use conversation ID as session ID
+      } else if (sessionId) {
+        // LocalStorage storage: persist session ID
+        localStorage.setItem('space_current_session_id', sessionId.toString());
+        localStorage.removeItem('space_current_conversation_id'); // Clear if switching to localStorage mode
+      }
+    } catch (error) {
+      console.error('Failed to persist current session:', error);
+    }
+  };
+
+  // Load persisted current session/conversation ID
+  const loadPersistedCurrentSession = () => {
+    try {
+      const conversationId = localStorage.getItem('space_current_conversation_id');
+      const sessionId = localStorage.getItem('space_current_session_id');
+      
+      return {
+        conversationId: conversationId || null,
+        sessionId: sessionId || null
+      };
+    } catch (error) {
+      console.error('Failed to load persisted current session:', error);
+      return { conversationId: null, sessionId: null };
+    }
   };
 
   const handleAdvisorImport = (importedAdvisors, mode) => {
@@ -535,7 +571,20 @@ const Terminal = ({ theme, toggleTheme }) => {
   const [metaphors, setMetaphors] = useState([]);
   // DEPRECATED: Questions feature temporarily disabled - can be reactivated by uncommenting
   // const [questions, setQuestions] = useState([]);
-  const [currentSessionId, setCurrentSessionId] = useState(getNextSessionId());
+  // Initialize currentSessionId from persisted value, or generate new one
+  const [currentSessionId, setCurrentSessionId] = useState(() => {
+    const persisted = loadPersistedCurrentSession();
+    if (persisted.sessionId) {
+      // Check if it's a UUID (database conversation) or integer (localStorage session)
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(persisted.sessionId);
+      if (isUUID) {
+        return persisted.sessionId; // Return UUID as-is
+      } else {
+        return parseInt(persisted.sessionId) || getNextSessionId();
+      }
+    }
+    return getNextSessionId();
+  });
   const [advisors, setAdvisors] = useState(() => {
     const saved = localStorage.getItem('space_advisors');
     const savedAdvisors = saved ? JSON.parse(saved) : [];
@@ -758,24 +807,58 @@ const Terminal = ({ theme, toggleTheme }) => {
     }
   }, [modalController, hasCheckedKeys, useAuthSystem]);
 
-  // Auto-load most recent session after initialization
+  // Auto-load current session after initialization (check persisted session first)
   useEffect(() => {
     if (!isInitializing && hasCheckedKeys && apiKeysSet && !showWelcome) {
-      console.log('🔄 Auto-loading most recent session...');
+      const persisted = loadPersistedCurrentSession();
       
-      // Get all sessions
-      const allSessions = loadSessions();
-      
-      if (allSessions.length > 0) {
-        // Load the most recent session (first in the sorted array)
-        const mostRecentSession = allSessions[0];
-        console.log('📂 Auto-loading session:', mostRecentSession.id, mostRecentSession.title);
-        handleLoadSession(mostRecentSession.id);
+      // Check if we have a persisted current session/conversation
+      if (persisted.conversationId || persisted.sessionId) {
+        console.log('🔄 Restoring persisted session:', { conversationId: persisted.conversationId, sessionId: persisted.sessionId });
+        
+        // Check if it's a UUID (database conversation) or integer (localStorage session)
+        const isUUID = persisted.conversationId || /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(persisted.sessionId);
+        
+        if (isUUID && useDatabaseStorage) {
+          // Load from database
+          const sessionIdToLoad = persisted.conversationId || persisted.sessionId;
+          handleLoadSession(sessionIdToLoad);
+        } else if (persisted.sessionId && !isUUID) {
+          // Load from localStorage
+          handleLoadSession(persisted.sessionId);
+        } else {
+          // Fall back to most recent session
+          console.log('🔄 No valid persisted session, loading most recent...');
+          const allSessions = loadSessions();
+          if (allSessions.length > 0) {
+            const mostRecentSession = allSessions[0];
+            console.log('📂 Auto-loading most recent session:', mostRecentSession.id, mostRecentSession.title);
+            handleLoadSession(mostRecentSession.id);
+          } else {
+            console.log('📭 No sessions found to auto-load');
+          }
+        }
       } else {
-        console.log('📭 No sessions found to auto-load');
+        // No persisted session - try to load most recent
+        console.log('🔄 No persisted session, loading most recent...');
+        const allSessions = loadSessions();
+        if (allSessions.length > 0) {
+          const mostRecentSession = allSessions[0];
+          console.log('📂 Auto-loading most recent session:', mostRecentSession.id, mostRecentSession.title);
+          handleLoadSession(mostRecentSession.id);
+        } else {
+          console.log('📭 No sessions found to auto-load');
+        }
       }
     }
-  }, [isInitializing, hasCheckedKeys, apiKeysSet, showWelcome]);
+  }, [isInitializing, hasCheckedKeys, apiKeysSet, showWelcome, useDatabaseStorage]);
+
+  // Persist current session/conversation ID whenever it changes
+  useEffect(() => {
+    if (currentConversationId || currentSessionId) {
+      persistCurrentSession(currentSessionId, currentConversationId);
+    }
+  }, [currentSessionId, currentConversationId]);
 
   // Storage event listener to sync state across tabs and mobile/desktop views
   useEffect(() => {
@@ -1368,6 +1451,7 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
 
         setCurrentConversationId(conversation.id);
         setCurrentSessionId(conversation.id); // Use conversation ID as session ID
+        persistCurrentSession(conversation.id, conversation.id); // Persist so it survives refresh
         console.log('🗃️ Created new database conversation:', conversation.id);
       } catch (error) {
         console.error('Failed to create database conversation, falling back to localStorage:', error);
@@ -1375,12 +1459,14 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
         const newSessionId = getNextSessionId();
         setCurrentSessionId(newSessionId);
         setCurrentConversationId(null);
+        persistCurrentSession(newSessionId, null); // Persist localStorage session ID
       }
     } else {
       // Legacy localStorage session
       const newSessionId = getNextSessionId();
       setCurrentSessionId(newSessionId);
       setCurrentConversationId(null);
+      persistCurrentSession(newSessionId, null); // Persist localStorage session ID
     }
 
     setMessages([]);
@@ -1409,6 +1495,7 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
         const conversation = await storage.loadConversation(sessionId);
         setCurrentConversationId(conversation.id);
         setCurrentSessionId(conversation.id);
+        persistCurrentSession(conversation.id, conversation.id); // Persist so it survives refresh
         
         // Process messages to restore advisor_json format if needed and ensure timestamps
         const processedMessages = (conversation.messages || []).map((msg, idx) => {
@@ -1467,6 +1554,7 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
         const session = JSON.parse(sessionData);
         setCurrentSessionId(session.id);
         setCurrentConversationId(null);
+        persistCurrentSession(session.id, null); // Persist localStorage session ID
         
         // Process messages to restore advisor_json format if needed and ensure timestamps
         const processedMessages = session.messages.map((msg, idx) => {
@@ -3889,61 +3977,9 @@ Example: {"position": "Option 2 text here", "confidence": 75, "reasoning": "This
 
   // Auto-scroll is now handled by browser's natural scroll behavior
 
-  // On mount: Load most recent session or show onboarding
-  useEffect(() => {
-    // Only run once on mount
-    let mounted = true;
-
-    const initializeApp = async () => {
-      if (!apiKeysSet) return; // Wait for API keys to be set
-
-      // Check for most recent session
-      const sessionKeys = Object.keys(localStorage).filter(key => key.startsWith('space_session_'));
-
-      if (sessionKeys.length > 0) {
-        // Find most recent session
-        const sessions = sessionKeys.map(key => {
-          const sessionData = localStorage.getItem(key);
-          try {
-            const data = JSON.parse(sessionData);
-            const sessionId = parseInt(key.replace('space_session_', ''));
-            return { id: sessionId, data, timestamp: data.timestamp || 0 };
-          } catch {
-            return null;
-          }
-        }).filter(Boolean);
-
-        if (sessions.length > 0) {
-          // Sort by timestamp (most recent first) or by ID if no timestamp
-          sessions.sort((a, b) => (b.timestamp || b.id) - (a.timestamp || a.id));
-          const mostRecent = sessions[0];
-
-          console.log('📂 Found most recent session:', mostRecent.id);
-
-          // Only auto-load if we're starting fresh (no messages except system messages)
-          const realMessages = messages.filter(m => m.type === 'user' || m.type === 'assistant');
-          if (realMessages.length === 0 && mounted) {
-            // Load the most recent session
-            await handleLoadSession(mostRecent.id.toString());
-            return;
-          }
-        }
-      }
-
-      // No sessions found or couldn't load - show onboarding
-      const realMessages = messages.filter(m => m.type === 'user' || m.type === 'assistant');
-      if (realMessages.length === 0 && mounted && !showJournalOnboarding) {
-        console.log('📝 No previous sessions found, showing journal onboarding');
-        setShowJournalOnboarding(true);
-      }
-    };
-
-    initializeApp();
-
-    return () => {
-      mounted = false;
-    };
-  }, [apiKeysSet]); // Only run when API keys are set
+  // DEPRECATED: This effect is now handled by the auto-load effect above (lines 810-854)
+  // The auto-load effect handles both persisted session restoration and fallback to most recent session
+  // This duplicate initialization effect has been removed to prevent conflicts
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -4068,49 +4104,58 @@ ${selectedText}
     const messageId = params.get('message');
     
     if (sessionId && messageId) {
-      const sessionKey = `space_session_${sessionId}`;
-      const sessionData = localStorage.getItem(sessionKey);
+      // Check if it's a UUID (database conversation) or integer (localStorage session)
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(sessionId);
       
-      if (sessionData) {
-        const session = JSON.parse(sessionData);
+      if (isUUID && useDatabaseStorage) {
+        // Load from database using handleLoadSession
+        handleLoadSession(sessionId);
+      } else {
+        // Load from localStorage
+        const sessionKey = `space_session_${sessionId}`;
+        const sessionData = localStorage.getItem(sessionKey);
         
-        // Process messages to restore advisor_json format if needed
-        const processedMessages = session.messages.map(msg => {
-          // If it's an assistant message that looks like JSON advisor format, restore it
-          if (msg.type === 'assistant' && msg.content) {
-            let jsonContent = msg.content.trim();
-            
-            // Handle markdown code block format
-            if (jsonContent.startsWith('```json') && jsonContent.endsWith('```')) {
-              jsonContent = jsonContent.slice(7, -3).trim();
-            }
-            
-            // Check if it's valid advisor JSON
-            if (jsonContent.startsWith('{') && jsonContent.endsWith('}')) {
-              try {
-                const parsed = JSON.parse(jsonContent);
-                if (parsed.type === 'advisor_response' && parsed.advisors && Array.isArray(parsed.advisors)) {
-                  // Restore as advisor_json type with parsedAdvisors
-                  return {
-                    ...msg,
-                    type: 'advisor_json',
-                    content: jsonContent,
-                    parsedAdvisors: parsed
-                  };
+        if (sessionData) {
+          const session = JSON.parse(sessionData);
+          
+          // Process messages to restore advisor_json format if needed
+          const processedMessages = session.messages.map(msg => {
+            // If it's an assistant message that looks like JSON advisor format, restore it
+            if (msg.type === 'assistant' && msg.content) {
+              let jsonContent = msg.content.trim();
+              
+              // Handle markdown code block format
+              if (jsonContent.startsWith('```json') && jsonContent.endsWith('```')) {
+                jsonContent = jsonContent.slice(7, -3).trim();
+              }
+              
+              // Check if it's valid advisor JSON
+              if (jsonContent.startsWith('{') && jsonContent.endsWith('}')) {
+                try {
+                  const parsed = JSON.parse(jsonContent);
+                  if (parsed.type === 'advisor_response' && parsed.advisors && Array.isArray(parsed.advisors)) {
+                    // Restore as advisor_json type with parsedAdvisors
+                    return {
+                      ...msg,
+                      type: 'advisor_json',
+                      content: jsonContent,
+                      parsedAdvisors: parsed
+                    };
+                  }
+                } catch (e) {
+                  // Not valid JSON, keep as-is
                 }
-              } catch (e) {
-                // Not valid JSON, keep as-is
               }
             }
-          }
+            
+            return msg;
+          });
           
-          return msg;
-        });
-        
-        setMessages(processedMessages);
-        setCurrentSessionId(parseInt(sessionId));
-        
-        // Scroll to the specified message after render
+          setMessages(processedMessages);
+          setCurrentSessionId(parseInt(sessionId));
+          persistCurrentSession(parseInt(sessionId), null); // Persist localStorage session ID
+          
+          // Scroll to the specified message after render
         setTimeout(() => {
           const element = document.getElementById(`msg-${messageId}`);
           if (element) {
