@@ -80,6 +80,7 @@ const MessageRenderer = memo(({
                   allAdvisors={advisors}
                   onAssertionsClick={(advisorData) => onAssertionsClick(advisorData, messages, getSystemPrompt)}
                   compact={true}
+                  totalAdvisorCount={advisorCount}
                 />
               ))}
             </div>

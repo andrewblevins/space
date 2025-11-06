@@ -8,8 +8,9 @@ import ReactMarkdown from 'react-markdown';
  * @param {Array} props.allAdvisors - Array of all advisor configurations for color mapping
  * @param {Function} props.onAssertionsClick - Callback when assertions button is clicked
  * @param {boolean} props.compact - Use compact styling for grid layout (default: false)
+ * @param {number} props.totalAdvisorCount - Total number of advisors in current response (default: undefined)
  */
-export const AdvisorResponseCard = memo(({ advisor, allAdvisors = [], onAssertionsClick, compact = false }) => {
+export const AdvisorResponseCard = memo(({ advisor, allAdvisors = [], onAssertionsClick, compact = false, totalAdvisorCount }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   // Find advisor configuration for color
@@ -75,7 +76,11 @@ export const AdvisorResponseCard = memo(({ advisor, allAdvisors = [], onAssertio
 
   // Truncation logic for collapsible cards
   const TRUNCATE_THRESHOLD = 250; // characters
-  const shouldShowToggle = advisor.response && advisor.response.length > TRUNCATE_THRESHOLD;
+  // Only show toggle if response is long enough AND there are multiple advisors
+  // When there's a single advisor, always show full content (no truncation)
+  const shouldShowToggle = totalAdvisorCount !== 1 && 
+                          advisor.response && 
+                          advisor.response.length > TRUNCATE_THRESHOLD;
 
   // Determine display content based on expand state
   const getDisplayContent = () => {

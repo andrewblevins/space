@@ -83,6 +83,7 @@ const MobileLayout = ({
                             });
                             setShowAssertionsModal(true);
                           }}
+                          totalAdvisorCount={msg.parsedAdvisors.advisors.length}
                         />
                       ))}
                       
@@ -128,6 +129,7 @@ const MobileLayout = ({
                                 });
                                 setShowAssertionsModal(true);
                               }}
+                              totalAdvisorCount={Object.keys(msg.advisorResponses).length}
                             />
                             {advisorData.error && (
                               <div className="mb-2 text-sm text-red-600 dark:text-red-400 italic">

@@ -82,6 +82,7 @@ export const ParallelAdvisorGrid = memo(({
                 allAdvisors={advisors}
                 onAssertionsClick={(advisorData) => onAssertionsClick(advisorData, messages, getSystemPrompt)}
                 compact={true}
+                totalAdvisorCount={advisorCount}
               />
 
               {/* Error indicator if present */}
