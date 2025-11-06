@@ -49,15 +49,19 @@ const AdvisorSuggestionsModal = ({ suggestions, existingAdvisors, onAddSelected,
   };
 
   const handleAddSelected = () => {
-    // Combine existing advisors and new suggestions based on selection
+    // Combine existing advisors, new suggestions, and custom perspectives based on selection
     const selectedExisting = (existingAdvisors || []).filter(a => selectedIds.has(a.name));
     const selectedNew = suggestions.filter(s => selectedIds.has(s.id));
-    onAddSelected([...selectedExisting, ...selectedNew]);
+    const selectedCustom = customPerspectives.filter(cp => {
+      const advisorId = cp.id || cp.name.toLowerCase().replace(/\s+/g, '-');
+      return selectedIds.has(advisorId);
+    });
+    onAddSelected([...selectedExisting, ...selectedNew, ...selectedCustom]);
   };
 
   const handleAddAll = () => {
-    // Add all existing advisors and all new suggestions
-    onAddSelected([...(existingAdvisors || []), ...suggestions]);
+    // Add all existing advisors, all new suggestions, and all custom perspectives
+    onAddSelected([...(existingAdvisors || []), ...suggestions, ...customPerspectives]);
   };
 
   return (
