@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useState } from "react";
 import ReactMarkdown from 'react-markdown';
 
 /**
@@ -10,6 +10,8 @@ import ReactMarkdown from 'react-markdown';
  * @param {boolean} props.compact - Use compact styling for grid layout (default: false)
  */
 export const AdvisorResponseCard = memo(({ advisor, allAdvisors = [], onAssertionsClick, compact = false }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+
   // Find advisor configuration for color
   const advisorConfig = allAdvisors.find(a => 
     a.name.toLowerCase() === advisor.name.toLowerCase()
@@ -71,6 +73,35 @@ export const AdvisorResponseCard = memo(({ advisor, allAdvisors = [], onAssertio
     );
   };
 
+  // Truncation logic for collapsible cards
+  const TRUNCATE_THRESHOLD = 250; // characters
+  const shouldShowToggle = advisor.response && advisor.response.length > TRUNCATE_THRESHOLD;
+
+  // Determine display content based on expand state
+  const getDisplayContent = () => {
+    if (!shouldShowToggle) {
+      return advisor.response; // Short responses show in full
+    }
+
+    if (isExpanded) {
+      return advisor.response; // Expanded state
+    }
+
+    // Collapsed state - truncate to ~3 lines
+    // Find first 2-3 sentence boundaries within 250 chars
+    const sentences = advisor.response.match(/[^.!?]+[.!?]+/g) || [];
+    let preview = '';
+    for (const sentence of sentences) {
+      if ((preview + sentence).length > TRUNCATE_THRESHOLD) break;
+      preview += sentence;
+    }
+
+    // Fallback to character limit if no sentence boundaries found
+    return preview || advisor.response.slice(0, TRUNCATE_THRESHOLD) + '...';
+  };
+
+  const displayContent = getDisplayContent();
+
   const handleAssertionsClick = () => {
     if (onAssertionsClick) {
       onAssertionsClick(advisor);
@@ -123,8 +154,27 @@ export const AdvisorResponseCard = memo(({ advisor, allAdvisors = [], onAssertio
 
       {/* Response content */}
       <div className="text-gray-800 dark:text-gray-200">
-        <StreamingMarkdownRenderer content={advisor.response} />
+        <StreamingMarkdownRenderer content={displayContent} />
       </div>
+
+      {/* Show more/less button */}
+      {shouldShowToggle && (
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="mt-3 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 flex items-center transition-colors group"
+          aria-label={isExpanded ? `Collapse response from ${advisor.name}` : `Expand response from ${advisor.name}`}
+        >
+          <span>{isExpanded ? 'Show less' : 'Show more'}</span>
+          <svg
+            className={`w-4 h-4 ml-1 transform transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+      )}
     </div>
   );
 });

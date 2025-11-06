@@ -45,7 +45,7 @@ export const ParallelAdvisorGrid = memo(({
       )}
 
       {/* Responsive grid layout */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 items-start">
         {sortedAdvisorEntries.map(([advisorId, advisorData]) => {
           // Create advisor object compatible with AdvisorResponseCard
           const advisorForCard = {
