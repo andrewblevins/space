@@ -11,18 +11,29 @@ const JournalOnboarding = ({
   const [text, setText] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // Load current answer when question changes
+  // Load current answer when question changes OR when entering questions phase
   React.useEffect(() => {
+    console.log('🔄 JournalOnboarding useEffect triggered:', {
+      phase: contextFlow?.phase,
+      questionIndex: contextFlow?.questionIndex,
+      currentAnswer: contextFlow?.currentAnswer,
+      isGenerating
+    });
+
     if (contextFlow && contextFlow.phase === 'questions') {
       setText(contextFlow.currentAnswer || '');
+      // Reset generating state when question loads
+      console.log('✅ Resetting isGenerating to false');
+      setIsGenerating(false);
     }
-  }, [contextFlow?.questionIndex]);
+  }, [contextFlow?.phase, contextFlow?.questionIndex]);
 
   const wordCount = text.trim().split(/\s+/).filter(w => w.length > 0).length;
   const canGenerate = wordCount >= 25;
 
   const handleGenerate = async () => {
     if (!canGenerate) return;
+    console.log('🚀 handleGenerate: Setting isGenerating to true');
     setIsGenerating(true);
     try {
       await onSubmit(text);
@@ -51,8 +62,10 @@ const JournalOnboarding = ({
   // Handle context question flow
   const handleContinue = () => {
     if (onAnswerQuestion) {
-      // Check if this is the last question (will trigger generation)
-      if (contextFlow && contextFlow.questionIndex === 2) {
+      // Only set generating state on the LAST question (index 2 = question 3)
+      // When clicking Continue on question 3, we're generating perspectives
+      const isLastQuestion = contextFlow && contextFlow.questionIndex === 2;
+      if (isLastQuestion) {
         setIsGenerating(true);
       }
       onAnswerQuestion(text, false);
@@ -91,6 +104,13 @@ const JournalOnboarding = ({
     const canGoBack = contextFlow.questionIndex > 0;
     const canGoForward = contextFlow.questionIndex < 2 && contextFlow.hasNextQuestion;
     const isLastQuestion = contextFlow.questionIndex === 2;
+
+    console.log('📋 Rendering question phase:', {
+      questionIndex: contextFlow.questionIndex,
+      isLastQuestion,
+      isGenerating,
+      buttonText: isGenerating ? 'Generating...' : (isLastQuestion ? 'Generate Perspectives' : 'Continue')
+    });
 
     return (
       <div className="flex-1 flex items-center justify-center p-8">
