@@ -49,6 +49,21 @@ const MessageRenderer = memo(({
         );
 
       case 'advisor_json':
+        // Dynamically determine grid columns based on number of advisors
+        const advisorCount = msg.parsedAdvisors.advisors.length;
+        const getGridClasses = () => {
+          if (advisorCount === 1) {
+            // Single advisor: full width on all screen sizes
+            return "grid grid-cols-1 gap-4 items-start";
+          } else if (advisorCount === 2) {
+            // Two advisors: stack on mobile, side-by-side on medium+
+            return "grid grid-cols-1 md:grid-cols-2 gap-4 items-start";
+          } else {
+            // Three or more advisors: stack on mobile, 2 cols on medium, 3 cols on large
+            return "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start";
+          }
+        };
+
         return (
           <div>
             {msg.thinking && <ThinkingBlock content={msg.thinking} />}
@@ -57,14 +72,17 @@ const MessageRenderer = memo(({
                 ⚡ Streaming advisor responses...
               </div>
             )}
-            {msg.parsedAdvisors.advisors.map((advisor, advisorIdx) => (
-              <AdvisorResponseCard
-                key={`${advisor.id || advisor.name}-${advisorIdx}`}
-                advisor={advisor}
-                allAdvisors={advisors}
-                onAssertionsClick={(advisorData) => onAssertionsClick(advisorData, messages, getSystemPrompt)}
-              />
-            ))}
+            <div className={getGridClasses()}>
+              {msg.parsedAdvisors.advisors.map((advisor, advisorIdx) => (
+                <AdvisorResponseCard
+                  key={`${advisor.id || advisor.name}-${advisorIdx}`}
+                  advisor={advisor}
+                  allAdvisors={advisors}
+                  onAssertionsClick={(advisorData) => onAssertionsClick(advisorData, messages, getSystemPrompt)}
+                  compact={true}
+                />
+              ))}
+            </div>
             {/* Show synthesis if it exists (for council mode or other cases) */}
             {msg.parsedAdvisors.synthesis && (
               <div className="mt-4 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">

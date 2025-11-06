@@ -35,6 +35,21 @@ export const ParallelAdvisorGrid = memo(({
     return indexA - indexB;
   });
 
+  // Dynamically determine grid columns based on number of advisors
+  const advisorCount = sortedAdvisorEntries.length;
+  const getGridClasses = () => {
+    if (advisorCount === 1) {
+      // Single advisor: full width on all screen sizes
+      return "grid grid-cols-1 gap-4 items-start";
+    } else if (advisorCount === 2) {
+      // Two advisors: stack on mobile, side-by-side on medium+
+      return "grid grid-cols-1 md:grid-cols-2 gap-4 items-start";
+    } else {
+      // Three or more advisors: stack on mobile, 2 cols on medium, 3 cols on large
+      return "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start";
+    }
+  };
+
   return (
     <div>
       {/* Global streaming indicator - only show when not all completed */}
@@ -44,8 +59,8 @@ export const ParallelAdvisorGrid = memo(({
         </div>
       )}
 
-      {/* Responsive grid layout */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 items-start">
+      {/* Dynamic responsive grid layout */}
+      <div className={getGridClasses()}>
         {sortedAdvisorEntries.map(([advisorId, advisorData]) => {
           // Create advisor object compatible with AdvisorResponseCard
           const advisorForCard = {
