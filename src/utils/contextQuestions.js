@@ -36,16 +36,19 @@ export async function generateContextQuestion(journalEntry, previousAnswers = []
     ? `\n\nPrevious answers:\n${previousAnswers.join('\n\n')}`
     : '';
 
-  const promptContent = `You are helping gather context for a conversation. The user has written an initial entry about a situation they want to explore. Ask ONE specific, factual follow-up question that will help understand their situation better.
+  const promptContent = `You are helping someone prepare for a multi-perspective conversation about something they're working through. Your job is to ask ONE follow-up question that will help generate the most relevant and useful perspectives for them.
 
-Ask about concrete details like:
-- Specific people involved
-- What actually happened or was said
-- Timeline or sequence of events
-- Constraints or resources
-- What they've already tried
+The questions should progressively uncover:
+${previousAnswers.length === 0 ? `- First question: What specific aspect or dimension of this situation feels most alive or pressing for them right now? What angle are they approaching this from?` : ''}
+${previousAnswers.length === 1 ? `- Second question: How do they currently see or understand this situation? What's their working theory or interpretation?` : ''}
+${previousAnswers.length === 2 ? `- Third question: What kind of input would actually be helpful? What are they hoping to get clearer on or work through?` : ''}
 
-Keep the question short and conversational. Do not make suggestions or offer advice.
+Guidelines:
+- Build naturally on what they've already shared
+- Ask about their subjective experience, not just facts
+- Help them articulate what kind of conversation they need
+- Keep it conversational and focused
+- One clear question only
 
 Initial entry: ${journalEntry}${previousContext}
 
