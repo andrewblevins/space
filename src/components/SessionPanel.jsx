@@ -8,13 +8,15 @@ const SessionPanel = ({
   onLoadSession,
   onLoadPrevious,
   onResetAllSessions,
-  onDeleteSession
+  onDeleteSession,
+  useDatabaseStorage = false,
+  storage = null
 }) => {
   const [sessions, setSessions] = useState([]);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
 
   // Load sessions from localStorage
-  const loadSessions = () => {
+  const loadLocalStorageSessions = () => {
     const sessionList = [];
     const seenIds = new Set();
     
@@ -76,9 +78,67 @@ const SessionPanel = ({
         }
       });
       
-      setSessions(loadSessions());
+      loadAllSessions();
     }
-  }, [isOpen, currentSessionId]);
+  }, [isOpen, currentSessionId, useDatabaseStorage, storage]);
+
+  // Load all sessions (localStorage + database if enabled)
+  const loadAllSessions = async () => {
+    const localStorageSessions = loadLocalStorageSessions();
+    let allSessions = [...localStorageSessions];
+    
+    // If using database storage, fetch and merge database conversations
+    if (useDatabaseStorage && storage) {
+      try {
+        const conversations = await storage.listConversations();
+        if (conversations && conversations.length > 0) {
+          // Format database conversations to match session structure
+          const dbSessions = conversations.map(conv => {
+            // We need to load the conversation to get message count
+            // But that's expensive, so we'll use a placeholder for now
+            // The actual message count will be loaded when the conversation is opened
+            return {
+              id: conv.id,
+              title: conv.title || `Session ${conv.id.substring(0, 8)}`,
+              timestamp: conv.updated_at || conv.created_at,
+              messageCount: 0, // Will be updated when loaded
+              isDatabase: true,
+              conversation: conv
+            };
+          });
+          
+          // Merge and sort by timestamp
+          allSessions = [...allSessions, ...dbSessions].sort((a, b) => {
+            const timeA = new Date(a.timestamp);
+            const timeB = new Date(b.timestamp);
+            return timeB - timeA; // Most recent first
+          });
+          
+          // Update message counts for database conversations
+          // Load first few to get accurate counts without blocking UI
+          const updateMessageCounts = async () => {
+            for (const session of allSessions.filter(s => s.isDatabase)) {
+              try {
+                const conversation = await storage.loadConversation(session.id);
+                session.messageCount = (conversation.messages || []).filter(m => m.type !== 'system').length;
+              } catch (error) {
+                console.warn(`Failed to load message count for conversation ${session.id}:`, error);
+              }
+            }
+            setSessions([...allSessions]);
+          };
+          
+          // Update counts in background
+          updateMessageCounts();
+        }
+      } catch (error) {
+        console.error('Failed to load database conversations:', error);
+        // Continue with just localStorage sessions
+      }
+    }
+    
+    setSessions(allSessions);
+  };
 
   const formatTimestamp = (timestamp) => {
     const date = new Date(timestamp);
@@ -98,17 +158,17 @@ const SessionPanel = ({
 
   const handleLoadSession = (sessionId) => {
     onLoadSession(sessionId);
-    setSessions(loadSessions()); // Refresh to update current indicator
+    loadAllSessions(); // Refresh to update current indicator
   };
 
   const handleDeleteSession = (sessionId) => {
     onDeleteSession(sessionId);
-    setSessions(loadSessions()); // Refresh list
+    loadAllSessions(); // Refresh list
   };
 
   const handleNewSession = () => {
     onNewSession();
-    setSessions(loadSessions()); // Refresh to show new session
+    loadAllSessions(); // Refresh to show new session
   };
 
   const handleResetAll = () => {
@@ -166,18 +226,24 @@ const SessionPanel = ({
             <p className="text-gray-400 text-sm">No sessions found</p>
           ) : (
             <div className="space-y-3">
-              {sessions.map((session) => (
+              {sessions.map((session) => {
+                // Handle session ID comparison for both UUIDs (database) and integers (localStorage)
+                const sessionIdStr = String(session.id);
+                const currentSessionIdStr = currentSessionId ? String(currentSessionId) : null;
+                const isCurrentSession = sessionIdStr === currentSessionIdStr;
+                
+                return (
                 <div 
                   key={session.id}
                   className={`p-3 rounded border ${
-                    session.id === currentSessionId 
+                    isCurrentSession
                       ? 'border-green-400 bg-green-400 bg-opacity-10' 
                       : 'border-gray-600 bg-gray-800'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center">
-                      {session.id === currentSessionId ? (
+                      {isCurrentSession ? (
                         <div className="w-2 h-2 bg-green-400 rounded-full mr-2" title="Current Session"></div>
                       ) : (
                         <div className="w-2 h-2 bg-gray-600 rounded-full mr-2"></div>
@@ -186,7 +252,7 @@ const SessionPanel = ({
                         {session.title || `Session ${session.id}`}
                       </span>
                     </div>
-                    {session.id === currentSessionId && (
+                    {isCurrentSession && (
                       <span className="text-xs text-green-400 bg-green-400 bg-opacity-20 px-2 py-1 rounded">
                         CURRENT
                       </span>
@@ -197,7 +263,7 @@ const SessionPanel = ({
                     {session.messageCount} messages • {formatTimestamp(session.timestamp)}
                   </p>
 
-                  {session.id !== currentSessionId && (
+                  {!isCurrentSession && (
                     <div className="flex space-x-2">
                       <button
                         onClick={() => handleLoadSession(session.id)}
@@ -217,7 +283,8 @@ const SessionPanel = ({
                     </div>
                   )}
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

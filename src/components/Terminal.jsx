@@ -105,6 +105,25 @@ const Terminal = ({ theme, toggleTheme }) => {
   //   }
   // }, [useAuthSystem, user]);
 
+  // Sync useDatabaseStorage when user state changes
+  useEffect(() => {
+    const shouldUseDatabase = useAuthSystem && !!user;
+    if (useDatabaseStorage !== shouldUseDatabase) {
+      console.log('🗃️ Updating database storage decision:', { 
+        useAuthSystem, 
+        user: !!user, 
+        previous: useDatabaseStorage, 
+        new: shouldUseDatabase 
+      });
+      setUseDatabaseStorage(shouldUseDatabase);
+      
+      // If switching from localStorage to database storage, try to load most recent database conversation
+      if (shouldUseDatabase && !useDatabaseStorage) {
+        console.log('🔄 Switching to database storage, will load most recent conversation');
+        // The auto-load effect will handle loading the conversation
+      }
+    }
+  }, [user, useAuthSystem, useDatabaseStorage]);
 
   const getNextSessionId = () => {
     const keys = Object.keys(localStorage).filter(key => key.startsWith('space_session_'));
@@ -809,6 +828,11 @@ const Terminal = ({ theme, toggleTheme }) => {
 
   // Auto-load current session after initialization (check persisted session first)
   useEffect(() => {
+    // Wait for auth to complete if using auth system
+    if (useAuthSystem && authData?.loading) {
+      return;
+    }
+    
     if (!isInitializing && hasCheckedKeys && apiKeysSet && !showWelcome) {
       const persisted = loadPersistedCurrentSession();
       
@@ -824,11 +848,100 @@ const Terminal = ({ theme, toggleTheme }) => {
           const sessionIdToLoad = persisted.conversationId || persisted.sessionId;
           handleLoadSession(sessionIdToLoad);
         } else if (persisted.sessionId && !isUUID) {
-          // Load from localStorage
-          handleLoadSession(persisted.sessionId);
+          // If we have a localStorage session ID but now using database storage, try loading most recent database conversation
+          if (useDatabaseStorage) {
+            console.log('🔄 Persisted localStorage session but using database storage, loading most recent database conversation...');
+            storage.listConversations().then(conversations => {
+              if (conversations && conversations.length > 0) {
+                const mostRecent = conversations[0]; // Already sorted by updated_at desc
+                console.log('📂 Auto-loading most recent database conversation:', mostRecent.id, mostRecent.title);
+                handleLoadSession(mostRecent.id);
+              } else {
+                console.log('📭 No database conversations found to auto-load');
+              }
+            }).catch(error => {
+              console.error('Failed to load database conversations:', error);
+            });
+          } else {
+            // Load from localStorage
+            handleLoadSession(persisted.sessionId);
+          }
         } else {
           // Fall back to most recent session
           console.log('🔄 No valid persisted session, loading most recent...');
+          if (useDatabaseStorage) {
+            // Try database first
+            storage.listConversations().then(conversations => {
+              if (conversations && conversations.length > 0) {
+                const mostRecent = conversations[0];
+                console.log('📂 Auto-loading most recent database conversation:', mostRecent.id, mostRecent.title);
+                handleLoadSession(mostRecent.id);
+              } else {
+                // Fall back to localStorage
+                const allSessions = loadSessions();
+                if (allSessions.length > 0) {
+                  const mostRecentSession = allSessions[0];
+                  console.log('📂 Auto-loading most recent localStorage session:', mostRecentSession.id, mostRecentSession.title);
+                  handleLoadSession(mostRecentSession.id);
+                } else {
+                  console.log('📭 No sessions found to auto-load');
+                }
+              }
+            }).catch(error => {
+              console.error('Failed to load database conversations, falling back to localStorage:', error);
+              const allSessions = loadSessions();
+              if (allSessions.length > 0) {
+                const mostRecentSession = allSessions[0];
+                console.log('📂 Auto-loading most recent localStorage session:', mostRecentSession.id, mostRecentSession.title);
+                handleLoadSession(mostRecentSession.id);
+              } else {
+                console.log('📭 No sessions found to auto-load');
+              }
+            });
+          } else {
+            const allSessions = loadSessions();
+            if (allSessions.length > 0) {
+              const mostRecentSession = allSessions[0];
+              console.log('📂 Auto-loading most recent session:', mostRecentSession.id, mostRecentSession.title);
+              handleLoadSession(mostRecentSession.id);
+            } else {
+              console.log('📭 No sessions found to auto-load');
+            }
+          }
+        }
+      } else {
+        // No persisted session - try to load most recent
+        console.log('🔄 No persisted session, loading most recent...');
+        if (useDatabaseStorage) {
+          // Try database first
+          storage.listConversations().then(conversations => {
+            if (conversations && conversations.length > 0) {
+              const mostRecent = conversations[0];
+              console.log('📂 Auto-loading most recent database conversation:', mostRecent.id, mostRecent.title);
+              handleLoadSession(mostRecent.id);
+            } else {
+              // Fall back to localStorage
+              const allSessions = loadSessions();
+              if (allSessions.length > 0) {
+                const mostRecentSession = allSessions[0];
+                console.log('📂 Auto-loading most recent localStorage session:', mostRecentSession.id, mostRecentSession.title);
+                handleLoadSession(mostRecentSession.id);
+              } else {
+                console.log('📭 No sessions found to auto-load');
+              }
+            }
+          }).catch(error => {
+            console.error('Failed to load database conversations, falling back to localStorage:', error);
+            const allSessions = loadSessions();
+            if (allSessions.length > 0) {
+              const mostRecentSession = allSessions[0];
+              console.log('📂 Auto-loading most recent localStorage session:', mostRecentSession.id, mostRecentSession.title);
+              handleLoadSession(mostRecentSession.id);
+            } else {
+              console.log('📭 No sessions found to auto-load');
+            }
+          });
+        } else {
           const allSessions = loadSessions();
           if (allSessions.length > 0) {
             const mostRecentSession = allSessions[0];
@@ -838,20 +951,9 @@ const Terminal = ({ theme, toggleTheme }) => {
             console.log('📭 No sessions found to auto-load');
           }
         }
-      } else {
-        // No persisted session - try to load most recent
-        console.log('🔄 No persisted session, loading most recent...');
-        const allSessions = loadSessions();
-        if (allSessions.length > 0) {
-          const mostRecentSession = allSessions[0];
-          console.log('📂 Auto-loading most recent session:', mostRecentSession.id, mostRecentSession.title);
-          handleLoadSession(mostRecentSession.id);
-        } else {
-          console.log('📭 No sessions found to auto-load');
-        }
       }
     }
-  }, [isInitializing, hasCheckedKeys, apiKeysSet, showWelcome, useDatabaseStorage]);
+  }, [isInitializing, hasCheckedKeys, apiKeysSet, showWelcome, useDatabaseStorage, user, useAuthSystem, storage]);
 
   // Persist current session/conversation ID whenever it changes
   useEffect(() => {
@@ -4733,12 +4835,14 @@ ${selectedText}
       <SessionPanel
         isOpen={showSessionPanel}
         onClose={() => setShowSessionPanel(false)}
-        currentSessionId={currentSessionId}
+        currentSessionId={currentSessionId || currentConversationId}
         onNewSession={handleNewSession}
         onLoadSession={handleLoadSession}
         onLoadPrevious={handleLoadPrevious}
         onResetAllSessions={handleResetAllSessions}
         onDeleteSession={handleDeleteSession}
+        useDatabaseStorage={useDatabaseStorage}
+        storage={storage}
       />
 
       {/* Export Menu Component */}

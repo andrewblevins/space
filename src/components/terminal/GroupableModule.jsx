@@ -85,14 +85,18 @@ export function GroupableModule({
                   return (
                     <li
                       key={advisorName}
-                      className={`group flex items-center justify-between text-gray-600 dark:text-gray-300 rounded px-2 py-1 -mx-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${activeItems.includes(advisor) ? 'text-green-600 dark:text-green-400' : ''}`}
+                      className={`group flex items-center justify-between rounded px-2 py-1 -mx-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
+                        activeItems.includes(advisor) 
+                          ? 'text-green-600 dark:text-green-400' 
+                          : 'text-gray-400 dark:text-gray-500 opacity-60'
+                      }`}
                     >
                       <div
                         onClick={() => onItemClick && onItemClick(advisor)}
                         className="flex items-center space-x-2 flex-1 cursor-pointer"
                       >
                         {advisor.color && (
-                          <span className={`w-3 h-3 rounded-full ${advisor.color}`}></span>
+                          <span className={`w-3 h-3 rounded-full ${advisor.color} ${!activeItems.includes(advisor) ? 'opacity-50' : ''}`}></span>
                         )}
                         <span>{advisor.name}</span>
                       </div>
@@ -136,14 +140,18 @@ export function GroupableModule({
           .map((item, idx) => (
             <li
               key={`item-${idx}`}
-              className={`group flex items-center justify-between text-gray-900 dark:text-gray-300 rounded px-2 py-1 -mx-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${activeItems.includes(item) ? 'text-green-700 dark:text-green-400' : ''}`}
+              className={`group flex items-center justify-between rounded px-2 py-1 -mx-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
+                activeItems.includes(item) 
+                  ? 'text-green-700 dark:text-green-400' 
+                  : 'text-gray-400 dark:text-gray-500 opacity-60'
+              }`}
             >
               <div
                 onClick={() => onItemClick && onItemClick(item)}
                 className="flex items-center space-x-2 flex-1 cursor-pointer"
               >
                 {item.color && (
-                  <span className={`w-3 h-3 rounded-full ${item.color}`}></span>
+                  <span className={`w-3 h-3 rounded-full ${item.color} ${!activeItems.includes(item) ? 'opacity-50' : ''}`}></span>
                 )}
                 <span>{item.name}</span>
               </div>

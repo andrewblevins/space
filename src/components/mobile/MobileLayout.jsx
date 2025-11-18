@@ -204,7 +204,7 @@ const MobileLayout = ({
                   className={`p-3 rounded-lg border cursor-pointer transition-colors ${
                     advisor.active 
                       ? 'border-green-400 bg-green-50 dark:bg-green-900/20' 
-                      : 'border-gray-300 dark:border-gray-600'
+                      : 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/30 opacity-60'
                   }`}
                   onClick={() => {
                     setAdvisors(prev => prev.map(a => 
@@ -215,9 +215,9 @@ const MobileLayout = ({
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
                       <div
-                        className={`w-3 h-3 rounded-full mr-2 ${advisor.color}`}
+                        className={`w-3 h-3 rounded-full mr-2 ${advisor.color} ${!advisor.active ? 'opacity-50' : ''}`}
                       />
-                      <span className="font-medium text-gray-800 dark:text-gray-200">
+                      <span className={`font-medium ${advisor.active ? 'text-gray-800 dark:text-gray-200' : 'text-gray-500 dark:text-gray-500'}`}>
                         {advisor.name}
                       </span>
                     </div>
@@ -226,7 +226,7 @@ const MobileLayout = ({
                     )}
                   </div>
                   {advisor.description && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+                    <p className={`text-sm mt-1 line-clamp-2 ${advisor.active ? 'text-gray-600 dark:text-gray-400' : 'text-gray-400 dark:text-gray-500'}`}>
                       {advisor.description}
                     </p>
                   )}
