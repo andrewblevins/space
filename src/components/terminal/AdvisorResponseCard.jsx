@@ -9,8 +9,11 @@ import ReactMarkdown from 'react-markdown';
  * @param {Function} props.onAssertionsClick - Callback when assertions button is clicked
  * @param {boolean} props.compact - Use compact styling for grid layout (default: false)
  * @param {number} props.totalAdvisorCount - Total number of advisors in current response (default: undefined)
+ * @param {Array} props.allAdvisorsInMessage - Array of all advisor objects from the same message (for fullscreen modal)
+ * @param {Function} props.onCardClick - Callback when card is clicked (takes advisor index)
+ * @param {number} props.cardIndex - Index of this card in the message
  */
-export const AdvisorResponseCard = memo(({ advisor, allAdvisors = [], onAssertionsClick, compact = false, totalAdvisorCount }) => {
+export const AdvisorResponseCard = memo(({ advisor, allAdvisors = [], onAssertionsClick, compact = false, totalAdvisorCount, allAdvisorsInMessage = [], onCardClick, cardIndex }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   // Find advisor configuration for color
@@ -107,16 +110,27 @@ export const AdvisorResponseCard = memo(({ advisor, allAdvisors = [], onAssertio
 
   const displayContent = getDisplayContent();
 
-  const handleAssertionsClick = () => {
+  const handleAssertionsClick = (e) => {
+    e.stopPropagation(); // Prevent card click when clicking Assert button
     if (onAssertionsClick) {
       onAssertionsClick(advisor);
     }
   };
 
+  const handleCardClick = () => {
+    // Only open modal if there are multiple advisors and callback is provided
+    if (allAdvisorsInMessage.length > 1 && onCardClick && cardIndex !== undefined) {
+      onCardClick(cardIndex);
+    }
+  };
+
+  // Determine if card should be clickable
+  const isClickable = allAdvisorsInMessage.length > 1 && onCardClick && cardIndex !== undefined;
+
   // Determine styling based on compact mode
   const cardClasses = compact
-    ? "border border-gray-300 dark:border-gray-700 rounded-lg p-3 bg-white dark:bg-gray-900 h-full hover:shadow-md transition-shadow"
-    : "border border-gray-300 dark:border-gray-700 rounded-lg p-4 mb-4 bg-white dark:bg-gray-900";
+    ? `border border-gray-300 dark:border-gray-700 rounded-lg p-3 bg-white dark:bg-gray-900 h-full transition-shadow ${isClickable ? 'hover:shadow-lg cursor-pointer' : 'hover:shadow-md'}`
+    : `border border-gray-300 dark:border-gray-700 rounded-lg p-4 mb-4 bg-white dark:bg-gray-900 ${isClickable ? 'hover:shadow-lg cursor-pointer' : ''}`;
 
   const headerClasses = compact
     ? "flex items-center justify-between mb-2"
@@ -127,7 +141,7 @@ export const AdvisorResponseCard = memo(({ advisor, allAdvisors = [], onAssertio
     : "font-bold font-serif text-lg text-gray-800 dark:text-gray-200 flex items-center";
 
   return (
-    <div className={cardClasses}>
+    <div className={cardClasses} onClick={handleCardClick}>
       {/* Header with advisor name and assertions button */}
       <div className={headerClasses}>
         <h3 className={titleClasses}>
@@ -165,7 +179,10 @@ export const AdvisorResponseCard = memo(({ advisor, allAdvisors = [], onAssertio
       {/* Show more/less button */}
       {shouldShowToggle && (
         <button
-          onClick={() => setIsExpanded(!isExpanded)}
+          onClick={(e) => {
+            e.stopPropagation(); // Prevent card click when clicking Show more/less
+            setIsExpanded(!isExpanded);
+          }}
           className="mt-3 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 flex items-center transition-colors group"
           aria-label={isExpanded ? `Collapse response from ${advisor.name}` : `Expand response from ${advisor.name}`}
         >

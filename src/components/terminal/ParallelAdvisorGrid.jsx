@@ -1,6 +1,7 @@
-import { memo } from "react";
+import { memo, useState } from "react";
 import { AdvisorResponseCard } from './AdvisorResponseCard';
 import ThinkingBlock from '../ThinkingBlock';
+import FullScreenPerspectiveModal from './FullScreenPerspectiveModal';
 
 /**
  * Grid layout component for parallel advisor responses
@@ -20,6 +21,13 @@ export const ParallelAdvisorGrid = memo(({
   messages,
   getSystemPrompt
 }) => {
+  // State for fullscreen perspective modal
+  const [fullscreenModal, setFullscreenModal] = useState({
+    isOpen: false,
+    advisors: [],
+    selectedIndex: 0
+  });
+
   // Sort advisor responses by the order they appear in the advisors list
   const sortedAdvisorEntries = Object.entries(message.advisorResponses).sort((a, b) => {
     const [, dataA] = a;
@@ -50,52 +58,86 @@ export const ParallelAdvisorGrid = memo(({
     }
   };
 
+  // Convert sorted advisor entries to array format for fullscreen modal
+  const advisorsArray = sortedAdvisorEntries.map(([advisorId, advisorData], index) => ({
+    id: advisorId,
+    name: advisorData.name,
+    response: advisorData.content,
+    content: advisorData.content, // Support both response and content properties
+    timestamp: message.timestamp,
+    isStreaming: !advisorData.completed
+  }));
+
   return (
-    <div>
-      {/* Global streaming indicator - only show when not all completed */}
-      {!message.allCompleted && (
-        <div className="mb-3 text-sm text-green-600 dark:text-green-400 italic">
-          ⚡ Parallel streaming in progress...
+    <>
+      <div>
+        {/* Global streaming indicator - only show when not all completed */}
+        {!message.allCompleted && (
+          <div className="mb-3 text-sm text-green-600 dark:text-green-400 italic">
+            ⚡ Parallel streaming in progress...
+          </div>
+        )}
+
+        {/* Dynamic responsive grid layout */}
+        <div className={getGridClasses()}>
+          {sortedAdvisorEntries.map(([advisorId, advisorData], index) => {
+            // Create advisor object compatible with AdvisorResponseCard
+            const advisorForCard = {
+              id: advisorId,
+              name: advisorData.name,
+              response: advisorData.content,
+              timestamp: message.timestamp,
+              isStreaming: !advisorData.completed
+            };
+
+            return (
+              <div key={advisorId} className="flex flex-col">
+                {/* Thinking block if present */}
+                {advisorData.thinking && <ThinkingBlock content={advisorData.thinking} />}
+
+                {/* Advisor card */}
+                <AdvisorResponseCard
+                  advisor={advisorForCard}
+                  allAdvisors={advisors}
+                  onAssertionsClick={(advisorData) => onAssertionsClick(advisorData, messages, getSystemPrompt)}
+                  compact={true}
+                  totalAdvisorCount={advisorCount}
+                  allAdvisorsInMessage={advisorsArray}
+                  onCardClick={(cardIndex) => setFullscreenModal({
+                    isOpen: true,
+                    advisors: advisorsArray,
+                    selectedIndex: cardIndex
+                  })}
+                  cardIndex={index}
+                />
+
+                {/* Error indicator if present */}
+                {advisorData.error && (
+                  <div className="mt-2 text-sm text-red-600 dark:text-red-400 italic">
+                    ⚠ Error with this advisor
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
-      )}
-
-      {/* Dynamic responsive grid layout */}
-      <div className={getGridClasses()}>
-        {sortedAdvisorEntries.map(([advisorId, advisorData]) => {
-          // Create advisor object compatible with AdvisorResponseCard
-          const advisorForCard = {
-            id: advisorId,
-            name: advisorData.name,
-            response: advisorData.content,
-            timestamp: message.timestamp,
-            isStreaming: !advisorData.completed
-          };
-
-          return (
-            <div key={advisorId} className="flex flex-col">
-              {/* Thinking block if present */}
-              {advisorData.thinking && <ThinkingBlock content={advisorData.thinking} />}
-
-              {/* Advisor card */}
-              <AdvisorResponseCard
-                advisor={advisorForCard}
-                allAdvisors={advisors}
-                onAssertionsClick={(advisorData) => onAssertionsClick(advisorData, messages, getSystemPrompt)}
-                compact={true}
-                totalAdvisorCount={advisorCount}
-              />
-
-              {/* Error indicator if present */}
-              {advisorData.error && (
-                <div className="mt-2 text-sm text-red-600 dark:text-red-400 italic">
-                  ⚠ Error with this advisor
-                </div>
-              )}
-            </div>
-          );
-        })}
       </div>
-    </div>
+
+      {/* Fullscreen perspective modal */}
+      {fullscreenModal.isOpen && (
+        <FullScreenPerspectiveModal
+          isOpen={fullscreenModal.isOpen}
+          advisors={fullscreenModal.advisors}
+          selectedIndex={fullscreenModal.selectedIndex}
+          onClose={() => setFullscreenModal({ isOpen: false, advisors: [], selectedIndex: 0 })}
+          onAssertionsClick={(advisorData) => {
+            setFullscreenModal({ isOpen: false, advisors: [], selectedIndex: 0 });
+            onAssertionsClick(advisorData, messages, getSystemPrompt);
+          }}
+          allAdvisors={advisors}
+        />
+      )}
+    </>
   );
 });
 

@@ -1,8 +1,9 @@
-import React, { memo } from 'react';
+import React, { memo, useState } from 'react';
 import { MemoizedMarkdownMessage } from './MemoizedMarkdownMessage';
 import { AdvisorResponseCard } from './AdvisorResponseCard';
 import { ParallelAdvisorGrid } from './ParallelAdvisorGrid';
 import ThinkingBlock from '../ThinkingBlock';
+import FullScreenPerspectiveModal from './FullScreenPerspectiveModal';
 // DEPRECATED: DebateBlock no longer used after High Council removal
 // import DebateBlock from '../DebateBlock';
 
@@ -19,6 +20,13 @@ const MessageRenderer = memo(({
   messages,
   getSystemPrompt
 }) => {
+  // State for fullscreen perspective modal
+  const [fullscreenModal, setFullscreenModal] = useState({
+    isOpen: false,
+    advisors: [],
+    selectedIndex: 0
+  });
+
   // Create stable key for this message
   const messageKey = msg.timestamp ? `${msg.timestamp}-${idx}` : `${idx}-${msg.content?.slice(0, 20) || 'empty'}`;
   
@@ -81,6 +89,13 @@ const MessageRenderer = memo(({
                   onAssertionsClick={(advisorData) => onAssertionsClick(advisorData, messages, getSystemPrompt)}
                   compact={true}
                   totalAdvisorCount={advisorCount}
+                  allAdvisorsInMessage={msg.parsedAdvisors.advisors}
+                  onCardClick={(index) => setFullscreenModal({
+                    isOpen: true,
+                    advisors: msg.parsedAdvisors.advisors,
+                    selectedIndex: index
+                  })}
+                  cardIndex={advisorIdx}
                 />
               ))}
             </div>
@@ -134,13 +149,30 @@ const MessageRenderer = memo(({
   };
 
   return (
-    <div
-      key={messageKey}
-      id={`msg-${idx}`}
-      className={`mb-4 break-words text-lg ${getMessageClassName(msg.type)}`}
-    >
-      {renderMessageContent()}
-    </div>
+    <>
+      <div
+        key={messageKey}
+        id={`msg-${idx}`}
+        className={`mb-4 break-words text-lg ${getMessageClassName(msg.type)}`}
+      >
+        {renderMessageContent()}
+      </div>
+      
+      {/* Fullscreen perspective modal */}
+      {fullscreenModal.isOpen && (
+        <FullScreenPerspectiveModal
+          isOpen={fullscreenModal.isOpen}
+          advisors={fullscreenModal.advisors}
+          selectedIndex={fullscreenModal.selectedIndex}
+          onClose={() => setFullscreenModal({ isOpen: false, advisors: [], selectedIndex: 0 })}
+          onAssertionsClick={(advisorData) => {
+            setFullscreenModal({ isOpen: false, advisors: [], selectedIndex: 0 });
+            onAssertionsClick(advisorData, messages, getSystemPrompt);
+          }}
+          allAdvisors={advisors}
+        />
+      )}
+    </>
   );
 }, (prevProps, nextProps) => {
   // Simple reference check - if props are identical objects, skip render

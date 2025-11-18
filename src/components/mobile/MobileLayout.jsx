@@ -6,6 +6,7 @@ import { AdvisorResponseCard } from '../terminal/AdvisorResponseCard';
 import ThinkingBlock from '../ThinkingBlock';
 import DebateBlock from '../DebateBlock';
 import TouchInput from './TouchInput';
+import FullScreenPerspectiveModal from '../terminal/FullScreenPerspectiveModal';
 
 /**
  * MobileLayout component provides the main layout structure for mobile devices
@@ -36,6 +37,12 @@ const MobileLayout = ({
   getSystemPrompt
 }) => {
   const [activeTab, setActiveTab] = useState('chat');
+  // State for fullscreen perspective modal
+  const [fullscreenModal, setFullscreenModal] = useState({
+    isOpen: false,
+    advisors: [],
+    selectedIndex: 0
+  });
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -84,6 +91,13 @@ const MobileLayout = ({
                             setShowAssertionsModal(true);
                           }}
                           totalAdvisorCount={msg.parsedAdvisors.advisors.length}
+                          allAdvisorsInMessage={msg.parsedAdvisors.advisors}
+                          onCardClick={(index) => setFullscreenModal({
+                            isOpen: true,
+                            advisors: msg.parsedAdvisors.advisors,
+                            selectedIndex: index
+                          })}
+                          cardIndex={advisorIdx}
                         />
                       ))}
                       
@@ -102,43 +116,61 @@ const MobileLayout = ({
                           ⚡ Parallel streaming in progress...
                         </div>
                       )}
-                      {Object.entries(msg.advisorResponses).map(([advisorId, advisorData]) => {
-                        const advisorForCard = {
-                          id: advisorId,
-                          name: advisorData.name,
-                          response: advisorData.content,
+                      {(() => {
+                        // Convert advisorResponses to array format for fullscreen modal (once per message)
+                        const advisorsArray = Object.entries(msg.advisorResponses).map(([id, data]) => ({
+                          id,
+                          name: data.name,
+                          response: data.content,
+                          content: data.content,
                           timestamp: msg.timestamp
-                        };
+                        }));
 
-                        return (
-                          <div key={advisorId}>
-                            {advisorData.thinking && <ThinkingBlock content={advisorData.thinking} />}
-                            <AdvisorResponseCard
-                              advisor={advisorForCard}
-                              allAdvisors={advisors}
-                              onAssertionsClick={(advisorData) => {
-                                console.log('🎯 Assertions clicked for:', advisorData);
-                                setSelectedAdvisorForAssertions({
-                                  ...advisorData,
-                                  conversationContext: {
-                                    messages: [...messages],
-                                    advisors: [...advisors],
-                                    systemPrompt: getSystemPrompt(),
-                                    timestamp: new Date().toISOString()
-                                  }
-                                });
-                                setShowAssertionsModal(true);
-                              }}
-                              totalAdvisorCount={Object.keys(msg.advisorResponses).length}
-                            />
-                            {advisorData.error && (
-                              <div className="mb-2 text-sm text-red-600 dark:text-red-400 italic">
-                                ⚠ Error with this advisor
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
+                        return Object.entries(msg.advisorResponses).map(([advisorId, advisorData], index) => {
+                          const advisorForCard = {
+                            id: advisorId,
+                            name: advisorData.name,
+                            response: advisorData.content,
+                            timestamp: msg.timestamp
+                          };
+
+                          return (
+                            <div key={advisorId}>
+                              {advisorData.thinking && <ThinkingBlock content={advisorData.thinking} />}
+                              <AdvisorResponseCard
+                                advisor={advisorForCard}
+                                allAdvisors={advisors}
+                                onAssertionsClick={(advisorData) => {
+                                  console.log('🎯 Assertions clicked for:', advisorData);
+                                  setSelectedAdvisorForAssertions({
+                                    ...advisorData,
+                                    conversationContext: {
+                                      messages: [...messages],
+                                      advisors: [...advisors],
+                                      systemPrompt: getSystemPrompt(),
+                                      timestamp: new Date().toISOString()
+                                    }
+                                  });
+                                  setShowAssertionsModal(true);
+                                }}
+                                totalAdvisorCount={Object.keys(msg.advisorResponses).length}
+                                allAdvisorsInMessage={advisorsArray}
+                                onCardClick={(cardIndex) => setFullscreenModal({
+                                  isOpen: true,
+                                  advisors: advisorsArray,
+                                  selectedIndex: cardIndex
+                                })}
+                                cardIndex={index}
+                              />
+                              {advisorData.error && (
+                                <div className="mb-2 text-sm text-red-600 dark:text-red-400 italic">
+                                  ⚠ Error with this advisor
+                                </div>
+                              )}
+                            </div>
+                          );
+                        });
+                      })()}
                     </div>
                   ) : msg.type === 'assistant' ? (
                     <div>
@@ -321,22 +353,48 @@ const MobileLayout = ({
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <MobileHeader 
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        setShowInfoModal={setShowInfoModal}
-      />
-      
-      <div className="flex-1 overflow-hidden">
-        {renderTabContent()}
+    <>
+      <div className="flex flex-col h-full">
+        <MobileHeader 
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          setShowInfoModal={setShowInfoModal}
+        />
+        
+        <div className="flex-1 overflow-hidden">
+          {renderTabContent()}
+        </div>
+        
+        <MobileTabBar 
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+        />
       </div>
-      
-      <MobileTabBar 
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-      />
-    </div>
+
+      {/* Fullscreen perspective modal */}
+      {fullscreenModal.isOpen && (
+        <FullScreenPerspectiveModal
+          isOpen={fullscreenModal.isOpen}
+          advisors={fullscreenModal.advisors}
+          selectedIndex={fullscreenModal.selectedIndex}
+          onClose={() => setFullscreenModal({ isOpen: false, advisors: [], selectedIndex: 0 })}
+          onAssertionsClick={(advisorData) => {
+            setFullscreenModal({ isOpen: false, advisors: [], selectedIndex: 0 });
+            setSelectedAdvisorForAssertions({
+              ...advisorData,
+              conversationContext: {
+                messages: [...messages],
+                advisors: [...advisors],
+                systemPrompt: getSystemPrompt(),
+                timestamp: new Date().toISOString()
+              }
+            });
+            setShowAssertionsModal(true);
+          }}
+          allAdvisors={advisors}
+        />
+      )}
+    </>
   );
 };
 
