@@ -2563,32 +2563,6 @@ Now, I'd like to generate the final output. Please include the following aspects
               return true;
           }
 
-        case '/export':
-          try {
-            // Default to including perspectives for command-line export
-            const markdown = formatSessionAsMarkdown(messages, {}, { includePerspectives: true });
-            const blob = new Blob([markdown], { type: 'text/markdown' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `space-session-${currentSessionId}.md`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            
-            setMessages(prev => [...prev, {
-              type: 'system',
-              content: 'Session exported successfully'
-            }]);
-          } catch (error) {
-            setMessages(prev => [...prev, {
-              type: 'system',
-              content: `Error exporting session: ${error.message}`
-            }]);
-          }
-          return true;
-
         case '/worksheet':
           if (!args[0]) {
             setMessages(prev => [...prev, {
@@ -3240,10 +3214,6 @@ Gemini: ${geminiKey ? '✓ Set' : '✗ Not Set'}`
               }]);
               return true;
           }
-
-        case '/export-all':
-          exportAllSessions();
-          return true;
 
         case '/council':
           // Let council mode detection handle this in normal message processing
