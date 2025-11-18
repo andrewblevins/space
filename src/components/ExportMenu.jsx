@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 const ExportMenu = ({
   isOpen,
@@ -8,10 +8,12 @@ const ExportMenu = ({
   currentSessionId,
   sessionTitle
 }) => {
+  const [includePerspectives, setIncludePerspectives] = useState(true);
+
   if (!isOpen) return null;
 
   const handleExportSession = () => {
-    onExportSession();
+    onExportSession({ includePerspectives });
     onClose(); // Close menu after action
   };
 
@@ -40,6 +42,43 @@ const ExportMenu = ({
         </div>
 
         <div className="space-y-4">
+          {/* Export Options Checkboxes */}
+          <div className="p-4 bg-black border border-gray-700 rounded space-y-3">
+            <h3 className="text-green-400 font-medium text-sm mb-3">Export Options</h3>
+            <label className="flex items-start space-x-3 cursor-pointer group">
+              <input
+                type="checkbox"
+                checked={includePerspectives}
+                onChange={(e) => setIncludePerspectives(e.target.checked)}
+                className="mt-1 w-4 h-4 text-green-400 bg-gray-800 border-gray-600 rounded focus:ring-green-400 focus:ring-2"
+              />
+              <div className="flex-1">
+                <span className="text-gray-300 group-hover:text-green-400 transition-colors text-sm font-medium">
+                  Export full conversation with all perspective responses
+                </span>
+                <p className="text-gray-500 text-xs mt-1">
+                  Includes all user messages and all perspective responses
+                </p>
+              </div>
+            </label>
+            <label className="flex items-start space-x-3 cursor-pointer group">
+              <input
+                type="checkbox"
+                checked={!includePerspectives}
+                onChange={(e) => setIncludePerspectives(!e.target.checked)}
+                className="mt-1 w-4 h-4 text-green-400 bg-gray-800 border-gray-600 rounded focus:ring-green-400 focus:ring-2"
+              />
+              <div className="flex-1">
+                <span className="text-gray-300 group-hover:text-green-400 transition-colors text-sm font-medium">
+                  Export only my responses
+                </span>
+                <p className="text-gray-500 text-xs mt-1">
+                  Includes only user messages, excludes all perspective responses
+                </p>
+              </div>
+            </label>
+          </div>
+
           {/* Export Current Session */}
           <button
             onClick={handleExportSession}

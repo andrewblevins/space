@@ -1828,7 +1828,7 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
   };
 
   // Export functions for GUI buttons
-  const handleExportSession = () => {
+  const handleExportSession = (options = {}) => {
     try {
       // Load from localStorage to get complete session data
       const sessionData = localStorage.getItem(`space_session_${currentSessionId}`);
@@ -1843,12 +1843,12 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
         throw new Error('Session has no messages to export');
       }
       
-      // Format session as markdown with metadata
+      // Format session as markdown with metadata and export options
       const markdown = formatSessionAsMarkdown(session.messages, {
         title: session.title,
         advisors: session.advisors || [],
         timestamp: session.timestamp
-      });
+      }, options);
       
       // Validate markdown content
       if (!markdown || markdown.length === 0) {
@@ -2565,7 +2565,8 @@ Now, I'd like to generate the final output. Please include the following aspects
 
         case '/export':
           try {
-            const markdown = formatSessionAsMarkdown(messages);
+            // Default to including perspectives for command-line export
+            const markdown = formatSessionAsMarkdown(messages, {}, { includePerspectives: true });
             const blob = new Blob([markdown], { type: 'text/markdown' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -3570,15 +3571,16 @@ Gemini: ${geminiKey ? '✓ Set' : '✗ Not Set'}`
   };
 
   // Add this helper function to format messages as markdown
-  const formatSessionAsMarkdown = (messages, metadata = {}) => {
+  const formatSessionAsMarkdown = (messages, metadata = {}, options = {}) => {
     const { title, advisors = [], timestamp } = metadata;
+    const { includePerspectives = true } = options;
     const date = timestamp ? new Date(timestamp).toLocaleString() : new Date().toLocaleString();
     
     let markdown = `# ${title || 'SPACE Terminal Session'}\n`;
     markdown += `Exported: ${date}\n\n`;
     
-    // Include active perspectives if present
-    if (advisors.length > 0) {
+    // Include active perspectives if present and including perspectives
+    if (includePerspectives && advisors.length > 0) {
       markdown += `## Active Perspectives\n`;
       advisors.forEach(advisor => {
         markdown += `- **${advisor.name}**: ${advisor.description || 'No description'}\n`;
@@ -3586,8 +3588,13 @@ Gemini: ${geminiKey ? '✓ Set' : '✗ Not Set'}`
       markdown += `\n`;
     }
     
+    // Filter messages based on export options
+    const filteredMessages = includePerspectives 
+      ? messages 
+      : messages.filter(msg => msg.type === 'user');
+    
     // Format messages with proper attribution
-    messages.forEach((msg) => {
+    filteredMessages.forEach((msg) => {
       // Skip help command outputs
       if (msg.content && msg.content.includes('SPACE Terminal v0.1 - Command Reference')) {
         return;
@@ -3600,8 +3607,18 @@ Gemini: ${geminiKey ? '✓ Set' : '✗ Not Set'}`
         case 'assistant':
           markdown += `\n### Assistant\n${msg.content}\n`;
           break;
+        case 'parallel_advisor_response':
+          // Handle parallel advisor responses with proper attribution
+          if (msg.advisorResponses && typeof msg.advisorResponses === 'object') {
+            Object.values(msg.advisorResponses).forEach((advisorResp) => {
+              if (advisorResp && advisorResp.content && advisorResp.completed) {
+                markdown += `\n### ${advisorResp.name}\n${advisorResp.content}\n`;
+              }
+            });
+          }
+          break;
         case 'advisor_response':
-          // Handle advisor responses with proper attribution
+          // Handle legacy advisor responses with proper attribution
           if (msg.advisorData) {
             markdown += `\n### ${msg.advisorData.name}\n${msg.advisorData.content}\n`;
           } else if (msg.content) {
