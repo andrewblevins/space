@@ -4245,15 +4245,16 @@ ${selectedText}
           persistCurrentSession(parseInt(sessionId), null); // Persist localStorage session ID
           
           // Scroll to the specified message after render
-        setTimeout(() => {
-          const element = document.getElementById(`msg-${messageId}`);
-          if (element) {
-            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            // Add highlight effect
-            element.classList.add('bg-green-900/20');
-            setTimeout(() => element.classList.remove('bg-green-900/20'), 2000);
-          }
-        }, 100);
+          setTimeout(() => {
+            const element = document.getElementById(`msg-${messageId}`);
+            if (element) {
+              element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              // Add highlight effect
+              element.classList.add('bg-green-900/20');
+              setTimeout(() => element.classList.remove('bg-green-900/20'), 2000);
+            }
+          }, 100);
+        }
       }
     }
   }, []);
