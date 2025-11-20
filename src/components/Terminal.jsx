@@ -834,7 +834,7 @@ const Terminal = ({ theme, toggleTheme }) => {
     }
   }, [modalController, hasCheckedKeys, useAuthSystem]);
 
-  // Auto-load current session after initialization (check persisted session first)
+  // Auto-load most recent session by date/time on initialization
   useEffect(() => {
     // Wait for auth to complete if using auth system
     if (useAuthSystem && authData?.loading) {
@@ -847,144 +847,92 @@ const Terminal = ({ theme, toggleTheme }) => {
     }
     
     if (!isInitializing && hasCheckedKeys && apiKeysSet && !showWelcome) {
-      const persisted = loadPersistedCurrentSession();
+      // Mark as restored to prevent infinite loop
+      hasRestoredSessionRef.current = true;
       
-      // Check if we have a persisted current session/conversation
-      if (persisted.conversationId || persisted.sessionId) {
-        console.log('🔄 Restoring persisted session:', { conversationId: persisted.conversationId, sessionId: persisted.sessionId });
-        
-        // Mark as restored to prevent infinite loop
-        hasRestoredSessionRef.current = true;
-        
-        // Check if it's a UUID (database conversation) or integer (localStorage session)
-        const isUUID = persisted.conversationId || /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(persisted.sessionId);
-        
-        if (isUUID && useDatabaseStorage) {
-          // Load from database
-          const sessionIdToLoad = persisted.conversationId || persisted.sessionId;
-          // Ref already set above, but ensure it's set before async operations
-          handleLoadSession(sessionIdToLoad);
-        } else if (persisted.sessionId && !isUUID) {
-          // If we have a localStorage session ID but now using database storage, try loading most recent database conversation
-          if (useDatabaseStorage) {
-            console.log('🔄 Persisted localStorage session but using database storage, loading most recent database conversation...');
-            storage.listConversations().then(conversations => {
-              if (conversations && conversations.length > 0) {
-                const mostRecent = conversations[0]; // Already sorted by updated_at desc
-                console.log('📂 Auto-loading most recent database conversation:', mostRecent.id, mostRecent.title);
-                hasRestoredSessionRef.current = true;
-                handleLoadSession(mostRecent.id);
-              } else {
-                console.log('📭 No database conversations found to auto-load');
-              }
-            }).catch(error => {
-              console.error('Failed to load database conversations:', error);
-            });
-          } else {
-            // Load from localStorage
-            hasRestoredSessionRef.current = true;
-            handleLoadSession(persisted.sessionId);
-          }
-        } else {
-          // Fall back to most recent session
-          console.log('🔄 No valid persisted session, loading most recent...');
-          // Mark as restored to prevent infinite loop
-          hasRestoredSessionRef.current = true;
-          if (useDatabaseStorage) {
-            // Try database first
-            storage.listConversations().then(conversations => {
-              if (conversations && conversations.length > 0) {
-                const mostRecent = conversations[0];
-                console.log('📂 Auto-loading most recent database conversation:', mostRecent.id, mostRecent.title);
-                hasRestoredSessionRef.current = true;
-                handleLoadSession(mostRecent.id);
-              } else {
-                // Fall back to localStorage
-                const allSessions = loadSessions();
-                if (allSessions.length > 0) {
-                  const mostRecentSession = allSessions[0];
-                  console.log('📂 Auto-loading most recent localStorage session:', mostRecentSession.id, mostRecentSession.title);
-                  hasRestoredSessionRef.current = true;
-                  handleLoadSession(mostRecentSession.id);
-                } else {
-                  console.log('📭 No sessions found to auto-load');
-                }
-              }
-            }).catch(error => {
-              console.error('Failed to load database conversations, falling back to localStorage:', error);
-              const allSessions = loadSessions();
-              if (allSessions.length > 0) {
-                const mostRecentSession = allSessions[0];
-                console.log('📂 Auto-loading most recent localStorage session:', mostRecentSession.id, mostRecentSession.title);
-                hasRestoredSessionRef.current = true;
-                handleLoadSession(mostRecentSession.id);
-              } else {
-                console.log('📭 No sessions found to auto-load');
-              }
-            });
-          } else {
-            const allSessions = loadSessions();
-            if (allSessions.length > 0) {
-              const mostRecentSession = allSessions[0];
-              console.log('📂 Auto-loading most recent session:', mostRecentSession.id, mostRecentSession.title);
-              hasRestoredSessionRef.current = true;
-              handleLoadSession(mostRecentSession.id);
-            } else {
-              console.log('📭 No sessions found to auto-load');
-            }
+      // Helper function to get timestamp for a session/conversation
+      // Matches the logic used in loadSessions() for consistent sorting
+      const getSessionTimestamp = (session) => {
+        // For localStorage sessions with messages, use last user message timestamp
+        if (session.messages && session.messages.length > 0) {
+          const userMessages = session.messages.filter(m => m.type === 'user');
+          if (userMessages.length > 0) {
+            const lastUserMsg = userMessages[userMessages.length - 1];
+            return new Date(lastUserMsg.timestamp || session.timestamp || 0);
           }
         }
-      } else {
-        // No persisted session - try to load most recent
-        console.log('🔄 No persisted session, loading most recent...');
-        // Mark as restored to prevent infinite loop
-        hasRestoredSessionRef.current = true;
-        if (useDatabaseStorage) {
-          // Try database first
-          storage.listConversations().then(conversations => {
-            if (conversations && conversations.length > 0) {
-              const mostRecent = conversations[0];
-              console.log('📂 Auto-loading most recent database conversation:', mostRecent.id, mostRecent.title);
-              hasRestoredSessionRef.current = true;
-              handleLoadSession(mostRecent.id);
-            } else {
-              // Fall back to localStorage
-              const allSessions = loadSessions();
-              if (allSessions.length > 0) {
-                const mostRecentSession = allSessions[0];
-                console.log('📂 Auto-loading most recent localStorage session:', mostRecentSession.id, mostRecentSession.title);
-                hasRestoredSessionRef.current = true;
-                handleLoadSession(mostRecentSession.id);
-              } else {
-                console.log('📭 No sessions found to auto-load');
+        // For database conversations, use updated_at (which is updated when messages are added)
+        if (session.updated_at) {
+          return new Date(session.updated_at);
+        }
+        // Fallback to created_at or session timestamp
+        if (session.created_at) {
+          return new Date(session.created_at);
+        }
+        if (session.timestamp) {
+          return new Date(session.timestamp);
+        }
+        return new Date(0);
+      };
+      
+      // Always load the most recent session by date/time
+      const loadMostRecentSession = async () => {
+        try {
+          const allSessions = [];
+          
+          // Get localStorage sessions
+          const localStorageSessions = loadSessions();
+          allSessions.push(...localStorageSessions.map(s => ({
+            ...s,
+            source: 'localStorage',
+            timestamp: getSessionTimestamp(s)
+          })));
+          
+          // Get database conversations if using database storage
+          if (useDatabaseStorage && storage) {
+            try {
+              const conversations = await storage.listConversations();
+              if (conversations && conversations.length > 0) {
+                allSessions.push(...conversations.map(c => ({
+                  id: c.id,
+                  title: c.title || `Session ${c.id.substring(0, 8)}`,
+                  source: 'database',
+                  timestamp: getSessionTimestamp(c)
+                })));
               }
+            } catch (error) {
+              console.error('Failed to load database conversations:', error);
             }
-            }).catch(error => {
-              console.error('Failed to load database conversations, falling back to localStorage:', error);
-              const allSessions = loadSessions();
-              if (allSessions.length > 0) {
-                const mostRecentSession = allSessions[0];
-                console.log('📂 Auto-loading most recent localStorage session:', mostRecentSession.id, mostRecentSession.title);
-                hasRestoredSessionRef.current = true;
-                handleLoadSession(mostRecentSession.id);
-              } else {
-                console.log('📭 No sessions found to auto-load');
-              }
+          }
+          
+          // Sort all sessions by timestamp (most recent first)
+          allSessions.sort((a, b) => {
+            const timeA = a.timestamp.getTime ? a.timestamp.getTime() : new Date(a.timestamp).getTime();
+            const timeB = b.timestamp.getTime ? b.timestamp.getTime() : new Date(b.timestamp).getTime();
+            return timeB - timeA; // Most recent first
+          });
+          
+          // Load the most recent session
+          if (allSessions.length > 0) {
+            const mostRecent = allSessions[0];
+            console.log('📂 Auto-loading most recent session:', {
+              id: mostRecent.id,
+              title: mostRecent.title,
+              source: mostRecent.source,
+              timestamp: mostRecent.timestamp
             });
-          } else {
-            const allSessions = loadSessions();
-            if (allSessions.length > 0) {
-              const mostRecentSession = allSessions[0];
-              console.log('📂 Auto-loading most recent session:', mostRecentSession.id, mostRecentSession.title);
-              hasRestoredSessionRef.current = true;
-              handleLoadSession(mostRecentSession.id);
+            handleLoadSession(mostRecent.id);
           } else {
             console.log('📭 No sessions found to auto-load');
           }
+        } catch (error) {
+          console.error('Failed to load most recent session:', error);
         }
-      }
+      };
+      
+      loadMostRecentSession();
     }
-  }, [isInitializing, hasCheckedKeys, apiKeysSet, showWelcome, useDatabaseStorage, user, useAuthSystem, storage]);
+  }, [isInitializing, hasCheckedKeys, apiKeysSet, showWelcome, useDatabaseStorage, user, useAuthSystem, storage, handleLoadSession]);
 
   // Persist current session/conversation ID whenever it changes
   useEffect(() => {
