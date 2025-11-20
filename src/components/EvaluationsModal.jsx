@@ -244,13 +244,26 @@ const EvaluationsModal = ({ isOpen, onClose, advisors = [], onUpdateAdvisor, ini
     setShowOptimizationModal(true);
 
     try {
+      // Validate conversationContext structure
+      if (!selectedResponse.conversationContext) {
+        throw new Error('Missing conversation context. Cannot optimize without advisor configuration.');
+      }
+
+      if (!selectedResponse.conversationContext.advisors || !Array.isArray(selectedResponse.conversationContext.advisors)) {
+        throw new Error('Missing advisors array in conversation context. Cannot optimize without advisor configuration.');
+      }
+
       // Find the advisor that produced this response
-      const targetAdvisor = selectedResponse.conversationContext.advisors?.find(
+      const targetAdvisor = selectedResponse.conversationContext.advisors.find(
         advisor => advisor.name === selectedResponse.advisorName
       );
 
       if (!targetAdvisor) {
-        throw new Error('Could not find advisor configuration for optimization');
+        throw new Error(`Could not find advisor configuration for "${selectedResponse.advisorName}". The advisor may have been deleted or renamed.`);
+      }
+
+      if (!targetAdvisor.description) {
+        throw new Error(`Advisor "${selectedResponse.advisorName}" has no description. Cannot optimize without an existing prompt.`);
       }
 
       const originalPrompt = targetAdvisor.description;
@@ -391,10 +404,28 @@ ${selectedResponse.advisorName}: ${improvedPrompt}
 Please respond to user questions from this advisor's perspective, maintaining their expertise and approach.`;
 
           // Get the original context for this assertion
+          if (!assertion.conversationContext) {
+            console.warn(`⚠️ Missing conversation context for assertion: ${assertion.text}`);
+            return {
+              assertion: assertion.text,
+              testResponse: null,
+              error: 'Missing conversation context'
+            };
+          }
+
           const contextMessages = assertion.conversationContext.messages || [];
+          if (!Array.isArray(contextMessages) || contextMessages.length === 0) {
+            console.warn(`⚠️ No messages found in conversation context for assertion: ${assertion.text}`);
+            return {
+              assertion: assertion.text,
+              testResponse: null,
+              error: 'No conversation messages found'
+            };
+          }
+
           const lastUserMessage = contextMessages.slice().reverse().find(msg => msg.type === 'user');
           
-          if (!lastUserMessage) {
+          if (!lastUserMessage || !lastUserMessage.content) {
             console.warn(`⚠️ Could not find original user message for assertion: ${assertion.text}`);
             return {
               assertion: assertion.text,

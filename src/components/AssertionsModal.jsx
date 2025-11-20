@@ -15,6 +15,20 @@ const AssertionsModal = ({
 
   useEffect(() => {
     if (isOpen && advisorResponse) {
+      // Validate advisorResponse has required properties
+      if (!advisorResponse.id) {
+        console.error('AssertionsModal: advisorResponse missing id property', advisorResponse);
+        return;
+      }
+      if (!advisorResponse.name) {
+        console.error('AssertionsModal: advisorResponse missing name property', advisorResponse);
+        return;
+      }
+      if (!advisorResponse.response && !advisorResponse.content) {
+        console.error('AssertionsModal: advisorResponse missing response/content property', advisorResponse);
+        return;
+      }
+
       // Load existing assertions if they exist
       const existing = loadAssertions(advisorResponse.id);
       if (existing) {
@@ -30,7 +44,28 @@ const AssertionsModal = ({
   }, [isOpen, advisorResponse]);
 
   const saveAssertionsData = async () => {
-    if (!advisorResponse || !assertions.trim()) {
+    if (!advisorResponse) {
+      console.error('AssertionsModal: Cannot save assertions - advisorResponse is missing');
+      return null;
+    }
+
+    if (!advisorResponse.id) {
+      console.error('AssertionsModal: Cannot save assertions - advisorResponse.id is missing', advisorResponse);
+      return null;
+    }
+
+    if (!advisorResponse.name) {
+      console.error('AssertionsModal: Cannot save assertions - advisorResponse.name is missing', advisorResponse);
+      return null;
+    }
+
+    const responseContent = advisorResponse.response || advisorResponse.content;
+    if (!responseContent) {
+      console.error('AssertionsModal: Cannot save assertions - advisorResponse.response/content is missing', advisorResponse);
+      return null;
+    }
+
+    if (!assertions.trim()) {
       return null;
     }
 
@@ -55,11 +90,11 @@ const AssertionsModal = ({
       // Create the assertions data structure
       const assertionsData = {
         responseId: advisorResponse.id,
-        responseContent: advisorResponse.response,
+        responseContent: responseContent,
         advisorName: advisorResponse.name,
         conversationContext: {
           ...conversationContext,
-          timestamp: conversationContext.timestamp || new Date().toISOString()
+          timestamp: conversationContext?.timestamp || new Date().toISOString()
         },
         assertions: assertionObjects,
         evaluations: existingAssertions?.evaluations || [],
@@ -142,11 +177,11 @@ const AssertionsModal = ({
         {advisorResponse && (
           <div className="mb-4 p-3 bg-gray-100 dark:bg-gray-800 rounded">
             <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">
-              {advisorResponse.name}
+              {advisorResponse.name || 'Unknown Advisor'}
             </h3>
             <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3">
-              {advisorResponse.response.substring(0, 200)}
-              {advisorResponse.response.length > 200 ? '...' : ''}
+              {(advisorResponse.response || advisorResponse.content || '').substring(0, 200)}
+              {(advisorResponse.response || advisorResponse.content || '').length > 200 ? '...' : ''}
             </p>
           </div>
         )}

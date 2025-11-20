@@ -127,33 +127,39 @@ const MobileLayout = ({
                         }));
 
                         return Object.entries(msg.advisorResponses).map(([advisorId, advisorData], index) => {
-                          const advisorForCard = {
-                            id: advisorId,
-                            name: advisorData.name,
-                            response: advisorData.content,
-                            timestamp: msg.timestamp
-                          };
+                        // Generate unique response ID by combining message timestamp with advisor ID
+                        // This ensures uniqueness across multiple responses from the same advisor
+                        const uniqueResponseId = msg.timestamp 
+                          ? `resp-${advisorId}-${msg.timestamp.replace(/[:.]/g, '-')}`
+                          : `resp-${advisorId}-${Date.now()}`;
+                        
+                        const advisorForCard = {
+                          id: uniqueResponseId,
+                          name: advisorData.name,
+                          response: advisorData.content,
+                          timestamp: msg.timestamp
+                        };
 
-                          return (
-                            <div key={advisorId}>
-                              {advisorData.thinking && <ThinkingBlock content={advisorData.thinking} />}
-                              <AdvisorResponseCard
-                                advisor={advisorForCard}
-                                allAdvisors={advisors}
-                                onAssertionsClick={(advisorData) => {
-                                  console.log('🎯 Assertions clicked for:', advisorData);
-                                  setSelectedAdvisorForAssertions({
-                                    ...advisorData,
-                                    conversationContext: {
-                                      messages: [...messages],
-                                      advisors: [...advisors],
-                                      systemPrompt: getSystemPrompt(),
-                                      timestamp: new Date().toISOString()
-                                    }
-                                  });
-                                  setShowAssertionsModal(true);
-                                }}
-                                totalAdvisorCount={Object.keys(msg.advisorResponses).length}
+                        return (
+                          <div key={advisorId}>
+                            {advisorData.thinking && <ThinkingBlock content={advisorData.thinking} />}
+                            <AdvisorResponseCard
+                              advisor={advisorForCard}
+                              allAdvisors={advisors}
+                              onAssertionsClick={(advisorData) => {
+                                console.log('🎯 Assertions clicked for:', advisorData);
+                                setSelectedAdvisorForAssertions({
+                                  ...advisorData,
+                                  conversationContext: {
+                                    messages: [...messages],
+                                    advisors: [...advisors],
+                                    systemPrompt: getSystemPrompt(),
+                                    timestamp: new Date().toISOString()
+                                  }
+                                });
+                                setShowAssertionsModal(true);
+                              }}
+                              totalAdvisorCount={Object.keys(msg.advisorResponses).length}
                                 allAdvisorsInMessage={advisorsArray}
                                 onCardClick={(cardIndex) => setFullscreenModal({
                                   isOpen: true,
@@ -161,14 +167,14 @@ const MobileLayout = ({
                                   selectedIndex: cardIndex
                                 })}
                                 cardIndex={index}
-                              />
-                              {advisorData.error && (
-                                <div className="mb-2 text-sm text-red-600 dark:text-red-400 italic">
-                                  ⚠ Error with this advisor
-                                </div>
-                              )}
-                            </div>
-                          );
+                            />
+                            {advisorData.error && (
+                              <div className="mb-2 text-sm text-red-600 dark:text-red-400 italic">
+                                ⚠ Error with this advisor
+                              </div>
+                            )}
+                          </div>
+                        );
                         });
                       })()}
                     </div>
@@ -354,22 +360,22 @@ const MobileLayout = ({
 
   return (
     <>
-      <div className="flex flex-col h-full">
-        <MobileHeader 
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          setShowInfoModal={setShowInfoModal}
-        />
-        
-        <div className="flex-1 overflow-hidden">
-          {renderTabContent()}
-        </div>
-        
-        <MobileTabBar 
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-        />
+    <div className="flex flex-col h-full">
+      <MobileHeader 
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        setShowInfoModal={setShowInfoModal}
+      />
+      
+      <div className="flex-1 overflow-hidden">
+        {renderTabContent()}
       </div>
+      
+      <MobileTabBar 
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+      />
+    </div>
 
       {/* Fullscreen perspective modal */}
       {fullscreenModal.isOpen && (

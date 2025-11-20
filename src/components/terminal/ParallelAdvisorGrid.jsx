@@ -70,38 +70,44 @@ export const ParallelAdvisorGrid = memo(({
 
   return (
     <>
-      <div>
-        {/* Global streaming indicator - only show when not all completed */}
-        {!message.allCompleted && (
-          <div className="mb-3 text-sm text-green-600 dark:text-green-400 italic">
-            ⚡ Parallel streaming in progress...
-          </div>
-        )}
+    <div>
+      {/* Global streaming indicator - only show when not all completed */}
+      {!message.allCompleted && (
+        <div className="mb-3 text-sm text-green-600 dark:text-green-400 italic">
+          ⚡ Parallel streaming in progress...
+        </div>
+      )}
 
-        {/* Dynamic responsive grid layout */}
-        <div className={getGridClasses()}>
+      {/* Dynamic responsive grid layout */}
+      <div className={getGridClasses()}>
           {sortedAdvisorEntries.map(([advisorId, advisorData], index) => {
-            // Create advisor object compatible with AdvisorResponseCard
-            const advisorForCard = {
-              id: advisorId,
-              name: advisorData.name,
-              response: advisorData.content,
-              timestamp: message.timestamp,
-              isStreaming: !advisorData.completed
-            };
+          // Create advisor object compatible with AdvisorResponseCard
+          // Generate unique response ID by combining message timestamp with advisor ID
+          // This ensures uniqueness across multiple responses from the same advisor
+          const uniqueResponseId = message.timestamp 
+            ? `resp-${advisorId}-${message.timestamp.replace(/[:.]/g, '-')}`
+            : `resp-${advisorId}-${Date.now()}`;
+          
+          const advisorForCard = {
+            id: uniqueResponseId,
+            name: advisorData.name,
+            response: advisorData.content,
+            timestamp: message.timestamp,
+            isStreaming: !advisorData.completed
+          };
 
-            return (
-              <div key={advisorId} className="flex flex-col">
-                {/* Thinking block if present */}
-                {advisorData.thinking && <ThinkingBlock content={advisorData.thinking} />}
+          return (
+            <div key={advisorId} className="flex flex-col">
+              {/* Thinking block if present */}
+              {advisorData.thinking && <ThinkingBlock content={advisorData.thinking} />}
 
-                {/* Advisor card */}
-                <AdvisorResponseCard
-                  advisor={advisorForCard}
-                  allAdvisors={advisors}
-                  onAssertionsClick={(advisorData) => onAssertionsClick(advisorData, messages, getSystemPrompt)}
-                  compact={true}
-                  totalAdvisorCount={advisorCount}
+              {/* Advisor card */}
+              <AdvisorResponseCard
+                advisor={advisorForCard}
+                allAdvisors={advisors}
+                onAssertionsClick={(advisorData) => onAssertionsClick(advisorData, messages, getSystemPrompt)}
+                compact={true}
+                totalAdvisorCount={advisorCount}
                   allAdvisorsInMessage={advisorsArray}
                   onCardClick={(cardIndex) => setFullscreenModal({
                     isOpen: true,
@@ -109,19 +115,19 @@ export const ParallelAdvisorGrid = memo(({
                     selectedIndex: cardIndex
                   })}
                   cardIndex={index}
-                />
+              />
 
-                {/* Error indicator if present */}
-                {advisorData.error && (
-                  <div className="mt-2 text-sm text-red-600 dark:text-red-400 italic">
-                    ⚠ Error with this advisor
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+              {/* Error indicator if present */}
+              {advisorData.error && (
+                <div className="mt-2 text-sm text-red-600 dark:text-red-400 italic">
+                  ⚠ Error with this advisor
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
+    </div>
 
       {/* Fullscreen perspective modal */}
       {fullscreenModal.isOpen && (
