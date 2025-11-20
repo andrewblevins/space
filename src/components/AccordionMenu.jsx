@@ -36,27 +36,28 @@ const AccordionMenu = ({
   }, [isExpanded]);
 
   const menuItems = [
-    {
-      id: 'new-session',
-      label: 'New Session',
-      onClick: onNewSessionClick,
-      icon: (
-        <svg 
-          xmlns="http://www.w3.org/2000/svg" 
-          className="h-4 w-4" 
-          fill="none" 
-          viewBox="0 0 24 24" 
-          stroke="currentColor"
-        >
-          <path 
-            strokeLinecap="round" 
-            strokeLinejoin="round" 
-            strokeWidth={2} 
-            d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-          />
-        </svg>
-      )
-    },
+    // DEPRECATED: New Session - Now available in sidebar
+    // {
+    //   id: 'new-session',
+    //   label: 'New Session',
+    //   onClick: onNewSessionClick,
+    //   icon: (
+    //     <svg 
+    //       xmlns="http://www.w3.org/2000/svg" 
+    //       className="h-4 w-4" 
+    //       fill="none" 
+    //       viewBox="0 0 24 24" 
+    //       stroke="currentColor"
+    //     >
+    //       <path 
+    //         strokeLinecap="round" 
+    //         strokeLinejoin="round" 
+    //         strokeWidth={2} 
+    //         d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+    //       />
+    //     </svg>
+    //   )
+    // },
     {
       id: 'sessions',
       label: 'Session Manager',
@@ -78,48 +79,50 @@ const AccordionMenu = ({
         </svg>
       )
     },
-    {
-      id: 'prompts',
-      label: 'Prompt Library',
-      onClick: onPromptLibraryClick,
-      icon: (
-        <svg 
-          xmlns="http://www.w3.org/2000/svg" 
-          className="h-4 w-4" 
-          fill="none" 
-          viewBox="0 0 24 24" 
-          stroke="currentColor"
-        >
-          <path 
-            strokeLinecap="round" 
-            strokeLinejoin="round" 
-            strokeWidth={2} 
-            d="M19 11H5m14-7H3a2 2 0 01-2 2v10a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2zM9 7h6"
-          />
-        </svg>
-      )
-    },
-    {
-      id: 'dossier',
-      label: 'Knowledge',
-      onClick: onDossierClick,
-      icon: (
-        <svg 
-          xmlns="http://www.w3.org/2000/svg" 
-          className="h-4 w-4" 
-          fill="none" 
-          viewBox="0 0 24 24" 
-          stroke="currentColor"
-        >
-          <path 
-            strokeLinecap="round" 
-            strokeLinejoin="round" 
-            strokeWidth={2} 
-            d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
-          />
-        </svg>
-      )
-    },
+    // DEPRECATED: Prompt Library - Feature no longer maintained
+    // {
+    //   id: 'prompts',
+    //   label: 'Prompt Library',
+    //   onClick: onPromptLibraryClick,
+    //   icon: (
+    //     <svg 
+    //       xmlns="http://www.w3.org/2000/svg" 
+    //       className="h-4 w-4" 
+    //       fill="none" 
+    //       viewBox="0 0 24 24" 
+    //       stroke="currentColor"
+    //     >
+    //       <path 
+    //         strokeLinecap="round" 
+    //         strokeLinejoin="round" 
+    //         strokeWidth={2} 
+    //         d="M19 11H5m14-7H3a2 2 0 01-2 2v10a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2zM9 7h6"
+    //       />
+    //     </svg>
+    //   )
+    // },
+    // DEPRECATED: Knowledge Dossier - Feature no longer maintained
+    // {
+    //   id: 'dossier',
+    //   label: 'Knowledge',
+    //   onClick: onDossierClick,
+    //   icon: (
+    //     <svg 
+    //       xmlns="http://www.w3.org/2000/svg" 
+    //       className="h-4 w-4" 
+    //       fill="none" 
+    //       viewBox="0 0 24 24" 
+    //       stroke="currentColor"
+    //     >
+    //       <path 
+    //         strokeLinecap="round" 
+    //         strokeLinejoin="round" 
+    //         strokeWidth={2} 
+    //         d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
+    //       />
+    //     </svg>
+    //   )
+    // },
     {
       id: 'evaluations',
       label: 'Evaluations',
@@ -183,27 +186,28 @@ const AccordionMenu = ({
         </svg>
       )
     },
-    {
-      id: 'voting',
-      label: 'Call a Vote',
-      onClick: onVotingClick,
-      icon: (
-        <svg 
-          xmlns="http://www.w3.org/2000/svg" 
-          className="h-4 w-4" 
-          fill="none" 
-          viewBox="0 0 24 24" 
-          stroke="currentColor"
-        >
-          <path 
-            strokeLinecap="round" 
-            strokeLinejoin="round" 
-            strokeWidth={2} 
-            d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 8l2 2 4-4"
-          />
-        </svg>
-      )
-    },
+    // DEPRECATED: Call a Vote - Feature no longer maintained
+    // {
+    //   id: 'voting',
+    //   label: 'Call a Vote',
+    //   onClick: onVotingClick,
+    //   icon: (
+    //     <svg 
+    //       xmlns="http://www.w3.org/2000/svg" 
+    //       className="h-4 w-4" 
+    //       fill="none" 
+    //       viewBox="0 0 24 24" 
+    //       stroke="currentColor"
+    //     >
+    //       <path 
+    //         strokeLinecap="round" 
+    //         strokeLinejoin="round" 
+    //         strokeWidth={2} 
+    //         d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 8l2 2 4-4"
+    //       />
+    //     </svg>
+    //   )
+    // },
     // DEPRECATED: High Council Mode - Replaced by parallel advisor streaming
     // The new parallel advisor system provides better real-time responses with independent advisors
     // commenting out rather than removing to preserve code for reference

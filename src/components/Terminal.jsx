@@ -17,10 +17,12 @@ import { useModal } from '../contexts/ModalContext';
 import { useAuth } from '../contexts/AuthContext';
 import AccordionMenu from './AccordionMenu';
 import SessionPanel from './SessionPanel';
-import PromptLibrary from './PromptLibrary';
-import AddPromptForm from './AddPromptForm';
+// DEPRECATED: Prompt Library - Feature no longer maintained
+// import PromptLibrary from './PromptLibrary';
+// import AddPromptForm from './AddPromptForm';
 import ExportMenu from './ExportMenu';
-import DossierModal from './DossierModal';
+// DEPRECATED: Knowledge Dossier - Feature no longer maintained
+// import DossierModal from './DossierModal';
 import ImportExportModal from './ImportExportModal';
 import HelpModal from './HelpModal';
 import InfoModal from './InfoModal';
@@ -33,7 +35,8 @@ import { CollapsibleClickableModule } from "./terminal/CollapsibleClickableModul
 // DEPRECATED: High Council Mode components
 // import DebateBlock from './DebateBlock';
 import { CollapsibleSuggestionsModule } from "./terminal/CollapsibleSuggestionsModule";
-import VotingModal from './VotingModal';
+// DEPRECATED: Call a Vote - Feature no longer maintained
+// import VotingModal from './VotingModal';
 // import HighCouncilModal from './HighCouncilModal';
 import { ExpandingInput } from "./terminal/ExpandingInput";
 import { MemoizedMarkdownMessage } from "./terminal/MemoizedMarkdownMessage";
@@ -715,7 +718,8 @@ const Terminal = ({ theme, toggleTheme }) => {
   const [advisorSuggestionsExpanded, setAdvisorSuggestionsExpanded] = useState(false);
   const [advisorSuggestions, setAdvisorSuggestions] = useState([]);
   const [voteHistory, setVoteHistory] = useState([]);
-  const [showVotingModal, setShowVotingModal] = useState(false);
+  // DEPRECATED: Call a Vote - Feature no longer maintained
+  // const [showVotingModal, setShowVotingModal] = useState(false);
   // DEPRECATED: High Council Mode state
   // const [showHighCouncilModal, setShowHighCouncilModal] = useState(false);
   const [lastAdvisorAnalysisContent, setLastAdvisorAnalysisContent] = useState('');
@@ -737,13 +741,16 @@ const Terminal = ({ theme, toggleTheme }) => {
   };
   const [openaiClient, setOpenaiClient] = useState(null);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
-  const [showPromptLibrary, setShowPromptLibrary] = useState(false);
+  // DEPRECATED: Prompt Library - Feature no longer maintained
+  // const [showPromptLibrary, setShowPromptLibrary] = useState(false);
   const [showSessionPanel, setShowSessionPanel] = useState(false);
 
 
-  const [showAddPromptForm, setShowAddPromptForm] = useState(false);
+  // DEPRECATED: Prompt Library - Feature no longer maintained
+  // const [showAddPromptForm, setShowAddPromptForm] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
-  const [showDossierModal, setShowDossierModal] = useState(false);
+  // DEPRECATED: Knowledge Dossier - Feature no longer maintained
+  // const [showDossierModal, setShowDossierModal] = useState(false);
   const [showImportExportModal, setShowImportExportModal] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
@@ -3526,43 +3533,43 @@ Gemini: ${geminiKey ? '✓ Set' : '✗ Not Set'}`
   };
 
 
-  // Prompt Library handlers
-  const handleUsePrompt = (prompt) => {
-    setInput(prompt.text);
-    setMessages(prev => [...prev, {
-      type: 'system',
-      content: `Loaded prompt: "${prompt.name}"`
-    }]);
-  };
+  // DEPRECATED: Prompt Library handlers - Feature no longer maintained
+  // const handleUsePrompt = (prompt) => {
+  //   setInput(prompt.text);
+  //   setMessages(prev => [...prev, {
+  //     type: 'system',
+  //     content: `Loaded prompt: "${prompt.name}"`
+  //   }]);
+  // };
 
-  const handleEditPrompt = (prompt) => {
-    setEditingPrompt(prompt);
-    setShowPromptLibrary(false);
-  };
+  // const handleEditPrompt = (prompt) => {
+  //   setEditingPrompt(prompt);
+  //   setShowPromptLibrary(false);
+  // };
 
-  const handleDeletePrompt = (prompt) => {
-    setSavedPrompts(prev => prev.filter(p => p.name !== prompt.name));
-    setMessages(prev => [...prev, {
-      type: 'system',
-      content: `Deleted prompt: "${prompt.name}"`
-    }]);
-  };
+  // const handleDeletePrompt = (prompt) => {
+  //   setSavedPrompts(prev => prev.filter(p => p.name !== prompt.name));
+  //   setMessages(prev => [...prev, {
+  //     type: 'system',
+  //     content: `Deleted prompt: "${prompt.name}"`
+  //   }]);
+  // };
 
-  const handleAddNewPrompt = () => {
-    setShowPromptLibrary(false);
-    setShowAddPromptForm(true);
-  };
+  // const handleAddNewPrompt = () => {
+  //   setShowPromptLibrary(false);
+  //   setShowAddPromptForm(true);
+  // };
 
-  const handleAddPromptSubmit = ({ name, text }) => {
-    const newPrompt = { name, text };
-    setSavedPrompts(prev => [...prev, newPrompt]);
-    setMessages(prev => [...prev, {
-      type: 'system',
-      content: `Added new prompt: "${name}"`
-    }]);
-    setShowAddPromptForm(false);
-    setShowPromptLibrary(true); // Reopen the prompt library after saving
-  };
+  // const handleAddPromptSubmit = ({ name, text }) => {
+  //   const newPrompt = { name, text };
+  //   setSavedPrompts(prev => [...prev, newPrompt]);
+  //   setMessages(prev => [...prev, {
+  //     type: 'system',
+  //     content: `Added new prompt: "${name}"`
+  //   }]);
+  //   setShowAddPromptForm(false);
+  //   setShowPromptLibrary(true); // Reopen the prompt library after saving
+  // };
 
   // Add this helper function to format messages as markdown
   const formatSessionAsMarkdown = (messages, metadata = {}, options = {}) => {
@@ -3801,109 +3808,110 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
     }
   };
 
-  const generateAdvisorVote = async (advisor, question, options) => {
-    if (!openaiClient) return { position: 'abstain', confidence: 0, reasoning: 'No API connection' };
-    try {
-      const optionsList = options.map((opt, i) => `${i + 1}. ${opt}`).join('\n');
-      
-      const prompt = `As ${advisor.name}, vote on this question from your perspective: "${question}"
+  // DEPRECATED: Call a Vote handlers - Feature no longer maintained
+  // const generateAdvisorVote = async (advisor, question, options) => {
+  //   if (!openaiClient) return { position: 'abstain', confidence: 0, reasoning: 'No API connection' };
+  //   try {
+  //     const optionsList = options.map((opt, i) => `${i + 1}. ${opt}`).join('\n');
+  //     
+  //     const prompt = `As ${advisor.name}, vote on this question from your perspective: "${question}"
 
-Your persona: ${advisor.description}
+  // Your persona: ${advisor.description}
 
-Available options:
-${optionsList}
+  // Available options:
+  // ${optionsList}
 
-Choose one of the numbered options above and respond with a JSON object containing:
-- "position": The exact text of your chosen option (not the number)
-- "confidence": Your confidence level (0-100)
-- "reasoning": A brief explanation in your voice (1-2 sentences)
+  // Choose one of the numbered options above and respond with a JSON object containing:
+  // - "position": The exact text of your chosen option (not the number)
+  // - "confidence": Your confidence level (0-100)
+  // - "reasoning": A brief explanation in your voice (1-2 sentences)
 
-Example: {"position": "Option 2 text here", "confidence": 75, "reasoning": "This aligns with my philosophical understanding of human nature."}`;
+  // Example: {"position": "Option 2 text here", "confidence": 75, "reasoning": "This aligns with my philosophical understanding of human nature."}`;
 
-      const inputTokens = Math.ceil((100 + prompt.length) / 4);
-      const response = await openaiClient.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: 'You are a voting advisor. Choose from the provided options only. Respond in valid JSON format with the exact fields requested.' },
-          { role: 'user', content: prompt }
-        ],
-        max_tokens: 200,
-        response_format: { type: 'json_object' }
-      });
-      
-      const vote = JSON.parse(response.choices[0].message.content);
-      const outputTokens = Math.ceil(response.choices[0].message.content.length / 4);
-      trackUsage('gpt', inputTokens, outputTokens);
-      
-      // Validate that the position matches one of the options
-      let validPosition = vote.position;
-      if (!options.some(opt => opt.toLowerCase().includes(validPosition.toLowerCase()) || validPosition.toLowerCase().includes(opt.toLowerCase()))) {
-        // If no match found, default to first option
-        validPosition = options[0];
-      }
-      
-      const sanitizedVote = {
-        position: validPosition,
-        confidence: Math.max(0, Math.min(100, parseInt(vote.confidence) || 0)),
-        reasoning: vote.reasoning || 'No reasoning provided'
-      };
-      
-      return sanitizedVote;
-    } catch (e) {
-      console.error('Vote generation failed for', advisor.name, e);
-      return { position: options[0] || 'abstain', confidence: 0, reasoning: 'Vote generation failed' };
-    }
-  };
+  //     const inputTokens = Math.ceil((100 + prompt.length) / 4);
+  //     const response = await openaiClient.chat.completions.create({
+  //       model: 'gpt-4o-mini',
+  //       messages: [
+  //         { role: 'system', content: 'You are a voting advisor. Choose from the provided options only. Respond in valid JSON format with the exact fields requested.' },
+  //         { role: 'user', content: prompt }
+  //       ],
+  //       max_tokens: 200,
+  //       response_format: { type: 'json_object' }
+  //     });
+  //     
+  //     const vote = JSON.parse(response.choices[0].message.content);
+  //     const outputTokens = Math.ceil(response.choices[0].message.content.length / 4);
+  //     trackUsage('gpt', inputTokens, outputTokens);
+  //     
+  //     // Validate that the position matches one of the options
+  //     let validPosition = vote.position;
+  //     if (!options.some(opt => opt.toLowerCase().includes(validPosition.toLowerCase()) || validPosition.toLowerCase().includes(opt.toLowerCase()))) {
+  //       // If no match found, default to first option
+  //       validPosition = options[0];
+  //     }
+  //     
+  //     const sanitizedVote = {
+  //       position: validPosition,
+  //       confidence: Math.max(0, Math.min(100, parseInt(vote.confidence) || 0)),
+  //       reasoning: vote.reasoning || 'No reasoning provided'
+  //     };
+  //     
+  //     return sanitizedVote;
+  //   } catch (e) {
+  //     console.error('Vote generation failed for', advisor.name, e);
+  //     return { position: options[0] || 'abstain', confidence: 0, reasoning: 'Vote generation failed' };
+  //   }
+  // };
 
-  const handleModalVote = async (question, options) => {
-    const active = advisors.filter(a => a.active);
-    if (active.length === 0) {
-      setMessages(prev => [...prev, {
-        type: 'system',
-        content: 'No active advisors to vote. Please activate advisors first.'
-      }]);
-      return;
-    }
+  // const handleModalVote = async (question, options) => {
+  //   const active = advisors.filter(a => a.active);
+  //   if (active.length === 0) {
+  //     setMessages(prev => [...prev, {
+  //       type: 'system',
+  //       content: 'No active advisors to vote. Please activate advisors first.'
+  //     }]);
+  //     return;
+  //   }
 
-    // Add "starting vote" message
-    setMessages(prev => [...prev, {
-      type: 'system',
-      content: `**Starting Vote:** "${question}"\n**Options:** ${options.map((opt, i) => `${i + 1}. ${opt}`).join(', ')}`
-    }]);
+  //   // Add "starting vote" message
+  //   setMessages(prev => [...prev, {
+  //     type: 'system',
+  //     content: `**Starting Vote:** "${question}"\n**Options:** ${options.map((opt, i) => `${i + 1}. ${opt}`).join(', ')}`
+  //   }]);
 
-    const votes = [];
-    for (const adv of active) {
-      const vote = await generateAdvisorVote(adv, question, options);
-      votes.push({ advisor: adv.name, ...vote });
-    }
-    
-    setVoteHistory(prev => [...prev, { question, options, votes }]);
-    
-    // Create voting results message
-    const tally = {};
-    let totalConf = 0;
-    votes.forEach(v => {
-      tally[v.position] = (tally[v.position] || 0) + 1;
-      totalConf += v.confidence;
-    });
-    const recommended = Object.entries(tally).sort((a,b)=>b[1]-a[1])[0][0];
-    const avgConfidence = Math.round(totalConf / votes.length);
-    
-    let voteResults = `**Voting Results**\n\n`;
-    votes.forEach(vote => {
-      voteResults += `**${vote.advisor}:** ${vote.position} (${vote.confidence}% confidence)\n`;
-      if (vote.reasoning) {
-        voteResults += `  *"${vote.reasoning}"*\n`;
-      }
-      voteResults += `\n`;
-    });
-    voteResults += `**Summary:** ${tally[recommended]}/${active.length} advisors chose **${recommended}** (avg confidence: ${avgConfidence}%)`;
-    
-    setMessages(prev => [...prev, { 
-      type: 'system', 
-      content: voteResults
-    }]);
-  };
+  //   const votes = [];
+  //   for (const adv of active) {
+  //     const vote = await generateAdvisorVote(adv, question, options);
+  //     votes.push({ advisor: adv.name, ...vote });
+  //   }
+  //   
+  //   setVoteHistory(prev => [...prev, { question, options, votes }]);
+  //   
+  //   // Create voting results message
+  //   const tally = {};
+  //   let totalConf = 0;
+  //   votes.forEach(v => {
+  //     tally[v.position] = (tally[v.position] || 0) + 1;
+  //     totalConf += v.confidence;
+  //   });
+  //   const recommended = Object.entries(tally).sort((a,b)=>b[1]-a[1])[0][0];
+  //   const avgConfidence = Math.round(totalConf / votes.length);
+  //   
+  //   let voteResults = `**Voting Results**\n\n`;
+  //   votes.forEach(vote => {
+  //     voteResults += `**${vote.advisor}:** ${vote.position} (${vote.confidence}% confidence)\n`;
+  //     if (vote.reasoning) {
+  //       voteResults += `  *"${vote.reasoning}"*\n`;
+  //     }
+  //     voteResults += `\n`;
+  //   });
+  //   voteResults += `**Summary:** ${tally[recommended]}/${active.length} advisors chose **${recommended}** (avg confidence: ${avgConfidence}%)`;
+  //   
+  //   setMessages(prev => [...prev, { 
+  //     type: 'system', 
+  //     content: voteResults
+  //   }]);
+  // };
 
   // DEPRECATED: High Council Mode handler - Replaced by parallel advisor streaming
   // const handleStartHighCouncil = async (topic) => {
@@ -4556,14 +4564,18 @@ ${selectedText}
                     <div className="mt-6 mb-4">
                       <AccordionMenu
                         onSettingsClick={() => setShowSettingsMenu(true)}
-                        onPromptLibraryClick={() => setShowPromptLibrary(true)}
+                        // DEPRECATED: Prompt Library - Feature no longer maintained
+                        // onPromptLibraryClick={() => setShowPromptLibrary(true)}
                         onSessionManagerClick={() => setShowSessionPanel(true)}
-                        onNewSessionClick={handleNewSession}
+                        // DEPRECATED: New Session - Now available in sidebar
+                        // onNewSessionClick={handleNewSession}
                         onExportClick={() => setShowExportMenu(true)}
-                        onDossierClick={() => setShowDossierModal(true)}
+                        // DEPRECATED: Knowledge Dossier - Feature no longer maintained
+                        // onDossierClick={() => setShowDossierModal(true)}
                         onEvaluationsClick={() => setShowEvaluationsModal(true)}
                         onImportExportAdvisorsClick={() => setShowImportExportModal(true)}
-                        onVotingClick={() => setShowVotingModal(true)}
+                        // DEPRECATED: Call a Vote - Feature no longer maintained
+                        // onVotingClick={() => setShowVotingModal(true)}
                         onHelpClick={() => setShowHelpModal(true)}
                         onFullscreenClick={toggleFullscreen}
                         isFullscreen={isFullscreen}
@@ -4768,7 +4780,8 @@ ${selectedText}
             />
           )}
 
-          {editingPrompt && (
+          {/* DEPRECATED: Edit Prompt Form - Part of Prompt Library feature no longer maintained */}
+          {/* {editingPrompt && (
             <EditPromptForm
               prompt={editingPrompt}
               onSubmit={({ name, text }) => {
@@ -4785,7 +4798,7 @@ ${selectedText}
                 setEditText('');
               }}
             />
-          )}
+          )} */}
 
       {/* Settings Menu Component */}
       <SettingsMenu
@@ -4810,8 +4823,8 @@ ${selectedText}
         setOpenrouterModel={import.meta.env.DEV ? setOpenrouterModel : () => {}}
       />
 
-      {/* Prompt Library Component */}
-      <PromptLibrary
+      {/* DEPRECATED: Prompt Library Component - Feature no longer maintained */}
+      {/* <PromptLibrary
         isOpen={showPromptLibrary}
         onClose={() => setShowPromptLibrary(false)}
         savedPrompts={savedPrompts}
@@ -4819,15 +4832,15 @@ ${selectedText}
         onEditPrompt={handleEditPrompt}
         onDeletePrompt={handleDeletePrompt}
         onAddNewPrompt={handleAddNewPrompt}
-      />
+      /> */}
 
-      {/* Voting Modal Component */}
-      <VotingModal
+      {/* DEPRECATED: Voting Modal Component - Feature no longer maintained */}
+      {/* <VotingModal
         isOpen={showVotingModal}
         onClose={() => setShowVotingModal(false)}
         advisors={advisors}
         onSubmitVote={handleModalVote}
-      />
+      /> */}
 
       {/* DEPRECATED: High Council Modal - Replaced by parallel advisor streaming */}
       {/* <HighCouncilModal
@@ -4836,12 +4849,12 @@ ${selectedText}
         onStartCouncil={handleStartHighCouncil}
       /> */}
 
-      {/* Add Prompt Form Component */}
-      <AddPromptForm
+      {/* DEPRECATED: Add Prompt Form Component - Feature no longer maintained */}
+      {/* <AddPromptForm
         isOpen={showAddPromptForm}
         onSubmit={handleAddPromptSubmit}
         onCancel={() => setShowAddPromptForm(false)}
-      />
+      /> */}
 
       {/* Session Panel Component */}
       <SessionPanel
@@ -4874,14 +4887,15 @@ ${selectedText}
         })()}
       />
 
-      <DossierModal
+      {/* DEPRECATED: Knowledge Dossier Modal - Feature no longer maintained */}
+      {/* <DossierModal
         isOpen={showDossierModal}
         onClose={() => setShowDossierModal(false)}
         onJumpToSession={(sessionId) => {
           setShowDossierModal(false);
           handleLoadSession(sessionId);
         }}
-      />
+      /> */}
 
       <ImportExportModal
         isOpen={showImportExportModal}
