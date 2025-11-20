@@ -786,13 +786,13 @@ const Terminal = ({ theme, toggleTheme }) => {
 
   // AI Model Settings - Always use OpenRouter
   const [openrouterModel, setOpenrouterModel] = useState(() => {
-    // In production, always use Claude Sonnet 4
+    // In production, always use Claude Sonnet 4.5
     if (!import.meta.env.DEV) {
-      return 'anthropic/claude-sonnet-4';
+      return 'anthropic/claude-sonnet-4.5';
     }
     // In development, allow user selection
     const saved = localStorage.getItem('space_openrouter_model');
-    return saved || 'anthropic/claude-sonnet-4';
+    return saved || 'anthropic/claude-sonnet-4.5';
   });
 
   // Check for API keys after modal controller is initialized
@@ -1302,7 +1302,7 @@ const { callParallelAdvisors } = useParallelAdvisors({ messages, setMessages, ma
         method: 'POST',
         headers,
         body: JSON.stringify({
-          model: 'claude-sonnet-4',
+          model: 'claude-sonnet-4.5',
           messages: [{
             role: 'user',
             content: "Generate an interesting, thought-provoking question or scenario that would make for a great conversation starter. Something that would benefit from multiple perspectives and deep thinking."
@@ -1436,7 +1436,7 @@ Generate ONLY the user's message describing their situation, nothing else. Inclu
         method: 'POST',
         headers,
         body: JSON.stringify({
-          model: 'claude-sonnet-4',
+          model: 'claude-sonnet-4.5',
           messages: contextMessages,
           system: `You are helping test a conversational AI system. Based on the conversation history, generate a natural follow-up message that a user would likely say next. 
 
@@ -3197,7 +3197,7 @@ Gemini: ${geminiKey ? '✓ Set' : '✗ Not Set'}`
                         'anthropic-dangerous-direct-browser-access': 'true'
                       },
                       body: JSON.stringify({
-                        model: 'claude-sonnet-4',
+                        model: 'claude-sonnet-4.5',
                         messages: [{ role: 'user', content: 'Hello' }],
                         max_tokens: 10
                       })

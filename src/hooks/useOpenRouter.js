@@ -21,7 +21,7 @@ import { trackMessage } from '../utils/analytics';
  * @param {string} params.model - OpenRouter model to use
  * @returns {{ callOpenRouter: (msg: string, customGetSystemPrompt?: () => string) => Promise<string> }}
  */
-export function useOpenRouter({ messages, setMessages, maxTokens, contextLimit, memory, debugMode, getSystemPrompt, model = 'anthropic/claude-3.5-sonnet' }) {
+export function useOpenRouter({ messages, setMessages, maxTokens, contextLimit, memory, debugMode, getSystemPrompt, model = 'anthropic/claude-sonnet-4.5' }) {
   // Always call hooks (hooks rules), but check auth enabled inside logic
   const useAuthSystem = import.meta.env.VITE_USE_AUTH === 'true';
   const authData = useAuthSystem ? useAuth() : { session: null };
