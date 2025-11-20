@@ -697,6 +697,7 @@ const Terminal = ({ theme, toggleTheme }) => {
   const [showAdvisorForm, setShowAdvisorForm] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const terminalRef = useRef(null);
+  const hasRestoredSessionRef = useRef(false);
 
   // Sidebar collapse state
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
@@ -833,6 +834,11 @@ const Terminal = ({ theme, toggleTheme }) => {
       return;
     }
     
+    // Prevent infinite loop: only restore session once
+    if (hasRestoredSessionRef.current) {
+      return;
+    }
+    
     if (!isInitializing && hasCheckedKeys && apiKeysSet && !showWelcome) {
       const persisted = loadPersistedCurrentSession();
       
@@ -840,12 +846,16 @@ const Terminal = ({ theme, toggleTheme }) => {
       if (persisted.conversationId || persisted.sessionId) {
         console.log('🔄 Restoring persisted session:', { conversationId: persisted.conversationId, sessionId: persisted.sessionId });
         
+        // Mark as restored to prevent infinite loop
+        hasRestoredSessionRef.current = true;
+        
         // Check if it's a UUID (database conversation) or integer (localStorage session)
         const isUUID = persisted.conversationId || /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(persisted.sessionId);
         
         if (isUUID && useDatabaseStorage) {
           // Load from database
           const sessionIdToLoad = persisted.conversationId || persisted.sessionId;
+          // Ref already set above, but ensure it's set before async operations
           handleLoadSession(sessionIdToLoad);
         } else if (persisted.sessionId && !isUUID) {
           // If we have a localStorage session ID but now using database storage, try loading most recent database conversation
@@ -855,6 +865,7 @@ const Terminal = ({ theme, toggleTheme }) => {
               if (conversations && conversations.length > 0) {
                 const mostRecent = conversations[0]; // Already sorted by updated_at desc
                 console.log('📂 Auto-loading most recent database conversation:', mostRecent.id, mostRecent.title);
+                hasRestoredSessionRef.current = true;
                 handleLoadSession(mostRecent.id);
               } else {
                 console.log('📭 No database conversations found to auto-load');
@@ -864,17 +875,21 @@ const Terminal = ({ theme, toggleTheme }) => {
             });
           } else {
             // Load from localStorage
+            hasRestoredSessionRef.current = true;
             handleLoadSession(persisted.sessionId);
           }
         } else {
           // Fall back to most recent session
           console.log('🔄 No valid persisted session, loading most recent...');
+          // Mark as restored to prevent infinite loop
+          hasRestoredSessionRef.current = true;
           if (useDatabaseStorage) {
             // Try database first
             storage.listConversations().then(conversations => {
               if (conversations && conversations.length > 0) {
                 const mostRecent = conversations[0];
                 console.log('📂 Auto-loading most recent database conversation:', mostRecent.id, mostRecent.title);
+                hasRestoredSessionRef.current = true;
                 handleLoadSession(mostRecent.id);
               } else {
                 // Fall back to localStorage
@@ -882,6 +897,7 @@ const Terminal = ({ theme, toggleTheme }) => {
                 if (allSessions.length > 0) {
                   const mostRecentSession = allSessions[0];
                   console.log('📂 Auto-loading most recent localStorage session:', mostRecentSession.id, mostRecentSession.title);
+                  hasRestoredSessionRef.current = true;
                   handleLoadSession(mostRecentSession.id);
                 } else {
                   console.log('📭 No sessions found to auto-load');
@@ -893,6 +909,7 @@ const Terminal = ({ theme, toggleTheme }) => {
               if (allSessions.length > 0) {
                 const mostRecentSession = allSessions[0];
                 console.log('📂 Auto-loading most recent localStorage session:', mostRecentSession.id, mostRecentSession.title);
+                hasRestoredSessionRef.current = true;
                 handleLoadSession(mostRecentSession.id);
               } else {
                 console.log('📭 No sessions found to auto-load');
@@ -903,6 +920,7 @@ const Terminal = ({ theme, toggleTheme }) => {
             if (allSessions.length > 0) {
               const mostRecentSession = allSessions[0];
               console.log('📂 Auto-loading most recent session:', mostRecentSession.id, mostRecentSession.title);
+              hasRestoredSessionRef.current = true;
               handleLoadSession(mostRecentSession.id);
             } else {
               console.log('📭 No sessions found to auto-load');
@@ -912,12 +930,15 @@ const Terminal = ({ theme, toggleTheme }) => {
       } else {
         // No persisted session - try to load most recent
         console.log('🔄 No persisted session, loading most recent...');
+        // Mark as restored to prevent infinite loop
+        hasRestoredSessionRef.current = true;
         if (useDatabaseStorage) {
           // Try database first
           storage.listConversations().then(conversations => {
             if (conversations && conversations.length > 0) {
               const mostRecent = conversations[0];
               console.log('📂 Auto-loading most recent database conversation:', mostRecent.id, mostRecent.title);
+              hasRestoredSessionRef.current = true;
               handleLoadSession(mostRecent.id);
             } else {
               // Fall back to localStorage
@@ -925,28 +946,31 @@ const Terminal = ({ theme, toggleTheme }) => {
               if (allSessions.length > 0) {
                 const mostRecentSession = allSessions[0];
                 console.log('📂 Auto-loading most recent localStorage session:', mostRecentSession.id, mostRecentSession.title);
+                hasRestoredSessionRef.current = true;
                 handleLoadSession(mostRecentSession.id);
               } else {
                 console.log('📭 No sessions found to auto-load');
               }
             }
-          }).catch(error => {
-            console.error('Failed to load database conversations, falling back to localStorage:', error);
+            }).catch(error => {
+              console.error('Failed to load database conversations, falling back to localStorage:', error);
+              const allSessions = loadSessions();
+              if (allSessions.length > 0) {
+                const mostRecentSession = allSessions[0];
+                console.log('📂 Auto-loading most recent localStorage session:', mostRecentSession.id, mostRecentSession.title);
+                hasRestoredSessionRef.current = true;
+                handleLoadSession(mostRecentSession.id);
+              } else {
+                console.log('📭 No sessions found to auto-load');
+              }
+            });
+          } else {
             const allSessions = loadSessions();
             if (allSessions.length > 0) {
               const mostRecentSession = allSessions[0];
-              console.log('📂 Auto-loading most recent localStorage session:', mostRecentSession.id, mostRecentSession.title);
+              console.log('📂 Auto-loading most recent session:', mostRecentSession.id, mostRecentSession.title);
+              hasRestoredSessionRef.current = true;
               handleLoadSession(mostRecentSession.id);
-            } else {
-              console.log('📭 No sessions found to auto-load');
-            }
-          });
-        } else {
-          const allSessions = loadSessions();
-          if (allSessions.length > 0) {
-            const mostRecentSession = allSessions[0];
-            console.log('📂 Auto-loading most recent session:', mostRecentSession.id, mostRecentSession.title);
-            handleLoadSession(mostRecentSession.id);
           } else {
             console.log('📭 No sessions found to auto-load');
           }
