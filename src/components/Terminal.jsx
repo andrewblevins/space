@@ -701,6 +701,7 @@ const Terminal = ({ theme, toggleTheme }) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const terminalRef = useRef(null);
   const hasRestoredSessionRef = useRef(false);
+  const handleLoadSessionRef = useRef(null);
 
   // Sidebar collapse state
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
@@ -836,17 +837,33 @@ const Terminal = ({ theme, toggleTheme }) => {
 
   // Auto-load most recent session by date/time on initialization
   useEffect(() => {
+    console.log('🔄 Auto-load effect triggered:', {
+      useAuthSystem,
+      authLoading: authData?.loading,
+      isInitializing,
+      hasCheckedKeys,
+      apiKeysSet,
+      showWelcome,
+      hasRestored: hasRestoredSessionRef.current,
+      useDatabaseStorage,
+      hasStorage: !!storage,
+      hasHandleLoadSession: typeof handleLoadSession === 'function'
+    });
+    
     // Wait for auth to complete if using auth system
     if (useAuthSystem && authData?.loading) {
+      console.log('⏳ Waiting for auth to complete...');
       return;
     }
     
     // Prevent infinite loop: only restore session once
     if (hasRestoredSessionRef.current) {
+      console.log('✅ Session already restored, skipping');
       return;
     }
     
     if (!isInitializing && hasCheckedKeys && apiKeysSet && !showWelcome) {
+      console.log('✅ All conditions met, starting auto-load...');
       // Mark as restored to prevent infinite loop
       hasRestoredSessionRef.current = true;
       
@@ -906,6 +923,7 @@ const Terminal = ({ theme, toggleTheme }) => {
             }
           }
           
+          console.log(`📦 Found ${localStorageSessions.length} localStorage sessions`);
           allSessions.push(...localStorageSessions.map(s => ({
             ...s,
             source: 'localStorage',
@@ -914,8 +932,10 @@ const Terminal = ({ theme, toggleTheme }) => {
           
           // Get database conversations if using database storage
           if (useDatabaseStorage && storage) {
+            console.log('🗃️ Loading database conversations...');
             try {
               const conversations = await storage.listConversations();
+              console.log(`🗃️ Found ${conversations?.length || 0} database conversations`);
               if (conversations && conversations.length > 0) {
                 allSessions.push(...conversations.map(c => ({
                   id: c.id,
@@ -925,9 +945,13 @@ const Terminal = ({ theme, toggleTheme }) => {
                 })));
               }
             } catch (error) {
-              console.error('Failed to load database conversations:', error);
+              console.error('❌ Failed to load database conversations:', error);
             }
+          } else {
+            console.log('⏭️ Skipping database conversations (useDatabaseStorage:', useDatabaseStorage, ', hasStorage:', !!storage, ')');
           }
+          
+          console.log(`📊 Total sessions found: ${allSessions.length}`);
           
           // Sort all sessions by timestamp (most recent first)
           allSessions.sort((a, b) => {
@@ -945,7 +969,23 @@ const Terminal = ({ theme, toggleTheme }) => {
               source: mostRecent.source,
               timestamp: mostRecent.timestamp
             });
-            handleLoadSession(mostRecent.id);
+            // Call handleLoadSession directly - it should be defined by the time this effect runs
+            // Using a small delay to ensure it's available
+            setTimeout(() => {
+              console.log('🔍 Checking handleLoadSession availability:', {
+                isFunction: typeof handleLoadSession === 'function',
+                isRefSet: !!handleLoadSessionRef.current,
+                sessionId: mostRecent.id
+              });
+              
+              const loadFn = handleLoadSessionRef.current || handleLoadSession;
+              if (typeof loadFn === 'function') {
+                console.log('✅ Calling handleLoadSession for session:', mostRecent.id);
+                loadFn(mostRecent.id);
+              } else {
+                console.warn('⚠️ handleLoadSession not available, skipping auto-load. Will retry on next render.');
+              }
+            }, 0);
           } else {
             console.log('📭 No sessions found to auto-load');
           }
@@ -956,7 +996,8 @@ const Terminal = ({ theme, toggleTheme }) => {
       
       loadMostRecentSession();
     }
-  }, [isInitializing, hasCheckedKeys, apiKeysSet, showWelcome, useDatabaseStorage, user, useAuthSystem, storage, handleLoadSession]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isInitializing, hasCheckedKeys, apiKeysSet, showWelcome, useDatabaseStorage, user, useAuthSystem, storage]);
 
   // Persist current session/conversation ID whenever it changes
   useEffect(() => {
@@ -1717,6 +1758,15 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
       }]);
     }
   };
+
+  // Update ref so it can be accessed in the auto-load effect
+  useEffect(() => {
+    console.log('🔗 Updating handleLoadSessionRef:', {
+      isFunction: typeof handleLoadSession === 'function',
+      wasSet: !!handleLoadSessionRef.current
+    });
+    handleLoadSessionRef.current = handleLoadSession;
+  });
 
   const handleLoadPrevious = () => {
     const sessions = loadSessions();
