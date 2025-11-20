@@ -880,8 +880,32 @@ const Terminal = ({ theme, toggleTheme }) => {
         try {
           const allSessions = [];
           
-          // Get localStorage sessions
-          const localStorageSessions = loadSessions();
+          // Get localStorage sessions (inline logic to avoid hoisting issues)
+          const localStorageSessions = [];
+          const seenIds = new Set();
+          
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('space_session_')) {
+              const sessionData = localStorage.getItem(key);
+              if (sessionData) {
+                try {
+                  const session = JSON.parse(sessionData);
+                  if (session && session.id && !seenIds.has(session.id)) {
+                    seenIds.add(session.id);
+                    // Only include sessions with actual user/assistant messages
+                    const nonSystemMessages = session.messages?.filter(m => m.type !== 'system') || [];
+                    if (nonSystemMessages.length > 0) {
+                      localStorageSessions.push(session);
+                    }
+                  }
+                } catch (error) {
+                  console.warn(`Failed to parse session data for key ${key}:`, error);
+                }
+              }
+            }
+          }
+          
           allSessions.push(...localStorageSessions.map(s => ({
             ...s,
             source: 'localStorage',
