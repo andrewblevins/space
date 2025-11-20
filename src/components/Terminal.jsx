@@ -4480,7 +4480,8 @@ ${selectedText}
               handleAdvisorSuggestionClick={handleAdvisorSuggestionClick}
               setShowAdvisorForm={setShowAdvisorForm}
               setShowSettingsMenu={setShowSettingsMenu}
-              setShowPromptLibrary={setShowPromptLibrary}
+              // DEPRECATED: Prompt Library - Feature no longer maintained
+              // setShowPromptLibrary={setShowPromptLibrary}
               setShowSessionPanel={setShowSessionPanel}
               setShowHelpModal={setShowHelpModal}
               setShowInfoModal={setShowInfoModal}

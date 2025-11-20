@@ -26,7 +26,8 @@ const MobileLayout = ({
   handleAdvisorSuggestionClick,
   setShowAdvisorForm,
   setShowSettingsMenu,
-  setShowPromptLibrary,
+  // DEPRECATED: Prompt Library - Feature no longer maintained
+  // setShowPromptLibrary,
   setShowSessionPanel,
   setShowHelpModal,
   setShowInfoModal,
@@ -329,12 +330,13 @@ const MobileLayout = ({
                 <span className="text-gray-800 dark:text-gray-200">Session Manager</span>
               </button>
               
-              <button
+              {/* DEPRECATED: Prompt Library - Feature no longer maintained */}
+              {/* <button
                 onClick={() => setShowPromptLibrary(true)}
                 className="w-full p-3 text-left rounded-lg border border-gray-300 dark:border-gray-600 hover:border-green-400 transition-colors"
               >
                 <span className="text-gray-800 dark:text-gray-200">Prompt Library</span>
-              </button>
+              </button> */}
               
               <button
                 onClick={() => setShowSettingsMenu(true)}
