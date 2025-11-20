@@ -69,6 +69,38 @@ const Terminal = ({ theme, toggleTheme }) => {
   const { user, session } = authData;
   const storage = useConversationStorage();
   
+  // Helper functions for session persistence (must be defined before useState calls that use them)
+  const loadPersistedCurrentSession = () => {
+    try {
+      const conversationId = localStorage.getItem('space_current_conversation_id');
+      const sessionId = localStorage.getItem('space_current_session_id');
+      
+      return {
+        conversationId: conversationId || null,
+        sessionId: sessionId || null
+      };
+    } catch (error) {
+      console.error('Failed to load persisted current session:', error);
+      return { conversationId: null, sessionId: null };
+    }
+  };
+
+  const persistCurrentSession = (sessionId, conversationId) => {
+    try {
+      if (conversationId) {
+        // Database storage: persist conversation ID
+        localStorage.setItem('space_current_conversation_id', conversationId);
+        localStorage.setItem('space_current_session_id', conversationId); // Use conversation ID as session ID
+      } else if (sessionId) {
+        // LocalStorage storage: persist session ID
+        localStorage.setItem('space_current_session_id', sessionId.toString());
+        localStorage.removeItem('space_current_conversation_id'); // Clear if switching to localStorage mode
+      }
+    } catch (error) {
+      console.error('Failed to persist current session:', error);
+    }
+  };
+  
   // Database storage state - initialize from persisted value
   const [currentConversationId, setCurrentConversationId] = useState(() => {
     const persisted = loadPersistedCurrentSession();
@@ -133,38 +165,6 @@ const Terminal = ({ theme, toggleTheme }) => {
     return Math.max(...ids) + 1;
   };
 
-  // Persist current session/conversation ID so it survives page refreshes
-  const persistCurrentSession = (sessionId, conversationId) => {
-    try {
-      if (conversationId) {
-        // Database storage: persist conversation ID
-        localStorage.setItem('space_current_conversation_id', conversationId);
-        localStorage.setItem('space_current_session_id', conversationId); // Use conversation ID as session ID
-      } else if (sessionId) {
-        // LocalStorage storage: persist session ID
-        localStorage.setItem('space_current_session_id', sessionId.toString());
-        localStorage.removeItem('space_current_conversation_id'); // Clear if switching to localStorage mode
-      }
-    } catch (error) {
-      console.error('Failed to persist current session:', error);
-    }
-  };
-
-  // Load persisted current session/conversation ID
-  const loadPersistedCurrentSession = () => {
-    try {
-      const conversationId = localStorage.getItem('space_current_conversation_id');
-      const sessionId = localStorage.getItem('space_current_session_id');
-      
-      return {
-        conversationId: conversationId || null,
-        sessionId: sessionId || null
-      };
-    } catch (error) {
-      console.error('Failed to load persisted current session:', error);
-      return { conversationId: null, sessionId: null };
-    }
-  };
 
   const handleAdvisorImport = (importedAdvisors, mode) => {
     if (mode === 'replace') {
