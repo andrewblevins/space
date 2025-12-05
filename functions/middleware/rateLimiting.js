@@ -1,9 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 
-// MVP Configuration - Everyone gets reasonable limits
+// Rate limits by tier
 const RATE_LIMITS = {
-  free: 100,  // Reasonable MVP limits for all users
-  paid: 100   // Same for now, ready to differentiate later
+  free: 100,      // Free tier: 100 messages/day
+  premium: 1000,  // Premium tier: 1000 messages/day
+  coaching: 1000, // Coaching tier: 1000 messages/day (same as premium for now)
 };
 
 export async function checkRateLimit(context, userId) {

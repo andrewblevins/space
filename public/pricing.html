@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pricing - SPACE Terminal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #0a0a0a;
+            color: #00ff00;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem 0;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: #00ff00;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #888;
+            margin-bottom: 2rem;
+        }
+        
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+        
+        .pricing-card {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 2rem;
+            position: relative;
+        }
+        
+        .pricing-card.featured {
+            border-color: #00ff00;
+            transform: scale(1.05);
+        }
+        
+        .plan-name {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: #00ff00;
+        }
+        
+        .plan-price {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        
+        .plan-period {
+            color: #888;
+            margin-bottom: 1.5rem;
+        }
+        
+        .plan-description {
+            color: #aaa;
+            margin-bottom: 1.5rem;
+            min-height: 3rem;
+        }
+        
+        .features {
+            list-style: none;
+            margin-bottom: 2rem;
+        }
+        
+        .features li {
+            padding: 0.5rem 0;
+            color: #ccc;
+        }
+        
+        .features li::before {
+            content: "✓ ";
+            color: #00ff00;
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+        
+        .features li.unavailable::before {
+            content: "✗ ";
+            color: #666;
+        }
+        
+        .cta-button {
+            display: block;
+            width: 100%;
+            padding: 1rem;
+            background: #00ff00;
+            color: #000;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+        
+        .cta-button:hover {
+            background: #00cc00;
+        }
+        
+        .cta-button.secondary {
+            background: transparent;
+            border: 1px solid #00ff00;
+            color: #00ff00;
+        }
+        
+        .cta-button.secondary:hover {
+            background: #00ff00;
+            color: #000;
+        }
+        
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 3rem;
+            background: #1a1a1a;
+        }
+        
+        .comparison-table th,
+        .comparison-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #333;
+        }
+        
+        .comparison-table th {
+            background: #0a0a0a;
+            color: #00ff00;
+        }
+        
+        .faq {
+            margin-top: 4rem;
+        }
+        
+        .faq h2 {
+            margin-bottom: 2rem;
+            color: #00ff00;
+        }
+        
+        .faq-item {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid #333;
+        }
+        
+        .faq-question {
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            color: #00ff00;
+        }
+        
+        .faq-answer {
+            color: #aaa;
+        }
+        
+        @media (max-width: 768px) {
+            .pricing-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .pricing-card.featured {
+                transform: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Simple, Transparent Pricing</h1>
+            <p class="subtitle">Choose the plan that fits your needs. Upgrade or downgrade anytime.</p>
+        </header>
+        
+        <div class="pricing-grid">
+            <!-- Free Tier -->
+            <div class="pricing-card">
+                <div class="plan-name">Free</div>
+                <div class="plan-price">$0</div>
+                <div class="plan-period">per month</div>
+                <div class="plan-description">Perfect for exploring SPACE and occasional use</div>
+                
+                <ul class="features">
+                    <li>100 messages/day</li>
+                    <li>Multi-advisor conversations</li>
+                    <li>Advisor creation & management</li>
+                    <li>Evaluation system</li>
+                    <li>Session management</li>
+                    <li>Export conversations</li>
+                    <li>Full transparency (debug mode)</li>
+                    <li>Community support</li>
+                    <li class="unavailable">Expert knowledge advisors</li>
+                    <li class="unavailable">Advanced analytics</li>
+                    <li class="unavailable">Priority support</li>
+                </ul>
+                
+                <a href="/" class="cta-button secondary">Start Free</a>
+            </div>
+            
+            <!-- Premium Tier -->
+            <div class="pricing-card featured">
+                <div class="plan-name">Premium</div>
+                <div class="plan-price">$15</div>
+                <div class="plan-period">per month<br><small>or $150/year (save $30)</small></div>
+                <div class="plan-description">For serious thinkers who want the full experience</div>
+                
+                <ul class="features">
+                    <li>1,000 messages/day (10x limit)</li>
+                    <li>Multi-advisor conversations</li>
+                    <li>Advisor creation & management</li>
+                    <li>Evaluation system</li>
+                    <li>Session management</li>
+                    <li>Export conversations</li>
+                    <li>Full transparency (debug mode)</li>
+                    <li><strong>Expert knowledge advisors</strong></li>
+                    <li><strong>Advanced analytics</strong></li>
+                    <li><strong>Priority support (24hr)</strong></li>
+                    <li><strong>Early access to new features</strong></li>
+                    <li><strong>API access (coming soon)</strong></li>
+                </ul>
+                
+                <a href="/subscription/upgrade" class="cta-button">Upgrade to Premium</a>
+            </div>
+            
+            <!-- Self-Hosted -->
+            <div class="pricing-card">
+                <div class="plan-name">Self-Hosted</div>
+                <div class="plan-price">Free</div>
+                <div class="plan-period">forever</div>
+                <div class="plan-description">Open source. Host it yourself. Full control.</div>
+                
+                <ul class="features">
+                    <li>All core features</li>
+                    <li>Unlimited messages</li>
+                    <li>Full source code access</li>
+                    <li>Complete control</li>
+                    <li>Privacy-focused</li>
+                    <li>MIT License</li>
+                    <li class="unavailable">Hosted convenience</li>
+                    <li class="unavailable">Automatic updates</li>
+                </ul>
+                
+                <a href="https://github.com/andrewblevins/space" class="cta-button secondary">View on GitHub</a>
+            </div>
+        </div>
+        
+        <!-- Comparison Table -->
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>Feature</th>
+                    <th>Free</th>
+                    <th>Premium</th>
+                    <th>Self-Hosted</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Messages/day</td>
+                    <td>100</td>
+                    <td>1,000</td>
+                    <td>Unlimited</td>
+                </tr>
+                <tr>
+                    <td>Multi-advisor conversations</td>
+                    <td>✓</td>
+                    <td>✓</td>
+                    <td>✓</td>
+                </tr>
+                <tr>
+                    <td>Advisor creation</td>
+                    <td>✓</td>
+                    <td>✓</td>
+                    <td>✓</td>
+                </tr>
+                <tr>
+                    <td>Evaluation system</td>
+                    <td>✓</td>
+                    <td>✓</td>
+                    <td>✓</td>
+                </tr>
+                <tr>
+                    <td>Expert knowledge advisors</td>
+                    <td>✗</td>
+                    <td>✓</td>
+                    <td>✓</td>
+                </tr>
+                <tr>
+                    <td>Advanced analytics</td>
+                    <td>✗</td>
+                    <td>✓</td>
+                    <td>✓</td>
+                </tr>
+                <tr>
+                    <td>Priority support</td>
+                    <td>✗</td>
+                    <td>✓</td>
+                    <td>Community</td>
+                </tr>
+                <tr>
+                    <td>Hosted convenience</td>
+                    <td>✓</td>
+                    <td>✓</td>
+                    <td>✗</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <!-- FAQ -->
+        <div class="faq">
+            <h2>Frequently Asked Questions</h2>
+            
+            <div class="faq-item">
+                <div class="faq-question">Can I self-host SPACE?</div>
+                <div class="faq-answer">Yes! SPACE is open source (MIT license). You can self-host for free and get all core features.</div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question">What happens if I exceed my message limit?</div>
+                <div class="faq-answer">You can upgrade to Premium for 10x more messages, or wait until the next day when limits reset.</div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question">Can I cancel anytime?</div>
+                <div class="faq-answer">Yes, cancel anytime. No long-term contracts.</div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question">Do you offer refunds?</div>
+                <div class="faq-answer">Yes, 30-day money-back guarantee.</div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question">Is there a free trial for Premium?</div>
+                <div class="faq-answer">The free tier is already a generous trial. Upgrade when you're ready for premium features.</div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question">Do you offer student discounts?</div>
+                <div class="faq-answer">Yes, students get Premium for $5/month with .edu email.</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

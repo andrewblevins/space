@@ -150,13 +150,13 @@ const MessageRenderer = memo(({
 
   return (
     <>
-      <div
-        key={messageKey}
-        id={`msg-${idx}`}
-        className={`mb-4 break-words text-lg ${getMessageClassName(msg.type)}`}
-      >
-        {renderMessageContent()}
-      </div>
+    <div
+      key={messageKey}
+      id={`msg-${idx}`}
+      className={`mb-4 break-words text-lg ${getMessageClassName(msg.type)}`}
+    >
+      {renderMessageContent()}
+    </div>
       
       {/* Fullscreen perspective modal */}
       {fullscreenModal.isOpen && (
