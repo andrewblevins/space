@@ -1,0 +1,6 @@
+# https://spaceterminal.xyz robots.txt
+User-agent: *
+Allow: /
+
+Sitemap: https://spaceterminal.xyz/sitemap.xml
+
