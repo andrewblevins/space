@@ -513,4 +513,22 @@ export const validateSession = (password) => {
 export const clearSession = () => {
   localStorage.removeItem(SESSION_STORAGE_KEY);
   encryptionPassword = null;
+};
+
+/**
+ * Helper function to get a decrypted API key by short name
+ * Maps short names like 'openrouter' to full keys like 'space_openrouter_key'
+ * @param {string} keyName - Short name: 'openrouter', 'anthropic', 'openai', 'gemini'
+ * @returns {Promise<string|null>} The decrypted key value or null
+ */
+export const getDecryptedKey = async (keyName) => {
+  const keyMap = {
+    'openrouter': 'space_openrouter_key',
+    'anthropic': 'space_anthropic_key',
+    'openai': 'space_openai_key',
+    'gemini': 'space_gemini_key'
+  };
+  
+  const fullKey = keyMap[keyName] || `space_${keyName}_key`;
+  return getDecrypted(fullKey);
 }; 

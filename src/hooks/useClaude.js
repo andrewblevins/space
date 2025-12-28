@@ -36,11 +36,11 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
       throw new Error('Not authenticated');
     }
     
-    // Only get API key for legacy mode
-    let anthropicKey = null;
+    // Only get API key for legacy mode (now using OpenRouter)
+    let openrouterKey = null;
     if (!useAuthSystem) {
-      anthropicKey = await getDecrypted('space_anthropic_key');
-      if (!anthropicKey) throw new Error('Anthropic API key not found');
+      openrouterKey = await getDecrypted('space_openrouter_key');
+      if (!openrouterKey) throw new Error('OpenRouter API key not found. Please set up your API key.');
     }
 
     const estimateTokens = (text) => Math.ceil(text.length / 4);
@@ -99,10 +99,21 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
       setMessages((prev) => [...prev, { type: 'debug', content: debugOutput }]);
     }
 
-    const requestBody = {
+    // Build request body - format depends on auth mode
+    // Auth mode uses our backend proxy (Anthropic format)
+    // Legacy mode uses OpenRouter API (OpenAI-compatible format)
+    const requestBody = useAuthSystem ? {
       model: 'claude-sonnet-4.5',
       messages: contextMessages,
       system: systemPromptText,
+      max_tokens: maxTokens,
+      stream: true,
+    } : {
+      model: 'anthropic/claude-sonnet-4.5', // OpenRouter model name
+      messages: [
+        { role: 'system', content: systemPromptText },
+        ...contextMessages
+      ],
       max_tokens: maxTokens,
       stream: true,
     };
@@ -143,18 +154,18 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
     };
     
     if (useAuthSystem) {
-      // Auth mode: use bearer token
+      // Auth mode: use bearer token for our backend proxy
       headers['Authorization'] = `Bearer ${session.access_token}`;
     } else {
-      // Legacy mode: direct API access
-      headers['x-api-key'] = anthropicKey;
-      headers['anthropic-version'] = '2023-06-01';
-      headers['anthropic-dangerous-direct-browser-access'] = 'true';
+      // Legacy mode: use OpenRouter API directly
+      headers['Authorization'] = `Bearer ${openrouterKey}`;
+      headers['HTTP-Referer'] = window.location.origin;
+      headers['X-Title'] = 'SPACE Terminal';
     }
     
     const apiUrl = useAuthSystem 
       ? `${getApiEndpoint()}/api/chat/claude`  // Backend proxy
-      : `${getApiEndpoint()}/v1/messages`;     // Direct API
+      : 'https://openrouter.ai/api/v1/chat/completions';  // OpenRouter API
     
     const response = await fetch(apiUrl, {
       method: 'POST',
@@ -333,83 +344,96 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
       for (const event of events) {
         const dataMatch = event.match(/^data: (.+)$/m);
         if (!dataMatch) continue;
+        
+        // Skip [DONE] marker
+        if (dataMatch[1] === '[DONE]') continue;
+        
         try {
           const data = JSON.parse(dataMatch[1]);
-          if (data.type === 'content_block_delta') {
-            if (data.delta.type === 'text_delta') {
-              // Regular text content with character-by-character updates
-              const text = data.delta.text;
-              console.log('✍️ TEXT DELTA:', {
-                textLength: text.length,
-                textPreview: text.length > 50 ? text.substring(0, 50) + '...' : text,
-                totalContentLength: currentMessageContent.length + text.length,
-                timeSinceStreamStart: Math.round(performance.now() - streamStartTime)
-              });
-              
-              // Show actual text content as it arrives
-              console.log(`📝 STREAMING TEXT: "${text}"`);
-              process.stdout?.write?.(text) || console.log(`CHUNK: ${text}`);
-              currentMessageContent += text;
-              
-              // Early detection of JSON advisor format
-              if (!isJsonMode && detectJsonFormat(currentMessageContent)) {
-                isJsonMode = true;
-              }
-              
-              // Update message with appropriate type
-              setMessages((prev) => {
-                const newMessages = [...prev];
-                if (newMessages.length > 0) {
-                  if (isJsonMode) {
-                    // Try to parse partial JSON for better streaming experience
-                    const parseResult = tryParsePartialAdvisorJson(currentMessageContent);
-                    if (parseResult.success) {
-                      newMessages[newMessages.length - 1] = {
-                        type: 'advisor_json',
-                        content: parseResult.jsonContent,
-                        parsedAdvisors: parseResult.parsed,
-                        thinking: (reasoningMode && !isCouncilMode) ? thinkingContent : undefined,
-                        isStreaming: true,
-                        isPartial: parseResult.partial
-                      };
-                    } else {
-                      newMessages[newMessages.length - 1] = {
-                        type: 'assistant',
-                        content: currentMessageContent,
-                        thinking: (reasoningMode && !isCouncilMode) ? thinkingContent : undefined,
-                        isJsonStreaming: true
-                      };
-                    }
+          
+          // Handle text content - support both Anthropic and OpenAI/OpenRouter formats
+          let text = null;
+          
+          // Anthropic format: data.type === 'content_block_delta' with data.delta.text
+          if (data.type === 'content_block_delta' && data.delta?.type === 'text_delta') {
+            text = data.delta.text;
+          }
+          // OpenAI/OpenRouter format: data.choices[0].delta.content
+          else if (data.choices?.[0]?.delta?.content) {
+            text = data.choices[0].delta.content;
+          }
+          
+          if (text) {
+            // Regular text content with character-by-character updates
+            console.log('✍️ TEXT DELTA:', {
+              textLength: text.length,
+              textPreview: text.length > 50 ? text.substring(0, 50) + '...' : text,
+              totalContentLength: currentMessageContent.length + text.length,
+              timeSinceStreamStart: Math.round(performance.now() - streamStartTime)
+            });
+            
+            currentMessageContent += text;
+            
+            // Early detection of JSON advisor format
+            if (!isJsonMode && detectJsonFormat(currentMessageContent)) {
+              isJsonMode = true;
+            }
+            
+            // Update message with appropriate type
+            setMessages((prev) => {
+              const newMessages = [...prev];
+              if (newMessages.length > 0) {
+                if (isJsonMode) {
+                  // Try to parse partial JSON for better streaming experience
+                  const parseResult = tryParsePartialAdvisorJson(currentMessageContent);
+                  if (parseResult.success) {
+                    newMessages[newMessages.length - 1] = {
+                      type: 'advisor_json',
+                      content: parseResult.jsonContent,
+                      parsedAdvisors: parseResult.parsed,
+                      thinking: (reasoningMode && !isCouncilMode) ? thinkingContent : undefined,
+                      isStreaming: true,
+                      isPartial: parseResult.partial
+                    };
                   } else {
-                    // Regular assistant message
+                    newMessages[newMessages.length - 1] = {
+                      type: 'assistant',
+                      content: currentMessageContent,
+                      thinking: (reasoningMode && !isCouncilMode) ? thinkingContent : undefined,
+                      isJsonStreaming: true
+                    };
+                  }
+                } else {
+                  // Regular assistant message
+                  newMessages[newMessages.length - 1] = { 
+                    type: 'assistant', 
+                    content: currentMessageContent,
+                    thinking: (reasoningMode && !isCouncilMode) ? thinkingContent : undefined
+                  };
+                }
+              }
+              return newMessages;
+            });
+          }
+          
+          // Handle thinking content (Extended Thinking) - Anthropic only, not in council mode
+          if (data.type === 'content_block_delta' && data.delta?.type === 'thinking_delta' && reasoningMode && !isCouncilMode) {
+            const thinkingText = data.delta.thinking || '';
+            if (thinkingText) {
+              thinkingContent += thinkingText;
+              // Batch thinking updates too - only update every 10 characters or on significant breaks
+              if (thinkingText.length > 10 || thinkingText.includes('\n') || thinkingText.includes('.')) {
+                setMessages((prev) => {
+                  const newMessages = [...prev];
+                  if (newMessages.length > 0) {
                     newMessages[newMessages.length - 1] = { 
                       type: 'assistant', 
                       content: currentMessageContent,
-                      thinking: (reasoningMode && !isCouncilMode) ? thinkingContent : undefined
+                      thinking: thinkingContent
                     };
                   }
-                }
-                return newMessages;
-              });
-            } else if (data.delta.type === 'thinking_delta' && reasoningMode && !isCouncilMode) {
-              // Thinking content (Extended Thinking) - only when not in council mode
-              const thinkingText = data.delta.thinking || '';
-              if (thinkingText) {
-                thinkingContent += thinkingText;
-                // Batch thinking updates too - only update every 10 characters or on significant breaks
-                if (thinkingText.length > 10 || thinkingText.includes('\n') || thinkingText.includes('.')) {
-                  setMessages((prev) => {
-                    const newMessages = [...prev];
-                    if (newMessages.length > 0) {
-                      newMessages[newMessages.length - 1] = { 
-                        type: 'assistant', 
-                        content: currentMessageContent,
-                        thinking: thinkingContent
-                      };
-                    }
-                    return newMessages;
-                  });
-                }
+                  return newMessages;
+                });
               }
             }
           }

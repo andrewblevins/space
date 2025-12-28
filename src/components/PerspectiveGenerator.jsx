@@ -118,7 +118,7 @@ Respond with JSON: {
         method: 'POST',
         headers,
         body: JSON.stringify({
-          model: 'openai/gpt-4o-mini',
+          model: 'anthropic/claude-sonnet-4.5',
           messages: [{
             role: 'system',
             content: 'You are a helpful assistant that responds only in valid JSON format.'
@@ -126,8 +126,7 @@ Respond with JSON: {
             role: 'user',
             content: promptContent
           }],
-          max_tokens: 2000,
-          response_format: { type: 'json_object' }
+          max_tokens: 2000
         })
       });
 
@@ -137,13 +136,32 @@ Respond with JSON: {
       }
 
       const data = await response.json();
-      const result = JSON.parse(data.choices[0].message.content);
+      const content = data.choices[0].message.content;
+      
+      // Parse JSON response - handle cases where Claude includes extra text
+      let result;
+      try {
+        // Try to extract JSON if there's extra text or markdown
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          result = JSON.parse(jsonMatch[0]);
+        } else {
+          result = JSON.parse(content);
+        }
+      } catch (e) {
+        console.error('Failed to parse perspective suggestions:', content);
+        throw new Error('Failed to parse perspective suggestions from API response');
+      }
+      
+      if (!result.perspectives || !Array.isArray(result.perspectives)) {
+        throw new Error('Invalid response format - missing perspectives array');
+      }
 
       // Track usage if handler provided
       if (trackUsage) {
         const inputTokens = Math.ceil((100 + promptContent.length) / 4);
         const outputTokens = Math.ceil(data.choices[0].message.content.length / 4);
-        trackUsage('gpt', inputTokens, outputTokens);
+        trackUsage('claude', inputTokens, outputTokens);
       }
 
       // Add unique IDs to each perspective

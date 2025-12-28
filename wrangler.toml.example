@@ -3,16 +3,17 @@ compatibility_date = "2023-05-18"
 pages_build_output_dir = "dist"
 
 [vars]
-# Frontend build-time variables (VITE_)
-VITE_USE_AUTH = "true"
-VITE_SUPABASE_URL = "https://your-project.supabase.co"
-VITE_SUPABASE_ANON_KEY = "your-supabase-anon-key"
+# Frontend build-time variables
+# Set to "false" for BYOK mode (users provide their own API keys)
+VITE_USE_AUTH = "false"
 
-# Backend runtime variables (Functions)
-# Get these from your respective API providers:
-ANTHROPIC_API_KEY = "sk-ant-api03-your-anthropic-key"
-OPENAI_API_KEY = "sk-proj-your-openai-key"
-GEMINI_API_KEY = "your-gemini-api-key"
-SUPABASE_URL = "https://your-project.supabase.co"
-SUPABASE_ANON_KEY = "your-supabase-anon-key"
-SUPABASE_SERVICE_ROLE_KEY = "your-supabase-service-role-key" 
+# Note: In BYOK mode (VITE_USE_AUTH = "false"), users provide their own 
+# OpenRouter API key, so no backend API keys are needed for normal operation.
+# 
+# The backend variables below are only used when VITE_USE_AUTH = "true"
+# (authenticated/managed mode where you provide the API keys).
+#
+# ANTHROPIC_API_KEY = "sk-ant-api03-your-anthropic-key"
+# OPENAI_API_KEY = "sk-proj-your-openai-key"
+# GEMINI_API_KEY = "your-gemini-api-key"
+# OPENROUTER_API_KEY = "sk-or-v1-your-openrouter-key"

@@ -21,7 +21,6 @@ const MobileLayout = ({
   setInput, 
   isLoading, 
   handleSubmit,
-  metaphors,
   advisorSuggestions,
   handleAdvisorSuggestionClick,
   setShowAdvisorForm,
@@ -297,22 +296,9 @@ const MobileLayout = ({
         return (
           <div className="flex-1 p-4 overflow-y-auto scrollable-area">
             <h2 className="text-green-400 text-xl font-semibold mb-4">Insights</h2>
-            
-            {/* Metaphors */}
-            <div className="mb-6">
-              <h3 className="text-green-400 text-lg font-medium mb-3">Metaphors</h3>
-              {metaphors.length > 0 ? (
-                <div className="space-y-2">
-                  {metaphors.map((metaphor, idx) => (
-                    <div key={idx} className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                      <p className="text-gray-800 dark:text-gray-200">{metaphor}</p>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500 dark:text-gray-400">No metaphors generated yet.</p>
-              )}
-            </div>
+            <p className="text-gray-500 dark:text-gray-400">
+              Insights features coming soon. Check the Tools tab for session management.
+            </p>
           </div>
         );
       

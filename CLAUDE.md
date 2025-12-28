@@ -79,9 +79,7 @@ State Update → UI Refresh → Analysis Triggers (OpenAI GPT-4o-mini)
 ### Required Environment Variables
 ```bash
 # Frontend (.env)
-VITE_USE_AUTH=true                    # Enable/disable authentication
-VITE_SUPABASE_URL=                    # Supabase database URL
-VITE_SUPABASE_ANON_KEY=               # Supabase anonymous key
+VITE_USE_AUTH=false                   # Authentication disabled (localStorage mode)
 
 # Backend (wrangler.toml)
 ANTHROPIC_API_KEY=                    # Claude API (primary)
@@ -90,9 +88,9 @@ GEMINI_API_KEY=                       # Gemini (evaluation system)
 OPENROUTER_API_KEY=                   # OpenRouter (additional models)
 ```
 
-### Development Modes
-- **Local-Only**: `VITE_USE_AUTH=false` - localStorage persistence
-- **Database Mode**: `VITE_USE_AUTH=true` - Supabase integration with Google OAuth
+### Development Mode
+- **Local Storage**: All conversation data is stored in browser localStorage
+- No database or cloud storage is used for conversations
 
 ## Key Architectural Patterns
 

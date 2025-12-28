@@ -51,18 +51,11 @@ You'll need API keys from these providers:
 - **OpenAI (GPT)**: Get from [platform.openai.com](https://platform.openai.com)
 - **Google (Gemini)**: Get from [ai.google.dev](https://ai.google.dev)
 
-### Optional: Database (Supabase)
-For conversation persistence (optional - works offline without this):
-- **Supabase**: Create project at [supabase.com](https://supabase.com)
-
 ### Configuration Files
 
 **`.env`** (for frontend):
 ```env
 VITE_USE_AUTH=false
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
-VITE_AUTH_REDIRECT_URL=http://localhost:3000
 ```
 
 **`wrangler.toml`** (for backend functions):
@@ -71,22 +64,14 @@ VITE_AUTH_REDIRECT_URL=http://localhost:3000
 ANTHROPIC_API_KEY = "sk-ant-api03-your-anthropic-key"
 OPENAI_API_KEY = "sk-proj-your-openai-key"
 GEMINI_API_KEY = "your-gemini-api-key"
-SUPABASE_URL = "https://your-project.supabase.co"
-SUPABASE_ANON_KEY = "your-supabase-anon-key"
-SUPABASE_SERVICE_ROLE_KEY = "your-supabase-service-role-key"
 ```
 
-## Development Modes
+## Data Storage
 
-### 1. Local-Only Mode (Recommended for testing)
-- Set `VITE_USE_AUTH=false` in `.env`
-- Data stored in browser localStorage
-- No database required
-
-### 2. Full Database Mode
-- Set `VITE_USE_AUTH=true` in `.env`
-- Requires Supabase setup
-- Conversation persistence across devices
+All conversation data is stored locally in your browser's localStorage. No database or cloud storage is used. This means:
+- Your conversations stay on your device
+- Data persists until you clear your browser data
+- No account or sign-in required
 
 ## Key Features to Test
 

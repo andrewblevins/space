@@ -1,14 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { getApiEndpoint } from '../utils/apiConfig';
-import { handleApiError } from '../utils/apiErrorHandler';
 import { setEncrypted } from '../utils/secureStorage';
 import InfoModal from './InfoModal';
 
 const ApiKeySetup = ({ onComplete }) => {
-  const [anthropicKey, setAnthropicKey] = useState('');
-  const [openaiKey, setOpenaiKey] = useState('');
   const [openrouterKey, setOpenrouterKey] = useState('');
   const [error, setError] = useState('');
+  const [isValidating, setIsValidating] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [showApiKeysInfoModal, setShowApiKeysInfoModal] = useState(false);
 
@@ -17,16 +14,14 @@ const ApiKeySetup = ({ onComplete }) => {
     const authError = sessionStorage.getItem('auth_error');
     if (authError) {
       setError(authError);
-      sessionStorage.removeItem('auth_error'); // Clear the message
+      sessionStorage.removeItem('auth_error');
     }
 
     // Automation helper: expose functions globally for Puppeteer
     window.spaceAutomation = {
-      setApiKeys: (anthropicKey, openaiKey, openrouterKey) => {
-        setAnthropicKey(anthropicKey);
-        setOpenaiKey(openaiKey);
-        if (openrouterKey) setOpenrouterKey(openrouterKey);
-        setError(''); // Clear any errors
+      setApiKeys: (key) => {
+        setOpenrouterKey(key);
+        setError('');
         return { success: true };
       },
       submitForm: () => {
@@ -38,8 +33,6 @@ const ApiKeySetup = ({ onComplete }) => {
         return { success: false, error: 'Form not found' };
       },
       getCurrentState: () => ({
-        anthropicKey: anthropicKey ? '***set***' : '',
-        openaiKey: openaiKey ? '***set***' : '',
         openrouterKey: openrouterKey ? '***set***' : '',
         error,
         hasError: !!error
@@ -48,87 +41,75 @@ const ApiKeySetup = ({ onComplete }) => {
 
     // Check for environment variables (for development)
     try {
-      const envAnthropicKey = import.meta.env.VITE_ANTHROPIC_API_KEY;
-      const envOpenaiKey = import.meta.env.VITE_OPENAI_API_KEY;
       const envOpenrouterKey = import.meta.env.VITE_OPENROUTER_API_KEY;
       
-      if (envAnthropicKey && envOpenaiKey) {
-        console.log('🔑 Found API keys in environment, auto-filling...');
-        setAnthropicKey(envAnthropicKey);
-        setOpenaiKey(envOpenaiKey);
-        if (envOpenrouterKey) {
-          setOpenrouterKey(envOpenrouterKey);
-        }
+      if (envOpenrouterKey) {
+        console.log('🔑 Found OpenRouter API key in environment, auto-filling...');
+        setOpenrouterKey(envOpenrouterKey);
       }
     } catch (error) {
-      // Environment variables not available, continue normally
       console.log('No environment variables found for auto-fill');
     }
-  }, [anthropicKey, openaiKey, openrouterKey, error]);
+  }, [openrouterKey, error]);
 
-  const handleInputChange = (setter) => (e) => {
-    setError(''); // Clear error when user starts typing
-    setter(e.target.value);
+  const handleInputChange = (e) => {
+    setError('');
+    setOpenrouterKey(e.target.value);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!anthropicKey || !openaiKey) {
-      setError('Anthropic and OpenAI API keys are required');
+    if (!openrouterKey) {
+      setError('OpenRouter API key is required');
       return;
     }
 
-    if (!anthropicKey.startsWith('sk-ant-')) {
-      setError('Invalid Anthropic API key format');
+    if (!openrouterKey.startsWith('sk-or-v1-')) {
+      setError('Invalid OpenRouter API key format. It should start with "sk-or-v1-"');
       return;
     }
 
-    if (!openaiKey.startsWith('sk-')) {
-      setError('Invalid OpenAI API key format');
-      return;
-    }
-
-    if (openrouterKey && !openrouterKey.startsWith('sk-or-v1-')) {
-      setError('Invalid OpenRouter API key format');
-      return;
-    }
+    setIsValidating(true);
+    setError('');
 
     try {
-      const response = await fetch(`${getApiEndpoint()}/v1/messages`, {
+      // Test the API key with a minimal request
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': anthropicKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true'
+          'Authorization': `Bearer ${openrouterKey}`,
+          'HTTP-Referer': window.location.origin,
+          'X-Title': 'SPACE Terminal'
         },
         body: JSON.stringify({
-          model: 'claude-sonnet-4.5',
-          messages: [{ role: 'user', content: 'Hello' }],
-          max_tokens: 10
+          model: 'openai/gpt-4o-mini',
+          messages: [{ role: 'user', content: 'Hi' }],
+          max_tokens: 5
         })
       });
 
       if (!response.ok) {
-        await handleApiError(response);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error?.message || `API validation failed (${response.status})`);
       }
 
-      await setEncrypted('space_anthropic_key', anthropicKey);
-      await setEncrypted('space_openai_key', openaiKey);
-      if (openrouterKey) {
-        await setEncrypted('space_openrouter_key', openrouterKey);
-      }
+      // Save the key
+      await setEncrypted('space_openrouter_key', openrouterKey);
 
-      onComplete({ anthropicKey, openaiKey, openrouterKey });
+      onComplete({ openrouterKey });
     } catch (error) {
+      console.error('API key validation error:', error);
       setError(`API key validation failed: ${error.message}`);
+    } finally {
+      setIsValidating(false);
     }
   };
 
   return (
     <div className="min-h-screen bg-black text-green-400 flex flex-col relative overflow-hidden">
-      {/* Subtle background pattern matching welcome screen */}
+      {/* Subtle background pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="grid grid-cols-8 gap-8 h-full">
           {Array.from({ length: 64 }).map((_, i) => (
@@ -163,152 +144,126 @@ const ApiKeySetup = ({ onComplete }) => {
 
       {/* Main content */}
       <main className="flex-1 flex flex-col items-center justify-center px-6 relative z-10">
-        <div className="text-center max-w-2xl mx-auto mb-8">
+        <div className="text-center max-w-xl mx-auto mb-8">
           <h1 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight text-white">
-            API Configuration
+            Connect Your AI Key
           </h1>
-          <p className="text-lg text-gray-300 mb-6 leading-relaxed">
-            Connect your AI providers to begin exploring with SPACE
+          <p className="text-lg text-gray-300 mb-2 leading-relaxed">
+            SPACE Terminal uses OpenRouter to access AI models
+          </p>
+          <p className="text-sm text-gray-400">
+            One key gives you access to Claude, GPT, Gemini, and 200+ other models
           </p>
         </div>
 
         {error && (
-          <div className="bg-red-900/20 border border-red-400/50 text-red-400 p-4 mb-6 rounded-lg backdrop-blur-sm max-w-2xl w-full">
+          <div className="bg-red-900/20 border border-red-400/50 text-red-400 p-4 mb-6 rounded-lg backdrop-blur-sm max-w-xl w-full">
             {error}
           </div>
         )}
 
-        <div className="w-full max-w-2xl space-y-8">
-          <div className="text-center">
-            <button
-              onClick={() => setShowApiKeysInfoModal(true)}
-              className="text-green-400 hover:text-green-300 underline text-sm transition-colors"
-              title="Learn about API keys"
-            >
-              (What does this mean?)
-            </button>
-          </div>
-          
+        <div className="w-full max-w-xl space-y-6">
           {/* Instructions */}
           <div className="bg-gray-900/30 border border-green-400/10 rounded-lg p-6 backdrop-blur-sm">
-            <div className="grid md:grid-cols-3 gap-4">
-              <div>
-                <h3 className="text-green-400 font-medium mb-3 flex items-center gap-2">
-                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  Anthropic (Claude) *
-                </h3>
-                <ol className="text-gray-300 text-sm space-y-1 list-decimal list-inside">
-                  <li>Visit <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer" className="text-green-400 hover:text-green-300 underline transition-colors">console.anthropic.com</a></li>
-                  <li>Sign up or log in</li>
-                  <li>Create a new API key</li>
-                </ol>
-              </div>
-              
-              <div>
-                <h3 className="text-green-400 font-medium mb-3 flex items-center gap-2">
-                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  OpenAI *
-                </h3>
-                <ol className="text-gray-300 text-sm space-y-1 list-decimal list-inside">
-                  <li>Visit <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-green-400 hover:text-green-300 underline transition-colors">platform.openai.com</a></li>
-                  <li>Sign up or log in</li>
-                  <li>Create a new API key</li>
-                </ol>
-              </div>
-              
-              <div>
-                <h3 className="text-green-400 font-medium mb-3 flex items-center gap-2">
-                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  OpenRouter
-                </h3>
-                <ol className="text-gray-300 text-sm space-y-1 list-decimal list-inside">
-                  <li>Visit <a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer" className="text-green-400 hover:text-green-300 underline transition-colors">openrouter.ai</a></li>
-                  <li>Sign up or log in</li>
-                  <li>Create a new API key</li>
-                </ol>
-                <p className="text-xs text-gray-400 mt-2">Optional • 200+ AI models</p>
-              </div>
-            </div>
+            <h3 className="text-green-400 font-medium mb-4 flex items-center gap-2">
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              Quick Setup (2 minutes)
+            </h3>
+            <ol className="text-gray-300 space-y-3 list-decimal list-inside">
+              <li>
+                Go to{' '}
+                <a 
+                  href="https://openrouter.ai/keys" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="text-green-400 hover:text-green-300 underline transition-colors"
+                >
+                  openrouter.ai/keys
+                </a>
+              </li>
+              <li>Create a free account (Google sign-in available)</li>
+              <li>Click "Create Key" and copy it</li>
+              <li>Paste it below</li>
+            </ol>
             
-            <div className="mt-6 pt-4 border-t border-green-400/20">
-              <p className="text-gray-400 text-sm text-center">
-                <strong>Realistic costs:</strong> ~3-4¢ per message • Light usage: $5-12/month • Moderate: $15-30/month
-              </p>
-              <p className="text-gray-300 text-xs text-center mt-2">
-                Higher than basic AI chat due to multi-model architecture, knowledge dossier, and advisor personas
+            <div className="mt-4 pt-4 border-t border-green-400/20">
+              <p className="text-gray-400 text-sm">
+                <strong className="text-gray-300">Free tier available</strong> — New accounts get free credits to try it out
               </p>
             </div>
           </div>
 
-                     {/* Form */}
-           <form onSubmit={handleSubmit} className="space-y-6" data-testid="api-key-form">
-             <div className="text-center mb-4">
-               <p className="text-gray-400 text-xs">* Required: Anthropic and OpenAI • Optional: OpenRouter for additional models</p>
-             </div>
-             <div className="space-y-4">
-               <div>
-                 <label className="block mb-2 text-green-400 font-medium text-sm">Anthropic API Key *</label>
-                 <input
-                   type="password"
-                   value={anthropicKey}
-                   onChange={handleInputChange(setAnthropicKey)}
-                   className="w-full bg-black text-green-400 border border-green-400/50 p-3 rounded focus:outline-none focus:border-green-400 transition-colors"
-                   placeholder="sk-ant-..."
-                   data-testid="anthropic-api-key"
-                   id="anthropic-api-key"
-                 />
-               </div>
-
-               <div>
-                 <label className="block mb-2 text-green-400 font-medium text-sm">OpenAI API Key *</label>
-                 <input
-                   type="password"
-                   value={openaiKey}
-                   onChange={handleInputChange(setOpenaiKey)}
-                   className="w-full bg-black text-green-400 border border-green-400/50 p-3 rounded focus:outline-none focus:border-green-400 transition-colors"
-                   placeholder="sk-..."
-                   data-testid="openai-api-key"
-                   id="openai-api-key"
-                 />
-               </div>
-
-               <div>
-                 <label className="block mb-2 text-green-400 font-medium text-sm">OpenRouter API Key <span className="text-gray-400">(Optional)</span></label>
-                 <input
-                   type="password"
-                   value={openrouterKey}
-                   onChange={handleInputChange(setOpenrouterKey)}
-                   className="w-full bg-black text-green-400 border border-green-400/50 p-3 rounded focus:outline-none focus:border-green-400 transition-colors"
-                   placeholder="sk-or-v1-..."
-                   data-testid="openrouter-api-key"
-                   id="openrouter-api-key"
-                 />
-                 <p className="text-xs text-gray-400 mt-1">Access 200+ AI models including Claude, GPT, Gemini, and more</p>
-               </div>
-             </div>
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-4" data-testid="api-key-form">
+            <div>
+              <label className="block mb-2 text-green-400 font-medium text-sm">
+                OpenRouter API Key
+              </label>
+              <input
+                type="password"
+                value={openrouterKey}
+                onChange={handleInputChange}
+                className="w-full bg-black text-green-400 border border-green-400/50 p-3 rounded focus:outline-none focus:border-green-400 transition-colors font-mono"
+                placeholder="sk-or-v1-..."
+                data-testid="openrouter-api-key"
+                id="openrouter-api-key"
+                autoFocus
+              />
+            </div>
 
             <button 
               type="submit"
-              className="w-full bg-green-400 text-black py-3 px-6 rounded-lg font-medium hover:bg-green-300 transition-all duration-200 shadow-lg hover:shadow-green-400/10"
+              disabled={isValidating}
+              className="w-full bg-green-400 text-black py-3 px-6 rounded-lg font-medium hover:bg-green-300 transition-all duration-200 shadow-lg hover:shadow-green-400/10 disabled:opacity-50 disabled:cursor-not-allowed"
               data-testid="save-api-keys-button"
             >
-              Continue to SPACE Terminal
+              {isValidating ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  Validating...
+                </span>
+              ) : (
+                'Continue to SPACE Terminal'
+              )}
             </button>
           </form>
+          
+          <div className="text-center">
+            <button
+              onClick={() => setShowApiKeysInfoModal(true)}
+              className="text-gray-400 hover:text-green-400 text-sm transition-colors"
+            >
+              What is an API key? Why do I need this?
+            </button>
+          </div>
+          
+          {/* Cost info */}
+          <div className="text-center text-sm text-gray-500">
+            <p>
+              <strong className="text-gray-400">Typical usage:</strong> $5-15/month depending on how much you chat
+            </p>
+            <p className="mt-1">
+              You only pay for what you use • No subscriptions
+            </p>
+          </div>
         </div>
       </main>
 
       {/* Footer */}
       <footer className="relative z-10 p-6 text-center">
         <p className="text-gray-500 text-sm">
-          Your keys are encrypted and stored locally • 
-          <span className="text-green-400 ml-1">Privacy-focused design</span>
+          Your key is encrypted and stored locally in your browser •{' '}
+          <a 
+            href="/privacy.html" 
+            className="text-green-400/70 hover:text-green-400 transition-colors"
+          >
+            Privacy Policy
+          </a>
         </p>
       </footer>
 
@@ -320,7 +275,7 @@ const ApiKeySetup = ({ onComplete }) => {
       {/* API Keys Info Modal */}
       {showApiKeysInfoModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
-          <div className="bg-gray-900 border border-green-400/20 rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+          <div className="bg-gray-900 border border-green-400/20 rounded-lg max-w-lg w-full max-h-[80vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-semibold text-white">About API Keys</h2>
@@ -336,32 +291,47 @@ const ApiKeySetup = ({ onComplete }) => {
               
               <div className="space-y-4 text-gray-300">
                 <div>
-                  <h3 className="text-green-400 font-medium mb-2">What are API keys?</h3>
+                  <h3 className="text-green-400 font-medium mb-2">What is an API key?</h3>
                   <p className="text-sm leading-relaxed">
-                    API keys are secure authentication tokens that allow SPACE to communicate with AI providers on your behalf. 
-                    Think of them as digital passwords that give our app permission to access AI services like Claude and GPT.
+                    An API key is like a password that lets SPACE Terminal communicate with AI services on your behalf. 
+                    It's how you get access to AI models like Claude and GPT.
                   </p>
                 </div>
                 
                 <div>
-                  <h3 className="text-green-400 font-medium mb-2">How SPACE uses your API keys</h3>
+                  <h3 className="text-green-400 font-medium mb-2">Why OpenRouter?</h3>
                   <p className="text-sm leading-relaxed">
-                    Claude (Anthropic) powers main conversations and advisor generation. GPT (OpenAI) handles background analysis. OpenRouter (optional) provides access to 200+ additional models for experimentation and cost optimization.
-                  </p>                 
+                    OpenRouter is a service that gives you access to many AI models through a single key. 
+                    Instead of getting separate accounts with Anthropic, OpenAI, and others, you just need one OpenRouter account.
+                  </p>
                 </div>
                 
                 <div>
-                  <h3 className="text-green-400 font-medium mb-2">Your privacy & security</h3>
+                  <h3 className="text-green-400 font-medium mb-2">Is it safe?</h3>
                   <p className="text-sm leading-relaxed">
-                    Your API keys are encrypted and stored locally on your device. SPACE never sends your keys to external servers—
-                    they're only used directly between your browser and the AI providers.
+                    Yes. Your API key is encrypted and stored only on your device. 
+                    SPACE Terminal never sends your key to our servers—it goes directly from your browser to OpenRouter.
+                  </p>
+                </div>
+                
+                <div>
+                  <h3 className="text-green-400 font-medium mb-2">How much does it cost?</h3>
+                  <p className="text-sm leading-relaxed">
+                    OpenRouter offers a free tier with some credits to get started. 
+                    After that, you pay per message based on the AI model used. 
+                    Light usage is typically $5-15/month.
                   </p>
                 </div>
                 
                 <div className="pt-4 border-t border-green-400/20">
-                  <p className="text-xs text-gray-400">
-                    If you don't have API keys yet, follow the instructions below to get free accounts with both providers.
-                  </p>
+                  <a 
+                    href="https://openrouter.ai" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-green-400 hover:text-green-300 text-sm transition-colors"
+                  >
+                    Learn more at openrouter.ai →
+                  </a>
                 </div>
               </div>
             </div>
@@ -372,4 +342,4 @@ const ApiKeySetup = ({ onComplete }) => {
   );
 };
 
-export default ApiKeySetup; 
+export default ApiKeySetup;

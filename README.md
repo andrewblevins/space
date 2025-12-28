@@ -1,10 +1,20 @@
 # SPACE Terminal
 
-[SPACE Terminal](https://spaceterminal.xyz) is an open-source interface for exploring complex problems with AI through multi-perspective conversations, iterative self-improvement, and user-defined alignment.
+[SPACE Terminal](https://spaceterminal.xyz) is a free, open-source interface for exploring complex problems with AI through multi-perspective conversations, iterative self-improvement, and user-defined alignment.
 
 SPACE stands for Simple Perspective-Augmenting Conversation Environment (or, Simulated People Advising Convincingly Enough).
 
 <img src="screenshots/terminal-screenshot.png" alt="SPACE Terminal Interface" width="800"/>
+
+## Quick Start
+
+**SPACE uses your own API key.** You'll need an [OpenRouter](https://openrouter.ai) account (free tier available).
+
+1. Visit [spaceterminal.xyz](https://spaceterminal.xyz)
+2. Get an API key from [openrouter.ai/keys](https://openrouter.ai/keys) (takes 2 minutes)
+3. Paste your key and start exploring
+
+Your conversations are stored locally in your browser—we don't store your data on our servers.
 
 ## What SPACE Does
 
@@ -22,6 +32,7 @@ The result is a fluid, modular, deliberately developmental environment that aims
 - **Journal Onboarding**: Smart context-gathering flow that asks follow-up questions before generating relevant perspectives
 - **Session Management**: Export conversations, reference past sessions with @-mentions, and maintain conversation continuity
 - **Full Transparency**: See exactly what's sent to AI models in Debug mode
+- **Privacy-First**: All data stored locally in your browser—no accounts required, no server-side storage
   
 ## Why SPACE Exists
 
@@ -33,13 +44,20 @@ SPACE implements three core principles to redirect these tendencies:
 - **Opponent Processing**: Use multiple perspectives to stress-test ideas and avoid spirals of confirmation bias.
 - **User Sovereignty**: Where most apps track usage patterns and use them to optimize for engagement, SPACE gives users the power to define what constitutes improvement, and repeatedly invites an attitude of responsibility and curiosity toward the shaping of cognitive tools.
 
-## Two Ways to Use SPACE
+## Bring Your Own Key (BYOK)
 
-### Hosted Service
-Visit [spaceterminal.xyz](https://spaceterminal.xyz) and sign in with Google. No setup required.
+SPACE is free to use, but you bring your own API key. This means:
 
-### Self-Hosted
-Clone this repository and run your own instance:
+- **You control costs**: Pay only for what you use (typically $5-15/month for regular use)
+- **No subscriptions**: No monthly fees to us—just pay-as-you-go to OpenRouter
+- **Privacy**: Your API key is stored encrypted in your browser, never on our servers
+- **Access to 200+ models**: OpenRouter provides access to Claude, GPT, Gemini, and more through a single key
+
+**Why OpenRouter?** Instead of managing multiple API keys from different providers, OpenRouter gives you access to all major AI models with one key and one account.
+
+## Self-Hosting
+
+Want to run your own instance? Clone this repository:
 
 ```bash
 git clone https://github.com/andrewblevins/space.git
@@ -47,7 +65,6 @@ cd space
 npm install
 cp .env.example .env
 cp wrangler.toml.example wrangler.toml
-# Add your API keys to wrangler.toml
 npm run dev:watch
 ```
 
@@ -62,43 +79,6 @@ See [SETUP.md](SETUP.md) for detailed instructions.
 
 The system uses one AI model (Gemini) to suggest improvements and another (Claude) to test them against your criteria.
 
-## Getting Started
-
-### Hosted Version
-1. Visit [spaceterminal.xyz](https://spaceterminal.xyz)
-2. Sign in with Google
-3. Add an advisor using the + button
-4. Start a conversation
-
-### Self-Hosted Version
-1. Follow [SETUP.md](SETUP.md) to install dependencies
-2. Add API keys for Anthropic, OpenAI, and Google
-3. Run `npm run dev:watch`
-4. Open `http://localhost:3000`
-
-## Technical Details
-
-Built with React, Cloudflare Workers, and Supabase. Uses Claude 4 Sonnet, GPT-4o, and Gemini Pro.
-
-The evaluation system creates isolated test environments to avoid interfering with your main conversations.
-
-## Documentation
-
-- [SETUP.md](SETUP.md) - Installation and setup
-- [docs/EVALUATION-SYSTEM.md](docs/EVALUATION-SYSTEM.md) - How the evaluation system works
-- [docs/SECURITY-AUDIT.md](docs/SECURITY-AUDIT.md) - Security measures
-- [docs/](docs/) - Additional documentation
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
-
-See [SETUP.md](SETUP.md) for development setup and [docs/VERSION-LOGGING.md](docs/VERSION-LOGGING.md) for release process.
-
 ## Potential Use Cases
 
 - **Academic Research**: Create a panel with your field's leading theorist, a methodologist, and a constructive critic to pressure-test arguments from multiple angles
@@ -109,18 +89,33 @@ See [SETUP.md](SETUP.md) for development setup and [docs/VERSION-LOGGING.md](doc
   
 - **Personal Decisions**: Design advisors who embody different aspects of wisdom—your future self, a teacher in your preferred lineage, a devil's advocate—to explore life choices seriously
 
+## Technical Details
+
+Built with React, Vite, TailwindCSS, and Cloudflare Pages. Uses Claude, GPT-4o, and Gemini via OpenRouter.
+
+All conversation data is stored in your browser's localStorage. No database or cloud storage is used.
+
+## Documentation
+
+- [SETUP.md](SETUP.md) - Installation and setup
+- [docs/EVALUATION-SYSTEM.md](docs/EVALUATION-SYSTEM.md) - How the evaluation system works
+- [docs/](docs/) - Additional documentation
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+See [SETUP.md](SETUP.md) for development setup.
+
 ## Support
 
 - [GitHub Issues](https://github.com/andrewblevins/space/issues) for bugs
 - [GitHub Discussions](https://github.com/andrewblevins/space/discussions) for questions
 - andrew.s.blevins@gmail.com for direct contact
-
-## Getting Involved
-
-- **Try it**: Visit [spaceterminal.xyz](https://spaceterminal.xyz) or self-host
-- **Share**: Create and share assertion templates for your field
-- **Build**: Extend SPACE for your specific use case
-- **Discuss**: Join our GitHub Discussions to shape the future of user-aligned AI
 
 ## License
 

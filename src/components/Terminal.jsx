@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MemorySystem } from '../lib/memory';
-import { OpenAI } from 'openai';
 import AdvisorForm from './AdvisorForm';
 import EditAdvisorForm from './EditAdvisorForm';
 import EditPromptForm from './EditPromptForm';
@@ -46,7 +45,7 @@ import MessageRenderer from "./terminal/MessageRenderer";
 import useClaude from "../hooks/useClaude";
 import useOpenRouter from "../hooks/useOpenRouter";
 import useParallelAdvisors from "../hooks/useParallelAdvisors";
-import { analyzeMetaphors, analyzeForQuestions, summarizeSession, generateSessionSummary } from "../utils/terminalHelpers";
+import { summarizeSession, generateSessionSummary } from "../utils/terminalHelpers";
 import { trackUsage, trackSession } from '../utils/usageTracking';
 import { worksheetQuestions, WORKSHEET_TEMPLATES } from "../utils/worksheetTemplates";
 import { useConversationStorage } from '../hooks/useConversationStorage';
@@ -590,9 +589,6 @@ const Terminal = ({ theme, toggleTheme }) => {
   });
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [metaphors, setMetaphors] = useState([]);
-  // DEPRECATED: Questions feature temporarily disabled - can be reactivated by uncommenting
-  // const [questions, setQuestions] = useState([]);
   // Initialize currentSessionId from persisted value, or generate new one
   const [currentSessionId, setCurrentSessionId] = useState(() => {
     const persisted = loadPersistedCurrentSession();
@@ -714,10 +710,6 @@ const Terminal = ({ theme, toggleTheme }) => {
     const saved = localStorage.getItem('space_max_tokens');
     return saved ? parseInt(saved) : 2048;
   });
-  const [metaphorsExpanded, setMetaphorsExpanded] = useState(false);
-  const [lastMetaphorAnalysisContent, setLastMetaphorAnalysisContent] = useState('');
-  // DEPRECATED: Questions feature temporarily disabled
-  // const [questionsExpanded, setQuestionsExpanded] = useState(false);
   const [advisorSuggestionsExpanded, setAdvisorSuggestionsExpanded] = useState(false);
   const [advisorSuggestions, setAdvisorSuggestions] = useState([]);
   const [voteHistory, setVoteHistory] = useState([]);
@@ -1042,15 +1034,13 @@ const Terminal = ({ theme, toggleTheme }) => {
           const session = JSON.parse(e.newValue);
           if (session.messages) {
             setMessages(session.messages);
-            if (session.metaphors) setMetaphors(session.metaphors);
             if (session.advisorSuggestions) setAdvisorSuggestions(session.advisorSuggestions);
             if (session.voteHistory) setVoteHistory(session.voteHistory);
             
             if (debugMode) {
               console.log('[State Sync] Session reloaded from storage:', {
                 sessionId: currentSessionId,
-                messageCount: session.messages.length,
-                metaphorCount: session.metaphors?.length || 0
+                messageCount: session.messages.length
               });
             }
           }
@@ -1138,7 +1128,6 @@ const Terminal = ({ theme, toggleTheme }) => {
           activeAdvisors: advisors.filter(a => a.active).map(a => a.name),
           messageCount: messages.length,
           sessionId: currentSessionId,
-          metaphorCount: metaphors.length,
           timestamp: Date.now(),
           isMobile: window.innerWidth < 768
         });
@@ -1146,7 +1135,7 @@ const Terminal = ({ theme, toggleTheme }) => {
 
       return () => clearInterval(interval);
     }
-  }, [debugMode, advisors, messages, currentSessionId, metaphors]);
+  }, [debugMode, advisors, messages, currentSessionId]);
 
 // Shared JSON response format for advisor responses (without synthesis)
 const ADVISOR_JSON_FORMAT = `
@@ -1618,7 +1607,6 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
     }
 
     setMessages([]);
-    setMetaphors([]);
     setAdvisorSuggestions([]);
     setVoteHistory([]);
 
@@ -1726,7 +1714,6 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
         });
         
         setMessages(deduplicatedMessages);
-        setMetaphors(conversation.metadata?.metaphors || []);
         setAdvisorSuggestions(conversation.metadata?.advisorSuggestions || []);
         setVoteHistory(conversation.metadata?.voteHistory || []);
         console.log('🗃️ Loaded database conversation:', conversation.id);
@@ -1812,7 +1799,6 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
         });
         
         setMessages(processedMessages);
-        setMetaphors(session.metaphors || []);
         setAdvisorSuggestions(session.advisorSuggestions || []);
         setVoteHistory(session.voteHistory || []);
         console.log('🗃️ Loaded localStorage session:', sessionId);
@@ -1936,7 +1922,6 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
     });
     
     setMessages(processedMessages);
-    setMetaphors(mostRecentSession.metaphors || []);
     setAdvisorSuggestions(mostRecentSession.advisorSuggestions || []);
     setVoteHistory(mostRecentSession.voteHistory || []);
     
@@ -1954,9 +1939,6 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
     // Reset current session
     setCurrentSessionId(1);
     setMessages([{ type: 'system', content: 'All sessions cleared. Starting fresh with Session 1' }]);
-    setMetaphors([]);
-    // DEPRECATED: Questions feature temporarily disabled
-    // setQuestions([]);
     setAdvisorSuggestions([]);
     setVoteHistory([]);
   };
@@ -2458,31 +2440,6 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
   }, [advisorGroups]);
 
 
-  const analyzeMetaphorsWithDuplicatePrevention = async (messages) => {
-    if (!metaphorsExpanded || !openaiClient) return;
-
-    const userMessages = messages.filter((m) => m.type === 'user').map((m) => m.content).join('\n');
-    if (!userMessages.trim()) return;
-
-    // Prevent duplicate analysis of same content
-    if (userMessages === lastMetaphorAnalysisContent) {
-      console.log('🔍 Skipping duplicate metaphor analysis');
-      return;
-    }
-    setLastMetaphorAnalysisContent(userMessages);
-
-    console.log('🔍 Metaphor analysis starting, user message chars:', userMessages.length);
-    
-    // Call the original analyzeMetaphors function
-    await analyzeMetaphors(messages, {
-      enabled: metaphorsExpanded,
-      openaiClient,
-      setMetaphors,
-      debugMode,
-      setMessages
-    });
-  };
-
   const analyzeAdvisorSuggestions = async (messages) => {
     if (!advisorSuggestionsExpanded || !openaiClient) return;
 
@@ -2773,9 +2730,8 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
                 idx === prev.length - 1 ? { ...msg, saved: true } : msg
               ));
               
-              // Update conversation metadata (metaphors, perspective suggestions, etc.)
+              // Update conversation metadata (perspective suggestions, etc.)
               await storage.saveSessionMetadata(currentConversationId, {
-                metaphors,
                 advisorSuggestions,
                 voteHistory,
                 lastActivity: new Date().toISOString()
@@ -2803,7 +2759,6 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
               ...msg,
               tags: msg.tags || []
             })),
-            metaphors,
             advisorSuggestions,
             voteHistory
           };
@@ -2851,7 +2806,7 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
 
       saveSession();
     }
-  }, [messages, metaphors, advisorSuggestions, voteHistory, currentSessionId, currentConversationId, useDatabaseStorage, storage, openaiClient]);
+  }, [messages, advisorSuggestions, voteHistory, currentSessionId, currentConversationId, useDatabaseStorage, storage, openaiClient]);
 
   // Trigger analysis when messages change and we have a Claude response (debounced for performance)
   useEffect(() => {
@@ -2861,35 +2816,13 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
       if (lastMessage.type === 'assistant' && !lastMessage.isStreaming && !lastMessage.isJsonStreaming) {
         // Debounce analysis to avoid excessive calls during streaming updates
         const debounceTimer = setTimeout(() => {
-          analyzeMetaphorsWithDuplicatePrevention(messages);
           analyzeAdvisorSuggestions(messages);
         }, 500); // 500ms debounce to wait for streaming to complete
         
         return () => clearTimeout(debounceTimer);
       }
     }
-  }, [messages, isLoading, metaphorsExpanded, advisorSuggestionsExpanded, openaiClient]);
-
-  // Trigger metaphors analysis when expanded state changes
-  useEffect(() => {
-    if (metaphorsExpanded && messages.length > 0 && openaiClient) {
-      analyzeMetaphorsWithDuplicatePrevention(messages);
-    }
-  }, [metaphorsExpanded, openaiClient]);
-
-  // DEPRECATED: Questions feature temporarily disabled
-  // // Trigger questions analysis when expanded state changes
-  // useEffect(() => {
-  //   if (questionsExpanded && messages.length > 0 && openaiClient) {
-  //     analyzeForQuestions(messages, {
-  //       enabled: questionsExpanded,
-  //       openaiClient,
-  //       setQuestions,
-  //       debugMode,
-  //       setMessages
-  //     });
-  //   }
-  // }, [questionsExpanded, openaiClient]);
+  }, [messages, isLoading, advisorSuggestionsExpanded, openaiClient]);
 
   // Trigger perspective suggestions analysis when expanded state changes
   useEffect(() => {
@@ -3281,13 +3214,37 @@ ${selectedText}
       ) : !apiKeysSet ? (
         // Only shown in legacy mode (useAuthSystem=false) when no API keys are set
         <ApiKeySetup 
-          onComplete={({ anthropicKey, openaiKey }) => {
-            const client = new OpenAI({
-              apiKey: openaiKey,
-              dangerouslyAllowBrowser: true
-            });
-            setOpenaiClient(client);
-            console.log('✅ OpenAI client initialized on API key setup complete');
+          onComplete={({ openrouterKey }) => {
+            // Create an OpenRouter-compatible client wrapper for background analysis tasks
+            const openrouterClient = {
+              chat: {
+                completions: {
+                  create: async (params) => {
+                    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${openrouterKey}`,
+                        'HTTP-Referer': window.location.origin,
+                        'X-Title': 'SPACE Terminal'
+                      },
+                      body: JSON.stringify({
+                        model: params.model === 'gpt-4o-mini' ? 'openai/gpt-4o-mini' : params.model,
+                        messages: params.messages,
+                        max_tokens: params.max_tokens,
+                        response_format: params.response_format
+                      })
+                    });
+                    if (!response.ok) {
+                      throw new Error(`OpenRouter API error: ${response.status}`);
+                    }
+                    return response.json();
+                  }
+                }
+              }
+            };
+            setOpenaiClient(openrouterClient);
+            console.log('✅ OpenRouter client initialized on API key setup complete');
             setApiKeysSet(true);
             setShowWelcome(false); // Ensure welcome screen doesn't show again
           }} 
@@ -3305,7 +3262,6 @@ ${selectedText}
               setInput={setInput}
               isLoading={isLoading}
               handleSubmit={handleSubmit}
-              metaphors={metaphors}
               advisorSuggestions={advisorSuggestions}
               handleAdvisorSuggestionClick={handleAdvisorSuggestionClick}
               setShowAdvisorForm={setShowAdvisorForm}
