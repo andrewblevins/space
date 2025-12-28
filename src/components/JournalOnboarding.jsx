@@ -44,8 +44,8 @@ const JournalOnboarding = ({
   };
 
   const handleKeyDown = (e) => {
-    // Handle Enter to proceed
-    if (e.key === 'Enter' && !e.shiftKey && !e.metaKey && !e.ctrlKey) {
+    // Handle Shift+Enter to proceed
+    if (e.key === 'Enter' && e.shiftKey && !e.metaKey && !e.ctrlKey) {
       e.preventDefault();
 
       // In question phase, proceed to next question

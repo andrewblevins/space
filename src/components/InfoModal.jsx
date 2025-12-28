@@ -25,7 +25,7 @@ const InfoModal = ({ isOpen, onClose }) => {
               </button>
             )}
             <h2 className="text-green-400 text-xl font-semibold">
-              {showChangelog ? 'Changelog v0.2.4' : 'About SPACE Terminal'}
+              {showChangelog ? 'Changelog v0.2.6' : 'About SPACE Terminal'}
             </h2>
           </div>
           <button
@@ -55,7 +55,7 @@ const AboutContent = ({ onShowChangelog }) => {
   return (
     <div className="space-y-4">
             <div className="text-center">
-              <h3 className="text-green-400 text-lg font-semibold mb-2">SPACE Terminal v0.2.4</h3>
+              <h3 className="text-green-400 text-lg font-semibold mb-2">SPACE Terminal v0.2.6</h3>
               <p className="text-gray-600 dark:text-gray-300 text-sm">
                 An experimental interface for conversations with AI advisors
               </p>
@@ -105,7 +105,7 @@ const AboutContent = ({ onShowChangelog }) => {
                   onClick={onShowChangelog}
                   className="text-green-600 dark:text-green-400 hover:underline text-sm flex items-center gap-1"
                 >
-                  📋 View v0.2.4 Changelog
+                  📋 View v0.2.6 Changelog
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
@@ -152,7 +152,7 @@ const ChangelogContent = () => {
       <div className="text-center border-b border-gray-300 dark:border-gray-600 pb-4">
         <h3 className="text-green-400 text-lg font-semibold mb-2">SPACE Terminal v0.2.6</h3>
         <p className="text-gray-600 dark:text-gray-300 text-sm">
-          Version 0.2.6 introduces mobile responsive design and enhanced OpenRouter integration with 200+ AI models.
+          Version 0.2.6 introduces comprehensive mobile responsive design and enhanced OpenRouter integration, providing users with access to 200+ AI models while maintaining optimal performance and user experience across all devices.
         </p>
         
         <div className="mt-4 p-3 bg-gray-100 dark:bg-gray-800 rounded border-l-4 border-green-400">
@@ -168,24 +168,34 @@ const ChangelogContent = () => {
           
           <div className="space-y-4 ml-4">
             <div>
-              <h5 className="font-medium text-gray-900 dark:text-gray-100 mb-2">🎯 Advisor Evaluation System</h5>
+              <h5 className="font-medium text-gray-900 dark:text-gray-100 mb-2">📱 Mobile Responsive Design</h5>
               <ul className="space-y-1 text-sm text-gray-700 dark:text-gray-300 list-disc list-inside">
-                <li><strong>Assert buttons</strong> on advisor response cards for creating test assertions</li>
-                <li><strong>Assertions modal</strong> with natural language assertion creation</li>
-                <li><strong>Evaluations modal</strong> with automated scoring against assertions</li>
-                <li><strong>Optimization loop</strong> (MVP) for iterative prompt improvement using Gemini + Claude + evaluation cycle</li>
-                <li><strong>Evaluation history</strong> stored in localStorage with session context</li>
+                <li><strong>Complete mobile layout system</strong> with MobileHeader, MobileLayout, MobileTabBar components</li>
+                <li><strong>Touch-optimized input</strong> with TouchInput component for virtual keyboard handling</li>
+                <li><strong>Responsive container</strong> that switches between mobile and desktop layouts at 1024px breakpoint</li>
+                <li><strong>Touch scrolling isolation</strong> - chat messages scroll independently of viewport</li>
+                <li><strong>Mobile-first CSS</strong> with touch-action properties and webkit-overflow-scrolling</li>
               </ul>
             </div>
 
             <div>
-              <h5 className="font-medium text-gray-900 dark:text-gray-100 mb-2">⚡ Streaming Improvements</h5>
+              <h5 className="font-medium text-gray-900 dark:text-gray-100 mb-2">🔗 Enhanced OpenRouter Integration</h5>
               <ul className="space-y-1 text-sm text-gray-700 dark:text-gray-300 list-disc list-inside">
-                <li><strong>Progressive advisor card rendering</strong> during response streaming</li>
-                <li><strong>Early JSON detection</strong> switches to advisor format immediately</li>
-                <li><strong>Real-time paragraph formatting</strong> with proper \n\n → paragraph break conversion</li>
-                <li><strong>Streaming indicators</strong> show preparation and streaming status</li>
-                <li><strong>Custom StreamingMarkdownRenderer</strong> for better real-time formatting</li>
+                <li><strong>Dynamic model fetching</strong> from OpenRouter API with 200+ AI models</li>
+                <li><strong>Multi-provider support</strong> from Anthropic, OpenAI, Google, Meta, Mistral, Cohere, and more</li>
+                <li><strong>Environment-based behavior</strong> - full model selection in dev, hardcoded Claude Sonnet 4 in production</li>
+                <li><strong>Simplified UI</strong> - single model dropdown in General tab (removed AI Provider tab)</li>
+                <li><strong>Live model updates</strong> with refresh functionality and loading states</li>
+              </ul>
+            </div>
+
+            <div>
+              <h5 className="font-medium text-gray-900 dark:text-gray-100 mb-2">⚙️ Production Optimization</h5>
+              <ul className="space-y-1 text-sm text-gray-700 dark:text-gray-300 list-disc list-inside">
+                <li><strong>Hardcoded Claude Sonnet 4</strong> for production consistency and performance</li>
+                <li><strong>Cost control</strong> - production users get optimized model selection</li>
+                <li><strong>Simplified UX</strong> - no confusing provider choices for end users</li>
+                <li><strong>Developer flexibility</strong> - full model access during development</li>
               </ul>
             </div>
           </div>
@@ -196,12 +206,34 @@ const ChangelogContent = () => {
           
           <div className="space-y-4 ml-4">
             <div>
-              <h5 className="font-medium text-gray-900 dark:text-gray-100 mb-2">🔗 Backend Integration</h5>
+              <h5 className="font-medium text-gray-900 dark:text-gray-100 mb-2">📱 Mobile Architecture</h5>
               <ul className="space-y-1 text-sm text-gray-700 dark:text-gray-300 list-disc list-inside">
-                <li><strong>Evaluation API endpoints</strong> for automated scoring</li>
-                <li><strong>Session loading fixes</strong> restore advisor response formatting and Assert buttons</li>
-                <li><strong>Progressive JSON parsing</strong> extracts advisor data during streaming</li>
-                <li><strong>Escape sequence handling</strong> properly unescapes \n, \t, \", \\ in streaming content</li>
+                <li><strong>Responsive breakpoint system</strong> using window.innerWidth detection</li>
+                <li><strong>Touch event handling</strong> with proper touch-action CSS properties</li>
+                <li><strong>Height constraint fixes</strong> using min-h-0 and flex-shrink-0 for proper scrolling</li>
+                <li><strong>Safe area support</strong> for devices with notches using env(safe-area-inset-*)</li>
+                <li><strong>Mobile-friendly focus styles</strong> and input sizing to prevent zoom</li>
+              </ul>
+            </div>
+
+            <div>
+              <h5 className="font-medium text-gray-900 dark:text-gray-100 mb-2">🔗 OpenRouter Backend</h5>
+              <ul className="space-y-1 text-sm text-gray-700 dark:text-gray-300 list-disc list-inside">
+                <li><strong>New backend function</strong> functions/api/chat/openrouter.js for authenticated requests</li>
+                <li><strong>Enhanced useOpenRouter hook</strong> with full streaming support and error handling</li>
+                <li><strong>API configuration updates</strong> supporting multiple providers</li>
+                <li><strong>Usage tracking enhancements</strong> for OpenRouter cost monitoring</li>
+                <li><strong>Fallback handling</strong> with graceful degradation if API fails</li>
+              </ul>
+            </div>
+
+            <div>
+              <h5 className="font-medium text-gray-900 dark:text-gray-100 mb-2">💾 State Management</h5>
+              <ul className="space-y-1 text-sm text-gray-700 dark:text-gray-300 list-disc list-inside">
+                <li><strong>Environment-aware defaults</strong> - different behavior for dev vs production</li>
+                <li><strong>Model persistence</strong> in localStorage with production overrides</li>
+                <li><strong>Loading states</strong> for better UX during API calls</li>
+                <li><strong>Error boundaries</strong> with informative fallback content</li>
               </ul>
             </div>
           </div>
@@ -212,10 +244,10 @@ const ChangelogContent = () => {
           
           <div className="space-y-2 ml-4">
             <ul className="space-y-1 text-sm text-gray-700 dark:text-gray-300 list-disc list-inside">
-              <li><strong>Infinite loop prevention</strong> in conversation storage with message validation</li>
-              <li><strong>Chrome error resolution</strong> by reducing debug logging</li>
-              <li><strong>Paragraph formatting</strong> works correctly during streaming phase</li>
-              <li><strong>Assert button availability</strong> in loaded sessions</li>
+              <li><strong>Touch scrolling isolation</strong> - prevents whole page scrolling on mobile</li>
+              <li><strong>Input area positioning</strong> - stays fixed at bottom on mobile</li>
+              <li><strong>Model selection persistence</strong> - properly saves and loads selected models</li>
+              <li><strong>API key validation</strong> - improved error messages and handling</li>
             </ul>
           </div>
         </section>
@@ -225,10 +257,14 @@ const ChangelogContent = () => {
           
           <div className="space-y-2 ml-4">
             <ul className="space-y-1 text-sm text-gray-700 dark:text-gray-300 list-disc list-inside">
-              <li><strong>Streaming visual feedback</strong> with "⚡ Preparing advisor responses..." indicators</li>
-              <li><strong>Progressive content updates</strong> show real advisor content instead of static placeholders</li>
-              <li><strong>Improved markdown rendering</strong> for streaming responses</li>
-              <li><strong>Better error handling</strong> for incomplete streaming data</li>
+              <li><strong>Cleaner Settings interface</strong> - removed confusing AI Provider tab</li>
+              <li><strong>Mobile-optimized layouts</strong> - proper spacing and touch targets</li>
+              <li><strong>Loading indicators</strong> - shows "Loading models..." during API calls</li>
+              <li><strong>Refresh functionality</strong> - manual model list refresh button</li>
+              <li><strong>Production info display</strong> - clear indication of active model in production</li>
+              <li><strong>Touch-friendly scrollbars</strong> - optimized for mobile interaction</li>
+              <li><strong>Responsive typography</strong> - proper scaling across device sizes</li>
+              <li><strong>Dark mode support</strong> - consistent theming across mobile and desktop</li>
             </ul>
           </div>
         </section>
