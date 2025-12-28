@@ -29,6 +29,11 @@ All notable changes to SPACE Terminal will be documented in this file.
 - Consolidated duplicate advisor creation logic
 
 ### Fixed
+- **AI perspectives not showing on session load**: Fixed bug where perspective response cards were blank when loading saved conversations from database (advisor_json messages weren't having parsedAdvisors restored)
+- **Duplicate message submissions**: Fixed race condition causing messages to be saved multiple times to database
+  - Added synchronous ref guard (isSubmittingRef) to prevent rapid double-clicks from submitting twice
+  - Added synchronous ref guard (savingMessageIdRef) to prevent auto-save effect from saving same message multiple times during async operation
+- **Excessive re-renders**: Fixed useEffect with missing dependency array that was triggering on every render
 - Mobile layout error with deprecated processCouncilDebates function
 - URL construction error in useConversationStorage for relative paths
 - TagAnalyzer backend API error handling for malformed responses
