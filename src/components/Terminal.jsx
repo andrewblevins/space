@@ -11,9 +11,9 @@ import { getApiEndpoint } from '../utils/apiConfig';
 import { defaultPrompts } from '../lib/defaultPrompts';
 import { handleApiError } from '../utils/apiErrorHandler';
 import { getNextAvailableColor, ADVISOR_COLORS } from '../lib/advisorColors';
-import { setEncrypted, removeEncrypted, setModalController, hasEncryptedData } from '../utils/secureStorage';
+import { setEncrypted, removeEncrypted, setModalController, hasEncryptedData, getDecrypted } from '../utils/secureStorage';
 import { useModal } from '../contexts/ModalContext';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuthSafe } from '../contexts/AuthContext';
 import AccordionMenu from './AccordionMenu';
 import SessionPanel from './SessionPanel';
 // DEPRECATED: Prompt Library - Feature no longer maintained
@@ -67,8 +67,7 @@ import { generateAdvisorSuggestions } from '../utils/advisorSuggestions';
 const Terminal = ({ theme, toggleTheme }) => {
   const modalController = useModal();
   const useAuthSystem = import.meta.env.VITE_USE_AUTH === 'true';
-  const authData = useAuthSystem ? useAuth() : { user: null, session: null };
-  const { user, session } = authData;
+  const { user, session, loading: authLoading } = useAuthSafe();
   const storage = useConversationStorage();
   
   // Helper functions for session persistence (must be defined before useState calls that use them)
@@ -833,7 +832,7 @@ const Terminal = ({ theme, toggleTheme }) => {
   useEffect(() => {
     console.log('🔄 Auto-load effect triggered:', {
       useAuthSystem,
-      authLoading: authData?.loading,
+      authLoading,
       isInitializing,
       hasCheckedKeys,
       apiKeysSet,
@@ -843,9 +842,9 @@ const Terminal = ({ theme, toggleTheme }) => {
       hasStorage: !!storage,
       hasHandleLoadSession: typeof handleLoadSession === 'function'
     });
-    
+
     // Wait for auth to complete if using auth system
-    if (useAuthSystem && authData?.loading) {
+    if (useAuthSystem && authLoading) {
       console.log('⏳ Waiting for auth to complete...');
       return;
     }
@@ -1287,31 +1286,27 @@ const { callParallelAdvisors } = useParallelAdvisors({ messages, setMessages, ma
       const headers = {
         'Content-Type': 'application/json',
       };
-      
-      const apiUrl = useAuthSystem 
-        ? `${getApiEndpoint()}/api/chat/claude`  // Backend proxy
-        : `${getApiEndpoint()}/v1/messages`;     // Direct API
+
+      const apiUrl = useAuthSystem
+        ? `${getApiEndpoint()}/api/chat/openrouter`  // Backend proxy
+        : 'https://openrouter.ai/api/v1/chat/completions';  // OpenRouter API
 
       if (useAuthSystem) {
         // Auth mode: use bearer token
         headers['Authorization'] = `Bearer ${session.access_token}`;
       } else {
-        // Legacy mode: direct API access
-        headers['x-api-key'] = anthropicKey;
-        headers['anthropic-version'] = '2023-06-01';
-        headers['anthropic-dangerous-direct-browser-access'] = 'true';
+        // Legacy mode: use OpenRouter API directly
+        const openrouterKey = await getDecrypted('space_openrouter_key');
+        if (!openrouterKey) {
+          console.error('OpenRouter API key not set');
+          throw new Error('OpenRouter API key not set');
+        }
+        headers['Authorization'] = `Bearer ${openrouterKey}`;
+        headers['HTTP-Referer'] = window.location.origin;
+        headers['X-Title'] = 'SPACE Terminal';
       }
 
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          model: 'claude-sonnet-4.5',
-          messages: [{
-            role: 'user',
-            content: "Generate an interesting, thought-provoking question or scenario that would make for a great conversation starter. Something that would benefit from multiple perspectives and deep thinking."
-          }],
-          system: `You are generating conversation starters for SPACE Terminal - a system where users experiencing cognitive or emotional constriction can talk to multiple AI advisors about complex, high-stakes problems.
+      const systemPrompt = `You are generating conversation starters for SPACE Terminal - a system where users experiencing cognitive or emotional constriction can talk to multiple AI advisors about complex, high-stakes problems.
 
 Users come to SPACE when they feel stuck between limited options, overwhelmed by complexity, or unable to integrate conflicting perspectives. Generate prompts that represent someone with:
 
@@ -1326,7 +1321,17 @@ Examples of good prompts:
 - "My elderly parent needs more care but refuses to move from their home. My siblings disagree on what to do and it's tearing our family apart."
 - "We're launching our product next month but discovered a potential safety issue. Fixing it means delaying 6 months and possibly losing our lead investor."
 
-Generate ONLY the user's message describing their situation, nothing else. Include specific details but keep it concise.`,
+Generate ONLY the user's message describing their situation, nothing else. Include specific details but keep it concise.`;
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          model: 'anthropic/claude-sonnet-4.5',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: "Generate an interesting, thought-provoking question or scenario that would make for a great conversation starter. Something that would benefit from multiple perspectives and deep thinking." }
+          ],
           max_tokens: 150,
           stream: true
         }),
@@ -1345,19 +1350,20 @@ Generate ONLY the user's message describing their situation, nothing else. Inclu
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        
+
         buffer += decoder.decode(value, { stream: true });
         const events = buffer.split('\n\n');
         buffer = events.pop() || '';
 
         for (const event of events) {
           const dataMatch = event.match(/^data: (.+)$/m);
-          if (!dataMatch) continue;
-          
+          if (!dataMatch || dataMatch[1] === '[DONE]') continue;
+
           try {
             const data = JSON.parse(dataMatch[1]);
-            if (data.type === 'content_block_delta' && data.delta.type === 'text_delta') {
-              const text = data.delta.text;
+            // Handle OpenRouter/OpenAI format
+            const text = data.choices?.[0]?.delta?.content;
+            if (text) {
               for (let i = 0; i < text.length; i++) {
                 const char = text[i];
                 generatedText += char;
@@ -1396,7 +1402,7 @@ Generate ONLY the user's message describing their situation, nothing else. Inclu
   // Generate contextual test prompt using Claude
   const generateTestPrompt = async () => {
     const hasConversation = messages.length > 0 && !messages.every(m => m.type === 'system');
-    
+
     if (!hasConversation) {
       // Generate a creative starting prompt for new conversations
       await generateStartingPrompt();
@@ -1410,39 +1416,31 @@ Generate ONLY the user's message describing their situation, nothing else. Inclu
         .slice(-10) // Last 10 messages for context
         .map((m) => ({ role: m.type, content: m.content }));
 
-      // Add the prompt request
-      contextMessages.push({
-        role: 'user',
-        content: "Based on our conversation so far, what would be a natural and interesting follow-up question or comment from the user? Generate only the user's message, nothing else."
-      });
-
       // Build headers based on auth mode
       const headers = {
         'Content-Type': 'application/json',
       };
-      
-      const apiUrl = useAuthSystem 
-        ? `${getApiEndpoint()}/api/chat/claude`  // Backend proxy
-        : `${getApiEndpoint()}/v1/messages`;     // Direct API
+
+      const apiUrl = useAuthSystem
+        ? `${getApiEndpoint()}/api/chat/openrouter`  // Backend proxy
+        : 'https://openrouter.ai/api/v1/chat/completions';  // OpenRouter API
 
       if (useAuthSystem) {
         // Auth mode: use bearer token
         headers['Authorization'] = `Bearer ${session.access_token}`;
       } else {
-        // Legacy mode: direct API access
-        headers['x-api-key'] = anthropicKey;
-        headers['anthropic-version'] = '2023-06-01';
-        headers['anthropic-dangerous-direct-browser-access'] = 'true';
+        // Legacy mode: use OpenRouter API directly
+        const openrouterKey = await getDecrypted('space_openrouter_key');
+        if (!openrouterKey) {
+          console.error('OpenRouter API key not set');
+          return;
+        }
+        headers['Authorization'] = `Bearer ${openrouterKey}`;
+        headers['HTTP-Referer'] = window.location.origin;
+        headers['X-Title'] = 'SPACE Terminal';
       }
 
-      // Make API call
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          model: 'claude-sonnet-4.5',
-          messages: contextMessages,
-          system: `You are helping test a conversational AI system. Based on the conversation history, generate a natural follow-up message that a user would likely say next. 
+      const systemPrompt = `You are helping test a conversational AI system. Based on the conversation history, generate a natural follow-up message that a user would likely say next.
 
 Consider:
 - The topic and flow of conversation so far
@@ -1451,7 +1449,19 @@ Consider:
 - Deeper exploration of themes already discussed
 - Challenging or probing questions that test the advisors' perspectives
 
-Generate ONLY the user's next message, nothing else. Make it feel authentic and conversational.`,
+Generate ONLY the user's next message, nothing else. Make it feel authentic and conversational.`;
+
+      // Make API call
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          model: 'anthropic/claude-sonnet-4.5',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            ...contextMessages,
+            { role: 'user', content: "Based on our conversation so far, what would be a natural and interesting follow-up question or comment from the user? Generate only the user's message, nothing else." }
+          ],
           max_tokens: 200,
           stream: true
         }),
@@ -1470,19 +1480,20 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        
+
         buffer += decoder.decode(value, { stream: true });
         const events = buffer.split('\n\n');
         buffer = events.pop() || '';
 
         for (const event of events) {
           const dataMatch = event.match(/^data: (.+)$/m);
-          if (!dataMatch) continue;
-          
+          if (!dataMatch || dataMatch[1] === '[DONE]') continue;
+
           try {
             const data = JSON.parse(dataMatch[1]);
-            if (data.type === 'content_block_delta' && data.delta.type === 'text_delta') {
-              const text = data.delta.text;
+            // Handle OpenRouter/OpenAI format
+            const text = data.choices?.[0]?.delta?.content;
+            if (text) {
               for (let i = 0; i < text.length; i++) {
                 const char = text[i];
                 generatedText += char;
@@ -3387,6 +3398,7 @@ ${selectedText}
                       onAddPerspective={handleAddGeneratedPerspective}
                       trackUsage={trackUsage}
                       onEditAdvisor={setEditingAdvisor}
+                      disabled={showJournalOnboarding}
                     />
 
                     {/* Accordion Menu */}

@@ -1,13 +1,16 @@
 import Terminal from './components/Terminal'
 import WelcomeScreen from './components/WelcomeScreen'
 import { ModalProvider } from './contexts/ModalContext'
-import { AuthProvider, useAuth } from './contexts/AuthContext'
+import { AuthProvider, useAuthSafe } from './contexts/AuthContext'
 import { useState, useEffect } from 'react'
 
 function AppContent() {
   const useAuthSystem = import.meta.env.VITE_USE_AUTH === 'true';
-  const authData = useAuthSystem ? useAuth() : { user: true, loading: false };
-  const { user, loading } = authData;
+  // useAuthSafe returns default values when auth is not enabled
+  const authData = useAuthSafe();
+  // In legacy mode (no auth), treat user as truthy to skip login
+  const user = useAuthSystem ? authData.user : true;
+  const loading = useAuthSystem ? authData.loading : false;
   
   const [theme, setTheme] = useState(() =>
     localStorage.getItem('theme') || 'dark'

@@ -12,6 +12,14 @@ export const useAuth = () => {
   return context;
 };
 
+// Safe version that returns default values when auth is not enabled
+// This allows components to always call the hook without conditional logic
+export const useAuthSafe = () => {
+  const context = useContext(AuthContext);
+  // Return default values if context is not available (auth disabled)
+  return context || { user: null, session: null, loading: false };
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
