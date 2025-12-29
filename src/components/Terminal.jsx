@@ -2692,12 +2692,18 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
           // Database storage: Save individual messages as they come
           const lastMessage = messages[messages.length - 1];
           if (lastMessage && !lastMessage.saved) {
+            // Skip saving messages that are still streaming
+            if (lastMessage.isStreaming || lastMessage.isJsonStreaming) {
+              console.log('⏳ Skipping save of streaming message - waiting for completion');
+              return;
+            }
+
             // Validate that message has required fields before attempting to save
             if (!lastMessage.type || !lastMessage.content || lastMessage.content.trim() === '') {
-              console.log('⏳ Skipping save of incomplete message:', { 
-                type: lastMessage.type, 
+              console.log('⏳ Skipping save of incomplete message:', {
+                type: lastMessage.type,
                 hasContent: !!lastMessage.content,
-                contentLength: lastMessage.content?.length || 0 
+                contentLength: lastMessage.content?.length || 0
               });
               return; // Skip saving incomplete messages
             }
