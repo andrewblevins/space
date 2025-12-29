@@ -1876,7 +1876,9 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
     // Load the most recent session (first in sorted array)
     const mostRecentSession = sessionsWithUserMessages[0];
     setCurrentSessionId(mostRecentSession.id);
-    
+    setCurrentConversationId(null); // Clear database conversation ID when loading localStorage session
+    persistCurrentSession(mostRecentSession.id, null); // Persist so it survives refresh
+
     // Process messages to restore advisor_json format if needed
     const processedMessages = mostRecentSession.messages.map((msg, idx) => {
       const baseTimestamp = msg.timestamp || new Date(Date.now() - (mostRecentSession.messages.length - idx) * 1000).toISOString();

@@ -14,6 +14,7 @@ const SessionPanel = ({
 }) => {
   const [sessions, setSessions] = useState([]);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Load sessions from localStorage
   const loadLocalStorageSessions = () => {
@@ -84,60 +85,55 @@ const SessionPanel = ({
 
   // Load all sessions (localStorage + database if enabled)
   const loadAllSessions = async () => {
-    const localStorageSessions = loadLocalStorageSessions();
-    let allSessions = [...localStorageSessions];
-    
-    // If using database storage, fetch and merge database conversations
-    if (useDatabaseStorage && storage) {
+    setIsLoading(true);
+    try {
+      const localStorageSessions = loadLocalStorageSessions();
+      let allSessions = [...localStorageSessions];
+
+      // If using database storage, fetch and merge database conversations
+      if (useDatabaseStorage && storage) {
       try {
         const conversations = await storage.listConversations();
         if (conversations && conversations.length > 0) {
           // Format database conversations to match session structure
-          const dbSessions = conversations.map(conv => {
-            // We need to load the conversation to get message count
-            // But that's expensive, so we'll use a placeholder for now
-            // The actual message count will be loaded when the conversation is opened
+          // Load message counts in parallel for all conversations
+          const dbSessionsPromises = conversations.map(async (conv) => {
+            let messageCount = 0;
+            try {
+              const conversation = await storage.loadConversation(conv.id);
+              messageCount = (conversation.messages || []).filter(m => m.type !== 'system').length;
+            } catch (error) {
+              console.warn(`Failed to load message count for conversation ${conv.id}:`, error);
+            }
             return {
               id: conv.id,
               title: conv.title || `Session ${conv.id.substring(0, 8)}`,
               timestamp: conv.updated_at || conv.created_at,
-              messageCount: 0, // Will be updated when loaded
+              messageCount,
               isDatabase: true,
               conversation: conv
             };
           });
-          
+
+          const dbSessions = await Promise.all(dbSessionsPromises);
+
           // Merge and sort by timestamp
           allSessions = [...allSessions, ...dbSessions].sort((a, b) => {
             const timeA = new Date(a.timestamp);
             const timeB = new Date(b.timestamp);
             return timeB - timeA; // Most recent first
           });
-          
-          // Update message counts for database conversations
-          // Load first few to get accurate counts without blocking UI
-          const updateMessageCounts = async () => {
-            for (const session of allSessions.filter(s => s.isDatabase)) {
-              try {
-                const conversation = await storage.loadConversation(session.id);
-                session.messageCount = (conversation.messages || []).filter(m => m.type !== 'system').length;
-              } catch (error) {
-                console.warn(`Failed to load message count for conversation ${session.id}:`, error);
-              }
-            }
-            setSessions([...allSessions]);
-          };
-          
-          // Update counts in background
-          updateMessageCounts();
         }
       } catch (error) {
         console.error('Failed to load database conversations:', error);
         // Continue with just localStorage sessions
       }
     }
-    
-    setSessions(allSessions);
+
+      setSessions(allSessions);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const formatTimestamp = (timestamp) => {
@@ -158,17 +154,24 @@ const SessionPanel = ({
 
   const handleLoadSession = (sessionId) => {
     onLoadSession(sessionId);
-    loadAllSessions(); // Refresh to update current indicator
+    onClose(); // Close panel after loading
   };
 
-  const handleDeleteSession = (sessionId) => {
+  const handleDeleteSession = async (sessionId) => {
     onDeleteSession(sessionId);
-    loadAllSessions(); // Refresh list
+    // Wait a tick for localStorage to update, then refresh
+    await new Promise(resolve => setTimeout(resolve, 50));
+    loadAllSessions();
   };
 
   const handleNewSession = () => {
     onNewSession();
-    loadAllSessions(); // Refresh to show new session
+    onClose(); // Close panel after creating new session
+  };
+
+  const handleLoadPrevious = () => {
+    onLoadPrevious();
+    onClose(); // Close panel after loading previous
   };
 
   const handleResetAll = () => {
@@ -210,7 +213,7 @@ const SessionPanel = ({
           
           {sessions.length > 1 && (
             <button
-              onClick={onLoadPrevious}
+              onClick={handleLoadPrevious}
               className="w-full px-4 py-2 bg-black border border-blue-400 rounded text-blue-400 hover:bg-blue-400 hover:text-black transition-colors"
             >
               Load Previous Session
@@ -220,17 +223,24 @@ const SessionPanel = ({
 
         {/* Sessions List */}
         <div className="flex-1 overflow-y-auto">
-          <h3 className="text-green-400 font-medium mb-3">Sessions ({sessions.length})</h3>
-          
-          {sessions.length === 0 ? (
+          <h3 className="text-green-400 font-medium mb-3">
+            Sessions {isLoading ? '(loading...)' : `(${sessions.length})`}
+          </h3>
+
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-pulse text-gray-400">Loading sessions...</div>
+            </div>
+          ) : sessions.length === 0 ? (
             <p className="text-gray-400 text-sm">No sessions found</p>
           ) : (
             <div className="space-y-3">
               {sessions.map((session) => {
                 // Handle session ID comparison for both UUIDs (database) and integers (localStorage)
-                const sessionIdStr = String(session.id);
-                const currentSessionIdStr = currentSessionId ? String(currentSessionId) : null;
-                const isCurrentSession = sessionIdStr === currentSessionIdStr;
+                // Ensure we handle null/undefined properly
+                const sessionIdStr = session.id != null ? String(session.id) : '';
+                const currentSessionIdStr = currentSessionId != null ? String(currentSessionId) : '';
+                const isCurrentSession = sessionIdStr !== '' && sessionIdStr === currentSessionIdStr;
                 
                 return (
                 <div 
@@ -304,8 +314,8 @@ const SessionPanel = ({
 
       {/* Reset Confirmation Dialog */}
       {showResetConfirmation && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-60"
+        <div
+          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[60]"
           onClick={(e) => e.stopPropagation()}
         >
           <div 
