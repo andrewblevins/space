@@ -126,14 +126,10 @@ const AdvisorForm = ({ onSubmit, onCancel, initialName = '', existingAdvisors = 
       return;
     }
 
-    if (description.trim()) {
-      setError('Clear the description field before generating a new description');
-      return;
-    }
-
     try {
       setError('');
       setIsGenerating(true);
+      setDescription(''); // Clear existing description before generating
       await generateAdvisorDescription(name, (streamedText) => {
         setDescription(streamedText);
       });
@@ -235,7 +231,7 @@ const AdvisorForm = ({ onSubmit, onCancel, initialName = '', existingAdvisors = 
             disabled={isGenerating}
             className="px-4 py-2 mx-2 text-yellow-600 border border-yellow-600 rounded hover:bg-yellow-600 hover:text-white dark:text-yellow-400 dark:border-yellow-400 dark:hover:bg-yellow-400 dark:hover:text-black disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isGenerating ? 'Generating...' : 'Generate Description'}
+            {isGenerating ? 'Generating...' : (description.trim() ? 'Regenerate Description' : 'Generate Description')}
           </button>
           <button
             onClick={() => {
