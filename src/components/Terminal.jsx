@@ -1568,6 +1568,23 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
 
   // Session management functions for SessionPanel
   const handleNewSession = async () => {
+    // If already in onboarding flow, just reset it to start fresh
+    if (showJournalOnboarding || contextFlow.active) {
+      setContextFlow({
+        active: false,
+        initialEntry: '',
+        questions: [],
+        answers: [],
+        currentQuestionIndex: 0
+      });
+      setJournalSuggestions([]);
+      setShowJournalSuggestions(false);
+      setIsGeneratingSuggestions(false);
+      // Keep showJournalOnboarding true to stay in the onboarding flow
+      setShowJournalOnboarding(true);
+      return;
+    }
+
     const prevSessionId = currentSessionId;
 
     // Auto-generate summary for the session we're leaving
