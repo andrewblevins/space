@@ -314,7 +314,7 @@ const MobileLayout = ({
                 onClick={() => setShowSessionPanel(true)}
                 className="w-full p-3 text-left rounded-lg border border-gray-300 dark:border-gray-600 hover:border-green-400 transition-colors"
               >
-                <span className="text-gray-800 dark:text-gray-200">Session Manager</span>
+                <span className="text-gray-800 dark:text-gray-200">Previous Chats</span>
               </button>
               
               {/* DEPRECATED: Prompt Library - Feature no longer maintained */}
