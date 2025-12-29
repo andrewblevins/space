@@ -318,11 +318,12 @@ export function useOpenRouter({ messages, setMessages, maxTokens, contextLimit, 
                     }
                   } else {
                     // Regular assistant message
-                    newMessages[newMessages.length - 1] = { 
-                      type: 'assistant', 
+                    newMessages[newMessages.length - 1] = {
+                      type: 'assistant',
                       content: currentMessageContent,
                       provider: 'openrouter',
-                      model: model
+                      model: model,
+                      isStreaming: true
                     };
                   }
                 }
@@ -373,7 +374,28 @@ export function useOpenRouter({ messages, setMessages, maxTokens, contextLimit, 
         // Response looks like JSON but failed to parse
       }
     }
-    
+
+    // For non-JSON responses, remove streaming flag now that streaming is complete
+    if (!parsedAdvisorResponse) {
+      setMessages((prev) => {
+        const newMessages = [...prev];
+        if (newMessages.length > 0) {
+          const lastMsg = newMessages[newMessages.length - 1];
+          // Only update if this is an assistant message with streaming flag
+          if (lastMsg.type === 'assistant' && (lastMsg.isStreaming || lastMsg.isJsonStreaming)) {
+            newMessages[newMessages.length - 1] = {
+              type: 'assistant',
+              content: currentMessageContent,
+              provider: 'openrouter',
+              model: model
+              // isStreaming and isJsonStreaming flags removed
+            };
+          }
+        }
+        return newMessages;
+      });
+    }
+
     // Track usage after successful completion
     const outputTokens = estimateTokens(currentMessageContent);
     const cost = trackUsage('openrouter', inputTokens, outputTokens, model);

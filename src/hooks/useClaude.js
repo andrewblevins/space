@@ -405,10 +405,11 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
                   }
                 } else {
                   // Regular assistant message
-                  newMessages[newMessages.length - 1] = { 
-                    type: 'assistant', 
+                  newMessages[newMessages.length - 1] = {
+                    type: 'assistant',
                     content: currentMessageContent,
-                    thinking: (reasoningMode && !isCouncilMode) ? thinkingContent : undefined
+                    thinking: (reasoningMode && !isCouncilMode) ? thinkingContent : undefined,
+                    isStreaming: true
                   };
                 }
               }
@@ -512,7 +513,27 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
         // console.log('🎭 Response looks like JSON but failed to parse:', e.message);
       }
     }
-    
+
+    // For non-JSON responses, remove streaming flag now that streaming is complete
+    if (!parsedAdvisorResponse) {
+      setMessages((prev) => {
+        const newMessages = [...prev];
+        if (newMessages.length > 0) {
+          const lastMsg = newMessages[newMessages.length - 1];
+          // Only update if this is an assistant message with streaming flag
+          if (lastMsg.type === 'assistant' && (lastMsg.isStreaming || lastMsg.isJsonStreaming)) {
+            newMessages[newMessages.length - 1] = {
+              type: 'assistant',
+              content: currentMessageContent,
+              thinking: (reasoningMode && !isCouncilMode) ? thinkingContent : undefined
+              // isStreaming and isJsonStreaming flags removed
+            };
+          }
+        }
+        return newMessages;
+      });
+    }
+
     // Track usage after successful completion
     const outputTokens = estimateTokens(currentMessageContent);
     const cost = trackUsage('claude', inputTokens, outputTokens);
