@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import InfoModal from './InfoModal';
 import PrivacyPolicy from './PrivacyPolicy';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuthSafe } from '../contexts/AuthContext';
 
-const WelcomeScreen = () => {
+const WelcomeScreen = ({ onGetStarted }) => {
   // Reset any localStorage welcome flag when component mounts
   useEffect(() => {
     localStorage.removeItem('space_skip_welcome');
@@ -11,16 +11,22 @@ const WelcomeScreen = () => {
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { signInWithGoogle } = useAuth();
+  const { signInWithGoogle } = useAuthSafe();
 
-  const handleGoogleSignIn = async () => {
-    try {
-      setLoading(true);
-      await signInWithGoogle();
-    } catch (error) {
-      console.error('Sign in error:', error);
-    } finally {
-      setLoading(false);
+  const handleGetStarted = async () => {
+    // If auth is enabled and signInWithGoogle exists, use it
+    if (signInWithGoogle) {
+      try {
+        setLoading(true);
+        await signInWithGoogle();
+      } catch (error) {
+        console.error('Sign in error:', error);
+      } finally {
+        setLoading(false);
+      }
+    } else if (onGetStarted) {
+      // Legacy mode - just proceed to the app
+      onGetStarted();
     }
   };
 
@@ -88,7 +94,7 @@ const WelcomeScreen = () => {
         {/* CTA section */}
         <div className="text-center max-w-2xl mx-auto">
           <button
-            onClick={handleGoogleSignIn}
+            onClick={handleGetStarted}
             disabled={loading}
             className="bg-green-400 text-black px-8 py-3 rounded-lg text-lg font-medium hover:bg-green-300 disabled:opacity-50 transition-all duration-200 shadow-lg hover:shadow-green-400/10 flex items-center justify-center gap-3 mx-auto"
           >
