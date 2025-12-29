@@ -4,7 +4,7 @@ import React from 'react';
  * MobileHeader component provides the header section for mobile layout
  * Features: App branding, tab indicator, and info button
  */
-const MobileHeader = ({ activeTab, setActiveTab, setShowInfoModal }) => {
+const MobileHeader = ({ activeTab, setActiveTab, setShowInfoModal, onLogoClick }) => {
   const getTabTitle = () => {
     switch (activeTab) {
       case 'chat':
@@ -24,7 +24,16 @@ const MobileHeader = ({ activeTab, setActiveTab, setShowInfoModal }) => {
     <header className="flex items-center justify-between p-4 bg-amber-50 dark:bg-gray-900 border-b border-gray-300 dark:border-gray-700">
       {/* Left side - App branding */}
       <div className="flex items-center">
-        <div className="flex items-center gap-2">
+        <a 
+          href="/"
+          onClick={(e) => {
+            if (onLogoClick) {
+              e.preventDefault();
+              onLogoClick();
+            }
+          }}
+          className="flex items-center gap-2"
+        >
           <div className="w-8 h-8 bg-green-400 rounded flex items-center justify-center text-black font-bold">
             S
           </div>
@@ -36,7 +45,7 @@ const MobileHeader = ({ activeTab, setActiveTab, setShowInfoModal }) => {
               {getTabTitle()}
             </span>
           </div>
-        </div>
+        </a>
       </div>
 
       {/* Right side - Info button */}

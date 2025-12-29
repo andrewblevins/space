@@ -3271,6 +3271,13 @@ ${selectedText}
               setShowSessionPanel={setShowSessionPanel}
               setShowHelpModal={setShowHelpModal}
               setShowInfoModal={setShowInfoModal}
+              onLogoClick={() => {
+                if (!useAuthSystem) {
+                  setShowWelcome(true);
+                } else {
+                  window.location.href = '/';
+                }
+              }}
               // Pass message rendering functions
               // DEPRECATED: processCouncilDebates removed with High Council mode
               paragraphSpacing={paragraphSpacing}
@@ -3295,7 +3302,19 @@ ${selectedText}
                 <div className="w-64 border-r border-gray-300 dark:border-gray-800 overflow-y-auto scrollbar-terminal flex-shrink-0 flex flex-col">
                   {/* Header with title and collapse button */}
                   <div className="flex items-center justify-between p-4 border-b border-gray-300 dark:border-gray-700">
-                    <h1 className="text-xl font-bold text-gray-800 dark:text-gray-200">SPACE Terminal</h1>
+                    <a 
+                      href="/"
+                      className="text-xl font-bold text-gray-800 dark:text-gray-200"
+                      onClick={(e) => {
+                        if (!useAuthSystem) {
+                          e.preventDefault();
+                          setShowWelcome(true);
+                        }
+                        // In auth mode, let the link navigate normally to "/"
+                      }}
+                    >
+                      SPACE Terminal
+                    </a>
                     <button
                       onClick={toggleSidebar}
                       className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"

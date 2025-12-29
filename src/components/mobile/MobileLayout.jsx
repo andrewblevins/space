@@ -34,7 +34,8 @@ const MobileLayout = ({
   paragraphSpacing,
   setSelectedAdvisorForAssertions,
   setShowAssertionsModal,
-  getSystemPrompt
+  getSystemPrompt,
+  onLogoClick
 }) => {
   const [activeTab, setActiveTab] = useState('chat');
   // State for fullscreen perspective modal
@@ -353,6 +354,7 @@ const MobileLayout = ({
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         setShowInfoModal={setShowInfoModal}
+        onLogoClick={onLogoClick}
       />
       
       <div className="flex-1 overflow-hidden">
