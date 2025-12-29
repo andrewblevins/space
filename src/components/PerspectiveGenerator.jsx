@@ -9,22 +9,25 @@ import AdvisorSuggestionsModal from './AdvisorSuggestionsModal';
  * @param {Function} props.onAddPerspective - Callback when adding perspectives
  * @param {Function} props.trackUsage - Usage tracking function
  * @param {Function} props.onEditAdvisor - Callback when editing an advisor
+ * @param {boolean} props.disabled - Whether the generator button should be disabled
  */
 export function PerspectiveGenerator({
   messages,
   existingAdvisors = [],
   onAddPerspective,
   trackUsage,
-  onEditAdvisor
+  onEditAdvisor,
+  disabled = false
 }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [generatedPerspectives, setGeneratedPerspectives] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
 
   const hasMessages = messages.filter(m => m.type === 'user' || m.type === 'assistant').length > 0;
+  const isDisabled = disabled || !hasMessages;
 
   const generatePerspectives = async () => {
-    if (!hasMessages) return;
+    if (isDisabled) return;
 
     // Open modal and start generating
     setIsModalOpen(true);
@@ -204,10 +207,10 @@ Respond with JSON: {
         {/* Generate Button */}
         <button
           onClick={generatePerspectives}
-          disabled={!hasMessages}
+          disabled={isDisabled}
           className={`
             w-full p-3 rounded-lg border transition-colors text-left
-            ${hasMessages
+            ${!isDisabled
               ? 'border-green-600 dark:border-green-500 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 cursor-pointer'
               : 'border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 cursor-not-allowed opacity-50'
             }
