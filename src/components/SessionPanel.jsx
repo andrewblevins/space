@@ -187,11 +187,11 @@ const SessionPanel = ({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-green-400 text-xl font-semibold">Session Manager</h2>
+          <h2 className="text-green-400 text-xl font-semibold">Previous Chats</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-green-400 transition-colors"
-            title="Close Session Manager"
+            title="Close Previous Chats"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

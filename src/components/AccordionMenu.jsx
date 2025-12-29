@@ -60,7 +60,7 @@ const AccordionMenu = ({
     // },
     {
       id: 'sessions',
-      label: 'Session Manager',
+      label: 'Previous Chats',
       onClick: onSessionManagerClick,
       icon: (
         <svg 
