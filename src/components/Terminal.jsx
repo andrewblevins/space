@@ -980,7 +980,8 @@ const Terminal = ({ theme, toggleTheme }) => {
               }
             }, 0);
           } else {
-            console.log('📭 No sessions found to auto-load');
+            console.log('📭 No sessions found to auto-load - starting onboarding');
+            setShowJournalOnboarding(true);
           }
         } catch (error) {
           console.error('Failed to load most recent session:', error);
