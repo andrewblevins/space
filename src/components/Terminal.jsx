@@ -863,19 +863,17 @@ const Terminal = ({ theme, toggleTheme }) => {
     }
   }, [modalController, hasCheckedKeys, useAuthSystem]);
 
-  // Auto-load most recent session by date/time on initialization
+  // Always start with onboarding flow on initialization
+  // Users can load previous conversations from the sidebar
   useEffect(() => {
-    console.log('🔄 Auto-load effect triggered:', {
+    console.log('🔄 Initialization effect triggered:', {
       useAuthSystem,
       authLoading,
       isInitializing,
       hasCheckedKeys,
       apiKeysSet,
       showWelcome,
-      hasRestored: hasRestoredSessionRef.current,
-      useDatabaseStorage,
-      hasStorage: !!storage,
-      hasHandleLoadSession: typeof handleLoadSession === 'function'
+      hasRestored: hasRestoredSessionRef.current
     });
 
     // Wait for auth to complete if using auth system
@@ -884,149 +882,22 @@ const Terminal = ({ theme, toggleTheme }) => {
       return;
     }
     
-    // Prevent infinite loop: only restore session once
+    // Prevent running multiple times
     if (hasRestoredSessionRef.current) {
-      console.log('✅ Session already restored, skipping');
+      console.log('✅ Already initialized, skipping');
       return;
     }
     
     if (!isInitializing && hasCheckedKeys && apiKeysSet && !showWelcome) {
-      console.log('✅ All conditions met, starting auto-load...');
-      // Mark as restored to prevent infinite loop
+      console.log('✅ All conditions met, starting onboarding flow');
+      // Mark as initialized to prevent running again
       hasRestoredSessionRef.current = true;
       
-      // Helper function to get timestamp for a session/conversation
-      // Matches the logic used in loadSessions() for consistent sorting
-      const getSessionTimestamp = (session) => {
-        // For localStorage sessions with messages, use last user message timestamp
-        if (session.messages && session.messages.length > 0) {
-          const userMessages = session.messages.filter(m => m.type === 'user');
-          if (userMessages.length > 0) {
-            const lastUserMsg = userMessages[userMessages.length - 1];
-            return new Date(lastUserMsg.timestamp || session.timestamp || 0);
-          }
-        }
-        // For database conversations, use updated_at (which is updated when messages are added)
-        if (session.updated_at) {
-          return new Date(session.updated_at);
-        }
-        // Fallback to created_at or session timestamp
-        if (session.created_at) {
-          return new Date(session.created_at);
-        }
-        if (session.timestamp) {
-          return new Date(session.timestamp);
-        }
-        return new Date(0);
-      };
-      
-      // Always load the most recent session by date/time
-      const loadMostRecentSession = async () => {
-        try {
-          const allSessions = [];
-          
-          // Get localStorage sessions (inline logic to avoid hoisting issues)
-          const localStorageSessions = [];
-          const seenIds = new Set();
-          
-          for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key && key.startsWith('space_session_')) {
-              const sessionData = localStorage.getItem(key);
-              if (sessionData) {
-                try {
-                  const session = JSON.parse(sessionData);
-                  if (session && session.id && !seenIds.has(session.id)) {
-                    seenIds.add(session.id);
-                    // Only include sessions with actual user/assistant messages
-                    const nonSystemMessages = session.messages?.filter(m => m.type !== 'system') || [];
-                    if (nonSystemMessages.length > 0) {
-                      localStorageSessions.push(session);
-                    }
-                  }
-                } catch (error) {
-                  console.warn(`Failed to parse session data for key ${key}:`, error);
-                }
-              }
-            }
-          }
-          
-          console.log(`📦 Found ${localStorageSessions.length} localStorage sessions`);
-          allSessions.push(...localStorageSessions.map(s => ({
-            ...s,
-            source: 'localStorage',
-            timestamp: getSessionTimestamp(s)
-          })));
-          
-          // Get database conversations if using database storage
-          if (useDatabaseStorage && storage) {
-            console.log('🗃️ Loading database conversations...');
-            try {
-              const conversations = await storage.listConversations();
-              console.log(`🗃️ Found ${conversations?.length || 0} database conversations`);
-              if (conversations && conversations.length > 0) {
-                allSessions.push(...conversations.map(c => ({
-                  id: c.id,
-                  title: c.title || `Session ${c.id.substring(0, 8)}`,
-                  source: 'database',
-                  timestamp: getSessionTimestamp(c)
-                })));
-              }
-            } catch (error) {
-              console.error('❌ Failed to load database conversations:', error);
-            }
-          } else {
-            console.log('⏭️ Skipping database conversations (useDatabaseStorage:', useDatabaseStorage, ', hasStorage:', !!storage, ')');
-          }
-          
-          console.log(`📊 Total sessions found: ${allSessions.length}`);
-          
-          // Sort all sessions by timestamp (most recent first)
-          allSessions.sort((a, b) => {
-            const timeA = a.timestamp.getTime ? a.timestamp.getTime() : new Date(a.timestamp).getTime();
-            const timeB = b.timestamp.getTime ? b.timestamp.getTime() : new Date(b.timestamp).getTime();
-            return timeB - timeA; // Most recent first
-          });
-          
-          // Load the most recent session
-          if (allSessions.length > 0) {
-            const mostRecent = allSessions[0];
-            console.log('📂 Auto-loading most recent session:', {
-              id: mostRecent.id,
-              title: mostRecent.title,
-              source: mostRecent.source,
-              timestamp: mostRecent.timestamp
-            });
-            // Call handleLoadSession directly - it should be defined by the time this effect runs
-            // Using a small delay to ensure it's available
-            setTimeout(() => {
-              console.log('🔍 Checking handleLoadSession availability:', {
-                isFunction: typeof handleLoadSession === 'function',
-                isRefSet: !!handleLoadSessionRef.current,
-                sessionId: mostRecent.id
-              });
-              
-              const loadFn = handleLoadSessionRef.current || handleLoadSession;
-              if (typeof loadFn === 'function') {
-                console.log('✅ Calling handleLoadSession for session:', mostRecent.id);
-                loadFn(mostRecent.id);
-              } else {
-                console.warn('⚠️ handleLoadSession not available, skipping auto-load. Will retry on next render.');
-              }
-            }, 0);
-          } else {
-            console.log('📭 No sessions found to auto-load - starting onboarding');
-            setShowJournalOnboarding(true);
-          }
-        } catch (error) {
-          console.error('Failed to load most recent session:', error);
-        }
-      };
-      
-      loadMostRecentSession();
+      // Always start with onboarding - users can load previous conversations from sidebar
+      setShowJournalOnboarding(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isInitializing, hasCheckedKeys, apiKeysSet, showWelcome, useDatabaseStorage, user, useAuthSystem, storage]);
+  }, [isInitializing, hasCheckedKeys, apiKeysSet, showWelcome, useAuthSystem, authLoading]);
 
   // Persist current session/conversation ID whenever it changes
   useEffect(() => {
