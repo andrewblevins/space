@@ -30,6 +30,8 @@ import ThinkingBlock from './ThinkingBlock';
 import { Module } from "./terminal/Module";
 import { GroupableModule } from "./terminal/GroupableModule";
 import { CollapsibleModule } from "./terminal/CollapsibleModule";
+import { CollapsibleSection } from "./terminal/CollapsibleSection";
+import { RecentChats } from "./terminal/RecentChats";
 import { CollapsibleClickableModule } from "./terminal/CollapsibleClickableModule";
 // DEPRECATED: High Council Mode components
 // import DebateBlock from './DebateBlock';
@@ -70,13 +72,13 @@ const Terminal = ({ theme, toggleTheme }) => {
   const authData = useAuthSystem ? useAuth() : { user: null, session: null };
   const { user, session } = authData;
   const storage = useConversationStorage();
-  
+
   // Helper functions for session persistence (must be defined before useState calls that use them)
   const loadPersistedCurrentSession = () => {
     try {
       const conversationId = localStorage.getItem('space_current_conversation_id');
       const sessionId = localStorage.getItem('space_current_session_id');
-      
+
       return {
         conversationId: conversationId || null,
         sessionId: sessionId || null
@@ -102,7 +104,7 @@ const Terminal = ({ theme, toggleTheme }) => {
       console.error('Failed to persist current session:', error);
     }
   };
-  
+
   // Database storage state - initialize from persisted value
   const [currentConversationId, setCurrentConversationId] = useState(() => {
     const persisted = loadPersistedCurrentSession();
@@ -118,7 +120,7 @@ const Terminal = ({ theme, toggleTheme }) => {
   //   console.log('🔄 Initializing showMigrationModal to false');
   //   return false;
   // });
-  
+
   // Initialize the modal controller for secureStorage
   useEffect(() => {
     if (modalController) {
@@ -143,14 +145,14 @@ const Terminal = ({ theme, toggleTheme }) => {
   useEffect(() => {
     const shouldUseDatabase = useAuthSystem && !!user;
     if (useDatabaseStorage !== shouldUseDatabase) {
-      console.log('🗃️ Updating database storage decision:', { 
-        useAuthSystem, 
-        user: !!user, 
-        previous: useDatabaseStorage, 
-        new: shouldUseDatabase 
+      console.log('🗃️ Updating database storage decision:', {
+        useAuthSystem,
+        user: !!user,
+        previous: useDatabaseStorage,
+        new: shouldUseDatabase
       });
       setUseDatabaseStorage(shouldUseDatabase);
-      
+
       // If switching from localStorage to database storage, try to load most recent database conversation
       if (shouldUseDatabase && !useDatabaseStorage) {
         console.log('🔄 Switching to database storage, will load most recent conversation');
@@ -162,7 +164,7 @@ const Terminal = ({ theme, toggleTheme }) => {
   const getNextSessionId = () => {
     const keys = Object.keys(localStorage).filter(key => key.startsWith('space_session_'));
     if (keys.length === 0) return 1;
-    
+
     const ids = keys.map(key => parseInt(key.replace('space_session_', '')));
     return Math.max(...ids) + 1;
   };
@@ -241,7 +243,7 @@ const Terminal = ({ theme, toggleTheme }) => {
         console.log('Generating question', contextFlow.currentQuestionIndex + 2, 'of 3');
         const filledAnswers = newAnswers.filter(a => a);
         console.log('Previous answers:', filledAnswers);
-        
+
         const { generateContextQuestion } = await import('../utils/contextQuestions');
         const nextQuestion = await generateContextQuestion(
           contextFlow.initialEntry,
@@ -571,7 +573,7 @@ const Terminal = ({ theme, toggleTheme }) => {
 
   const [messages, setMessages] = useState(() => {
     const baseMessages = [];
-    
+
     // Add auth-specific welcome message
     if (useAuthSystem && user) {
       baseMessages.push({
@@ -579,12 +581,12 @@ const Terminal = ({ theme, toggleTheme }) => {
         content: `Welcome back${user.email ? ', ' + user.email.split('@')[0] : ''}! You have 100 messages per day to explore complex problems with AI advisors. Your limit resets at midnight.`
       });
     }
-    
+
     baseMessages.push({
       type: 'system',
       content: 'Start a conversation, add a perspective (+), draw from the Prompt Library (↙), or type /help for instructions.'
     });
-    
+
     return baseMessages;
   });
   const [input, setInput] = useState('');
@@ -606,19 +608,19 @@ const Terminal = ({ theme, toggleTheme }) => {
   const [advisors, setAdvisors] = useState(() => {
     const saved = localStorage.getItem('space_advisors');
     const savedAdvisors = saved ? JSON.parse(saved) : [];
-    
+
     // Auto-assign colors to advisors that don't have them
     let hasChanges = false;
     const updatedAdvisors = [];
     const assignedColors = [];
-    
+
     // First pass: collect all existing colors
     savedAdvisors.forEach(advisor => {
       if (advisor.color) {
         assignedColors.push(advisor.color);
       }
     });
-    
+
     // Second pass: assign colors to advisors without them
     savedAdvisors.forEach(advisor => {
       if (!advisor.color) {
@@ -635,12 +637,12 @@ const Terminal = ({ theme, toggleTheme }) => {
         updatedAdvisors.push(advisor);
       }
     });
-    
+
     // If we made changes, save them back to localStorage
     if (hasChanges) {
       localStorage.setItem('space_advisors', JSON.stringify(updatedAdvisors));
     }
-    
+
     return updatedAdvisors;
   });
   const [advisorGroups, setAdvisorGroups] = useState(() => {
@@ -657,13 +659,13 @@ const Terminal = ({ theme, toggleTheme }) => {
   const [savedPrompts, setSavedPrompts] = useState(() => {
     const saved = localStorage.getItem('space_prompts');
     const userPrompts = saved ? JSON.parse(saved) : [];
-    
+
     // Migrate existing prompts that may have 'content' instead of 'text'
     const migratedUserPrompts = userPrompts.map(p => ({
       name: p.name,
       text: p.text || p.content || '' // Use text if it exists, otherwise content, otherwise empty
     }));
-    
+
     // Merge user prompts with defaults, giving precedence to user prompts
     const userPromptNames = new Set(migratedUserPrompts.map(p => p.name));
     const defaultPromptsWithTextProperty = defaultPrompts
@@ -673,13 +675,13 @@ const Terminal = ({ theme, toggleTheme }) => {
       ...migratedUserPrompts,
       ...defaultPromptsWithTextProperty
     ];
-    
+
     // Save migrated prompts back to localStorage if migration occurred
     const needsMigration = userPrompts.some(p => p.content && !p.text);
     if (needsMigration) {
       localStorage.setItem('space_prompts', JSON.stringify(mergedPrompts));
     }
-    
+
     return mergedPrompts;
   });
   const [editingPrompt, setEditingPrompt] = useState(null);
@@ -729,7 +731,7 @@ const Terminal = ({ theme, toggleTheme }) => {
     const saved = localStorage.getItem('space_auto_scroll');
     return saved ? JSON.parse(saved) : false; // Default: off
   });
-  
+
   // Handler to reset to welcome screen
   const resetToWelcome = () => {
     setShowWelcome(true);
@@ -798,9 +800,9 @@ const Terminal = ({ theme, toggleTheme }) => {
         if (useAuthSystem) {
           console.log('🔑 Auth system enabled, skipping API key check');
           setApiKeysSet(true);
-          
+
           // Welcome screen is now handled at App level for auth users
-          
+
           return;
         }
 
@@ -823,7 +825,7 @@ const Terminal = ({ theme, toggleTheme }) => {
         setHasCheckedKeys(true);
       }
     };
-    
+
     if (modalController && !hasCheckedKeys) {
       checkKeys();
     }
@@ -843,24 +845,24 @@ const Terminal = ({ theme, toggleTheme }) => {
       hasStorage: !!storage,
       hasHandleLoadSession: typeof handleLoadSession === 'function'
     });
-    
+
     // Wait for auth to complete if using auth system
     if (useAuthSystem && authData?.loading) {
       console.log('⏳ Waiting for auth to complete...');
       return;
     }
-    
+
     // Prevent infinite loop: only restore session once
     if (hasRestoredSessionRef.current) {
       console.log('✅ Session already restored, skipping');
       return;
     }
-    
+
     if (!isInitializing && hasCheckedKeys && apiKeysSet && !showWelcome) {
       console.log('✅ All conditions met, starting auto-load...');
       // Mark as restored to prevent infinite loop
       hasRestoredSessionRef.current = true;
-      
+
       // Helper function to get timestamp for a session/conversation
       // Matches the logic used in loadSessions() for consistent sorting
       const getSessionTimestamp = (session) => {
@@ -885,16 +887,16 @@ const Terminal = ({ theme, toggleTheme }) => {
         }
         return new Date(0);
       };
-      
+
       // Always load the most recent session by date/time
       const loadMostRecentSession = async () => {
         try {
           const allSessions = [];
-          
+
           // Get localStorage sessions (inline logic to avoid hoisting issues)
           const localStorageSessions = [];
           const seenIds = new Set();
-          
+
           for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
             if (key && key.startsWith('space_session_')) {
@@ -916,14 +918,14 @@ const Terminal = ({ theme, toggleTheme }) => {
               }
             }
           }
-          
+
           console.log(`📦 Found ${localStorageSessions.length} localStorage sessions`);
           allSessions.push(...localStorageSessions.map(s => ({
             ...s,
             source: 'localStorage',
             timestamp: getSessionTimestamp(s)
           })));
-          
+
           // Get database conversations if using database storage
           if (useDatabaseStorage && storage) {
             console.log('🗃️ Loading database conversations...');
@@ -944,16 +946,16 @@ const Terminal = ({ theme, toggleTheme }) => {
           } else {
             console.log('⏭️ Skipping database conversations (useDatabaseStorage:', useDatabaseStorage, ', hasStorage:', !!storage, ')');
           }
-          
+
           console.log(`📊 Total sessions found: ${allSessions.length}`);
-          
+
           // Sort all sessions by timestamp (most recent first)
           allSessions.sort((a, b) => {
             const timeA = a.timestamp.getTime ? a.timestamp.getTime() : new Date(a.timestamp).getTime();
             const timeB = b.timestamp.getTime ? b.timestamp.getTime() : new Date(b.timestamp).getTime();
             return timeB - timeA; // Most recent first
           });
-          
+
           // Load the most recent session
           if (allSessions.length > 0) {
             const mostRecent = allSessions[0];
@@ -971,7 +973,7 @@ const Terminal = ({ theme, toggleTheme }) => {
                 isRefSet: !!handleLoadSessionRef.current,
                 sessionId: mostRecent.id
               });
-              
+
               const loadFn = handleLoadSessionRef.current || handleLoadSession;
               if (typeof loadFn === 'function') {
                 console.log('✅ Calling handleLoadSession for session:', mostRecent.id);
@@ -987,7 +989,7 @@ const Terminal = ({ theme, toggleTheme }) => {
           console.error('Failed to load most recent session:', error);
         }
       };
-      
+
       loadMostRecentSession();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1036,7 +1038,7 @@ const Terminal = ({ theme, toggleTheme }) => {
             setMessages(session.messages);
             if (session.advisorSuggestions) setAdvisorSuggestions(session.advisorSuggestions);
             if (session.voteHistory) setVoteHistory(session.voteHistory);
-            
+
             if (debugMode) {
               console.log('[State Sync] Session reloaded from storage:', {
                 sessionId: currentSessionId,
@@ -1137,8 +1139,8 @@ const Terminal = ({ theme, toggleTheme }) => {
     }
   }, [debugMode, advisors, messages, currentSessionId]);
 
-// Shared JSON response format for advisor responses (without synthesis)
-const ADVISOR_JSON_FORMAT = `
+  // Shared JSON response format for advisor responses (without synthesis)
+  const ADVISOR_JSON_FORMAT = `
 
 ## Response Format
 
@@ -1164,121 +1166,121 @@ Format requirements:
 - Return ONLY valid JSON - no additional text before or after
 - Do not use markdown code blocks around the JSON`;
 
-const getSystemPrompt = useCallback(({ sessionContexts } = {}) => {
-  let prompt = "";
+  const getSystemPrompt = useCallback(({ sessionContexts } = {}) => {
+    let prompt = "";
 
-  // Add advisor personas
-  const activeAdvisors = advisors.filter(a => a.active);
-  if (activeAdvisors.length > 0) {
-    prompt += `You are currently embodying the following advisors:\n${activeAdvisors.map(a => `\n${a.name}: ${a.description}`).join('\n')}\n\n`;
+    // Add advisor personas
+    const activeAdvisors = advisors.filter(a => a.active);
+    if (activeAdvisors.length > 0) {
+      prompt += `You are currently embodying the following advisors:\n${activeAdvisors.map(a => `\n${a.name}: ${a.description}`).join('\n')}\n\n`;
 
-    // Explicit instruction to include all advisors
-    prompt += `CRITICAL: You must include ALL advisors listed above in your response, even if some have empty or minimal descriptions. Every advisor name that appears in your persona list must have a response in your output. Do not exclude any advisor based on lack of description.\n\n`;
+      // Explicit instruction to include all advisors
+      prompt += `CRITICAL: You must include ALL advisors listed above in your response, even if some have empty or minimal descriptions. Every advisor name that appears in your persona list must have a response in your output. Do not exclude any advisor based on lack of description.\n\n`;
 
-    // Add conversation continuity instructions
-    prompt += `## Conversation Continuity
+      // Add conversation continuity instructions
+      prompt += `## Conversation Continuity
 
 Track the conversation's evolution. When the user has already explained their context, don't ask them to repeat it. Build on established shared understanding. Reference specific things the user has told you earlier in natural ways. Treat this as an ongoing relationship, not a series of isolated exchanges.\n\n`;
 
-    // DEPRECATED: High Council Mode - Replaced by parallel advisor streaming
-    /* if (councilMode) {
-      prompt += `\n\n## HIGH COUNCIL MODE
-IMPORTANT: Start your response with the exact text "<COUNCIL_DEBATE>" (this is required for the interface to work properly).
-
-The advisors will engage in a structured debate, each maintaining their unique perspective throughout. Each advisor should:
-
-- Stay true to their core philosophy and worldview
-- Respond authentically from their own perspective
-- Keep responses concise: 2-3 sentences maximum per turn
-- Be direct and punchy - avoid lengthy explanations 
-- Challenge other advisors when they genuinely disagree
-- Build on points that align with their own thinking
-- Never abandon their perspective just to reach agreement
-
-CRITICAL: This must be a true DEBATE where advisors directly engage with each other's arguments, not separate speeches.
-
-Structure the debate exactly as follows:
-
-## ROUND 1: Initial Positions
-Each advisor states their position on the question.
-
-## ROUND 2: Direct Responses
-Each advisor must directly address the other advisors by name, responding to specific points from Round 1:
-- "Elon, you're wrong about X because..."
-- "I agree with you, Sarah, but you're missing..."
-- "That's complete nonsense, Marcus. Here's why..."
-
-## ROUND 3: Final Positions
-Each advisor directly challenges or supports the others' Round 2 arguments, speaking TO each other, not about them.
-
-CRITICAL: Use ## for round headers (not **bold**). Always add a blank line before each round header. Example:
-
-[ADVISOR: Name] Final sentence of previous round.
-
-## ROUND 2: Direct Responses
-
-[ADVISOR: Next Name] First response...
-
-REQUIREMENTS:
-- Advisors must reference each other by name and quote/paraphrase specific arguments
-- No advisor can ignore what others have said
-- Each response must build on the conversation, not restart it
-- Use transition phrases that show you're responding: "But as [Name] just pointed out..." or "That contradicts [Name]'s argument that..."
-
-MANDATORY FORMAT REQUIREMENTS:
-- Each advisor speaks for 2-3 sentences maximum per turn
-- Be concise and impactful, not verbose
-- You MUST wrap the entire debate in these exact tags:
-
-<COUNCIL_DEBATE>
-**ROUND 1: Initial Positions**
-[ADVISOR: Name] content...
-
-**ROUND 2: Direct Responses** 
-[ADVISOR: Name] responds to [Other Advisor]...
-
-**ROUND 3: Final Positions**
-[ADVISOR: Name] presents final stance...
-</COUNCIL_DEBATE>
-
-DO NOT FORGET THE <COUNCIL_DEBATE> TAGS. Without these tags, the debate will not display properly.
-
-## Council Summary
-
-After the debate section, provide:
-- One sentence per advisor summarizing their final position
-- Synthesis: 1-2 sentences on the overall outcome or remaining tensions`;
-    } */
-  }
-  // If no advisors are active, no system prompt is needed
+      // DEPRECATED: High Council Mode - Replaced by parallel advisor streaming
+      /* if (councilMode) {
+        prompt += `\n\n## HIGH COUNCIL MODE
+  IMPORTANT: Start your response with the exact text "<COUNCIL_DEBATE>" (this is required for the interface to work properly).
   
-  // Add session context from @ references  
-  const contextsToUse = sessionContexts || currentSessionContexts;
-  if (contextsToUse.length > 0) {
-    if (prompt) prompt += "\n\n";
-    prompt += "## REFERENCED CONVERSATION CONTEXTS\n\n";
-    prompt += "The user has referenced the following previous conversations for context:\n\n";
-    
-    contextsToUse.forEach((context, index) => {
-      const date = new Date(context.timestamp).toLocaleDateString();
-      prompt += `### Context ${index + 1}: "${context.title}" (Session ${context.sessionId}, ${date})\n`;
-      prompt += `${context.summary}\n\n`;
-    });
-    
-    prompt += "Use these conversation contexts to inform your response when relevant. The user's message may reference specific details from these conversations.\n";
-  }
+  The advisors will engage in a structured debate, each maintaining their unique perspective throughout. Each advisor should:
   
-  // Add JSON format instructions at the END to make them most prominent
-  if (activeAdvisors.length > 0) {
-    prompt += ADVISOR_JSON_FORMAT;
-  }
+  - Stay true to their core philosophy and worldview
+  - Respond authentically from their own perspective
+  - Keep responses concise: 2-3 sentences maximum per turn
+  - Be direct and punchy - avoid lengthy explanations 
+  - Challenge other advisors when they genuinely disagree
+  - Build on points that align with their own thinking
+  - Never abandon their perspective just to reach agreement
   
-  return prompt;
-}, [advisors, currentSessionContexts]);
+  CRITICAL: This must be a true DEBATE where advisors directly engage with each other's arguments, not separate speeches.
+  
+  Structure the debate exactly as follows:
+  
+  ## ROUND 1: Initial Positions
+  Each advisor states their position on the question.
+  
+  ## ROUND 2: Direct Responses
+  Each advisor must directly address the other advisors by name, responding to specific points from Round 1:
+  - "Elon, you're wrong about X because..."
+  - "I agree with you, Sarah, but you're missing..."
+  - "That's complete nonsense, Marcus. Here's why..."
+  
+  ## ROUND 3: Final Positions
+  Each advisor directly challenges or supports the others' Round 2 arguments, speaking TO each other, not about them.
+  
+  CRITICAL: Use ## for round headers (not **bold**). Always add a blank line before each round header. Example:
+  
+  [ADVISOR: Name] Final sentence of previous round.
+  
+  ## ROUND 2: Direct Responses
+  
+  [ADVISOR: Next Name] First response...
+  
+  REQUIREMENTS:
+  - Advisors must reference each other by name and quote/paraphrase specific arguments
+  - No advisor can ignore what others have said
+  - Each response must build on the conversation, not restart it
+  - Use transition phrases that show you're responding: "But as [Name] just pointed out..." or "That contradicts [Name]'s argument that..."
+  
+  MANDATORY FORMAT REQUIREMENTS:
+  - Each advisor speaks for 2-3 sentences maximum per turn
+  - Be concise and impactful, not verbose
+  - You MUST wrap the entire debate in these exact tags:
+  
+  <COUNCIL_DEBATE>
+  **ROUND 1: Initial Positions**
+  [ADVISOR: Name] content...
+  
+  **ROUND 2: Direct Responses** 
+  [ADVISOR: Name] responds to [Other Advisor]...
+  
+  **ROUND 3: Final Positions**
+  [ADVISOR: Name] presents final stance...
+  </COUNCIL_DEBATE>
+  
+  DO NOT FORGET THE <COUNCIL_DEBATE> TAGS. Without these tags, the debate will not display properly.
+  
+  ## Council Summary
+  
+  After the debate section, provide:
+  - One sentence per advisor summarizing their final position
+  - Synthesis: 1-2 sentences on the overall outcome or remaining tensions`;
+      } */
+    }
+    // If no advisors are active, no system prompt is needed
 
-const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimit, memory, debugMode, reasoningMode, getSystemPrompt });
-const { callOpenRouter } = useOpenRouter({ messages, setMessages, maxTokens, contextLimit, memory, debugMode, getSystemPrompt, model: openrouterModel });
-const { callParallelAdvisors } = useParallelAdvisors({ messages, setMessages, maxTokens, contextLimit, memory, debugMode, reasoningMode });
+    // Add session context from @ references  
+    const contextsToUse = sessionContexts || currentSessionContexts;
+    if (contextsToUse.length > 0) {
+      if (prompt) prompt += "\n\n";
+      prompt += "## REFERENCED CONVERSATION CONTEXTS\n\n";
+      prompt += "The user has referenced the following previous conversations for context:\n\n";
+
+      contextsToUse.forEach((context, index) => {
+        const date = new Date(context.timestamp).toLocaleDateString();
+        prompt += `### Context ${index + 1}: "${context.title}" (Session ${context.sessionId}, ${date})\n`;
+        prompt += `${context.summary}\n\n`;
+      });
+
+      prompt += "Use these conversation contexts to inform your response when relevant. The user's message may reference specific details from these conversations.\n";
+    }
+
+    // Add JSON format instructions at the END to make them most prominent
+    if (activeAdvisors.length > 0) {
+      prompt += ADVISOR_JSON_FORMAT;
+    }
+
+    return prompt;
+  }, [advisors, currentSessionContexts]);
+
+  const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimit, memory, debugMode, reasoningMode, getSystemPrompt });
+  const { callOpenRouter } = useOpenRouter({ messages, setMessages, maxTokens, contextLimit, memory, debugMode, getSystemPrompt, model: openrouterModel });
+  const { callParallelAdvisors } = useParallelAdvisors({ messages, setMessages, maxTokens, contextLimit, memory, debugMode, reasoningMode });
 
   // Generate a creative starting prompt for new conversations
   const generateStartingPrompt = async () => {
@@ -1287,8 +1289,8 @@ const { callParallelAdvisors } = useParallelAdvisors({ messages, setMessages, ma
       const headers = {
         'Content-Type': 'application/json',
       };
-      
-      const apiUrl = useAuthSystem 
+
+      const apiUrl = useAuthSystem
         ? `${getApiEndpoint()}/api/chat/claude`  // Backend proxy
         : `${getApiEndpoint()}/v1/messages`;     // Direct API
 
@@ -1345,7 +1347,7 @@ Generate ONLY the user's message describing their situation, nothing else. Inclu
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        
+
         buffer += decoder.decode(value, { stream: true });
         const events = buffer.split('\n\n');
         buffer = events.pop() || '';
@@ -1353,7 +1355,7 @@ Generate ONLY the user's message describing their situation, nothing else. Inclu
         for (const event of events) {
           const dataMatch = event.match(/^data: (.+)$/m);
           if (!dataMatch) continue;
-          
+
           try {
             const data = JSON.parse(dataMatch[1]);
             if (data.type === 'content_block_delta' && data.delta.type === 'text_delta') {
@@ -1396,7 +1398,7 @@ Generate ONLY the user's message describing their situation, nothing else. Inclu
   // Generate contextual test prompt using Claude
   const generateTestPrompt = async () => {
     const hasConversation = messages.length > 0 && !messages.every(m => m.type === 'system');
-    
+
     if (!hasConversation) {
       // Generate a creative starting prompt for new conversations
       await generateStartingPrompt();
@@ -1420,8 +1422,8 @@ Generate ONLY the user's message describing their situation, nothing else. Inclu
       const headers = {
         'Content-Type': 'application/json',
       };
-      
-      const apiUrl = useAuthSystem 
+
+      const apiUrl = useAuthSystem
         ? `${getApiEndpoint()}/api/chat/claude`  // Backend proxy
         : `${getApiEndpoint()}/v1/messages`;     // Direct API
 
@@ -1470,7 +1472,7 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        
+
         buffer += decoder.decode(value, { stream: true });
         const events = buffer.split('\n\n');
         buffer = events.pop() || '';
@@ -1478,7 +1480,7 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
         for (const event of events) {
           const dataMatch = event.match(/^data: (.+)$/m);
           if (!dataMatch) continue;
-          
+
           try {
             const data = JSON.parse(dataMatch[1]);
             if (data.type === 'content_block_delta' && data.delta.type === 'text_delta') {
@@ -1522,7 +1524,7 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
   const loadSessions = () => {
     const sessions = [];
     const seenIds = new Set();
-    
+
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       if (key && key.startsWith('space_session_')) {
@@ -1542,7 +1544,7 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
         }
       }
     }
-    
+
     return sessions
       .filter(session => {
         // Only include sessions with actual user/assistant messages (not just system messages)
@@ -1557,7 +1559,7 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
           const lastUserMsg = userMessages[userMessages.length - 1];
           return new Date(lastUserMsg.timestamp || session.timestamp);
         };
-        
+
         return getLastUserMessageTime(b) - getLastUserMessageTime(a);  // Descending order - most recent first
       })
       .map(session => ({
@@ -1624,7 +1626,7 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
     // Check if sessionId looks like a UUID (database ID) or integer (localStorage ID)
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(sessionId);
     const isLocalStorageId = /^\d+$/.test(sessionId);
-    
+
     if (useDatabaseStorage && isUUID) {
       // Load from database - sessionId is a proper UUID
       try {
@@ -1632,20 +1634,20 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
         setCurrentConversationId(conversation.id);
         setCurrentSessionId(conversation.id);
         persistCurrentSession(conversation.id, conversation.id); // Persist so it survives refresh
-        
+
         // Process messages to restore advisor_json format if needed and ensure timestamps
         const processedMessages = (conversation.messages || []).map((msg, idx) => {
           const baseTimestamp = msg.timestamp || msg.created_at || new Date(Date.now() - (conversation.messages.length - idx) * 1000).toISOString();
-          
+
           // If it's already an advisor_json message from the database, restore parsedAdvisors
           if (msg.type === 'advisor_json' && msg.content && !msg.parsedAdvisors) {
             let jsonContent = msg.content.trim();
-            
+
             // Handle markdown code block format
             if (jsonContent.startsWith('```json') && jsonContent.endsWith('```')) {
               jsonContent = jsonContent.slice(7, -3).trim();
             }
-            
+
             try {
               const parsed = JSON.parse(jsonContent);
               if (parsed.type === 'advisor_response' && parsed.advisors && Array.isArray(parsed.advisors)) {
@@ -1661,16 +1663,16 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
               console.warn('Failed to parse advisor_json content:', e.message);
             }
           }
-          
+
           // If it's an assistant message that looks like JSON advisor format, restore it
           if (msg.type === 'assistant' && msg.content) {
             let jsonContent = msg.content.trim();
-            
+
             // Handle markdown code block format
             if (jsonContent.startsWith('```json') && jsonContent.endsWith('```')) {
               jsonContent = jsonContent.slice(7, -3).trim();
             }
-            
+
             // Check if it's valid advisor JSON
             if (jsonContent.startsWith('{') && jsonContent.endsWith('}')) {
               try {
@@ -1690,29 +1692,29 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
               }
             }
           }
-          
+
           // Ensure each message has a timestamp for stable React keys
           return {
             ...msg,
             timestamp: baseTimestamp
           };
         });
-        
+
         // Deduplicate consecutive user messages with identical content
         // This handles cases where messages were accidentally saved multiple times
         const deduplicatedMessages = processedMessages.filter((msg, idx, arr) => {
           if (idx === 0) return true;
           const prevMsg = arr[idx - 1];
           // Keep message if it's not a duplicate of the previous one
-          const isDuplicate = msg.type === 'user' && 
-                             prevMsg.type === 'user' && 
-                             msg.content === prevMsg.content;
+          const isDuplicate = msg.type === 'user' &&
+            prevMsg.type === 'user' &&
+            msg.content === prevMsg.content;
           if (isDuplicate) {
             console.log('🔄 Filtered duplicate user message:', msg.content.substring(0, 50) + '...');
           }
           return !isDuplicate;
         });
-        
+
         setMessages(deduplicatedMessages);
         setAdvisorSuggestions(conversation.metadata?.advisorSuggestions || []);
         setVoteHistory(conversation.metadata?.voteHistory || []);
@@ -1732,20 +1734,20 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
         setCurrentSessionId(session.id);
         setCurrentConversationId(null);
         persistCurrentSession(session.id, null); // Persist localStorage session ID
-        
+
         // Process messages to restore advisor_json format if needed and ensure timestamps
         const processedMessages = session.messages.map((msg, idx) => {
           const baseTimestamp = msg.timestamp || new Date(Date.now() - (session.messages.length - idx) * 1000).toISOString();
-          
+
           // If it's already an advisor_json message, restore parsedAdvisors if missing
           if (msg.type === 'advisor_json' && msg.content && !msg.parsedAdvisors) {
             let jsonContent = msg.content.trim();
-            
+
             // Handle markdown code block format
             if (jsonContent.startsWith('```json') && jsonContent.endsWith('```')) {
               jsonContent = jsonContent.slice(7, -3).trim();
             }
-            
+
             try {
               const parsed = JSON.parse(jsonContent);
               if (parsed.type === 'advisor_response' && parsed.advisors && Array.isArray(parsed.advisors)) {
@@ -1761,16 +1763,16 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
               console.warn('Failed to parse advisor_json content:', e.message);
             }
           }
-          
+
           // If it's an assistant message that looks like JSON advisor format, restore it
           if (msg.type === 'assistant' && msg.content) {
             let jsonContent = msg.content.trim();
-            
+
             // Handle markdown code block format
             if (jsonContent.startsWith('```json') && jsonContent.endsWith('```')) {
               jsonContent = jsonContent.slice(7, -3).trim();
             }
-            
+
             // Check if it's valid advisor JSON
             if (jsonContent.startsWith('{') && jsonContent.endsWith('}')) {
               try {
@@ -1790,14 +1792,14 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
               }
             }
           }
-          
+
           // Ensure each message has a timestamp for stable React keys
           return {
             ...msg,
             timestamp: baseTimestamp
           };
         });
-        
+
         setMessages(processedMessages);
         setAdvisorSuggestions(session.advisorSuggestions || []);
         setVoteHistory(session.voteHistory || []);
@@ -1825,17 +1827,17 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
 
   const handleLoadPrevious = () => {
     const sessions = loadSessions();
-    
+
     // Find the most recent session that the user has sent a message in, excluding current session
     const sessionsWithUserMessages = sessions.filter(session => {
       // Skip current session
       if (session.id === currentSessionId) return false;
-      
+
       // Only include sessions where user has sent at least one message
       const userMessages = session.messages.filter(m => m.type === 'user');
       return userMessages.length > 0;
     });
-    
+
     if (sessionsWithUserMessages.length === 0) {
       setMessages(prev => [...prev, {
         type: 'system',
@@ -1843,7 +1845,7 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
       }]);
       return;
     }
-    
+
     // Sort by most recent user message timestamp (descending - most recent first)
     sessionsWithUserMessages.sort((a, b) => {
       const getLastUserMessageTime = (session) => {
@@ -1852,27 +1854,27 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
         const lastUserMsg = userMessages[userMessages.length - 1];
         return new Date(lastUserMsg.timestamp || session.timestamp);
       };
-      
+
       return getLastUserMessageTime(b) - getLastUserMessageTime(a); // Descending order
     });
-    
+
     // Load the most recent session (first in sorted array)
     const mostRecentSession = sessionsWithUserMessages[0];
     setCurrentSessionId(mostRecentSession.id);
-    
+
     // Process messages to restore advisor_json format if needed
     const processedMessages = mostRecentSession.messages.map((msg, idx) => {
       const baseTimestamp = msg.timestamp || new Date(Date.now() - (mostRecentSession.messages.length - idx) * 1000).toISOString();
-      
+
       // If it's already an advisor_json message, restore parsedAdvisors if missing
       if (msg.type === 'advisor_json' && msg.content && !msg.parsedAdvisors) {
         let jsonContent = msg.content.trim();
-        
+
         // Handle markdown code block format
         if (jsonContent.startsWith('```json') && jsonContent.endsWith('```')) {
           jsonContent = jsonContent.slice(7, -3).trim();
         }
-        
+
         try {
           const parsed = JSON.parse(jsonContent);
           if (parsed.type === 'advisor_response' && parsed.advisors && Array.isArray(parsed.advisors)) {
@@ -1888,16 +1890,16 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
           console.warn('Failed to parse advisor_json content:', e.message);
         }
       }
-      
+
       // If it's an assistant message that looks like JSON advisor format, restore it
       if (msg.type === 'assistant' && msg.content) {
         let jsonContent = msg.content.trim();
-        
+
         // Handle markdown code block format
         if (jsonContent.startsWith('```json') && jsonContent.endsWith('```')) {
           jsonContent = jsonContent.slice(7, -3).trim();
         }
-        
+
         // Check if it's valid advisor JSON
         if (jsonContent.startsWith('{') && jsonContent.endsWith('}')) {
           try {
@@ -1917,14 +1919,14 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
           }
         }
       }
-      
+
       return { ...msg, timestamp: baseTimestamp };
     });
-    
+
     setMessages(processedMessages);
     setAdvisorSuggestions(mostRecentSession.advisorSuggestions || []);
     setVoteHistory(mostRecentSession.voteHistory || []);
-    
+
     console.log('🔄 Loaded most recent session with user messages:', mostRecentSession.id);
   };
 
@@ -1951,7 +1953,7 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
       const session = JSON.parse(sessionData);
       displayName = session.title || `Session ${session.id}`;
     }
-    
+
     localStorage.removeItem(`space_session_${sessionId}`);
     setMessages(prev => [...prev, {
       type: 'system',
@@ -1967,50 +1969,50 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
       if (!sessionData) {
         throw new Error('Session not found');
       }
-      
+
       const session = JSON.parse(sessionData);
-      
+
       // Validate session has messages
       if (!session.messages || !Array.isArray(session.messages)) {
         throw new Error('Session has no messages to export');
       }
-      
+
       // Format session as markdown with metadata and export options
       const markdown = formatSessionAsMarkdown(session.messages, {
         title: session.title,
         advisors: session.advisors || [],
         timestamp: session.timestamp
       }, options);
-      
+
       // Validate markdown content
       if (!markdown || markdown.length === 0) {
         throw new Error('Generated export is empty');
       }
-      
+
       const blob = new Blob([markdown], { type: 'text/markdown' });
-      
+
       // Validate blob creation
       if (blob.size === 0) {
         throw new Error('Export file is empty');
       }
-      
+
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      
+
       // Use session title for filename, sanitized
       let filename = `space-session-${currentSessionId}`;
       if (session.title) {
         const sanitizedTitle = session.title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
         filename = `space-${sanitizedTitle}`;
       }
-      
+
       a.download = `${filename}.md`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      
+
       setMessages(prev => [...prev, {
         type: 'system',
         content: `Session exported successfully (${blob.size} bytes)`
@@ -2038,7 +2040,7 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
       console.log('Empty input or loading, returning');
       return;
     }
-    
+
     // Synchronous guard to prevent race condition on rapid clicks
     // React batches state updates, so isLoading can be false for multiple rapid calls
     // The ref updates immediately, preventing duplicate submissions
@@ -2072,13 +2074,13 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
       // if (councilMode) {
       //   processedInput = processedInput.replace(councilRegex, '').trim();
       // }
-      
+
       // Handle new format: @"Session Title" - collect summaries for context injection
       const atTitleRegex = /@"([^"]+)"/g;
       const titleMatches = [...processedInput.matchAll(atTitleRegex)];
       console.log('📄 Found @ references:', titleMatches.map(m => m[1]));
       console.log('📄 Available session selections:', Array.from(sessionSelections.keys()));
-      
+
       // Handle legacy format: @1, @2, etc. for backward compatibility
       const atRegex = /@(\d+)/g;
       const legacyMatches = [...processedInput.matchAll(atRegex)];
@@ -2088,7 +2090,7 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
         const title = m[1];
         const session = sessionSelections.get(title);
         console.log(`📄 Looking for session "${title}":`, session ? 'FOUND' : 'NOT FOUND');
-        
+
         if (session) {
           const summary = await summarizeSession(session.id, { openaiClient });
           if (summary) {
@@ -2143,7 +2145,7 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
           return [];
         }
       })();
-      
+
       // Create the new message object without tags initially (will be updated)
       const newMessage = {
         type: 'user',
@@ -2161,7 +2163,7 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
 
       // Use parallel advisors if any are selected, otherwise fall back to current system
       const activeAdvisors = advisors.filter(a => a.active);
-      
+
       if (activeAdvisors.length > 0) {
         // Use parallel advisor system
         console.log('🎭 Using parallel advisors:', activeAdvisors.map(a => a.name));
@@ -2179,7 +2181,7 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
 
       // Update message with tags after tag analysis completes (in background)
       tagAnalysisPromise.then(tags => {
-        setMessages(prev => prev.map(msg => 
+        setMessages(prev => prev.map(msg =>
           msg === newMessage ? { ...msg, tags } : msg
         ));
       });
@@ -2189,10 +2191,10 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
 
     } catch (error) {
       console.error('Error in handleSubmit:', error);
-      
+
       // Provide better error messages based on error type
       let errorMessage = 'Error: Failed to get response from OpenRouter';
-      
+
       if (error.message?.includes('rate limit') || error.message?.includes('429')) {
         errorMessage = "You've reached today's message limit (100 messages). Your limit will reset at midnight. Consider upgrading for more messages!";
       } else if (error.message?.includes('401') || error.message?.includes('authentication')) {
@@ -2202,10 +2204,10 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
       } else if (error.message) {
         errorMessage = `Error: ${error.message}`;
       }
-      
-      setMessages(prev => [...prev, { 
-        type: 'system', 
-        content: errorMessage 
+
+      setMessages(prev => [...prev, {
+        type: 'system',
+        content: errorMessage
       }]);
       // Clear session contexts on error
       setCurrentSessionContexts([]);
@@ -2244,7 +2246,7 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
   const handleEditKeyDown = (e) => {
     if (e.key === 'Enter' && e.ctrlKey) {
       // Save changes
-      setSavedPrompts(prev => prev.map(p => 
+      setSavedPrompts(prev => prev.map(p =>
         p.name === editingPrompt.name ? { ...p, text: editText } : p
       ));
       setEditingPrompt(null);
@@ -2265,7 +2267,7 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
       }]);
       return;
     }
-    
+
     removeEncrypted('space_anthropic_key');
     removeEncrypted('space_openai_key');
     setApiKeysSet(false);
@@ -2283,13 +2285,13 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
   // Auto-generate summary for previous session when starting a new one
   const generateSummaryForPreviousSession = async (prevSessionId) => {
     if (!openaiClient || prevSessionId === currentSessionId) return;
-    
+
     const sessionData = localStorage.getItem(`space_session_${prevSessionId}`);
     if (!sessionData) return;
-    
+
     const session = JSON.parse(sessionData);
     const messageCount = session.messages.filter(m => m.type === 'user' || m.type === 'assistant').length;
-    
+
     // Only generate summary for sessions with meaningful content that don't already have one
     if (messageCount >= 4 && !session.summary) {
       console.log(`📄 Auto-generating summary for completed session ${prevSessionId}`);
@@ -2345,10 +2347,10 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
     const { title, advisors = [], timestamp } = metadata;
     const { includePerspectives = true } = options;
     const date = timestamp ? new Date(timestamp).toLocaleString() : new Date().toLocaleString();
-    
+
     let markdown = `# ${title || 'SPACE Terminal Session'}\n`;
     markdown += `Exported: ${date}\n\n`;
-    
+
     // Include active perspectives if present and including perspectives
     if (includePerspectives && advisors.length > 0) {
       markdown += `## Active Perspectives\n`;
@@ -2357,20 +2359,20 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
       });
       markdown += `\n`;
     }
-    
+
     // Filter messages based on export options
-    const filteredMessages = includePerspectives 
-      ? messages 
+    const filteredMessages = includePerspectives
+      ? messages
       : messages.filter(msg => msg.type === 'user');
-    
+
     // Format messages with proper attribution
     filteredMessages.forEach((msg) => {
       // Skip help command outputs
       if (msg.content && msg.content.includes('SPACE Terminal v0.1 - Command Reference')) {
         return;
       }
-      
-      switch(msg.type) {
+
+      switch (msg.type) {
         case 'user':
           markdown += `\n### User\n${msg.content}\n`;
           break;
@@ -2403,7 +2405,7 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
           break;
       }
     });
-    
+
     return markdown;
   };
 
@@ -2417,10 +2419,10 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
         worksheets.push(key.replace('space_worksheet_', ''));
       }
     }
-    
+
     // Count worksheets of this type
     const typeCount = worksheets.filter(id => id.startsWith(type)).length + 1;
-    
+
     // Generate new ID
     return `${type}-${typeCount}`;
   };
@@ -2484,7 +2486,7 @@ Recent conversation:
 ${recentMessages}
 
 Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor Name 3", "Advisor Name 4", "Advisor Name 5"]}`;
-      
+
       const inputTokens = Math.ceil((100 + promptContent.length) / 4); // Estimate input tokens
       const response = await openaiClient.chat.completions.create({
         model: "gpt-4o-mini",
@@ -2500,11 +2502,11 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
       });
 
       const suggestions = JSON.parse(response.choices[0].message.content);
-      
+
       // Track usage
       const outputTokens = Math.ceil(response.choices[0].message.content.length / 4);
       trackUsage('gpt', inputTokens, outputTokens);
-      
+
       setAdvisorSuggestions(suggestions.suggestions || []);
     } catch (error) {
       console.error('Error generating perspective suggestions:', error);
@@ -2514,7 +2516,7 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
   // Generate conversation title using gpt-4o-mini
   const generateConversationTitle = async (messages) => {
     if (!openaiClient) return null;
-    
+
     try {
       // Use first few user/assistant messages for title generation
       const conversationText = messages
@@ -2522,9 +2524,9 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
         .slice(0, 6) // Use first 6 messages to capture the conversation direction
         .map(msg => `${msg.type}: ${msg.content.slice(0, 200)}`) // Limit content length
         .join('\n');
-        
+
       if (!conversationText.trim()) return null;
-      
+
       const inputTokens = Math.ceil((200 + conversationText.length) / 4); // Estimate input tokens
       const response = await openaiClient.chat.completions.create({
         model: "gpt-4o-mini",
@@ -2538,13 +2540,13 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
         max_tokens: 30,
         temperature: 0.7
       });
-      
+
       const title = response.choices[0].message.content.trim();
-      
+
       // Track usage
       const outputTokens = Math.ceil(title.length / 4);
       trackUsage('gpt', inputTokens, outputTokens);
-      
+
       return title;
     } catch (error) {
       console.error('Title generation failed:', error);
@@ -2694,18 +2696,18 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
           if (lastMessage && !lastMessage.saved) {
             // Validate that message has required fields before attempting to save
             if (!lastMessage.type || !lastMessage.content || lastMessage.content.trim() === '') {
-              console.log('⏳ Skipping save of incomplete message:', { 
-                type: lastMessage.type, 
+              console.log('⏳ Skipping save of incomplete message:', {
+                type: lastMessage.type,
                 hasContent: !!lastMessage.content,
-                contentLength: lastMessage.content?.length || 0 
+                contentLength: lastMessage.content?.length || 0
               });
               return; // Skip saving incomplete messages
             }
-            
+
             // Create a unique ID for this message to prevent duplicate saves
             // Uses content + timestamp + type as a composite key
             const messageId = `${lastMessage.type}-${lastMessage.timestamp}-${lastMessage.content.slice(0, 50)}`;
-            
+
             // Synchronous guard: Check if we're already saving this exact message
             // This prevents race condition where effect runs multiple times while save is in progress
             if (savingMessageIdRef.current === messageId) {
@@ -2713,7 +2715,7 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
               return;
             }
             savingMessageIdRef.current = messageId;
-            
+
             try {
               await storage.addMessage(
                 currentConversationId,
@@ -2724,19 +2726,19 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
                   timestamp: lastMessage.timestamp || new Date().toISOString()
                 }
               );
-              
+
               // Mark message as saved to prevent duplicate saves
-              setMessages(prev => prev.map((msg, idx) => 
+              setMessages(prev => prev.map((msg, idx) =>
                 idx === prev.length - 1 ? { ...msg, saved: true } : msg
               ));
-              
+
               // Update conversation metadata (perspective suggestions, etc.)
               await storage.saveSessionMetadata(currentConversationId, {
                 advisorSuggestions,
                 voteHistory,
                 lastActivity: new Date().toISOString()
               });
-              
+
             } catch (error) {
               console.error('Failed to save to database:', error);
               // Don't fall back to localStorage in database mode - just log the error
@@ -2750,7 +2752,7 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
           // Legacy localStorage storage
           saveLegacySession();
         }
-        
+
         async function saveLegacySession() {
           const sessionData = {
             id: currentSessionId,
@@ -2766,7 +2768,7 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
           // Generate title if this is a new session with enough content and no title yet
           const existingSession = localStorage.getItem(`space_session_${currentSessionId}`);
           const hasTitle = existingSession ? JSON.parse(existingSession).title : false;
-          
+
           if (!hasTitle && nonSystemMessages.length >= 2) {
             // Generate title when we have a back-and-forth conversation
             const title = await generateConversationTitle(messages);
@@ -2818,7 +2820,7 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
         const debounceTimer = setTimeout(() => {
           analyzeAdvisorSuggestions(messages);
         }, 500); // 500ms debounce to wait for streaming to complete
-        
+
         return () => clearTimeout(debounceTimer);
       }
     }
@@ -2850,7 +2852,7 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
   const formatCaptureAsMarkdown = (selectedText, timestamp, messageIndex) => {
     const formattedDate = new Date(timestamp).toLocaleString();
     const deepLink = `${window.location.origin}${window.location.pathname}?session=${currentSessionId}&message=${messageIndex}`;
-    
+
     return `# SPACE Terminal Capture
 Captured on: ${formattedDate}
 
@@ -2862,19 +2864,19 @@ ${selectedText}
   const handleContextMenu = (e) => {
     const selection = window.getSelection();
     const selectedText = selection?.toString().trim();
-    
+
     if (selectedText) {
       e.preventDefault();
-      
+
       // Find which message contains the selection
       const range = selection.getRangeAt(0);
       let element = range.commonAncestorContainer;
-      
+
       // Walk up the DOM tree until we find an element with an ID starting with 'msg-'
       while (element && (!element.id || !element.id.startsWith('msg-'))) {
         element = element.parentElement;
       }
-      
+
       const messageId = element?.id;
       const messageIndex = messageId ? parseInt(messageId.replace('msg-', '')) : null;
 
@@ -2885,7 +2887,7 @@ ${selectedText}
         }]);
         return;
       }
-      
+
       const menu = document.createElement('div');
       menu.className = `
         absolute bg-gray-900 
@@ -2895,7 +2897,7 @@ ${selectedText}
       `;
       menu.style.left = `${e.pageX}px`;
       menu.style.top = `${e.pageY}px`;
-      
+
       const captureButton = document.createElement('button');
       captureButton.className = `
         w-full px-4 py-2 
@@ -2903,7 +2905,7 @@ ${selectedText}
         hover:bg-gray-800
       `;
       captureButton.textContent = 'Capture Selection';
-      
+
       captureButton.onclick = () => {
         try {
           const timestamp = new Date().toISOString();
@@ -2917,12 +2919,12 @@ ${selectedText}
           a.click();
           document.body.removeChild(a);
           URL.revokeObjectURL(url);
-          
+
           // Check if menu is still in document before trying to remove it
           if (menu.parentNode === document.body) {
             document.body.removeChild(menu);
           }
-          
+
           setMessages(prev => [...prev, {
             type: 'system',
             content: 'Capture saved successfully'
@@ -2935,10 +2937,10 @@ ${selectedText}
           }]);
         }
       };
-      
+
       menu.appendChild(captureButton);
       document.body.appendChild(menu);
-      
+
       // Remove menu when clicking outside
       const removeMenu = (e) => {
         if (!menu.contains(e.target)) {
@@ -2953,16 +2955,16 @@ ${selectedText}
   useEffect(() => {
     // Pre-initialize TagAnalyzer to avoid delays during first analysis
     sharedTagAnalyzer.preInitialize();
-    
+
     // Check URL parameters on load
     const params = new URLSearchParams(window.location.search);
     const sessionId = params.get('session');
     const messageId = params.get('message');
-    
+
     if (sessionId && messageId) {
       // Check if it's a UUID (database conversation) or integer (localStorage session)
       const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(sessionId);
-      
+
       if (isUUID && useDatabaseStorage) {
         // Load from database using handleLoadSession
         handleLoadSession(sessionId);
@@ -2970,23 +2972,23 @@ ${selectedText}
         // Load from localStorage
         const sessionKey = `space_session_${sessionId}`;
         const sessionData = localStorage.getItem(sessionKey);
-        
+
         if (sessionData) {
           const session = JSON.parse(sessionData);
-          
+
           // Process messages to restore advisor_json format if needed
           const processedMessages = session.messages.map((msg, idx) => {
             const baseTimestamp = msg.timestamp || new Date(Date.now() - (session.messages.length - idx) * 1000).toISOString();
-            
+
             // If it's already an advisor_json message, restore parsedAdvisors if missing
             if (msg.type === 'advisor_json' && msg.content && !msg.parsedAdvisors) {
               let jsonContent = msg.content.trim();
-              
+
               // Handle markdown code block format
               if (jsonContent.startsWith('```json') && jsonContent.endsWith('```')) {
                 jsonContent = jsonContent.slice(7, -3).trim();
               }
-              
+
               try {
                 const parsed = JSON.parse(jsonContent);
                 if (parsed.type === 'advisor_response' && parsed.advisors && Array.isArray(parsed.advisors)) {
@@ -3002,16 +3004,16 @@ ${selectedText}
                 console.warn('Failed to parse advisor_json content:', e.message);
               }
             }
-            
+
             // If it's an assistant message that looks like JSON advisor format, restore it
             if (msg.type === 'assistant' && msg.content) {
               let jsonContent = msg.content.trim();
-              
+
               // Handle markdown code block format
               if (jsonContent.startsWith('```json') && jsonContent.endsWith('```')) {
                 jsonContent = jsonContent.slice(7, -3).trim();
               }
-              
+
               // Check if it's valid advisor JSON
               if (jsonContent.startsWith('{') && jsonContent.endsWith('}')) {
                 try {
@@ -3031,14 +3033,14 @@ ${selectedText}
                 }
               }
             }
-            
+
             return { ...msg, timestamp: baseTimestamp };
           });
-          
+
           setMessages(processedMessages);
           setCurrentSessionId(parseInt(sessionId));
           persistCurrentSession(parseInt(sessionId), null); // Persist localStorage session ID
-          
+
           // Scroll to the specified message after render
           setTimeout(() => {
             const element = document.getElementById(`msg-${messageId}`);
@@ -3055,8 +3057,8 @@ ${selectedText}
   }, []);
 
   const handleAdvisorClick = (advisor) => {
-    setAdvisors(prev => prev.map(a => 
-      a.name === advisor.name 
+    setAdvisors(prev => prev.map(a =>
+      a.name === advisor.name
         ? { ...a, active: !a.active }
         : a
     ));
@@ -3067,16 +3069,16 @@ ${selectedText}
     if (isActive) {
       // Deactivate group and all its advisors
       setActiveGroups(prev => prev.filter(g => g !== group.name));
-      setAdvisors(prev => prev.map(advisor => 
-        group.advisors.includes(advisor.name) 
+      setAdvisors(prev => prev.map(advisor =>
+        group.advisors.includes(advisor.name)
           ? { ...advisor, active: false }
           : advisor
       ));
     } else {
       // Activate group and all its advisors
       setActiveGroups(prev => [...prev, group.name]);
-      setAdvisors(prev => prev.map(advisor => 
-        group.advisors.includes(advisor.name) 
+      setAdvisors(prev => prev.map(advisor =>
+        group.advisors.includes(advisor.name)
           ? { ...advisor, active: true }
           : advisor
       ));
@@ -3131,7 +3133,7 @@ ${selectedText}
   const exportAllSessions = () => {
     try {
       const sessions = [];
-      
+
       // Iterate through localStorage to find all session keys
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
@@ -3139,7 +3141,7 @@ ${selectedText}
           try {
             const sessionData = localStorage.getItem(key);
             const session = JSON.parse(sessionData);
-            
+
             // Validate session has required fields
             if (session && session.messages && Array.isArray(session.messages)) {
               sessions.push(session);
@@ -3151,35 +3153,35 @@ ${selectedText}
           }
         }
       }
-      
+
       // Check if we found any valid sessions
       if (sessions.length === 0) {
         throw new Error('No valid sessions found to export');
       }
-      
+
       // Create export data
       const exportData = JSON.stringify(sessions, null, 2);
-      
+
       // Validate export data
       if (!exportData || exportData.length === 0) {
         throw new Error('Generated export is empty');
       }
-      
+
       const blob = new Blob([exportData], { type: 'application/json' });
-      
+
       // Validate blob creation
       if (blob.size === 0) {
         throw new Error('Export file is empty');
       }
-      
+
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      
+
       // Add timestamp to filename
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
       a.download = `space-all-sessions-${timestamp}.json`;
-      
+
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -3200,7 +3202,7 @@ ${selectedText}
 
   return (
     <>
-      
+
       {isInitializing ? (
         // Loading state to prevent flash of wrong screen
         <div className="w-full h-screen bg-black flex items-center justify-center">
@@ -3208,12 +3210,12 @@ ${selectedText}
         </div>
       ) : showWelcome && !useAuthSystem ? (
         // Welcome screen only shown in legacy mode (auth mode handles this at App level)
-        <WelcomeScreen 
+        <WelcomeScreen
           onGetStarted={() => setShowWelcome(false)}
         />
       ) : !apiKeysSet ? (
         // Only shown in legacy mode (useAuthSystem=false) when no API keys are set
-        <ApiKeySetup 
+        <ApiKeySetup
           onComplete={({ openrouterKey }) => {
             // Create an OpenRouter-compatible client wrapper for background analysis tasks
             const openrouterClient = {
@@ -3247,7 +3249,7 @@ ${selectedText}
             console.log('✅ OpenRouter client initialized on API key setup complete');
             setApiKeysSet(true);
             setShowWelcome(false); // Ensure welcome screen doesn't show again
-          }} 
+          }}
         />
       ) : (
         // Regular terminal UI with responsive layout
@@ -3302,7 +3304,7 @@ ${selectedText}
                 <div className="w-64 border-r border-gray-300 dark:border-gray-800 overflow-y-auto scrollbar-terminal flex-shrink-0 flex flex-col">
                   {/* Header with title and collapse button */}
                   <div className="flex items-center justify-between p-4 border-b border-gray-300 dark:border-gray-700">
-                    <a 
+                    <a
                       href="/"
                       className="text-xl font-bold text-gray-800 dark:text-gray-200"
                       onClick={(e) => {
@@ -3340,34 +3342,67 @@ ${selectedText}
                   </div>
 
                   {/* Scrollable content */}
-                  <div className="flex-1 overflow-y-auto px-4">
-                    <GroupableModule
+                  <div className="flex-1 overflow-y-auto px-4 space-y-4">
+                    {/* Perspectives Section - Collapsible */}
+                    <CollapsibleSection
                       title="Perspectives"
-                      groups={advisorGroups}
-                      items={advisors}
-                      onItemClick={handleAdvisorClick}
-                      onGroupClick={handleGroupClick}
-                      activeItems={advisors.filter(a => a.active)}
-                      activeGroups={activeGroups}
-                      onAddClick={() => {
-                        setSuggestedAdvisorName('');
-                        setShowAdvisorForm(true);
-                      }}
-                      setEditingAdvisor={setEditingAdvisor}
-                      setAdvisors={setAdvisors}
-                      setMessages={setMessages}
-                    />
+                      defaultExpanded={true}
+                      headerRight={
+                        <button
+                          onClick={() => {
+                            setSuggestedAdvisorName('');
+                            setShowAdvisorForm(true);
+                          }}
+                          className="text-green-700 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 transition-colors p-1"
+                          title="Add new perspective"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                          </svg>
+                        </button>
+                      }
+                    >
+                      <GroupableModule
+                        noContainer={true}
+                        groups={advisorGroups}
+                        items={advisors}
+                        onItemClick={handleAdvisorClick}
+                        onGroupClick={handleGroupClick}
+                        activeItems={advisors.filter(a => a.active)}
+                        activeGroups={activeGroups}
+                        setEditingAdvisor={setEditingAdvisor}
+                        setAdvisors={setAdvisors}
+                        setMessages={setMessages}
+                      />
 
-                    <PerspectiveGenerator
-                      messages={messages}
-                      existingAdvisors={advisors}
-                      onAddPerspective={handleAddGeneratedPerspective}
-                      trackUsage={trackUsage}
-                      onEditAdvisor={setEditingAdvisor}
-                    />
+                      <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                        <PerspectiveGenerator
+                          messages={messages}
+                          existingAdvisors={advisors}
+                          onAddPerspective={handleAddGeneratedPerspective}
+                          trackUsage={trackUsage}
+                          onEditAdvisor={setEditingAdvisor}
+                        />
+                      </div>
+                    </CollapsibleSection>
 
-                    {/* Accordion Menu */}
-                    <div className="mt-6 mb-4">
+                    {/* Recent Chats Section */}
+                    <CollapsibleSection
+                      title="Recent Chats"
+                      defaultExpanded={true}
+                    >
+                      <RecentChats
+                        maxItems={5}
+                        currentSessionId={currentSessionId || currentConversationId}
+                        onLoadSession={handleLoadSession}
+                        onShowMore={() => setShowSessionPanel(true)}
+                        useDatabaseStorage={useDatabaseStorage}
+                        storage={storage}
+                      />
+                    </CollapsibleSection>
+
+                    {/* Tools Menu */}
+                    <div className="mb-4">
                       <AccordionMenu
                         onSettingsClick={() => setShowSettingsMenu(true)}
                         // DEPRECATED: Prompt Library - Feature no longer maintained
@@ -3457,53 +3492,53 @@ ${selectedText}
 
                     <form onSubmit={handleSubmit} className="py-6">
                       <div className="max-w-3xl mx-auto px-4">
-                      {editingPrompt ? (
-                        <textarea
-                          value={editText}
-                          onChange={(e) => setEditText(e.target.value)}
-                          onKeyDown={handleEditKeyDown}
-                          className="w-full h-40 bg-white text-gray-800 font-serif p-2 border border-gray-300 focus:outline-none resize-none dark:bg-black dark:text-green-400 dark:border-green-400"
-                          placeholder="Edit your prompt..."
-                          autoFocus
-                          autoComplete="off"
-                          spellCheck="true"
-                          data-role="text-editor"
-                        />
-                      ) : editingAdvisor ? (
-                        <textarea
-                          value={editAdvisorText}
-                          onChange={(e) => setEditAdvisorText(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' && e.ctrlKey) {
-                              // Save changes
-                              setAdvisors(prev => prev.map(a =>
-                                a.name === editingAdvisor.name ? { ...a, description: editAdvisorText } : a
-                              ));
-                              setEditingAdvisor(null);
-                              setEditAdvisorText('');
-                            } else if (e.key === 'Escape') {
-                              // Cancel editing
-                              setEditingAdvisor(null);
-                              setEditAdvisorText('');
-                            }
-                          }}
-                          className="w-full h-40 bg-white text-gray-800 font-serif p-2 border border-gray-300 focus:outline-none resize-none dark:bg-black dark:text-green-400 dark:border-green-400"
-                          placeholder="Edit advisor description..."
-                          autoFocus
-                          autoComplete="off"
-                          spellCheck="true"
-                          data-role="text-editor"
-                        />
-                      ) : (
-                        <ExpandingInput
-                          value={input}
-                          onChange={(e) => setInput(e.target.value)}
-                          onSubmit={handleSubmit}
-                          isLoading={isLoading}
-                          sessions={sessions}
-                          onSessionSelect={handleSessionSelect}
-                        />
-                      )}
+                        {editingPrompt ? (
+                          <textarea
+                            value={editText}
+                            onChange={(e) => setEditText(e.target.value)}
+                            onKeyDown={handleEditKeyDown}
+                            className="w-full h-40 bg-white text-gray-800 font-serif p-2 border border-gray-300 focus:outline-none resize-none dark:bg-black dark:text-green-400 dark:border-green-400"
+                            placeholder="Edit your prompt..."
+                            autoFocus
+                            autoComplete="off"
+                            spellCheck="true"
+                            data-role="text-editor"
+                          />
+                        ) : editingAdvisor ? (
+                          <textarea
+                            value={editAdvisorText}
+                            onChange={(e) => setEditAdvisorText(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && e.ctrlKey) {
+                                // Save changes
+                                setAdvisors(prev => prev.map(a =>
+                                  a.name === editingAdvisor.name ? { ...a, description: editAdvisorText } : a
+                                ));
+                                setEditingAdvisor(null);
+                                setEditAdvisorText('');
+                              } else if (e.key === 'Escape') {
+                                // Cancel editing
+                                setEditingAdvisor(null);
+                                setEditAdvisorText('');
+                              }
+                            }}
+                            className="w-full h-40 bg-white text-gray-800 font-serif p-2 border border-gray-300 focus:outline-none resize-none dark:bg-black dark:text-green-400 dark:border-green-400"
+                            placeholder="Edit advisor description..."
+                            autoFocus
+                            autoComplete="off"
+                            spellCheck="true"
+                            data-role="text-editor"
+                          />
+                        ) : (
+                          <ExpandingInput
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            onSubmit={handleSubmit}
+                            isLoading={isLoading}
+                            sessions={sessions}
+                            onSessionSelect={handleSessionSelect}
+                          />
+                        )}
                       </div>
                     </form>
                   </>
@@ -3537,57 +3572,57 @@ ${selectedText}
       )}
 
       {showAdvisorForm && (
-            <AdvisorForm
-              initialName={suggestedAdvisorName}
-              existingAdvisors={advisors}
-              onSubmit={(formData) => {
-                const newAdvisor = createAdvisorObject(formData, true);
-                setAdvisors(prev => [...prev, newAdvisor]);
-                setShowAdvisorForm(false);
-                setSuggestedAdvisorName('');
-              }}
-              onCancel={() => {
-                setShowAdvisorForm(false);
-                setSuggestedAdvisorName('');
-              }}
-            />
-          )}
+        <AdvisorForm
+          initialName={suggestedAdvisorName}
+          existingAdvisors={advisors}
+          onSubmit={(formData) => {
+            const newAdvisor = createAdvisorObject(formData, true);
+            setAdvisors(prev => [...prev, newAdvisor]);
+            setShowAdvisorForm(false);
+            setSuggestedAdvisorName('');
+          }}
+          onCancel={() => {
+            setShowAdvisorForm(false);
+            setSuggestedAdvisorName('');
+          }}
+        />
+      )}
 
-          {/* AdvisorForm for creating custom perspectives in suggestions modal */}
-          {editingAdvisor?.isNewForSuggestions && (
-            <AdvisorForm
-              initialName=""
-              existingAdvisors={advisors}
-              onSubmit={(formData) => {
-                const newAdvisor = createAdvisorObject(formData, false);
-                handleSaveCustomPerspective(newAdvisor);
-                setEditingAdvisor(null);
-              }}
-              onCancel={() => {
-                setEditingAdvisor(null);
-              }}
-            />
-          )}
+      {/* AdvisorForm for creating custom perspectives in suggestions modal */}
+      {editingAdvisor?.isNewForSuggestions && (
+        <AdvisorForm
+          initialName=""
+          existingAdvisors={advisors}
+          onSubmit={(formData) => {
+            const newAdvisor = createAdvisorObject(formData, false);
+            handleSaveCustomPerspective(newAdvisor);
+            setEditingAdvisor(null);
+          }}
+          onCancel={() => {
+            setEditingAdvisor(null);
+          }}
+        />
+      )}
 
-          {editingAdvisor && !editingAdvisor.isNewForSuggestions && (
-            <EditAdvisorForm
-              advisor={editingAdvisor}
-              onSubmit={({ name, description, color }) => {
-                setAdvisors(prev => prev.map(a => 
-                  a.name === editingAdvisor.name 
-                    ? { ...a, name, description, color }
-                    : a
-                ));
-                setEditingAdvisor(null);
-              }}
-              onCancel={() => {
-                setEditingAdvisor(null);
-              }}
-            />
-          )}
+      {editingAdvisor && !editingAdvisor.isNewForSuggestions && (
+        <EditAdvisorForm
+          advisor={editingAdvisor}
+          onSubmit={({ name, description, color }) => {
+            setAdvisors(prev => prev.map(a =>
+              a.name === editingAdvisor.name
+                ? { ...a, name, description, color }
+                : a
+            ));
+            setEditingAdvisor(null);
+          }}
+          onCancel={() => {
+            setEditingAdvisor(null);
+          }}
+        />
+      )}
 
-          {/* DEPRECATED: Edit Prompt Form - Part of Prompt Library feature no longer maintained */}
-          {/* {editingPrompt && (
+      {/* DEPRECATED: Edit Prompt Form - Part of Prompt Library feature no longer maintained */}
+      {/* {editingPrompt && (
             <EditPromptForm
               prompt={editingPrompt}
               onSubmit={({ name, text }) => {
@@ -3626,7 +3661,7 @@ ${selectedText}
         autoScroll={autoScroll}
         setAutoScroll={setAutoScroll}
         openrouterModel={openrouterModel}
-        setOpenrouterModel={import.meta.env.DEV ? setOpenrouterModel : () => {}}
+        setOpenrouterModel={import.meta.env.DEV ? setOpenrouterModel : () => { }}
       />
 
       {/* DEPRECATED: Prompt Library Component - Feature no longer maintained */}

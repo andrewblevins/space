@@ -6,8 +6,17 @@ const AuthContext = createContext();
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
+  // Return safe defaults when used outside AuthProvider (legacy mode)
   if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
+    return {
+      user: null,
+      loading: false,
+      session: null,
+      signInWithGoogle: async () => console.warn('Auth not available'),
+      signInWithEmail: async () => console.warn('Auth not available'),
+      signUp: async () => console.warn('Auth not available'),
+      signOut: async () => console.warn('Auth not available'),
+    };
   }
   return context;
 };
