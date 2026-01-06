@@ -2590,6 +2590,13 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
     }
   };
 
+  // Convert title to sentence case (first letter caps, rest lowercase, preserving proper nouns)
+  const toSentenceCase = (str) => {
+    if (!str) return str;
+    // Lowercase everything first, then capitalize the first letter
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  };
+
   // Generate conversation title using gpt-4o-mini
   const generateConversationTitle = async (messages) => {
     if (!openaiClient) return null;
@@ -2609,7 +2616,7 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
         model: "gpt-4o-mini",
         messages: [{
           role: "system",
-          content: "Generate a concise, descriptive title (2-6 words) for this conversation. Focus on the main topic or question. Return only the title, no quotes or extra text. Examples: 'Python debugging help', 'Recipe for pasta', 'Career advice discussion'."
+          content: "Generate a concise, descriptive title (2-6 words) for this conversation. Use sentence case (first letter capitalized, rest lowercase) except for proper nouns. Focus on the main topic or question. Return only the title, no quotes or extra text. Examples: 'Python debugging help', 'Recipe for pasta', 'Career advice discussion'."
         }, {
           role: "user",
           content: `Generate a title for this conversation:\n\n${conversationText}`
@@ -2618,7 +2625,10 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
         temperature: 0.7
       });
       
-      const title = response.choices[0].message.content.trim();
+      let title = response.choices[0].message.content.trim();
+      
+      // Enforce sentence case as a fallback
+      title = toSentenceCase(title);
       
       // Track usage
       const outputTokens = Math.ceil(title.length / 4);

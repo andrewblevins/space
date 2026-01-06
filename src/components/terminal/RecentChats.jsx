@@ -100,31 +100,10 @@ export function RecentChats({
     return () => clearInterval(interval);
   }, [maxItems, useDatabaseStorage, storage, currentSessionId]);
 
-  const formatTimestamp = (timestamp) => {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffMs = now - date;
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 1) return "just now";
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays === 1) return "yesterday";
-    if (diffDays < 7) return `${diffDays}d ago`;
-    return date.toLocaleDateString();
-  };
-
-  // Get a preview/snippet from the session
-  const getSessionPreview = (session) => {
-    if (!session.messages) return "";
-    const userMessages = session.messages.filter((m) => m.type === "user");
-    if (userMessages.length === 0) return "";
-    const firstMessage = userMessages[0].content || "";
-    return firstMessage.length > 50
-      ? firstMessage.substring(0, 50) + "..."
-      : firstMessage;
+  // Convert title to sentence case (first letter caps, rest lowercase)
+  const toSentenceCase = (str) => {
+    if (!str) return str;
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
   };
 
   if (recentSessions.length === 0) {
@@ -136,7 +115,7 @@ export function RecentChats({
   }
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-0.5">
       {recentSessions.map((session) => {
         const sessionIdStr = String(session.id);
         const currentSessionIdStr = currentSessionId
@@ -144,69 +123,21 @@ export function RecentChats({
           : null;
         const isCurrentSession = sessionIdStr === currentSessionIdStr;
 
-        const sessionTitle = session.title || `Session ${session.id}`;
+        const rawTitle = session.title || `Session ${session.id}`;
+        const sessionTitle = toSentenceCase(rawTitle);
         
         return (
           <button
             key={session.id}
             onClick={() => !isCurrentSession && onLoadSession(session.id)}
-            className={`w-full text-left px-3 py-2.5 rounded-lg transition-all group ${
+            className={`w-full text-left px-2.5 py-1.5 rounded transition-all truncate text-sm ${
               isCurrentSession
-                ? "bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 cursor-default ring-1 ring-green-300 dark:ring-green-700"
-                : "hover:bg-gray-100 dark:hover:bg-gray-700/60 text-gray-800 dark:text-gray-200"
+                ? "bg-green-600/20 dark:bg-green-500/20 text-green-700 dark:text-green-300 font-medium"
+                : "hover:bg-gray-200/60 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-300"
             }`}
             title={sessionTitle}
           >
-            <div className="flex items-start gap-2.5">
-              {/* Chat icon */}
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className={`h-4 w-4 flex-shrink-0 mt-0.5 ${
-                  isCurrentSession
-                    ? "text-green-600 dark:text-green-400"
-                    : "text-gray-500 dark:text-gray-400"
-                }`}
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                />
-              </svg>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-2">
-                  <span 
-                    className="text-sm font-medium leading-snug line-clamp-2"
-                    style={{ 
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden'
-                    }}
-                  >
-                    {sessionTitle}
-                  </span>
-                  {isCurrentSession && (
-                    <span className="text-[10px] px-1.5 py-0.5 bg-green-200 dark:bg-green-800 text-green-700 dark:text-green-300 rounded font-semibold flex-shrink-0 mt-0.5">
-                      NOW
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  <span>{formatTimestamp(session.timestamp)}</span>
-                  {session.messageCount > 0 && (
-                    <>
-                      <span className="opacity-50">•</span>
-                      <span>{session.messageCount} msgs</span>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
+            {sessionTitle}
           </button>
         );
       })}
