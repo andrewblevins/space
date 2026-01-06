@@ -17,14 +17,16 @@ export const useAuth = () => {
 export const useAuthSafe = () => {
   const context = useContext(AuthContext);
   // Return default values if context is not available (auth disabled)
+  // signInWithGoogle etc. are null so components can check if auth is available
   return context || { 
     user: null, 
     session: null, 
     loading: false,
-    signInWithGoogle: async () => console.warn('Auth not available'),
-    signInWithEmail: async () => console.warn('Auth not available'),
-    signUp: async () => console.warn('Auth not available'),
-    signOut: async () => console.warn('Auth not available'),
+    isAuthEnabled: false,
+    signInWithGoogle: null,
+    signInWithEmail: null,
+    signUp: null,
+    signOut: null,
   };
 };
 
@@ -125,6 +127,7 @@ export const AuthProvider = ({ children }) => {
       user,
       loading,
       session,
+      isAuthEnabled: true,
       signInWithGoogle,
       signInWithEmail,
       signUp,
