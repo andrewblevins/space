@@ -2609,12 +2609,12 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
         model: "gpt-4o-mini",
         messages: [{
           role: "system",
-          content: "Generate a concise, descriptive title (2-6 words) for this conversation. Use sentence case (first letter capitalized, rest lowercase) except for proper nouns. Focus on the main topic or question. Return only the title, no quotes or extra text. Examples: 'Python debugging help', 'Recipe for pasta', 'Career advice discussion'."
+          content: "Generate a very short title (2-3 words MAX) for this conversation. Use sentence case. Return only the title, no quotes. Examples: 'Python debugging', 'Career advice', 'Recipe ideas', 'Moving decision', 'Sleep issues'."
         }, {
           role: "user",
-          content: `Generate a title for this conversation:\n\n${conversationText}`
+          content: `Generate a 2-3 word title:\n\n${conversationText}`
         }],
-        max_tokens: 30,
+        max_tokens: 15,
         temperature: 0.7
       });
       
