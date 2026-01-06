@@ -47,18 +47,26 @@ export const getUsageStats = () => {
 
 /**
  * Track usage for a specific API call
+ * @param {string} provider - The provider name (claude, gpt, openrouter)
+ * @param {number} inputTokens - Input token count
+ * @param {number} outputTokens - Output token count
+ * @param {string} model - Model name (optional)
+ * @param {number} actualCost - Real cost from API (optional, overrides calculated cost)
  */
-export const trackUsage = (provider, inputTokens, outputTokens, model = null) => {
+export const trackUsage = (provider, inputTokens, outputTokens, model = null, actualCost = null) => {
   try {
     const stats = getUsageStats();
     const pricing = PRICING[provider];
-    
+
     if (!pricing) {
       console.warn(`Unknown provider for usage tracking: ${provider}`);
       return;
     }
 
-    const cost = (inputTokens * pricing.input) + (outputTokens * pricing.output);
+    // Use actual cost from API if provided, otherwise calculate
+    const cost = actualCost !== null
+      ? actualCost
+      : (inputTokens * pricing.input) + (outputTokens * pricing.output);
     
     // Update provider-specific stats
     if (!stats[provider]) {

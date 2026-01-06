@@ -100,6 +100,9 @@ export function useOpenRouter({ messages, setMessages, maxTokens, contextLimit, 
       ],
       max_tokens: maxTokens,
       stream: true,
+      usage: {
+        include: true  // Get real token counts and costs from OpenRouter
+      }
     };
     
     // Log the complete system prompt that OpenRouter receives
@@ -165,6 +168,7 @@ export function useOpenRouter({ messages, setMessages, maxTokens, contextLimit, 
     let buffer = '';
     let currentMessageContent = '';
     let isJsonMode = false;
+    let usageData = null; // Store usage data from OpenRouter response
 
     setMessages((prev) => [...prev, { type: 'assistant', content: '', provider: 'openrouter', model: model }]);
 
@@ -274,6 +278,13 @@ export function useOpenRouter({ messages, setMessages, maxTokens, contextLimit, 
         if (!dataMatch) continue;
         try {
           const data = JSON.parse(dataMatch[1]);
+
+          // Capture usage data from the final stream message
+          if (data.usage) {
+            usageData = data.usage;
+            console.log('📊 OpenRouter Usage Data:', usageData);
+          }
+
           if (data.choices && data.choices[0] && data.choices[0].delta && data.choices[0].delta.content) {
             const text = data.choices[0].delta.content;
             for (let i = 0; i < text.length; i++) {
@@ -397,11 +408,32 @@ export function useOpenRouter({ messages, setMessages, maxTokens, contextLimit, 
     }
 
     // Track usage after successful completion
-    const outputTokens = estimateTokens(currentMessageContent);
-    const cost = trackUsage('openrouter', inputTokens, outputTokens, model);
-    
+    let actualInputTokens, actualOutputTokens, actualCost;
+
+    if (usageData) {
+      // Use real data from OpenRouter
+      actualInputTokens = usageData.prompt_tokens || 0;
+      actualOutputTokens = usageData.completion_tokens || 0;
+      actualCost = usageData.cost || 0;
+
+      console.log('💰 Using REAL OpenRouter usage data:', {
+        inputTokens: actualInputTokens,
+        outputTokens: actualOutputTokens,
+        cost: actualCost
+      });
+    } else {
+      // Fallback to estimates if usage data wasn't included
+      actualInputTokens = inputTokens;
+      actualOutputTokens = estimateTokens(currentMessageContent);
+      actualCost = null; // Will be calculated by trackUsage
+
+      console.warn('⚠️ No usage data from OpenRouter, using estimates');
+    }
+
+    const cost = trackUsage('openrouter', actualInputTokens, actualOutputTokens, model, actualCost);
+
     if (debugMode) {
-      const debugOutput = `OpenRouter Response complete:\nModel: ${model}\nOutput tokens: ${outputTokens}\nTotal cost for this call: ${formatCost(cost)}`;
+      const debugOutput = `OpenRouter Response complete:\nModel: ${model}\nInput tokens: ${actualInputTokens}\nOutput tokens: ${actualOutputTokens}\nTotal cost for this call: ${formatCost(cost)}\nData source: ${usageData ? 'REAL (from OpenRouter)' : 'ESTIMATED'}`;
       setMessages((prev) => [...prev, { type: 'debug', content: debugOutput }]);
     }
     
