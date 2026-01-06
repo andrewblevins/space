@@ -151,9 +151,6 @@ const ApiKeySetup = ({ onComplete }) => {
           <p className="text-lg text-gray-300 mb-2 leading-relaxed">
             SPACE Terminal uses OpenRouter to access AI models
           </p>
-          <p className="text-sm text-gray-400">
-            One key gives you access to Claude, GPT, Gemini, and 200+ other models
-          </p>
         </div>
 
         {error && (
@@ -187,12 +184,6 @@ const ApiKeySetup = ({ onComplete }) => {
               <li>Click "Create Key" and copy it</li>
               <li>Paste it below</li>
             </ol>
-            
-            <div className="mt-4 pt-4 border-t border-green-400/20">
-              <p className="text-gray-400 text-sm">
-                <strong className="text-gray-300">Free tier available</strong> — New accounts get free credits to try it out
-              </p>
-            </div>
           </div>
 
           {/* Form */}
