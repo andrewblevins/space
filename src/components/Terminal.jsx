@@ -5,6 +5,7 @@ import EditAdvisorForm from './EditAdvisorForm';
 import EditPromptForm from './EditPromptForm';
 import SettingsMenu from './SettingsMenu';
 import '@fontsource/vollkorn';
+import '@fontsource/plus-jakarta-sans';
 import TagAnalyzer, { sharedTagAnalyzer } from '../lib/tagAnalyzer';
 import ApiKeySetup from './ApiKeySetup';
 import { getApiEndpoint } from '../utils/apiConfig';

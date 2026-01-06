@@ -10,6 +10,8 @@ export default {
       fontFamily: {
         'serif': ['Vollkorn', 'serif'],
         'vollkorn': ['Vollkorn', 'serif'],
+        'sans': ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+        'jakarta': ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
       },
     },
   },

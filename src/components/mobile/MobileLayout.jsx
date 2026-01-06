@@ -57,7 +57,7 @@ const MobileLayout = ({
                   key={idx}
                   id={`msg-${idx}`}
                   className={`mb-4 break-words text-lg ${
-                    msg.type === 'user' ? 'text-gray-900 dark:text-gray-100 whitespace-pre-wrap border-l-4 border-gray-300 dark:border-gray-600 pl-4' :
+                    msg.type === 'user' ? 'text-gray-900 dark:text-gray-100 whitespace-pre-wrap border-l-4 border-gray-300 dark:border-gray-600 pl-4 font-jakarta' :
                     msg.type === 'assistant' ? 'text-gray-800 dark:text-gray-200' :
                     msg.type === 'system' ? 'text-gray-800 dark:text-gray-200' :
                     msg.type === 'debug' ? 'text-amber-600 dark:text-amber-400 whitespace-pre-wrap' : 'text-green-600 dark:text-green-400 whitespace-pre-wrap'
