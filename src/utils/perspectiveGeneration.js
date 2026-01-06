@@ -49,6 +49,8 @@ NAMING:
 
 For each perspective, write a 2-3 sentence description in second-person ("you") that instructs this perspective on their identity and approach. For named figures, capture their actual intellectual voice and style. For mythic beings, embody their specific archetypal qualities. Make each description feel like it could only describe THIS perspective.
 
+Descriptions should be reusable across multiple conversations - don't reference specifics from this ${contextWord}. Write timeless descriptions of how this perspective thinks and engages. Capture the relevance to this particular ${contextWord} in the rationale field, not the description.
+
 Return ONLY valid JSON:
 {
   "perspectives": [

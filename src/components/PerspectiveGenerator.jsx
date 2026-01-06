@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import AdvisorSuggestionsModal from './AdvisorSuggestionsModal';
 import { generatePerspectives, formatMessagesAsContext } from '../utils/perspectiveGeneration';
 
@@ -23,6 +23,23 @@ export function PerspectiveGenerator({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [generatedPerspectives, setGeneratedPerspectives] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  
+  // Use ref to always have access to the latest messages (prevents stale closure issues)
+  const messagesRef = useRef(messages);
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
+
+  // Clear generated perspectives when messages change significantly (session switch)
+  const prevMessageCount = useRef(messages.length);
+  useEffect(() => {
+    // If messages were cleared (session switch), clear generated perspectives
+    if (messages.length === 0 || messages.length < prevMessageCount.current - 2) {
+      setGeneratedPerspectives([]);
+      setIsModalOpen(false);
+    }
+    prevMessageCount.current = messages.length;
+  }, [messages.length]);
 
   const hasMessages = messages.filter(m => m.type === 'user' || m.type === 'assistant').length > 0;
   const isDisabled = disabled || !hasMessages;
@@ -35,8 +52,21 @@ export function PerspectiveGenerator({
     setIsGenerating(true);
 
     try {
+      // CRITICAL: Use messagesRef.current to get the LATEST messages at call time
+      // This prevents stale closure issues when switching sessions
+      const currentMessages = messagesRef.current;
+      
+      // Debug logging
+      const userAssistantMessages = currentMessages.filter(m => m.type === 'user' || m.type === 'assistant');
+      console.log('🎯 Generate Perspectives called with:', {
+        totalMessages: currentMessages.length,
+        userAssistantMessages: userAssistantMessages.length,
+        firstUserMessage: userAssistantMessages[0]?.content?.substring(0, 50) + '...',
+        lastMessage: userAssistantMessages[userAssistantMessages.length - 1]?.content?.substring(0, 50) + '...'
+      });
+      
       // Format recent messages as context
-      const context = formatMessagesAsContext(messages);
+      const context = formatMessagesAsContext(currentMessages);
       const existingNames = existingAdvisors.map(a => a.name);
 
       // Generate perspectives using shared utility

@@ -3463,6 +3463,7 @@ ${selectedText}
 
                       <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
                         <PerspectiveGenerator
+                          key={currentSessionId}
                           messages={messages}
                           existingAdvisors={advisors}
                           onAddPerspective={handleAddGeneratedPerspective}
