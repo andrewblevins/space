@@ -3,7 +3,7 @@ import { useState } from "react";
 /**
  * Module that supports grouping of advisors.
  * @param {object} props
- * @param {string} props.title
+ * @param {string} [props.title]
  * @param {Array<object>} [props.groups]
  * @param {Array<object>} [props.items]
  * @param {(item: any) => void} [props.onItemClick]
@@ -14,6 +14,7 @@ import { useState } from "react";
  * @param {function} [props.setEditingAdvisor]
  * @param {function} [props.setAdvisors]
  * @param {function} [props.setMessages]
+ * @param {boolean} [props.noContainer] - If true, renders only the list without the container
  */
 export function GroupableModule({
   title,
@@ -27,6 +28,7 @@ export function GroupableModule({
   setEditingAdvisor,
   setAdvisors,
   setMessages,
+  noContainer = false,
 }) {
   const [expandedGroups, setExpandedGroups] = useState(new Set());
 
@@ -42,24 +44,8 @@ export function GroupableModule({
     });
   };
 
-  return (
-    <div
-      className="border border-stone-300 dark:border-gray-700 rounded-md p-4 bg-amber-100 dark:bg-gray-800"
-    >
-      <div className="flex justify-between items-center mb-2">
-        <h2 className="text-gray-800 dark:text-gray-200">{title}</h2>
-        {onAddClick && (
-          <button
-            onClick={onAddClick}
-            className="text-green-700 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 transition-colors"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
-            </svg>
-          </button>
-        )}
-      </div>
-      <ul className="space-y-4">
+  const listContent = (
+    <ul className="space-y-4">
         {groups.map((group, idx) => (
           <li key={`group-${idx}`} className="mb-2">
             <div
@@ -85,11 +71,10 @@ export function GroupableModule({
                   return (
                     <li
                       key={advisorName}
-                      className={`group flex items-center justify-between rounded px-2 py-1 -mx-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
-                        activeItems.includes(advisor) 
-                          ? 'text-green-600 dark:text-green-400' 
+                      className={`group flex items-center justify-between rounded px-2 py-1 -mx-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${activeItems.includes(advisor)
+                          ? 'text-green-600 dark:text-green-400'
                           : 'text-gray-400 dark:text-gray-500 opacity-60'
-                      }`}
+                        }`}
                     >
                       <div
                         onClick={() => onItemClick && onItemClick(advisor)}
@@ -140,11 +125,10 @@ export function GroupableModule({
           .map((item, idx) => (
             <li
               key={`item-${idx}`}
-              className={`group flex items-center justify-between rounded px-2 py-1 -mx-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
-                activeItems.includes(item) 
-                  ? 'text-green-700 dark:text-green-400' 
+              className={`group flex items-center justify-between rounded px-2 py-1 -mx-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${activeItems.includes(item)
+                  ? 'text-green-700 dark:text-green-400'
                   : 'text-gray-400 dark:text-gray-500 opacity-60'
-              }`}
+                }`}
             >
               <div
                 onClick={() => onItemClick && onItemClick(item)}
@@ -186,6 +170,32 @@ export function GroupableModule({
             </li>
           ))}
       </ul>
+  );
+
+  // If noContainer is true, return just the list
+  if (noContainer) {
+    return listContent;
+  }
+
+  // Otherwise, render with the container and header
+  return (
+    <div
+      className="border border-stone-300 dark:border-gray-700 rounded-md p-4 bg-amber-100 dark:bg-gray-800"
+    >
+      <div className="flex justify-between items-center mb-2">
+        <h2 className="text-gray-800 dark:text-gray-200">{title}</h2>
+        {onAddClick && (
+          <button
+            onClick={onAddClick}
+            className="text-green-700 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+            </svg>
+          </button>
+        )}
+      </div>
+      {listContent}
     </div>
   );
 }

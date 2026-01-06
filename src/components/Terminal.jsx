@@ -30,6 +30,8 @@ import ThinkingBlock from './ThinkingBlock';
 import { Module } from "./terminal/Module";
 import { GroupableModule } from "./terminal/GroupableModule";
 import { CollapsibleModule } from "./terminal/CollapsibleModule";
+import { CollapsibleSection } from "./terminal/CollapsibleSection";
+import { RecentChats } from "./terminal/RecentChats";
 import { CollapsibleClickableModule } from "./terminal/CollapsibleClickableModule";
 // DEPRECATED: High Council Mode components
 // import DebateBlock from './DebateBlock';
@@ -3383,35 +3385,68 @@ ${selectedText}
                   </div>
 
                   {/* Scrollable content */}
-                  <div className="flex-1 overflow-y-auto px-4">
-                    <GroupableModule
+                  <div className="flex-1 overflow-y-auto px-4 space-y-4">
+                    {/* Perspectives Section - Collapsible */}
+                    <CollapsibleSection
                       title="Perspectives"
-                      groups={advisorGroups}
-                      items={advisors}
-                      onItemClick={handleAdvisorClick}
-                      onGroupClick={handleGroupClick}
-                      activeItems={advisors.filter(a => a.active)}
-                      activeGroups={activeGroups}
-                      onAddClick={() => {
-                        setSuggestedAdvisorName('');
-                        setShowAdvisorForm(true);
-                      }}
-                      setEditingAdvisor={setEditingAdvisor}
-                      setAdvisors={setAdvisors}
-                      setMessages={setMessages}
-                    />
+                      defaultExpanded={true}
+                      headerRight={
+                        <button
+                          onClick={() => {
+                            setSuggestedAdvisorName('');
+                            setShowAdvisorForm(true);
+                          }}
+                          className="text-green-700 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 transition-colors p-1"
+                          title="Add new perspective"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                          </svg>
+                        </button>
+                      }
+                    >
+                      <GroupableModule
+                        noContainer={true}
+                        groups={advisorGroups}
+                        items={advisors}
+                        onItemClick={handleAdvisorClick}
+                        onGroupClick={handleGroupClick}
+                        activeItems={advisors.filter(a => a.active)}
+                        activeGroups={activeGroups}
+                        setEditingAdvisor={setEditingAdvisor}
+                        setAdvisors={setAdvisors}
+                        setMessages={setMessages}
+                      />
 
-                    <PerspectiveGenerator
-                      messages={messages}
-                      existingAdvisors={advisors}
-                      onAddPerspective={handleAddGeneratedPerspective}
-                      trackUsage={trackUsage}
-                      onEditAdvisor={setEditingAdvisor}
-                      disabled={showJournalOnboarding}
-                    />
+                      <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                        <PerspectiveGenerator
+                          messages={messages}
+                          existingAdvisors={advisors}
+                          onAddPerspective={handleAddGeneratedPerspective}
+                          trackUsage={trackUsage}
+                          onEditAdvisor={setEditingAdvisor}
+                          disabled={showJournalOnboarding}
+                        />
+                      </div>
+                    </CollapsibleSection>
 
-                    {/* Accordion Menu */}
-                    <div className="mt-6 mb-4">
+                    {/* Recent Chats Section */}
+                    <CollapsibleSection
+                      title="Recent Chats"
+                      defaultExpanded={true}
+                    >
+                      <RecentChats
+                        maxItems={5}
+                        currentSessionId={currentSessionId || currentConversationId}
+                        onLoadSession={handleLoadSession}
+                        onShowMore={() => setShowSessionPanel(true)}
+                        useDatabaseStorage={useDatabaseStorage}
+                        storage={storage}
+                      />
+                    </CollapsibleSection>
+
+                    {/* Tools Menu */}
+                    <div className="mb-4">
                       <AccordionMenu
                         onSettingsClick={() => setShowSettingsMenu(true)}
                         // DEPRECATED: Prompt Library - Feature no longer maintained
