@@ -104,7 +104,7 @@ const AdvisorSuggestionsModal = ({ suggestions, existingAdvisors, onAddSelected,
             
             // Format category label
             const categoryLabels = {
-              'named_figure': 'Named Figure',
+              'named_figure': 'Human',
               'mythic_fictional': 'Mythic',
               'role': 'Role',
               'challenger': 'Challenger'
