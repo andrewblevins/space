@@ -45,11 +45,11 @@ export function GroupableModule({
   };
 
   const listContent = (
-    <ul className="space-y-4">
+    <ul className="space-y-1">
         {groups.map((group, idx) => (
           <li key={`group-${idx}`} className="mb-2">
             <div
-              className={`flex items-center justify-between text-gray-600 dark:text-gray-300 cursor-pointer hover:text-green-600 dark:hover:text-green-400 transition-colors ${activeGroups.includes(group.name) ? 'text-green-600 dark:text-green-400' : ''}`}
+              className={`flex items-center justify-between text-green-400/70 cursor-pointer hover:text-green-300 transition-colors ${activeGroups.includes(group.name) ? 'text-green-400' : ''}`}
               onClick={() => onGroupClick && onGroupClick(group)}
             >
               <span>{group.name}</span>
@@ -58,22 +58,22 @@ export function GroupableModule({
                   e.stopPropagation();
                   toggleGroup(group.name);
                 }}
-                className="ml-2 text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400"
+                className="ml-2 text-green-500/50 hover:text-green-400"
               >
                 {expandedGroups.has(group.name) ? '▼' : '▶'}
               </button>
             </div>
             {expandedGroups.has(group.name) && (
-              <ul className="ml-4 mt-2 space-y-2">
+              <ul className="ml-4 mt-2 space-y-1">
                 {group.advisors.map((advisorName) => {
                   const advisor = items.find((item) => item.name === advisorName);
                   if (!advisor) return null;
                   return (
                     <li
                       key={advisorName}
-                      className={`group flex items-center justify-between rounded px-2 py-1 -mx-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${activeItems.includes(advisor)
-                          ? 'text-green-600 dark:text-green-400'
-                          : 'text-gray-400 dark:text-gray-500 opacity-60'
+                      className={`group flex items-center justify-between rounded px-2 py-1 -mx-2 hover:bg-green-500/10 transition-colors ${activeItems.includes(advisor)
+                          ? 'text-green-400'
+                          : 'text-green-500/50'
                         }`}
                     >
                       <div
@@ -91,7 +91,7 @@ export function GroupableModule({
                             e.stopPropagation();
                             setEditingAdvisor && setEditingAdvisor(advisor);
                           }}
-                          className="p-1 hover:text-blue-500 dark:hover:text-blue-400"
+                          className="p-1 text-green-500/50 hover:text-green-300"
                           title="Edit advisor"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -105,7 +105,7 @@ export function GroupableModule({
                               setAdvisors && setAdvisors((prev) => prev.filter((a) => a.name !== advisor.name));
                             }
                           }}
-                          className="p-1 hover:text-red-500 dark:hover:text-red-400"
+                          className="p-1 text-green-500/50 hover:text-red-400"
                           title="Delete perspective"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -125,9 +125,9 @@ export function GroupableModule({
           .map((item, idx) => (
             <li
               key={`item-${idx}`}
-              className={`group flex items-center justify-between rounded px-2 py-1 -mx-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${activeItems.includes(item)
-                  ? 'text-green-700 dark:text-green-400'
-                  : 'text-gray-400 dark:text-gray-500 opacity-60'
+              className={`group flex items-center justify-between rounded px-2 py-1 -mx-2 hover:bg-green-500/10 transition-colors ${activeItems.includes(item)
+                  ? 'text-green-400'
+                  : 'text-green-500/50'
                 }`}
             >
               <div
@@ -145,7 +145,7 @@ export function GroupableModule({
                     e.stopPropagation();
                     setEditingAdvisor && setEditingAdvisor(item);
                   }}
-                  className="p-1 hover:text-blue-500 dark:hover:text-blue-400"
+                  className="p-1 text-green-500/50 hover:text-green-300"
                   title="Edit advisor"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -159,7 +159,7 @@ export function GroupableModule({
                       setAdvisors && setAdvisors((prev) => prev.filter((a) => a.name !== item.name));
                     }
                   }}
-                  className="p-1 hover:text-red-500 dark:hover:text-red-400"
+                  className="p-1 text-green-500/50 hover:text-red-400"
                   title="Delete perspective"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">

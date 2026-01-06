@@ -77,7 +77,7 @@ const TouchInput = ({
           w-full 
           min-h-[44px] 
           max-h-[120px] 
-          font-serif 
+          font-jakarta 
           p-3 
           border 
           border-green-600 

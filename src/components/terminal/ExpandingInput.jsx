@@ -178,7 +178,7 @@ export function ExpandingInput({ value, onChange, onSubmit, isLoading, sessions 
               w-full
               min-h-[100px]
               max-h-[400px]
-              font-serif
+              font-jakarta
               text-base
               p-4
               pr-12
@@ -277,7 +277,7 @@ export function ExpandingInput({ value, onChange, onSubmit, isLoading, sessions 
                 onSubmit(e);
               }
             }}
-            className="flex-1 w-full p-6 font-serif text-lg resize-none focus:outline-none bg-amber-50 text-gray-800 dark:bg-gray-900 dark:text-green-400"
+            className="flex-1 w-full p-6 font-jakarta text-lg resize-none focus:outline-none bg-amber-50 text-gray-800 dark:bg-gray-900 dark:text-green-400"
             placeholder="Write your thoughts... (⌘/Ctrl+Enter to send, Esc to close)"
             disabled={isLoading}
             autoComplete="off"

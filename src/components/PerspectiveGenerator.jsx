@@ -11,6 +11,7 @@ import { generatePerspectives, formatMessagesAsContext } from '../utils/perspect
  * @param {Function} props.trackUsage - Usage tracking function
  * @param {Function} props.onEditAdvisor - Callback when editing an advisor
  * @param {boolean} props.disabled - Whether the generator button should be disabled
+ * @param {'subtle' | 'terminal' | 'hybrid'} [props.variant='subtle'] - Style variant
  */
 export function PerspectiveGenerator({
   messages,
@@ -18,7 +19,8 @@ export function PerspectiveGenerator({
   onAddPerspective,
   trackUsage,
   onEditAdvisor,
-  disabled = false
+  disabled = false,
+  variant = 'subtle'
 }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [generatedPerspectives, setGeneratedPerspectives] = useState([]);
@@ -113,9 +115,45 @@ export function PerspectiveGenerator({
     setGeneratedPerspectives([]);
   };
 
+  // Style configurations based on variant
+  const containerStyles = {
+    subtle: "mt-4 border-t border-gray-300 dark:border-gray-700 pt-3",
+    terminal: "mt-3 border-t border-green-500/20 pt-3",
+    hybrid: "mt-4 border-t border-gray-300 dark:border-green-500/20 pt-3",
+  };
+
+  const buttonStyles = {
+    subtle: {
+      enabled: 'border-green-600 dark:border-green-500 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30',
+      disabled: 'border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800',
+    },
+    terminal: {
+      enabled: 'border-green-500/50 bg-green-500/10 hover:bg-green-500/20 hover:border-green-400',
+      disabled: 'border-green-500/20 bg-black/20',
+    },
+    hybrid: {
+      enabled: 'border-green-600 dark:border-green-500/50 bg-green-50 dark:bg-green-500/10 hover:bg-green-100 dark:hover:bg-green-500/20',
+      disabled: 'border-gray-300 dark:border-green-500/20 bg-gray-100 dark:bg-black/20',
+    },
+  };
+
+  const textStyles = {
+    subtle: "text-gray-800 dark:text-gray-200",
+    terminal: "text-green-400",
+    hybrid: "text-gray-800 dark:text-green-400",
+  };
+
+  const hintStyles = {
+    subtle: "text-gray-500 dark:text-gray-400",
+    terminal: "text-green-500/60",
+    hybrid: "text-gray-500 dark:text-green-500/60",
+  };
+
+  const currentButtonStyle = buttonStyles[variant] || buttonStyles.subtle;
+
   return (
     <>
-      <div className="mt-6 border-t border-gray-300 dark:border-gray-700 pt-4">
+      <div className={containerStyles[variant] || containerStyles.subtle}>
         {/* Generate Button */}
         <button
           onClick={handleGeneratePerspectives}
@@ -123,13 +161,13 @@ export function PerspectiveGenerator({
           className={`
             w-full p-3 rounded-lg border transition-colors text-left
             ${!isDisabled
-              ? 'border-green-600 dark:border-green-500 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 cursor-pointer'
-              : 'border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 cursor-not-allowed opacity-50'
+              ? `${currentButtonStyle.enabled} cursor-pointer`
+              : `${currentButtonStyle.disabled} cursor-not-allowed opacity-50`
             }
           `}
         >
           <div className="flex items-center justify-between">
-            <span className="font-medium text-gray-800 dark:text-gray-200">
+            <span className={`font-medium ${textStyles[variant] || textStyles.subtle}`}>
               Generate Perspectives
             </span>
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-600 dark:text-green-400" viewBox="0 0 20 20" fill="currentColor">
@@ -137,7 +175,7 @@ export function PerspectiveGenerator({
             </svg>
           </div>
           {!hasMessages && !disabled && (
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <p className={`text-xs mt-1 ${hintStyles[variant] || hintStyles.subtle}`}>
               Start a conversation to generate perspectives
             </p>
           )}
