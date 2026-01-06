@@ -8,7 +8,7 @@ SPACE stands for Simple Perspective-Augmenting Conversation Environment (or, Sim
 
 ## Quick Start
 
-**SPACE uses your own API key.** You'll need an [OpenRouter](https://openrouter.ai) account (free tier available).
+**SPACE uses your own API key.** You'll need an [OpenRouter](https://openrouter.ai) account.
 
 1. Visit [spaceterminal.xyz](https://spaceterminal.xyz)
 2. Get an API key from [openrouter.ai/keys](https://openrouter.ai/keys) (takes 2 minutes)

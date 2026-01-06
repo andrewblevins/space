@@ -184,6 +184,12 @@ const ApiKeySetup = ({ onComplete }) => {
               <li>Click "Create Key" and copy it</li>
               <li>Paste it below</li>
             </ol>
+
+            <div className="mt-4 pt-4 border-t border-green-400/20">
+              <p className="text-gray-400 text-sm">
+                <strong className="text-gray-300">Pay as you go</strong> — You only pay for the messages you send
+              </p>
+            </div>
           </div>
 
           {/* Form */}
@@ -308,8 +314,8 @@ const ApiKeySetup = ({ onComplete }) => {
                 <div>
                   <h3 className="text-green-400 font-medium mb-2">How much does it cost?</h3>
                   <p className="text-sm leading-relaxed">
-                    OpenRouter offers a free tier with some credits to get started. 
-                    After that, you pay per message based on the AI model used. 
+                    You pay per message based on the AI model used.
+                    Pricing is transparent and you only pay for what you use.
                     Light usage is typically $5-15/month.
                   </p>
                 </div>

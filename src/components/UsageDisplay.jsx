@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { getUsageSummary, formatCost, resetUsageStats } from '../utils/usageTracking';
+import { useOpenRouterCredits } from '../hooks/useOpenRouterCredits';
 
 const UsageDisplay = () => {
   const [usageSummary, setUsageSummary] = useState(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const { credits, loading: creditsLoading, error: creditsError, refetch: refetchCredits, isEnabled } = useOpenRouterCredits();
 
   const refreshUsage = () => {
     const summary = getUsageSummary();
@@ -52,7 +54,10 @@ const UsageDisplay = () => {
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-green-400">API Usage</h3>
         <button
-          onClick={refreshUsage}
+          onClick={() => {
+            refreshUsage();
+            if (isEnabled) refetchCredits();
+          }}
           className="text-xs text-gray-400 hover:text-green-400 transition-colors"
           title="Refresh usage statistics"
         >
@@ -60,13 +65,37 @@ const UsageDisplay = () => {
         </button>
       </div>
 
-      {/* Total Cost Display */}
+      {/* OpenRouter Credits (Real Balance) */}
+      {isEnabled && credits && !creditsError && (
+        <div className="bg-green-900/20 border border-green-400/30 rounded-lg p-4">
+          <div className="text-center">
+            <div className="text-xs text-gray-400 mb-1">OpenRouter Balance</div>
+            <div className="text-2xl font-bold text-green-400">
+              {formatCost(credits.remaining)}
+            </div>
+            <div className="text-xs text-gray-500 mt-2">
+              {formatCost(credits.used)} spent of {formatCost(credits.totalCredits)}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Error loading credits */}
+      {isEnabled && creditsError && (
+        <div className="bg-red-900/20 border border-red-400/30 rounded-lg p-3">
+          <div className="text-xs text-red-400">
+            Could not load OpenRouter balance
+          </div>
+        </div>
+      )}
+
+      {/* Total Cost Display (Estimated from usage) */}
       <div className="bg-gray-900/30 border border-green-400/20 rounded-lg p-4">
         <div className="text-center">
           <div className="text-2xl font-bold text-green-400">
             {formatCost(totalCost)}
           </div>
-          <div className="text-sm text-gray-400">Total Spent</div>
+          <div className="text-sm text-gray-400">This Session</div>
         </div>
       </div>
 

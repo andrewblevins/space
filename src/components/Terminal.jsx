@@ -2223,11 +2223,17 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
       
       // Provide better error messages based on error type
       let errorMessage = 'Error: Failed to get response from OpenRouter';
-      
+
       if (error.message?.includes('rate limit') || error.message?.includes('429')) {
-        errorMessage = "You've reached today's message limit (100 messages). Your limit will reset at midnight. Consider upgrading for more messages!";
+        if (useAuthSystem) {
+          errorMessage = "You've reached today's message limit (100 messages). Your limit will reset at midnight. Consider upgrading for more messages!";
+        } else {
+          errorMessage = "Rate limit reached. Please check your OpenRouter account at openrouter.ai to add credits or check your usage limits.";
+        }
       } else if (error.message?.includes('401') || error.message?.includes('authentication')) {
-        errorMessage = "Authentication error. Please sign in again.";
+        errorMessage = useAuthSystem
+          ? "Authentication error. Please sign in again."
+          : "API key error. Please check your OpenRouter API key in Settings.";
       } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
         errorMessage = "Network error. Please check your connection and try again.";
       } else if (error.message) {
