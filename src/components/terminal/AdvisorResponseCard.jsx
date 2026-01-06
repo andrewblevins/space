@@ -148,6 +148,7 @@ export const AdvisorResponseCard = memo(({ advisor, allAdvisors = [], onAssertio
           <span className={`w-2 h-2 rounded-full ${colorClass} mr-2`}></span>
           {advisor.name}
         </h3>
+{/* Assert button temporarily disabled - may be replaced with Instruct feature
         <button
           onClick={handleAssertionsClick}
           className="flex items-center px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
@@ -169,6 +170,7 @@ export const AdvisorResponseCard = memo(({ advisor, allAdvisors = [], onAssertio
           </svg>
           Assert
         </button>
+*/}
       </div>
 
       {/* Response content */}

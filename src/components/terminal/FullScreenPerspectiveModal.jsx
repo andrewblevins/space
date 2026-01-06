@@ -183,6 +183,7 @@ export function FullScreenPerspectiveModal({
               </span>
             </div>
             <div className="flex items-center gap-2">
+              {/* Assert button temporarily disabled - may be replaced with Instruct feature
               {onAssertionsClick && (
                 <button
                   onClick={handleAssertionsClick}
@@ -206,6 +207,7 @@ export function FullScreenPerspectiveModal({
                   Assert
                 </button>
               )}
+              */}
               <button
                 onClick={onClose}
                 className="text-gray-400 hover:text-green-400 transition-colors p-1"
