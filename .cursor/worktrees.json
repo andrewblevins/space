@@ -1,0 +1,7 @@
+{
+  "setup-worktree": [
+    "npm install",
+    "echo 'Worktree setup complete'"
+  ]
+}
+
