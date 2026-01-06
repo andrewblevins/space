@@ -46,8 +46,8 @@ const PasswordModal = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-      <div className="bg-gray-900 border border-green-400 p-6 rounded-lg w-full max-w-md max-h-[80vh] overflow-y-auto overflow-x-hidden">
-        <h2 className="text-green-400 text-xl mb-4">
+      <div className="bg-gray-900 border border-orange-500 p-6 rounded-lg w-full max-w-md max-h-[80vh] overflow-y-auto overflow-x-hidden">
+        <h2 className="text-orange-400 text-xl mb-4">
           {isCreatingPassword ? 'Create Password' : 'Password Required'}
         </h2>
 
@@ -63,14 +63,14 @@ const PasswordModal = ({
           </div>
         )}
 
-        <p className="text-green-400 mb-4 whitespace-pre-line">{message}</p>
+        <p className="text-orange-400 mb-4 whitespace-pre-line">{message}</p>
 
         <input
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="w-full bg-black text-green-400 border border-green-400 p-2 mb-4 focus:outline-none"
+          className="w-full bg-stone-900 text-white font-sans border border-orange-700 p-2 mb-4 focus:outline-none placeholder:text-orange-300"
           placeholder="Enter password"
           data-testid="password-input"
           autoComplete={isCreatingPassword ? "new-password" : "current-password"}
@@ -83,9 +83,9 @@ const PasswordModal = ({
             id="remember-me"
             checked={rememberMe}
             onChange={(e) => setRememberMe(e.target.checked)}
-            className="mr-2 rounded border-green-400 text-green-400 focus:ring-green-400"
+            className="mr-2 rounded border-orange-500 text-orange-400 focus:ring-orange-500"
           />
-          <label htmlFor="remember-me" className="text-green-400 text-sm">
+          <label htmlFor="remember-me" className="text-orange-400 text-sm">
             Remember me for 7 days
           </label>
         </div>
@@ -107,7 +107,7 @@ const PasswordModal = ({
           </button>
           <button
             onClick={handleSubmit}
-            className="px-4 py-2 text-green-400 border border-green-400 rounded hover:bg-green-400 hover:text-black"
+            className="px-4 py-2 text-orange-400 border border-orange-500 rounded hover:bg-orange-500 hover:text-black"
             data-testid="password-submit-btn"
           >
             Submit

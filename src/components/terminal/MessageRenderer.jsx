@@ -33,15 +33,15 @@ const MessageRenderer = memo(({
   const getMessageClassName = (type) => {
     switch (type) {
       case 'user':
-        return 'text-gray-900 dark:text-gray-100 whitespace-pre-wrap border-l-4 border-gray-300 dark:border-gray-600 pl-4 font-jakarta';
+        return 'text-gray-900 dark:text-gray-100 whitespace-pre-wrap border-l-4 border-gray-300 dark:border-stone-600 pl-4 font-sans';
       case 'assistant':
-        return 'text-gray-800 dark:text-gray-200';
+        return 'text-gray-800 dark:text-orange-100';
       case 'system':
-        return 'text-gray-800 dark:text-gray-200';
+        return 'text-gray-800 dark:text-orange-100';
       case 'debug':
         return 'text-amber-600 dark:text-amber-400 whitespace-pre-wrap';
       default:
-        return 'text-green-600 dark:text-green-400 whitespace-pre-wrap';
+        return 'text-orange-600 dark:text-orange-400 whitespace-pre-wrap';
     }
   };
 
@@ -76,7 +76,7 @@ const MessageRenderer = memo(({
           <div>
             {msg.thinking && <ThinkingBlock content={msg.thinking} />}
             {msg.isStreaming && (
-              <div className="mb-2 text-sm text-green-600 dark:text-green-400 italic">
+              <div className="mb-2 text-sm text-orange-600 dark:text-orange-400 italic">
                 ⚡ Streaming advisor responses...
               </div>
             )}
@@ -101,8 +101,8 @@ const MessageRenderer = memo(({
             </div>
             {/* Show synthesis if it exists (for council mode or other cases) */}
             {msg.parsedAdvisors.synthesis && (
-              <div className="mt-4 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
-                <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Synthesis</h4>
+              <div className="mt-4 p-3 bg-gray-100 dark:bg-stone-800 rounded-lg">
+                <h4 className="font-semibold text-gray-800 dark:text-orange-100 mb-2">Synthesis</h4>
                 <MemoizedMarkdownMessage 
                   content={msg.parsedAdvisors.synthesis} 
                   advisors={advisors} 

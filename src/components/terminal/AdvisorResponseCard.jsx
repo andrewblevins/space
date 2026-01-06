@@ -52,17 +52,17 @@ export const AdvisorResponseCard = memo(({ advisor, allAdvisors = [], onAssertio
             key={index}
             className="mb-3"
             components={{
-              p: ({ children }) => <p className="font-serif w-full text-gray-800 dark:text-gray-200 leading-relaxed">{children}</p>,
+              p: ({ children }) => <p className="font-serif w-full text-gray-800 dark:text-orange-100 leading-relaxed">{children}</p>,
               em: ({ children }) => <em className="italic">{children}</em>,
               strong: ({ children }) => <strong className="font-bold">{children}</strong>,
               code: ({ node, inline, className, children, ...props }) => {
                 return inline ? (
-                  <code className="text-green-600 dark:text-green-400 font-mono bg-stone-200 dark:bg-gray-900 px-1 rounded" {...props}>
+                  <code className="text-orange-600 dark:text-orange-400 font-mono bg-stone-200 dark:bg-stone-900 px-1 rounded" {...props}>
                     {children}
                   </code>
                 ) : (
-                  <pre className="bg-stone-200 dark:bg-gray-900 p-4 rounded-md my-2 overflow-x-auto whitespace-pre-wrap break-all w-full">
-                    <code className="font-mono block text-gray-800 dark:text-gray-200" {...props}>
+                  <pre className="bg-stone-200 dark:bg-stone-900 p-4 rounded-md my-2 overflow-x-auto whitespace-pre-wrap break-all w-full">
+                    <code className="font-mono block text-gray-800 dark:text-orange-100" {...props}>
                       {children}
                     </code>
                   </pre>
@@ -129,16 +129,16 @@ export const AdvisorResponseCard = memo(({ advisor, allAdvisors = [], onAssertio
 
   // Determine styling based on compact mode
   const cardClasses = compact
-    ? `border border-gray-300 dark:border-gray-700 rounded-lg p-3 bg-white dark:bg-gray-900 h-full transition-shadow ${isClickable ? 'hover:shadow-lg cursor-pointer' : 'hover:shadow-md'}`
-    : `border border-gray-300 dark:border-gray-700 rounded-lg p-4 mb-4 bg-white dark:bg-gray-900 ${isClickable ? 'hover:shadow-lg cursor-pointer' : ''}`;
+    ? `border border-gray-300 dark:border-stone-700 rounded-lg p-3 bg-white dark:bg-stone-900 h-full transition-shadow ${isClickable ? 'hover:shadow-lg cursor-pointer' : 'hover:shadow-md'}`
+    : `border border-gray-300 dark:border-stone-700 rounded-lg p-4 mb-4 bg-white dark:bg-stone-900 ${isClickable ? 'hover:shadow-lg cursor-pointer' : ''}`;
 
   const headerClasses = compact
     ? "flex items-center justify-between mb-2"
     : "flex items-center justify-between mb-3";
 
   const titleClasses = compact
-    ? "font-bold font-serif text-base text-gray-800 dark:text-gray-200 flex items-center"
-    : "font-bold font-serif text-lg text-gray-800 dark:text-gray-200 flex items-center";
+    ? "font-bold font-serif text-base text-gray-800 dark:text-orange-100 flex items-center"
+    : "font-bold font-serif text-lg text-gray-800 dark:text-orange-100 flex items-center";
 
   return (
     <div className={cardClasses} onClick={handleCardClick}>
@@ -174,7 +174,7 @@ export const AdvisorResponseCard = memo(({ advisor, allAdvisors = [], onAssertio
       </div>
 
       {/* Response content */}
-      <div className="text-gray-800 dark:text-gray-200">
+      <div className="text-gray-800 dark:text-orange-100">
         <StreamingMarkdownRenderer content={displayContent} />
       </div>
 

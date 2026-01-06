@@ -1,5 +1,17 @@
 import { useState } from "react";
 
+// Shared color theme configurations
+const colorThemes = {
+  green: { text: 'text-orange-400', textDim: 'text-orange-500/50', textMid: 'text-orange-400/70', hoverBg: 'hover:bg-orange-500/10', hoverText: 'hover:text-orange-300' },
+  mahogany: { text: 'text-rose-300', textDim: 'text-rose-400/50', textMid: 'text-rose-300/70', hoverBg: 'hover:bg-rose-900/30', hoverText: 'hover:text-rose-200' },
+  burgundy: { text: 'text-red-300', textDim: 'text-red-400/50', textMid: 'text-red-300/70', hoverBg: 'hover:bg-red-900/30', hoverText: 'hover:text-red-200' },
+  amber: { text: 'text-amber-400', textDim: 'text-amber-500/50', textMid: 'text-amber-400/70', hoverBg: 'hover:bg-amber-500/20', hoverText: 'hover:text-amber-300' },
+  cyan: { text: 'text-cyan-400', textDim: 'text-cyan-500/50', textMid: 'text-cyan-400/70', hoverBg: 'hover:bg-cyan-500/20', hoverText: 'hover:text-cyan-300' },
+  violet: { text: 'text-violet-400', textDim: 'text-violet-500/50', textMid: 'text-violet-400/70', hoverBg: 'hover:bg-violet-500/20', hoverText: 'hover:text-violet-300' },
+  copper: { text: 'text-orange-300', textDim: 'text-orange-400/50', textMid: 'text-orange-300/70', hoverBg: 'hover:bg-orange-700/20', hoverText: 'hover:text-orange-200' },
+  slate: { text: 'text-slate-300', textDim: 'text-slate-400/50', textMid: 'text-slate-300/70', hoverBg: 'hover:bg-slate-500/20', hoverText: 'hover:text-slate-200' },
+};
+
 /**
  * Module that supports grouping of advisors.
  * @param {object} props
@@ -15,6 +27,7 @@ import { useState } from "react";
  * @param {function} [props.setAdvisors]
  * @param {function} [props.setMessages]
  * @param {boolean} [props.noContainer] - If true, renders only the list without the container
+ * @param {string} [props.colorTheme='green'] - Color theme
  */
 export function GroupableModule({
   title,
@@ -29,6 +42,7 @@ export function GroupableModule({
   setAdvisors,
   setMessages,
   noContainer = false,
+  colorTheme = 'copper',
 }) {
   const [expandedGroups, setExpandedGroups] = useState(new Set());
 
@@ -44,12 +58,14 @@ export function GroupableModule({
     });
   };
 
+  const ct = colorThemes[colorTheme] || colorThemes.green;
+
   const listContent = (
     <ul className="space-y-1">
         {groups.map((group, idx) => (
           <li key={`group-${idx}`} className="mb-2">
             <div
-              className={`flex items-center justify-between text-green-400/70 cursor-pointer hover:text-green-300 transition-colors ${activeGroups.includes(group.name) ? 'text-green-400' : ''}`}
+              className={`flex items-center justify-between ${ct.textMid} cursor-pointer ${ct.hoverText} transition-colors ${activeGroups.includes(group.name) ? ct.text : ''}`}
               onClick={() => onGroupClick && onGroupClick(group)}
             >
               <span>{group.name}</span>
@@ -58,7 +74,7 @@ export function GroupableModule({
                   e.stopPropagation();
                   toggleGroup(group.name);
                 }}
-                className="ml-2 text-green-500/50 hover:text-green-400"
+                className={`ml-2 ${ct.textDim} ${ct.hoverText}`}
               >
                 {expandedGroups.has(group.name) ? '▼' : '▶'}
               </button>
@@ -68,22 +84,24 @@ export function GroupableModule({
                 {group.advisors.map((advisorName) => {
                   const advisor = items.find((item) => item.name === advisorName);
                   if (!advisor) return null;
+                  const isActive = activeItems.includes(advisor);
                   return (
                     <li
                       key={advisorName}
-                      className={`group flex items-center justify-between rounded px-2 py-1 -mx-2 hover:bg-green-500/10 transition-colors ${activeItems.includes(advisor)
-                          ? 'text-green-400'
-                          : 'text-green-500/50'
-                        }`}
+                      className={`group flex items-center justify-between rounded-md px-2 py-1.5 -mx-2 transition-all ${
+                        isActive
+                          ? 'bg-orange-600 text-white shadow-sm'
+                          : `${ct.textDim} ${ct.hoverBg} hover:text-orange-300`
+                      }`}
                     >
                       <div
                         onClick={() => onItemClick && onItemClick(advisor)}
                         className="flex items-center space-x-2 flex-1 cursor-pointer"
                       >
                         {advisor.color && (
-                          <span className={`w-3 h-3 rounded-full flex-shrink-0 ${advisor.color} ${!activeItems.includes(advisor) ? 'opacity-50' : ''}`}></span>
+                          <span className={`w-3 h-3 rounded-full flex-shrink-0 ${advisor.color} ${!isActive ? 'opacity-50' : 'ring-1 ring-white/30'}`}></span>
                         )}
-                        <span>{advisor.name}</span>
+                        <span className="font-medium">{advisor.name}</span>
                       </div>
                       <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
@@ -91,7 +109,7 @@ export function GroupableModule({
                             e.stopPropagation();
                             setEditingAdvisor && setEditingAdvisor(advisor);
                           }}
-                          className="p-1 text-green-500/50 hover:text-green-300"
+                          className={`p-1 ${isActive ? 'text-white/70 hover:text-white' : `${ct.textDim} ${ct.hoverText}`}`}
                           title="Edit advisor"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -105,7 +123,7 @@ export function GroupableModule({
                               setAdvisors && setAdvisors((prev) => prev.filter((a) => a.name !== advisor.name));
                             }
                           }}
-                          className="p-1 text-green-500/50 hover:text-red-400"
+                          className={`p-1 ${isActive ? 'text-white/70 hover:text-red-300' : 'text-orange-500/50 hover:text-red-400'}`}
                           title="Delete perspective"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -122,22 +140,25 @@ export function GroupableModule({
         ))}
         {items
           .filter((item) => !groups.some((g) => g.advisors.includes(item.name)))
-          .map((item, idx) => (
+          .map((item, idx) => {
+            const isActive = activeItems.includes(item);
+            return (
             <li
               key={`item-${idx}`}
-              className={`group flex items-center justify-between rounded px-2 py-1 -mx-2 hover:bg-green-500/10 transition-colors ${activeItems.includes(item)
-                  ? 'text-green-400'
-                  : 'text-green-500/50'
-                }`}
+              className={`group flex items-center justify-between rounded-md px-2 py-1.5 -mx-2 transition-all ${
+                isActive
+                  ? 'bg-orange-600 text-white shadow-sm'
+                  : `${ct.textDim} ${ct.hoverBg} hover:text-orange-300`
+              }`}
             >
               <div
                 onClick={() => onItemClick && onItemClick(item)}
                 className="flex items-center space-x-2 flex-1 cursor-pointer"
               >
                 {item.color && (
-                  <span className={`w-3 h-3 rounded-full flex-shrink-0 ${item.color} ${!activeItems.includes(item) ? 'opacity-50' : ''}`}></span>
+                  <span className={`w-3 h-3 rounded-full flex-shrink-0 ${item.color} ${!isActive ? 'opacity-50' : 'ring-1 ring-white/30'}`}></span>
                 )}
-                <span>{item.name}</span>
+                <span className="font-medium">{item.name}</span>
               </div>
               <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button
@@ -145,7 +166,7 @@ export function GroupableModule({
                     e.stopPropagation();
                     setEditingAdvisor && setEditingAdvisor(item);
                   }}
-                  className="p-1 text-green-500/50 hover:text-green-300"
+                  className={`p-1 ${isActive ? 'text-white/70 hover:text-white' : `${ct.textDim} ${ct.hoverText}`}`}
                   title="Edit advisor"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -159,7 +180,7 @@ export function GroupableModule({
                       setAdvisors && setAdvisors((prev) => prev.filter((a) => a.name !== item.name));
                     }
                   }}
-                  className="p-1 text-green-500/50 hover:text-red-400"
+                  className={`p-1 ${isActive ? 'text-white/70 hover:text-red-300' : 'text-orange-500/50 hover:text-red-400'}`}
                   title="Delete perspective"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -168,7 +189,8 @@ export function GroupableModule({
                 </button>
               </div>
             </li>
-          ))}
+          );
+          })}
       </ul>
   );
 
@@ -180,14 +202,14 @@ export function GroupableModule({
   // Otherwise, render with the container and header
   return (
     <div
-      className="border border-stone-300 dark:border-gray-700 rounded-md p-4 bg-amber-100 dark:bg-gray-800"
+      className="border border-stone-300 dark:border-stone-700 rounded-md p-4 bg-amber-100 dark:bg-stone-800"
     >
       <div className="flex justify-between items-center mb-2">
-        <h2 className="text-gray-800 dark:text-gray-200">{title}</h2>
+        <h2 className="text-gray-800 dark:text-orange-100">{title}</h2>
         {onAddClick && (
           <button
             onClick={onAddClick}
-            className="text-green-700 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 transition-colors"
+            className="text-orange-700 dark:text-orange-400 hover:text-orange-800 dark:hover:text-orange-300 transition-colors"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />

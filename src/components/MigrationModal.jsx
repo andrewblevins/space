@@ -99,14 +99,14 @@ const MigrationModal = ({ isOpen, onComplete }) => {
   if (step === 'discover') {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-gray-900 p-8 rounded-lg border border-green-500 max-w-md w-full mx-4">
-          <h2 className="text-xl font-bold text-green-400 mb-4">
+        <div className="bg-gray-900 p-8 rounded-lg border border-orange-600 max-w-md w-full mx-4">
+          <h2 className="text-xl font-bold text-orange-400 mb-4">
             Welcome to SPACE Terminal 0.2.4!
           </h2>
           
           <div className="space-y-4 text-gray-300">
             <p>
-              We found <span className="text-green-400 font-medium">{sessions.length}</span> conversation{sessions.length !== 1 ? 's' : ''} stored in your browser.
+              We found <span className="text-orange-400 font-medium">{sessions.length}</span> conversation{sessions.length !== 1 ? 's' : ''} stored in your browser.
             </p>
             
             <p>
@@ -146,7 +146,7 @@ const MigrationModal = ({ isOpen, onComplete }) => {
             </button>
             <button
               onClick={() => setStep('confirm')}
-              className="flex-1 px-4 py-2 bg-green-500 text-black rounded font-medium hover:bg-green-400 transition-colors"
+              className="flex-1 px-4 py-2 bg-orange-500 text-black rounded font-medium hover:bg-orange-500 transition-colors"
             >
               Migrate
             </button>
@@ -159,8 +159,8 @@ const MigrationModal = ({ isOpen, onComplete }) => {
   if (step === 'confirm') {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-gray-900 p-8 rounded-lg border border-green-500 max-w-md w-full mx-4">
-          <h2 className="text-xl font-bold text-green-400 mb-4">
+        <div className="bg-gray-900 p-8 rounded-lg border border-orange-600 max-w-md w-full mx-4">
+          <h2 className="text-xl font-bold text-orange-400 mb-4">
             Ready to Migrate
           </h2>
           
@@ -197,7 +197,7 @@ const MigrationModal = ({ isOpen, onComplete }) => {
             <button
               onClick={handleStartMigration}
               disabled={storage.loading}
-              className="flex-1 px-4 py-2 bg-green-500 text-black rounded font-medium hover:bg-green-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="flex-1 px-4 py-2 bg-orange-500 text-black rounded font-medium hover:bg-orange-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {storage.loading ? 'Starting...' : 'Start Migration'}
             </button>
@@ -212,8 +212,8 @@ const MigrationModal = ({ isOpen, onComplete }) => {
     
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-gray-900 p-8 rounded-lg border border-green-500 max-w-md w-full mx-4">
-          <h2 className="text-xl font-bold text-green-400 mb-4">
+        <div className="bg-gray-900 p-8 rounded-lg border border-orange-600 max-w-md w-full mx-4">
+          <h2 className="text-xl font-bold text-orange-400 mb-4">
             Migrating Conversations...
           </h2>
           
@@ -224,7 +224,7 @@ const MigrationModal = ({ isOpen, onComplete }) => {
             
             <div className="w-full bg-gray-700 rounded-full h-2">
               <div 
-                className="bg-green-500 h-2 rounded-full transition-all duration-300"
+                className="bg-orange-500 h-2 rounded-full transition-all duration-300"
                 style={{ width: `${percentage}%` }}
               ></div>
             </div>
@@ -241,8 +241,8 @@ const MigrationModal = ({ isOpen, onComplete }) => {
   if (step === 'complete') {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-gray-900 p-8 rounded-lg border border-green-500 max-w-md w-full mx-4">
-          <h2 className="text-xl font-bold text-green-400 mb-4 flex items-center">
+        <div className="bg-gray-900 p-8 rounded-lg border border-orange-600 max-w-md w-full mx-4">
+          <h2 className="text-xl font-bold text-orange-400 mb-4 flex items-center">
             <span className="mr-2">🎉</span>
             Migration Complete!
           </h2>
@@ -252,7 +252,7 @@ const MigrationModal = ({ isOpen, onComplete }) => {
               <div className="bg-gray-800 p-4 rounded">
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <div className="text-green-400 font-medium">{results.successful}</div>
+                    <div className="text-orange-400 font-medium">{results.successful}</div>
                     <div className="text-gray-400">Successful</div>
                   </div>
                   {results.failed > 0 && (
@@ -270,7 +270,7 @@ const MigrationModal = ({ isOpen, onComplete }) => {
               on all your devices.
             </p>
             
-            <div className="bg-green-900 border border-green-500 text-green-400 p-3 rounded text-sm">
+            <div className="bg-orange-950 border border-orange-600 text-orange-400 p-3 rounded text-sm">
               Your browser data has been safely cleaned up. Welcome to SPACE 0.2.4!
             </div>
           </div>
@@ -280,7 +280,7 @@ const MigrationModal = ({ isOpen, onComplete }) => {
               console.log('🔄 Continue to SPACE button clicked!');
               handleComplete();
             }}
-            className="w-full mt-6 px-4 py-2 bg-green-500 text-black rounded font-medium hover:bg-green-400 transition-colors"
+            className="w-full mt-6 px-4 py-2 bg-orange-500 text-black rounded font-medium hover:bg-orange-500 transition-colors"
           >
             Continue to SPACE
           </button>
@@ -296,8 +296,8 @@ const MigrationModal = ({ isOpen, onComplete }) => {
     
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-gray-900 p-8 rounded-lg border border-green-500 max-w-md w-full mx-4">
-          <h2 className="text-xl font-bold text-green-400 mb-4">
+        <div className="bg-gray-900 p-8 rounded-lg border border-orange-600 max-w-md w-full mx-4">
+          <h2 className="text-xl font-bold text-orange-400 mb-4">
             No Conversations to Migrate
           </h2>
           
@@ -332,7 +332,7 @@ const MigrationModal = ({ isOpen, onComplete }) => {
 
           <button
             onClick={onComplete}
-            className="w-full mt-6 px-4 py-2 bg-green-500 text-black rounded font-medium hover:bg-green-400 transition-colors"
+            className="w-full mt-6 px-4 py-2 bg-orange-500 text-black rounded font-medium hover:bg-orange-500 transition-colors"
           >
             Continue
           </button>

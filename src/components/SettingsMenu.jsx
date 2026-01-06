@@ -232,14 +232,14 @@ const SettingsMenu = ({
   return (
     <div className="fixed inset-0 bg-stone-100/70 dark:bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
       <div
-        className="bg-stone-50 border border-green-600 rounded-lg w-full max-w-md mx-4 dark:bg-gray-900 dark:border-green-400 max-h-[90vh] overflow-y-auto overflow-x-hidden flex flex-col"
+        className="bg-stone-50 border border-orange-700 rounded-lg w-full max-w-md mx-4 dark:bg-stone-900 dark:border-orange-500 max-h-[90vh] overflow-y-auto overflow-x-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-6 pb-4">
-          <h2 className="text-green-400 text-xl font-semibold">Settings</h2>
+          <h2 className="text-orange-400 text-xl font-semibold">Settings</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-green-400 transition-colors"
+            className="text-gray-400 hover:text-orange-400 transition-colors"
             title="Close Settings"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -249,15 +249,15 @@ const SettingsMenu = ({
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex border-b border-gray-300 dark:border-gray-600 px-6">
+        <div className="flex border-b border-gray-300 dark:border-stone-600 px-6">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`flex-1 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === tab.id
-                  ? 'border-green-400 text-green-400'
-                  : 'border-transparent text-gray-400 hover:text-green-400'
+                  ? 'border-orange-500 text-orange-400'
+                  : 'border-transparent text-gray-400 hover:text-orange-400'
               }`}
             >
               {tab.label}
@@ -272,7 +272,7 @@ const SettingsMenu = ({
               {/* AI Model Selection - Only show in development */}
               {isDevelopment && (
                 <div>
-                  <label className="text-green-400 font-medium block mb-3">
+                  <label className="text-orange-400 font-medium block mb-3">
                     AI Model
                   </label>
                   <p className="text-gray-400 text-sm mb-4">
@@ -282,7 +282,7 @@ const SettingsMenu = ({
                     value={openrouterModel}
                     onChange={(e) => handleModelChange(e.target.value)}
                     disabled={isLoadingModels}
-                    className="w-full bg-stone-50 text-gray-800 border border-stone-300 rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-green-600 dark:bg-black dark:text-green-400 dark:border-green-400 disabled:opacity-50"
+                    className="w-full bg-stone-50 text-gray-800 border border-stone-300 rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-orange-600 dark:bg-stone-900 dark:text-white dark:border-orange-700 disabled:opacity-50"
                   >
                     {isLoadingModels ? (
                       <option>Loading models...</option>
@@ -303,7 +303,7 @@ const SettingsMenu = ({
                     {!isLoadingModels && (
                       <button
                         onClick={fetchOpenRouterModels}
-                        className="text-xs text-green-400 hover:text-green-300 underline"
+                        className="text-xs text-orange-400 hover:text-orange-300 underline"
                       >
                         Refresh Models
                       </button>
@@ -315,20 +315,20 @@ const SettingsMenu = ({
               {/* Production Model Info */}
               {!isDevelopment && (
                 <div>
-                  <label className="text-green-400 font-medium block mb-3">
+                  <label className="text-orange-400 font-medium block mb-3">
                     AI Model
                   </label>
-                  <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded border">
+                  <div className="p-3 bg-gray-100 dark:bg-stone-800 rounded border">
                     <div className="flex items-center justify-between">
                       <div>
-                        <div className="text-gray-800 dark:text-gray-200 font-medium">
+                        <div className="text-gray-800 dark:text-orange-100 font-medium">
                           Claude Sonnet 4
                         </div>
                         <div className="text-sm text-gray-600 dark:text-gray-400">
                           Anthropic's latest model via OpenRouter
                         </div>
                       </div>
-                      <div className="text-green-400 text-sm font-medium">
+                      <div className="text-orange-400 text-sm font-medium">
                         Active
                       </div>
                     </div>
@@ -342,13 +342,13 @@ const SettingsMenu = ({
               {/* Debug Mode */}
               <div className="flex items-center justify-between">
                 <div>
-                  <label className="text-green-400 font-medium">Debug Mode</label>
+                  <label className="text-orange-400 font-medium">Debug Mode</label>
                   <p className="text-gray-400 text-sm">Show detailed API call information</p>
                 </div>
                 <button
                   onClick={handleDebugToggle}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    debugMode ? 'bg-green-400' : 'bg-gray-600'
+                    debugMode ? 'bg-orange-500' : 'bg-gray-600'
                   }`}
                 >
                   <span
@@ -362,13 +362,13 @@ const SettingsMenu = ({
               {/* Reasoning Mode */}
               <div className="flex items-center justify-between">
                 <div>
-                  <label className="text-green-400 font-medium">Reasoning Mode</label>
+                  <label className="text-orange-400 font-medium">Reasoning Mode</label>
                   <p className="text-gray-400 text-sm">Model explains its reasoning step-by-step</p>
                 </div>
                 <button
                   onClick={handleReasoningToggle}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    reasoningMode ? 'bg-green-400' : 'bg-gray-600'
+                    reasoningMode ? 'bg-orange-500' : 'bg-gray-600'
                   }`}
                 >
                   <span
@@ -382,13 +382,13 @@ const SettingsMenu = ({
               {/* Theme */}
               <div className="flex items-center justify-between">
                 <div>
-                  <label className="text-green-400 font-medium">Theme</label>
+                  <label className="text-orange-400 font-medium">Theme</label>
                   <p className="text-gray-400 text-sm">Toggle light or dark mode</p>
                 </div>
                 <button
                   onClick={toggleTheme}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    theme === 'dark' ? 'bg-green-400' : 'bg-gray-600'
+                    theme === 'dark' ? 'bg-orange-500' : 'bg-gray-600'
                   }`}
                 >
                   <span
@@ -402,13 +402,13 @@ const SettingsMenu = ({
               {/* Auto-scroll */}
               <div className="flex items-center justify-between">
                 <div>
-                  <label className="text-green-400 font-medium">Auto-scroll</label>
+                  <label className="text-orange-400 font-medium">Auto-scroll</label>
                   <p className="text-gray-400 text-sm">Automatically scroll to new messages</p>
                 </div>
                 <button
                   onClick={handleAutoScrollToggle}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    autoScroll ? 'bg-green-400' : 'bg-gray-600'
+                    autoScroll ? 'bg-orange-500' : 'bg-gray-600'
                   }`}
                 >
                   <span
@@ -421,7 +421,7 @@ const SettingsMenu = ({
 
               {/* Paragraph Spacing */}
               <div>
-                <label className="text-green-400 font-medium block mb-2">
+                <label className="text-orange-400 font-medium block mb-2">
                   Paragraph Spacing
                 </label>
                 <p className="text-gray-400 text-sm mb-3">
@@ -435,7 +435,7 @@ const SettingsMenu = ({
                     step="0.05"
                     value={paragraphSpacing}
                     onChange={(e) => handleParagraphSpacingChange(e.target.value)}
-                    className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider"
+                    className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-stone-700 slider"
                   />
                   <span className="text-gray-400 text-sm w-16">{paragraphSpacing === 0 ? 'None' : `${paragraphSpacing}rem`}</span>
                 </div>
@@ -445,7 +445,7 @@ const SettingsMenu = ({
               </div>
 
               {/* Restore Defaults */}
-              <div className="pt-4 border-t border-gray-300 dark:border-gray-600">
+              <div className="pt-4 border-t border-gray-300 dark:border-stone-600">
                 <button
                   onClick={handleRestoreDefaults}
                   className="w-full px-4 py-2 bg-stone-50 border border-blue-600 rounded text-blue-600 hover:bg-blue-600 hover:text-white transition-colors dark:bg-black dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-400 dark:hover:text-black"
@@ -463,7 +463,7 @@ const SettingsMenu = ({
             <div className="space-y-6">
               {/* Context Limit */}
               <div>
-                <label className="text-green-400 font-medium block mb-2">
+                <label className="text-orange-400 font-medium block mb-2">
                   Context Limit
                 </label>
                 <p className="text-gray-400 text-sm mb-3">
@@ -475,7 +475,7 @@ const SettingsMenu = ({
                     value={tempContextLimit}
                     onChange={(e) => setTempContextLimit(e.target.value)}
                     onBlur={(e) => handleContextLimitChange(e.target.value)}
-                    className="bg-stone-50 text-gray-800 border border-stone-300 rounded px-3 py-1 w-24 focus:outline-none focus:ring-1 focus:ring-green-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none dark:bg-black dark:text-green-400 dark:border-green-400"
+                    className="bg-stone-50 text-gray-800 border border-stone-300 rounded px-3 py-1 w-24 focus:outline-none focus:ring-1 focus:ring-orange-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none dark:bg-stone-900 dark:text-white dark:border-orange-700"
                     min="1000"
                     max="200000"
                     step="1000"
@@ -489,7 +489,7 @@ const SettingsMenu = ({
 
               {/* Max Tokens */}
               <div>
-                <label className="text-green-400 font-medium block mb-2">
+                <label className="text-orange-400 font-medium block mb-2">
                   Max Response Tokens
                 </label>
                 <p className="text-gray-400 text-sm mb-3">
@@ -501,7 +501,7 @@ const SettingsMenu = ({
                     value={tempMaxTokens}
                     onChange={(e) => setTempMaxTokens(e.target.value)}
                     onBlur={(e) => handleMaxTokensChange(e.target.value)}
-                    className="bg-stone-50 text-gray-800 border border-stone-300 rounded px-3 py-1 w-20 focus:outline-none focus:ring-1 focus:ring-green-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none dark:bg-black dark:text-green-400 dark:border-green-400"
+                    className="bg-stone-50 text-gray-800 border border-stone-300 rounded px-3 py-1 w-20 focus:outline-none focus:ring-1 focus:ring-orange-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none dark:bg-stone-900 dark:text-white dark:border-orange-700"
                     min="1"
                     max="8192"
                   />
@@ -520,19 +520,19 @@ const SettingsMenu = ({
                 /* Authentication & Account Info */
                 <>
                   <div>
-                    <label className="text-green-400 font-medium block mb-3">
+                    <label className="text-orange-400 font-medium block mb-3">
                       Account Information
                     </label>
                     <div className="space-y-2 mb-4">
-                      <div className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-800 rounded">
-                        <span className="text-gray-600 dark:text-gray-300 text-sm">Email</span>
-                        <span className="text-sm font-medium text-green-600 dark:text-green-400">
+                      <div className="flex items-center justify-between p-3 bg-gray-100 dark:bg-stone-800 rounded">
+                        <span className="text-gray-600 dark:text-orange-200 text-sm">Email</span>
+                        <span className="text-sm font-medium text-orange-600 dark:text-orange-400">
                           {user?.email || 'Not available'}
                         </span>
                       </div>
-                      <div className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-800 rounded">
-                        <span className="text-gray-600 dark:text-gray-300 text-sm">Authentication</span>
-                        <span className="text-sm font-medium text-green-600 dark:text-green-400">
+                      <div className="flex items-center justify-between p-3 bg-gray-100 dark:bg-stone-800 rounded">
+                        <span className="text-gray-600 dark:text-orange-200 text-sm">Authentication</span>
+                        <span className="text-sm font-medium text-orange-600 dark:text-orange-400">
                           ✓ Signed In
                         </span>
                       </div>
@@ -541,7 +541,7 @@ const SettingsMenu = ({
 
                   {/* Account Management */}
                   <div>
-                    <label className="text-green-400 font-medium block mb-3">
+                    <label className="text-orange-400 font-medium block mb-3">
                       Account Management
                     </label>
                     <p className="text-gray-400 text-sm mb-4">
@@ -578,7 +578,7 @@ const SettingsMenu = ({
                         Sign Out
                       </button>
                     </div>
-                    <div className="mt-4 p-3 bg-gray-100 dark:bg-gray-800 rounded text-xs text-gray-600 dark:text-gray-400">
+                    <div className="mt-4 p-3 bg-gray-100 dark:bg-stone-800 rounded text-xs text-gray-600 dark:text-gray-400">
                       <p>API access is managed server-side. No API keys needed on your device.</p>
                     </div>
                   </div>
@@ -587,22 +587,22 @@ const SettingsMenu = ({
                 /* Legacy API Key Management */
                 <>
                   <div>
-                    <label className="text-green-400 font-medium block mb-3">
+                    <label className="text-orange-400 font-medium block mb-3">
                       API Key Status
                     </label>
                     {isCheckingKeys ? (
                       <div className="text-gray-400 text-sm">Checking API keys...</div>
                     ) : (
                       <div className="space-y-2 mb-4">
-                        <div className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-800 rounded">
-                          <span className="text-gray-600 dark:text-gray-300 text-sm">Anthropic (Claude)</span>
-                          <span className={`text-sm font-medium ${apiKeyStatus.anthropic ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                        <div className="flex items-center justify-between p-3 bg-gray-100 dark:bg-stone-800 rounded">
+                          <span className="text-gray-600 dark:text-orange-200 text-sm">Anthropic (Claude)</span>
+                          <span className={`text-sm font-medium ${apiKeyStatus.anthropic ? 'text-orange-600 dark:text-orange-400' : 'text-red-600 dark:text-red-400'}`}>
                             {apiKeyStatus.anthropic ? '✓ Set' : '✗ Not Set'}
                           </span>
                         </div>
-                        <div className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-800 rounded">
-                          <span className="text-gray-600 dark:text-gray-300 text-sm">OpenAI (GPT)</span>
-                          <span className={`text-sm font-medium ${apiKeyStatus.openai ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                        <div className="flex items-center justify-between p-3 bg-gray-100 dark:bg-stone-800 rounded">
+                          <span className="text-gray-600 dark:text-orange-200 text-sm">OpenAI (GPT)</span>
+                          <span className={`text-sm font-medium ${apiKeyStatus.openai ? 'text-orange-600 dark:text-orange-400' : 'text-red-600 dark:text-red-400'}`}>
                             {apiKeyStatus.openai ? '✓ Set' : '✗ Not Set'}
                           </span>
                         </div>
@@ -612,7 +612,7 @@ const SettingsMenu = ({
                   </div>
 
                   <div>
-                    <label className="text-green-400 font-medium block mb-3">
+                    <label className="text-orange-400 font-medium block mb-3">
                       API Key Management
                     </label>
                     <p className="text-gray-400 text-sm mb-4">
@@ -622,7 +622,7 @@ const SettingsMenu = ({
                       <button
                         onClick={checkApiKeys}
                         disabled={isCheckingKeys}
-                        className="w-full text-left px-3 py-2 bg-stone-50 border border-green-600 rounded text-green-600 hover:bg-green-600 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed dark:bg-black dark:border-green-400 dark:text-green-400 dark:hover:bg-green-400 dark:hover:text-black"
+                        className="w-full text-left px-3 py-2 bg-stone-50 border border-orange-700 rounded text-orange-600 hover:bg-orange-700 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed dark:bg-black dark:border-orange-500 dark:text-orange-400 dark:hover:bg-orange-500 dark:hover:text-black"
                       >
                         {isCheckingKeys ? 'Checking...' : 'Refresh Status'}
                       </button>
@@ -633,7 +633,7 @@ const SettingsMenu = ({
                         Clear API Keys
                       </button>
                     </div>
-                    <div className="mt-4 p-3 bg-gray-100 dark:bg-gray-800 rounded text-xs text-gray-600 dark:text-gray-400">
+                    <div className="mt-4 p-3 bg-gray-100 dark:bg-stone-800 rounded text-xs text-gray-600 dark:text-gray-400">
                       <p>API keys are encrypted and stored locally in your browser. They are never sent to SPACE servers.</p>
                     </div>
                   </div>
@@ -641,12 +641,12 @@ const SettingsMenu = ({
               )}
 
               {/* Rate Limiting */}
-              <div className="border-t border-gray-300 dark:border-gray-600 pt-6">
+              <div className="border-t border-gray-300 dark:border-stone-600 pt-6">
                 <UsageIndicator />
               </div>
 
               {/* Usage Statistics */}
-              <div className="border-t border-gray-300 dark:border-gray-600 pt-6">
+              <div className="border-t border-gray-300 dark:border-stone-600 pt-6">
                 <UsageDisplay />
               </div>
             </div>
@@ -661,7 +661,7 @@ const SettingsMenu = ({
           onClick={(e) => e.stopPropagation()}
         >
           <div
-            className="bg-gray-100 border border-red-600 rounded-lg p-6 w-full max-w-sm mx-4 dark:bg-gray-900 dark:border-red-400"
+            className="bg-gray-100 border border-red-600 rounded-lg p-6 w-full max-w-sm mx-4 dark:bg-stone-900 dark:border-red-400"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-4">

@@ -741,6 +741,8 @@ const Terminal = ({ theme, toggleTheme }) => {
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   // Sidebar style variant: 'subtle', 'terminal', or 'hybrid' (terminal is default)
   const [sidebarVariant] = useState('terminal');
+  // Color theme for sidebar: 'green', 'mahogany', 'amber', 'cyan', 'violet', 'copper'
+  const [colorTheme, setColorTheme] = useState('copper');
   // DEPRECATED: Prompt Library - Feature no longer maintained
   // const [showPromptLibrary, setShowPromptLibrary] = useState(false);
   const [showSessionPanel, setShowSessionPanel] = useState(false);
@@ -2865,7 +2867,7 @@ ${selectedText}
       const menu = document.createElement('div');
       menu.className = `
         absolute bg-gray-900 
-        border border-green-400 
+        border border-orange-500 
         rounded-md shadow-lg 
         py-1
       `;
@@ -2875,7 +2877,7 @@ ${selectedText}
       const captureButton = document.createElement('button');
       captureButton.className = `
         w-full px-4 py-2 
-        text-left text-green-400 
+        text-left text-orange-400 
         hover:bg-gray-800
       `;
       captureButton.textContent = 'Capture Selection';
@@ -3021,8 +3023,8 @@ ${selectedText}
             if (element) {
               element.scrollIntoView({ behavior: 'smooth', block: 'center' });
               // Add highlight effect
-              element.classList.add('bg-green-900/20');
-              setTimeout(() => element.classList.remove('bg-green-900/20'), 2000);
+              element.classList.add('bg-orange-950/20');
+              setTimeout(() => element.classList.remove('bg-orange-950/20'), 2000);
             }
           }, 100);
         }
@@ -3180,7 +3182,7 @@ ${selectedText}
       {isInitializing ? (
         // Loading state to prevent flash of wrong screen
         <div className="w-full h-screen bg-black flex items-center justify-center">
-          <div className="text-green-400 animate-pulse">Loading SPACE Terminal...</div>
+          <div className="text-orange-400 animate-pulse">Loading SPACE Terminal...</div>
         </div>
       ) : showWelcome && !useAuthSystem ? (
         // Welcome screen only shown in legacy mode (auth mode handles this at App level)
@@ -3265,7 +3267,7 @@ ${selectedText}
           desktopLayout={
             <div
               ref={terminalRef}
-              className="w-full h-screen font-serif flex relative bg-gradient-to-b from-amber-50 to-amber-100 text-gray-800 dark:bg-gradient-to-b dark:from-gray-900 dark:to-black dark:text-green-400"
+              className="w-full h-screen font-serif flex relative bg-gradient-to-b from-amber-50 to-amber-100 text-gray-800 dark:bg-gradient-to-b dark:from-gray-900 dark:to-black dark:text-orange-400"
               onContextMenu={handleContextMenu}
               style={{
                 /* Custom scrollbar styling for webkit browsers */
@@ -3273,14 +3275,101 @@ ${selectedText}
                 scrollbarColor: '#374151 transparent'
               }}
             >
-              {/* Left Sidebar - Collapsible */}
-              {!sidebarCollapsed && (
-                <div className="w-72 border-r border-green-500/30 bg-gradient-to-b from-gray-900 to-black flex-shrink-0 flex flex-col overflow-hidden">
+              {/* Color theme configurations */}
+              {(() => {
+                const themes = {
+                  green: {
+                    name: 'Terminal Green',
+                    border: 'border-orange-600/30',
+                    title: 'text-orange-400',
+                    hoverBg: 'hover:bg-orange-500/20',
+                    button: 'bg-orange-500 hover:bg-orange-500',
+                    accent: 'text-orange-400',
+                    accentHover: 'hover:text-orange-300',
+                    swatch: 'bg-orange-500',
+                  },
+                  mahogany: {
+                    name: 'Rich Mahogany',
+                    border: 'border-rose-900/50',
+                    title: 'text-rose-300',
+                    hoverBg: 'hover:bg-rose-900/30',
+                    button: 'bg-rose-800 hover:bg-rose-700',
+                    accent: 'text-rose-300',
+                    accentHover: 'hover:text-rose-200',
+                    swatch: 'bg-rose-800',
+                  },
+                  burgundy: {
+                    name: 'Deep Burgundy',
+                    border: 'border-red-900/40',
+                    title: 'text-red-300',
+                    hoverBg: 'hover:bg-red-900/30',
+                    button: 'bg-red-900 hover:bg-red-800',
+                    accent: 'text-red-300',
+                    accentHover: 'hover:text-red-200',
+                    swatch: 'bg-red-900',
+                  },
+                  amber: {
+                    name: 'Warm Amber',
+                    border: 'border-amber-500/30',
+                    title: 'text-amber-400',
+                    hoverBg: 'hover:bg-amber-500/20',
+                    button: 'bg-amber-600 hover:bg-amber-500',
+                    accent: 'text-amber-400',
+                    accentHover: 'hover:text-amber-300',
+                    swatch: 'bg-amber-500',
+                  },
+                  cyan: {
+                    name: 'Cool Cyan',
+                    border: 'border-cyan-500/30',
+                    title: 'text-cyan-400',
+                    hoverBg: 'hover:bg-cyan-500/20',
+                    button: 'bg-cyan-600 hover:bg-cyan-500',
+                    accent: 'text-cyan-400',
+                    accentHover: 'hover:text-cyan-300',
+                    swatch: 'bg-cyan-500',
+                  },
+                  violet: {
+                    name: 'Royal Violet',
+                    border: 'border-violet-500/30',
+                    title: 'text-violet-400',
+                    hoverBg: 'hover:bg-violet-500/20',
+                    button: 'bg-violet-600 hover:bg-violet-500',
+                    accent: 'text-violet-400',
+                    accentHover: 'hover:text-violet-300',
+                    swatch: 'bg-violet-500',
+                  },
+                  copper: {
+                    name: 'Burnished Copper',
+                    border: 'border-orange-700/40',
+                    title: 'text-orange-300',
+                    hoverBg: 'hover:bg-orange-700/20',
+                    button: 'bg-orange-700 hover:bg-orange-600',
+                    accent: 'text-orange-300',
+                    accentHover: 'hover:text-orange-200',
+                    swatch: 'bg-orange-600',
+                  },
+                  slate: {
+                    name: 'Modern Slate',
+                    border: 'border-slate-500/30',
+                    title: 'text-slate-300',
+                    hoverBg: 'hover:bg-slate-500/20',
+                    button: 'bg-slate-600 hover:bg-slate-500',
+                    accent: 'text-slate-300',
+                    accentHover: 'hover:text-slate-200',
+                    swatch: 'bg-slate-500',
+                  },
+                };
+                const t = themes[colorTheme] || themes.green;
+                
+                if (sidebarCollapsed) return null;
+                
+                return (
+              <div className={`w-72 border-r ${t.border} bg-gradient-to-b from-gray-900 to-black flex-shrink-0 flex flex-col overflow-hidden`}>
                   {/* Header with title and collapse button */}
-                  <div className="flex items-center justify-between p-4 border-b border-green-500/30 bg-black/50">
+                  <div className={`flex items-center justify-between p-4 border-b ${t.border} bg-black/50`}>
                     <a 
                       href="/"
-                      className="text-xl font-bold text-green-400"
+                      className="flex items-center gap-3"
                       onClick={(e) => {
                         if (!useAuthSystem) {
                           e.preventDefault();
@@ -3289,14 +3378,17 @@ ${selectedText}
                         // In auth mode, let the link navigate normally to "/"
                       }}
                     >
-                      SPACE Terminal
+                      <div className="w-8 h-8 bg-orange-500 rounded flex items-center justify-center text-black font-bold">
+                        S
+                      </div>
+                      <span className="text-xl font-semibold font-sans text-orange-400">SPACE Terminal</span>
                     </a>
                     <button
                       onClick={toggleSidebar}
-                      className="p-1 rounded transition-colors hover:bg-green-500/20"
+                      className={`p-1 rounded transition-colors ${t.hoverBg}`}
                       title="Close sidebar"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                      <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 ${t.accent}`} viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
                     </button>
@@ -3306,7 +3398,7 @@ ${selectedText}
                   <div className="p-4">
                     <button
                       onClick={handleNewSession}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors bg-green-500 hover:bg-green-400 text-black"
+                      className={`w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${t.button} text-white`}
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
@@ -3322,13 +3414,14 @@ ${selectedText}
                       title="Perspectives"
                       defaultExpanded={true}
                       variant={sidebarVariant}
+                      colorTheme={colorTheme}
                       headerRight={
                         <button
                           onClick={() => {
                             setSuggestedAdvisorName('');
                             setShowAdvisorForm(true);
                           }}
-                          className="transition-colors p-1 text-green-400 hover:text-green-300"
+                          className={`transition-colors p-1 ${t.accent} ${t.accentHover}`}
                           title="Add new perspective"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -3338,7 +3431,7 @@ ${selectedText}
                       }
                     >
                       {/* Scrollable perspectives list with fixed height */}
-                      <div className="max-h-48 overflow-y-auto scrollbar-terminal pr-1">
+                      <div className="max-h-48 overflow-y-auto overflow-x-hidden scrollbar-terminal">
                         <GroupableModule
                           noContainer={true}
                           groups={advisorGroups}
@@ -3351,6 +3444,7 @@ ${selectedText}
                           setAdvisors={setAdvisors}
                           setMessages={setMessages}
                           variant={sidebarVariant}
+                          colorTheme={colorTheme}
                         />
                       </div>
 
@@ -3363,6 +3457,7 @@ ${selectedText}
                         onEditAdvisor={setEditingAdvisor}
                         disabled={showJournalOnboarding}
                         variant={sidebarVariant}
+                        colorTheme={colorTheme}
                       />
                     </CollapsibleSection>
 
@@ -3371,6 +3466,7 @@ ${selectedText}
                       title="Previous Chats"
                       defaultExpanded={true}
                       variant={sidebarVariant}
+                      colorTheme={colorTheme}
                     >
                       <RecentChats
                         maxItems={5}
@@ -3380,6 +3476,7 @@ ${selectedText}
                         useDatabaseStorage={useDatabaseStorage}
                         storage={storage}
                         variant={sidebarVariant}
+                        colorTheme={colorTheme}
                       />
                     </CollapsibleSection>
                   </div>
@@ -3387,22 +3484,24 @@ ${selectedText}
                   {/* Footer Menu - Integrated at bottom */}
                   <SidebarFooterMenu
                     variant={sidebarVariant}
+                    colorTheme={colorTheme}
                     onSessionManagerClick={() => setShowSessionPanel(true)}
                     onExportClick={() => setShowExportMenu(true)}
                     onHelpClick={() => setShowHelpModal(true)}
                     onSettingsClick={() => setShowSettingsMenu(true)}
                   />
                 </div>
-              )}
+                );
+              })()}
 
               {/* Expand Button (when sidebar is collapsed) */}
               {sidebarCollapsed && (
                 <button
                   onClick={toggleSidebar}
-                  className="absolute top-2 left-2 z-10 p-2 rounded bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors shadow-md"
+                  className="absolute top-2 left-2 z-10 p-2 rounded bg-gray-200 dark:bg-stone-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors shadow-md"
                   title="Expand sidebar"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-700 dark:text-gray-300" viewBox="0 0 20 20" fill="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-700 dark:text-orange-200" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
                   </svg>
                 </button>
@@ -3466,7 +3565,7 @@ ${selectedText}
                           value={editText}
                           onChange={(e) => setEditText(e.target.value)}
                           onKeyDown={handleEditKeyDown}
-                          className="w-full h-40 bg-white text-gray-800 font-serif p-2 border border-gray-300 focus:outline-none resize-none dark:bg-black dark:text-green-400 dark:border-green-400"
+                          className="w-full h-40 bg-white text-gray-800 font-sans p-2 border border-gray-300 focus:outline-none resize-none placeholder:text-amber-600 dark:placeholder:text-orange-300 dark:bg-stone-900 dark:text-white dark:border-orange-700"
                           placeholder="Edit your prompt..."
                           autoFocus
                           autoComplete="off"
@@ -3491,7 +3590,7 @@ ${selectedText}
                               setEditAdvisorText('');
                             }
                           }}
-                          className="w-full h-40 bg-white text-gray-800 font-serif p-2 border border-gray-300 focus:outline-none resize-none dark:bg-black dark:text-green-400 dark:border-green-400"
+                          className="w-full h-40 bg-white text-gray-800 font-sans p-2 border border-gray-300 focus:outline-none resize-none placeholder:text-amber-600 dark:placeholder:text-orange-300 dark:bg-stone-900 dark:text-white dark:border-orange-700"
                           placeholder="Edit advisor description..."
                           autoFocus
                           autoComplete="off"
@@ -3517,7 +3616,7 @@ ${selectedText}
               {/* Info Button - Top Right */}
               <div className="fixed top-4 right-4 z-50">
                 <button
-                  className="flex items-center justify-center w-8 h-8 rounded-full bg-black border border-green-400 text-green-400 hover:bg-green-400 hover:text-black transition-colors"
+                  className="flex items-center justify-center w-8 h-8 rounded-full bg-black border border-orange-500 text-orange-400 hover:bg-orange-500 hover:text-black transition-colors"
                   title="About SPACE Terminal"
                   onClick={() => setShowInfoModal(true)}
                 >

@@ -57,10 +57,10 @@ const MobileLayout = ({
                   key={idx}
                   id={`msg-${idx}`}
                   className={`mb-4 break-words text-lg ${
-                    msg.type === 'user' ? 'text-gray-900 dark:text-gray-100 whitespace-pre-wrap border-l-4 border-gray-300 dark:border-gray-600 pl-4 font-jakarta' :
-                    msg.type === 'assistant' ? 'text-gray-800 dark:text-gray-200' :
-                    msg.type === 'system' ? 'text-gray-800 dark:text-gray-200' :
-                    msg.type === 'debug' ? 'text-amber-600 dark:text-amber-400 whitespace-pre-wrap' : 'text-green-600 dark:text-green-400 whitespace-pre-wrap'
+                    msg.type === 'user' ? 'text-gray-900 dark:text-gray-100 whitespace-pre-wrap border-l-4 border-gray-300 dark:border-stone-600 pl-4 font-sans' :
+                    msg.type === 'assistant' ? 'text-gray-800 dark:text-orange-100' :
+                    msg.type === 'system' ? 'text-gray-800 dark:text-orange-100' :
+                    msg.type === 'debug' ? 'text-amber-600 dark:text-amber-400 whitespace-pre-wrap' : 'text-orange-600 dark:text-orange-400 whitespace-pre-wrap'
                   }`}
                 >
                   {msg.type === 'system' ? (
@@ -69,7 +69,7 @@ const MobileLayout = ({
                     <div>
                       {msg.thinking && <ThinkingBlock content={msg.thinking} />}
                       {msg.isStreaming && (
-                        <div className="mb-2 text-sm text-green-600 dark:text-green-400 italic">
+                        <div className="mb-2 text-sm text-orange-600 dark:text-orange-400 italic">
                           ⚡ Streaming advisor responses...
                         </div>
                       )}
@@ -104,8 +104,8 @@ const MobileLayout = ({
                       
                       {/* Show synthesis if it exists (for council mode or other cases) */}
                       {msg.parsedAdvisors.synthesis && (
-                        <div className="mt-4 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
-                          <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Synthesis</h4>
+                        <div className="mt-4 p-3 bg-gray-100 dark:bg-stone-800 rounded-lg">
+                          <h4 className="font-semibold text-gray-800 dark:text-orange-100 mb-2">Synthesis</h4>
                           <MemoizedMarkdownMessage content={msg.parsedAdvisors.synthesis} advisors={advisors} paragraphSpacing={paragraphSpacing} />
                         </div>
                       )}
@@ -113,7 +113,7 @@ const MobileLayout = ({
                   ) : msg.type === 'parallel_advisor_response' ? (
                     <div>
                       {!msg.allCompleted && (
-                        <div className="mb-2 text-sm text-green-600 dark:text-green-400 italic">
+                        <div className="mb-2 text-sm text-orange-600 dark:text-orange-400 italic">
                           ⚡ Parallel streaming in progress...
                         </div>
                       )}
@@ -202,10 +202,10 @@ const MobileLayout = ({
             </div>
             
             {/* Input area */}
-            <div className="flex-shrink-0 p-4 border-t border-gray-200 dark:border-gray-700 bg-amber-50 dark:bg-gray-900">
+            <div className="flex-shrink-0 p-4 border-t border-gray-200 dark:border-stone-700 bg-amber-50 dark:bg-stone-900">
               <form onSubmit={handleSubmit}>
                 <div className="flex items-end gap-3">
-                  <span className="text-green-400 text-lg mb-3">&gt;</span>
+                  <span className="text-orange-400 text-lg mb-3">&gt;</span>
                   <div className="flex-1">
                     <TouchInput
                       value={input}
@@ -225,10 +225,10 @@ const MobileLayout = ({
         return (
           <div className="flex-1 p-4 overflow-y-auto scrollable-area">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-green-400 text-xl font-semibold">Advisors</h2>
+              <h2 className="text-orange-400 text-xl font-semibold">Advisors</h2>
               <button
                 onClick={() => setShowAdvisorForm(true)}
-                className="w-8 h-8 rounded-full bg-green-400 text-black flex items-center justify-center hover:bg-green-300 transition-colors"
+                className="w-8 h-8 rounded-full bg-orange-500 text-black flex items-center justify-center hover:bg-orange-400 transition-colors"
                 title="Add Advisor"
               >
                 +
@@ -242,8 +242,8 @@ const MobileLayout = ({
                   key={idx}
                   className={`p-3 rounded-lg border cursor-pointer transition-colors ${
                     advisor.active 
-                      ? 'border-green-400 bg-green-50 dark:bg-green-900/20' 
-                      : 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/30 opacity-60'
+                      ? 'border-orange-500 bg-orange-50 dark:bg-orange-950/20' 
+                      : 'border-gray-300 dark:border-stone-600 bg-gray-50 dark:bg-stone-800/30 opacity-60'
                   }`}
                   onClick={() => {
                     setAdvisors(prev => prev.map(a => 
@@ -256,12 +256,12 @@ const MobileLayout = ({
                       <div
                         className={`w-3 h-3 rounded-full flex-shrink-0 mr-2 ${advisor.color} ${!advisor.active ? 'opacity-50' : ''}`}
                       />
-                      <span className={`font-medium ${advisor.active ? 'text-gray-800 dark:text-gray-200' : 'text-gray-500 dark:text-gray-500'}`}>
+                      <span className={`font-medium ${advisor.active ? 'text-gray-800 dark:text-orange-100' : 'text-gray-500 dark:text-gray-500'}`}>
                         {advisor.name}
                       </span>
                     </div>
                     {advisor.active && (
-                      <span className="text-green-400 text-sm">Active</span>
+                      <span className="text-orange-400 text-sm">Active</span>
                     )}
                   </div>
                   {advisor.description && (
@@ -276,15 +276,15 @@ const MobileLayout = ({
             {/* Suggested perspectives */}
             {advisorSuggestions.length > 0 && (
               <div className="mt-6">
-                <h3 className="text-green-400 text-lg font-medium mb-3">Suggested Perspectives</h3>
+                <h3 className="text-orange-400 text-lg font-medium mb-3">Suggested Perspectives</h3>
                 <div className="space-y-2">
                   {advisorSuggestions.map((suggestion, idx) => (
                     <button
                       key={idx}
                       onClick={() => handleAdvisorSuggestionClick(suggestion)}
-                      className="w-full text-left p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:border-green-400 transition-colors"
+                      className="w-full text-left p-3 rounded-lg border border-gray-300 dark:border-stone-600 hover:border-orange-500 transition-colors"
                     >
-                      <span className="text-gray-800 dark:text-gray-200">{suggestion}</span>
+                      <span className="text-gray-800 dark:text-orange-100">{suggestion}</span>
                     </button>
                   ))}
                 </div>
@@ -296,7 +296,7 @@ const MobileLayout = ({
       case 'insights':
         return (
           <div className="flex-1 p-4 overflow-y-auto scrollable-area">
-            <h2 className="text-green-400 text-xl font-semibold mb-4">Insights</h2>
+            <h2 className="text-orange-400 text-xl font-semibold mb-4">Insights</h2>
             <p className="text-gray-500 dark:text-gray-400">
               Insights features coming soon. Check the Tools tab for session management.
             </p>
@@ -306,37 +306,37 @@ const MobileLayout = ({
       case 'tools':
         return (
           <div className="flex-1 p-4 overflow-y-auto scrollable-area">
-            <h2 className="text-green-400 text-xl font-semibold mb-4">Tools</h2>
+            <h2 className="text-orange-400 text-xl font-semibold mb-4">Tools</h2>
             
             {/* Tool buttons */}
             <div className="space-y-3">
               <button
                 onClick={() => setShowSessionPanel(true)}
-                className="w-full p-3 text-left rounded-lg border border-gray-300 dark:border-gray-600 hover:border-green-400 transition-colors"
+                className="w-full p-3 text-left rounded-lg border border-gray-300 dark:border-stone-600 hover:border-orange-500 transition-colors"
               >
-                <span className="text-gray-800 dark:text-gray-200">Previous Chats</span>
+                <span className="text-gray-800 dark:text-orange-100">Previous Chats</span>
               </button>
               
               {/* DEPRECATED: Prompt Library - Feature no longer maintained */}
               {/* <button
                 onClick={() => setShowPromptLibrary(true)}
-                className="w-full p-3 text-left rounded-lg border border-gray-300 dark:border-gray-600 hover:border-green-400 transition-colors"
+                className="w-full p-3 text-left rounded-lg border border-gray-300 dark:border-stone-600 hover:border-orange-500 transition-colors"
               >
-                <span className="text-gray-800 dark:text-gray-200">Prompt Library</span>
+                <span className="text-gray-800 dark:text-orange-100">Prompt Library</span>
               </button> */}
               
               <button
                 onClick={() => setShowSettingsMenu(true)}
-                className="w-full p-3 text-left rounded-lg border border-gray-300 dark:border-gray-600 hover:border-green-400 transition-colors"
+                className="w-full p-3 text-left rounded-lg border border-gray-300 dark:border-stone-600 hover:border-orange-500 transition-colors"
               >
-                <span className="text-gray-800 dark:text-gray-200">Settings</span>
+                <span className="text-gray-800 dark:text-orange-100">Settings</span>
               </button>
               
               <button
                 onClick={() => setShowHelpModal(true)}
-                className="w-full p-3 text-left rounded-lg border border-gray-300 dark:border-gray-600 hover:border-green-400 transition-colors"
+                className="w-full p-3 text-left rounded-lg border border-gray-300 dark:border-stone-600 hover:border-orange-500 transition-colors"
               >
-                <span className="text-gray-800 dark:text-gray-200">Help</span>
+                <span className="text-gray-800 dark:text-orange-100">Help</span>
               </button>
             </div>
           </div>

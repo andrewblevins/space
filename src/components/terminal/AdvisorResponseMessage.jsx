@@ -69,35 +69,35 @@ export const AdvisorResponseMessage = memo(({ content, paragraphSpacing = 0.25, 
           className="text-left font-serif w-full"
           components={{
           h1: ({ children }) => <h1 className="text-blue-600 dark:text-blue-400 font-bold font-serif">{children}</h1>,
-          h2: ({ children }) => <h2 className="text-green-600 dark:text-green-400 font-bold font-serif" style={{ marginTop: `${paragraphSpacing}rem`, marginBottom: `${paragraphSpacing * 0.5}rem` }}>{children}</h2>,
+          h2: ({ children }) => <h2 className="text-orange-600 dark:text-orange-400 font-bold font-serif" style={{ marginTop: `${paragraphSpacing}rem`, marginBottom: `${paragraphSpacing * 0.5}rem` }}>{children}</h2>,
           code: ({ node, inline, className, children, ...props }) => {
             const match = /language-(\w+)/.exec(className || '');
             return !inline ? (
-              <pre className="bg-stone-200 dark:bg-gray-900 p-4 rounded-md overflow-x-auto whitespace-pre-wrap break-all w-full" style={{ marginTop: '0', marginBottom: `${paragraphSpacing}rem` }}>
-                <code className={`${match ? `language-${match[1]}` : ''} font-mono block text-gray-800 dark:text-gray-200`} {...props}>
+              <pre className="bg-stone-200 dark:bg-stone-900 p-4 rounded-md overflow-x-auto whitespace-pre-wrap break-all w-full" style={{ marginTop: '0', marginBottom: `${paragraphSpacing}rem` }}>
+                <code className={`${match ? `language-${match[1]}` : ''} font-mono block text-gray-800 dark:text-orange-100`} {...props}>
                   {children}
                 </code>
               </pre>
             ) : (
-              <code className="text-green-600 dark:text-green-400 font-mono bg-stone-200 dark:bg-gray-900 px-1 rounded" {...props}>
+              <code className="text-orange-600 dark:text-orange-400 font-mono bg-stone-200 dark:bg-stone-900 px-1 rounded" {...props}>
                 {children}
               </code>
             );
           },
           p: ({ children }) => (
-            <p className="whitespace-pre-wrap font-serif w-full text-gray-800 dark:text-gray-200" style={{ marginBottom: `${paragraphSpacing}rem` }}>
+            <p className="whitespace-pre-wrap font-serif w-full text-gray-800 dark:text-orange-100" style={{ marginBottom: `${paragraphSpacing}rem` }}>
               {children}
             </p>
           ),
           ul: ({ children }) => (
             <ul 
-              className="list-disc pl-4 w-full text-gray-800 dark:text-gray-200"
+              className="list-disc pl-4 w-full text-gray-800 dark:text-orange-100"
               style={{ marginTop: '0', marginBottom: `${paragraphSpacing}rem` }}
             >
               {children}
             </ul>
           ),
-          li: ({ children }) => <li className="text-gray-800 dark:text-gray-200">{children}</li>,
+          li: ({ children }) => <li className="text-gray-800 dark:text-orange-100">{children}</li>,
         }}
               >
           {content}
@@ -112,49 +112,49 @@ export const AdvisorResponseMessage = memo(({ content, paragraphSpacing = 0.25, 
       {sections.map((section, index) => (
         <div key={index} className={index > 0 ? 'mt-6' : ''}>
           {section.name && (
-            <h3 className="font-bold font-serif text-lg mb-3 text-gray-800 dark:text-gray-200 flex items-center">
+            <h3 className="font-bold font-serif text-lg mb-3 text-gray-800 dark:text-orange-100 flex items-center">
               <span className={`w-2 h-2 rounded-full ${section.colorClass} mr-3`}></span>
               {section.name}
             </h3>
           )}
           
           <div 
-            className="text-gray-800 dark:text-gray-200 markdown-content"
+            className="text-gray-800 dark:text-orange-100 markdown-content"
             style={{ '--paragraph-spacing': `${paragraphSpacing}rem` }}
           >
             <ReactMarkdown
               className="text-left font-serif w-full"
               components={{
                 h1: ({ children }) => <h1 className="text-blue-600 dark:text-blue-400 font-bold font-serif">{children}</h1>,
-                h2: ({ children }) => <h2 className="text-green-600 dark:text-green-400 font-bold font-serif" style={{ marginTop: `${paragraphSpacing}rem`, marginBottom: `${paragraphSpacing * 0.5}rem` }}>{children}</h2>,
+                h2: ({ children }) => <h2 className="text-orange-600 dark:text-orange-400 font-bold font-serif" style={{ marginTop: `${paragraphSpacing}rem`, marginBottom: `${paragraphSpacing * 0.5}rem` }}>{children}</h2>,
                 code: ({ node, inline, className, children, ...props }) => {
                   const match = /language-(\w+)/.exec(className || '');
                   return !inline ? (
-                    <pre className="bg-stone-200 dark:bg-gray-900 p-4 rounded-md overflow-x-auto whitespace-pre-wrap break-all w-full" style={{ marginTop: '0', marginBottom: `${paragraphSpacing}rem` }}>
-                      <code className={`${match ? `language-${match[1]}` : ''} font-mono block text-gray-800 dark:text-gray-200`} {...props}>
+                    <pre className="bg-stone-200 dark:bg-stone-900 p-4 rounded-md overflow-x-auto whitespace-pre-wrap break-all w-full" style={{ marginTop: '0', marginBottom: `${paragraphSpacing}rem` }}>
+                      <code className={`${match ? `language-${match[1]}` : ''} font-mono block text-gray-800 dark:text-orange-100`} {...props}>
                         {children}
                       </code>
                     </pre>
                   ) : (
-                    <code className="text-green-600 dark:text-green-400 font-mono bg-stone-200 dark:bg-gray-900 px-1 rounded" {...props}>
+                    <code className="text-orange-600 dark:text-orange-400 font-mono bg-stone-200 dark:bg-stone-900 px-1 rounded" {...props}>
                       {children}
                     </code>
                   );
                 },
                 p: ({ children }) => (
-                  <p className="whitespace-pre-wrap font-serif w-full text-gray-800 dark:text-gray-200" style={{ marginBottom: `${paragraphSpacing}rem` }}>
+                  <p className="whitespace-pre-wrap font-serif w-full text-gray-800 dark:text-orange-100" style={{ marginBottom: `${paragraphSpacing}rem` }}>
                     {children}
                   </p>
                 ),
                 ul: ({ children }) => (
                   <ul 
-                    className="list-disc pl-4 w-full text-gray-800 dark:text-gray-200"
+                    className="list-disc pl-4 w-full text-gray-800 dark:text-orange-100"
                     style={{ marginTop: '0', marginBottom: `${paragraphSpacing}rem` }}
                   >
                     {children}
                   </ul>
                 ),
-                li: ({ children }) => <li className="text-gray-800 dark:text-gray-200">{children}</li>,
+                li: ({ children }) => <li className="text-gray-800 dark:text-orange-100">{children}</li>,
               }}
             >
               {section.content}

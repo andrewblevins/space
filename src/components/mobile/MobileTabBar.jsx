@@ -46,15 +46,15 @@ const MobileTabBar = ({ activeTab, setActiveTab }) => {
   ];
 
   return (
-    <nav className="flex bg-amber-50 dark:bg-gray-900 border-t border-gray-300 dark:border-gray-700">
+    <nav className="flex bg-amber-50 dark:bg-stone-900 border-t border-gray-300 dark:border-stone-700">
       {tabs.map((tab) => (
         <button
           key={tab.id}
           onClick={() => setActiveTab(tab.id)}
           className={`flex-1 flex flex-col items-center justify-center py-3 px-2 transition-colors min-h-[60px] ${
             activeTab === tab.id
-              ? 'text-green-400 bg-green-50 dark:bg-green-900/20'
-              : 'text-gray-600 dark:text-gray-400 hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/10'
+              ? 'text-orange-400 bg-orange-50 dark:bg-orange-950/20'
+              : 'text-gray-600 dark:text-gray-400 hover:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/10'
           }`}
         >
           <div className="mb-1">

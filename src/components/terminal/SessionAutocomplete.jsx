@@ -90,7 +90,7 @@ export function SessionAutocomplete({
   return (
     <div 
       ref={dropdownRef}
-      className={`fixed z-50 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-w-md w-80 ${
+      className={`fixed z-50 bg-white dark:bg-stone-900 border border-gray-300 dark:border-stone-600 rounded-lg shadow-lg max-w-md w-80 ${
         position.showAbove ? 'shadow-2xl' : 'shadow-lg'
       }`}
       style={{
@@ -104,7 +104,7 @@ export function SessionAutocomplete({
     >
       <div className="p-2">
         {position.showAbove && (
-          <div className="text-xs text-gray-400 dark:text-gray-500 mb-2 px-2 border-b border-gray-200 dark:border-gray-700 pb-2">
+          <div className="text-xs text-gray-400 dark:text-gray-500 mb-2 px-2 border-b border-gray-200 dark:border-stone-700 pb-2">
             Use ↑↓ to navigate, Enter to select, Esc to close
           </div>
         )}
@@ -122,7 +122,7 @@ export function SessionAutocomplete({
               className={`
                 p-3 rounded-md cursor-pointer transition-colors border
                 ${isSelected 
-                  ? 'bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-600' 
+                  ? 'bg-orange-50 dark:bg-orange-950/20 border-orange-400 dark:border-orange-700' 
                   : 'bg-transparent border-transparent hover:bg-gray-50 dark:hover:bg-gray-800'
                 }
               `}
@@ -153,7 +153,7 @@ export function SessionAutocomplete({
         )}
         
         {!position.showAbove && (
-          <div className="text-xs text-gray-400 dark:text-gray-500 mt-2 px-2 border-t border-gray-200 dark:border-gray-700 pt-2">
+          <div className="text-xs text-gray-400 dark:text-gray-500 mt-2 px-2 border-t border-gray-200 dark:border-stone-700 pt-2">
             Use ↑↓ to navigate, Enter to select, Esc to close
           </div>
         )}

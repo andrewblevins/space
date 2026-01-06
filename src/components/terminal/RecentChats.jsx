@@ -1,5 +1,17 @@
 import { useState, useEffect } from "react";
 
+// Shared color theme configurations
+const colorThemes = {
+  green: { text: 'text-orange-400', textDim: 'text-orange-500/50', textMid: 'text-orange-400/80', hoverBg: 'hover:bg-orange-500/10', activeBg: 'bg-orange-500/20', border: 'border-orange-500' },
+  mahogany: { text: 'text-rose-300', textDim: 'text-rose-400/50', textMid: 'text-rose-300/80', hoverBg: 'hover:bg-rose-900/30', activeBg: 'bg-rose-900/30', border: 'border-rose-400' },
+  burgundy: { text: 'text-red-300', textDim: 'text-red-400/50', textMid: 'text-red-300/80', hoverBg: 'hover:bg-red-900/30', activeBg: 'bg-red-900/30', border: 'border-red-400' },
+  amber: { text: 'text-amber-400', textDim: 'text-amber-500/50', textMid: 'text-amber-400/80', hoverBg: 'hover:bg-amber-500/20', activeBg: 'bg-amber-500/20', border: 'border-amber-400' },
+  cyan: { text: 'text-cyan-400', textDim: 'text-cyan-500/50', textMid: 'text-cyan-400/80', hoverBg: 'hover:bg-cyan-500/20', activeBg: 'bg-cyan-500/20', border: 'border-cyan-400' },
+  violet: { text: 'text-violet-400', textDim: 'text-violet-500/50', textMid: 'text-violet-400/80', hoverBg: 'hover:bg-violet-500/20', activeBg: 'bg-violet-500/20', border: 'border-violet-400' },
+  copper: { text: 'text-orange-300', textDim: 'text-orange-400/50', textMid: 'text-orange-300/80', hoverBg: 'hover:bg-orange-700/20', activeBg: 'bg-orange-700/20', border: 'border-orange-400' },
+  slate: { text: 'text-slate-300', textDim: 'text-slate-400/50', textMid: 'text-slate-300/80', hoverBg: 'hover:bg-slate-500/20', activeBg: 'bg-slate-500/20', border: 'border-slate-400' },
+};
+
 /**
  * Displays a list of recent chat sessions with a "Show more..." button.
  * @param {object} props
@@ -10,6 +22,7 @@ import { useState, useEffect } from "react";
  * @param {boolean} [props.useDatabaseStorage=false] - Whether to use database storage
  * @param {object} [props.storage=null] - Storage service for database access
  * @param {'subtle' | 'terminal' | 'hybrid'} [props.variant='subtle'] - Style variant
+ * @param {string} [props.colorTheme='green'] - Color theme
  */
 export function RecentChats({
   maxItems = 5,
@@ -19,6 +32,7 @@ export function RecentChats({
   useDatabaseStorage = false,
   storage = null,
   variant = 'subtle',
+  colorTheme = 'copper',
 }) {
   const [recentSessions, setRecentSessions] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -108,32 +122,34 @@ export function RecentChats({
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
   };
 
+  const ct = colorThemes[colorTheme] || colorThemes.green;
+
   // Style configurations based on variant
   const emptyStyles = {
     subtle: "text-gray-500 dark:text-gray-500",
-    terminal: "text-green-500/60",
-    hybrid: "text-gray-500 dark:text-green-500/60",
+    terminal: ct.textDim,
+    hybrid: `text-gray-500 dark:${ct.textDim}`,
   };
 
   const buttonStyles = {
     subtle: {
-      current: "bg-green-600/20 dark:bg-green-500/20 text-green-700 dark:text-green-300 font-medium",
-      normal: "hover:bg-gray-200/60 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-300",
+      current: "bg-orange-700/20 dark:bg-orange-500/20 text-orange-700 dark:text-orange-300 font-medium",
+      normal: "hover:bg-gray-200/60 dark:hover:bg-gray-700/50 text-gray-700 dark:text-orange-200",
     },
     terminal: {
-      current: "bg-green-500/20 text-green-300 font-medium border-l-2 border-green-400",
-      normal: "hover:bg-green-500/10 text-green-400/80 hover:text-green-300",
+      current: `${ct.activeBg} ${ct.text} font-medium border-l-2 ${ct.border}`,
+      normal: `${ct.hoverBg} ${ct.textMid} hover:${ct.text}`,
     },
     hybrid: {
-      current: "bg-green-600/20 dark:bg-green-500/20 text-green-700 dark:text-green-300 font-medium",
-      normal: "hover:bg-gray-200/60 dark:hover:bg-green-500/10 text-gray-700 dark:text-green-400/80",
+      current: `bg-orange-700/20 dark:${ct.activeBg} text-orange-700 dark:${ct.text} font-medium`,
+      normal: `hover:bg-gray-200/60 dark:${ct.hoverBg} text-gray-700 dark:${ct.textMid}`,
     },
   };
 
   const showMoreStyles = {
-    subtle: "text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:bg-gray-100 dark:hover:bg-gray-700/50",
-    terminal: "text-green-400 hover:text-green-300 hover:bg-green-500/10",
-    hybrid: "text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:bg-gray-100 dark:hover:bg-green-500/10",
+    subtle: "text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 hover:bg-gray-100 dark:hover:bg-gray-700/50",
+    terminal: `${ct.text} hover:${ct.text} ${ct.hoverBg}`,
+    hybrid: `text-orange-600 dark:${ct.text} hover:text-orange-700 hover:bg-gray-100 dark:${ct.hoverBg}`,
   };
 
   if (recentSessions.length === 0) {

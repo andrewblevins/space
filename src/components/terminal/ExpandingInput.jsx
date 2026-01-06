@@ -167,7 +167,7 @@ export function ExpandingInput({ value, onChange, onSubmit, isLoading, sessions 
   return (
     <>
       <div className="flex-1 relative">
-        <div className="relative border border-green-600 dark:border-green-500 rounded-lg bg-white dark:bg-gray-900 shadow-sm">
+        <div className="relative border border-orange-700 dark:border-orange-800/60 rounded-lg bg-white dark:bg-stone-900 shadow-sm">
           <textarea
             ref={textareaRef}
             value={value}
@@ -178,7 +178,7 @@ export function ExpandingInput({ value, onChange, onSubmit, isLoading, sessions 
               w-full
               min-h-[100px]
               max-h-[400px]
-              font-jakarta
+              font-sans
               text-base
               p-4
               pr-12
@@ -186,7 +186,8 @@ export function ExpandingInput({ value, onChange, onSubmit, isLoading, sessions 
               focus:outline-none
               rounded-lg
               resize-none
-              bg-transparent text-gray-800 dark:text-green-400
+              bg-transparent text-gray-800 dark:text-white
+              placeholder:text-amber-600 dark:placeholder:text-orange-300
               ${isLoading ? 'opacity-50' : ''}
             `}
             placeholder={isLoading ? 'Waiting for response...' : 'Type your message... (use @ to reference past sessions)'}
@@ -204,7 +205,7 @@ export function ExpandingInput({ value, onChange, onSubmit, isLoading, sessions 
           {/* Fullscreen button - top right of textarea */}
           <button
             onClick={() => setIsFullscreen(true)}
-            className="absolute top-3 right-3 p-1 text-gray-400 hover:text-green-400 transition-colors z-10"
+            className="absolute top-3 right-3 p-1 text-gray-400 hover:text-orange-400 transition-colors z-10"
             title="Expand writing area"
             type="button"
           >
@@ -231,12 +232,12 @@ export function ExpandingInput({ value, onChange, onSubmit, isLoading, sessions 
         onClick={() => setIsFullscreen(false)}
       >
         <div
-          className="w-full max-w-4xl h-full flex flex-col bg-amber-50 dark:bg-gray-900 rounded-lg shadow-2xl border border-green-600"
+          className="w-full max-w-4xl h-full flex flex-col bg-amber-50 dark:bg-stone-900 rounded-lg shadow-2xl border border-orange-700"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-green-600">
-            <h3 className="text-green-600 dark:text-green-400 font-medium">Focus Writing Mode</h3>
+          <div className="flex items-center justify-between p-4 border-b border-orange-700">
+            <h3 className="text-orange-600 dark:text-orange-400 font-medium">Focus Writing Mode</h3>
             <div className="flex items-center gap-2">
               <button
                 onClick={(e) => {
@@ -245,14 +246,14 @@ export function ExpandingInput({ value, onChange, onSubmit, isLoading, sessions 
                   onSubmit(e);
                 }}
                 disabled={isLoading || !value.trim()}
-                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-orange-700 text-white rounded hover:bg-orange-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 type="button"
               >
                 Send (⏎)
               </button>
               <button
                 onClick={() => setIsFullscreen(false)}
-                className="text-gray-400 hover:text-green-400 transition-colors"
+                className="text-gray-400 hover:text-orange-400 transition-colors"
                 title="Close (Esc)"
                 type="button"
               >
@@ -277,7 +278,7 @@ export function ExpandingInput({ value, onChange, onSubmit, isLoading, sessions 
                 onSubmit(e);
               }
             }}
-            className="flex-1 w-full p-6 font-jakarta text-lg resize-none focus:outline-none bg-amber-50 text-gray-800 dark:bg-gray-900 dark:text-green-400"
+            className="flex-1 w-full p-6 font-sans text-lg resize-none focus:outline-none bg-amber-50 text-gray-800 dark:bg-stone-900 dark:text-white placeholder:text-amber-600 dark:placeholder:text-orange-300"
             placeholder="Write your thoughts... (⌘/Ctrl+Enter to send, Esc to close)"
             disabled={isLoading}
             autoComplete="off"
@@ -287,7 +288,7 @@ export function ExpandingInput({ value, onChange, onSubmit, isLoading, sessions 
           />
 
           {/* Footer info */}
-          <div className="p-3 border-t border-green-600 text-xs text-gray-500 dark:text-gray-400 flex justify-between items-center">
+          <div className="p-3 border-t border-orange-700 text-xs text-gray-500 dark:text-gray-400 flex justify-between items-center">
             <span>Use @ to reference past sessions</span>
             <span>{value.length} characters</span>
           </div>

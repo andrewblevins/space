@@ -21,7 +21,7 @@ const MobileHeader = ({ activeTab, setActiveTab, setShowInfoModal, onLogoClick }
   };
 
   return (
-    <header className="flex items-center justify-between p-4 bg-amber-50 dark:bg-gray-900 border-b border-gray-300 dark:border-gray-700">
+    <header className="flex items-center justify-between p-4 bg-amber-50 dark:bg-stone-900 border-b border-gray-300 dark:border-stone-700">
       {/* Left side - App branding */}
       <div className="flex items-center">
         <a 
@@ -34,11 +34,11 @@ const MobileHeader = ({ activeTab, setActiveTab, setShowInfoModal, onLogoClick }
           }}
           className="flex items-center gap-2"
         >
-          <div className="w-8 h-8 bg-green-400 rounded flex items-center justify-center text-black font-bold">
+          <div className="w-8 h-8 bg-orange-500 rounded flex items-center justify-center text-black font-bold">
             S
           </div>
           <div className="flex flex-col">
-            <span className="text-lg font-semibold text-gray-800 dark:text-green-400">
+            <span className="text-lg font-semibold text-gray-800 dark:text-orange-400">
               SPACE
             </span>
             <span className="text-sm text-gray-600 dark:text-gray-400">
@@ -51,7 +51,7 @@ const MobileHeader = ({ activeTab, setActiveTab, setShowInfoModal, onLogoClick }
       {/* Right side - Info button */}
       <button
         onClick={() => setShowInfoModal(true)}
-        className="flex items-center justify-center w-10 h-10 rounded-full border border-green-400 text-green-400 hover:bg-green-400 hover:text-black transition-colors"
+        className="flex items-center justify-center w-10 h-10 rounded-full border border-orange-500 text-orange-400 hover:bg-orange-500 hover:text-black transition-colors"
         title="About SPACE Terminal"
       >
         <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">

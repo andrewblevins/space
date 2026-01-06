@@ -116,13 +116,13 @@ const JournalOnboarding = ({
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="max-w-2xl w-full">
           <div className="mb-4">
-            <div className="text-sm text-gray-500 dark:text-gray-400 mb-2 flex items-center justify-between">
+            <div className="text-sm text-amber-700 dark:text-orange-300 mb-2 flex items-center justify-between">
               <span>Question {contextFlow.questionIndex + 1} of 3</span>
               <div className="flex gap-2">
                 {canGoBack && (
                   <button
                     onClick={handleBack}
-                    className="text-xs px-2 py-1 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    className="text-xs px-2 py-1 rounded border border-amber-400 dark:border-orange-700 text-amber-700 dark:text-orange-300 hover:bg-amber-100 dark:hover:bg-orange-900/30 transition-colors"
                   >
                     ← Back
                   </button>
@@ -130,7 +130,7 @@ const JournalOnboarding = ({
                 {canGoForward && (
                   <button
                     onClick={handleForward}
-                    className="text-xs px-2 py-1 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    className="text-xs px-2 py-1 rounded border border-amber-400 dark:border-orange-700 text-amber-700 dark:text-orange-300 hover:bg-amber-100 dark:hover:bg-orange-900/30 transition-colors"
                   >
                     Forward →
                   </button>
@@ -140,12 +140,12 @@ const JournalOnboarding = ({
 
             {/* Explanation text for question 1 */}
             {contextFlow.questionIndex === 0 && (
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+              <p className="text-sm text-amber-700 dark:text-orange-300/80 mb-3">
                 The following questions will be used to suggest relevant perspectives. This exchange will also build the starting context for your conversation.
               </p>
             )}
 
-            <h2 className="text-xl font-serif text-gray-700 dark:text-gray-300">
+            <h2 className="text-xl font-serif text-gray-700 dark:text-orange-200">
               {contextFlow.currentQuestion}
             </h2>
           </div>
@@ -155,7 +155,7 @@ const JournalOnboarding = ({
             onChange={(e) => setText(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Your answer..."
-            className="w-full h-48 p-4 font-serif text-lg bg-amber-50 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-2 border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:border-green-400 dark:focus:border-green-400 resize-none"
+            className="w-full h-48 p-4 font-sans text-lg bg-amber-50 dark:bg-stone-900 text-gray-800 dark:text-white placeholder:text-amber-600 dark:placeholder:text-orange-300 border-2 border-amber-200 dark:border-orange-900/50 rounded-lg focus:outline-none focus:border-orange-500 dark:focus:border-orange-500 resize-none"
             autoFocus
           />
 
@@ -165,7 +165,7 @@ const JournalOnboarding = ({
               <button
                 onClick={handleGenerateNow}
                 disabled={isGenerating}
-                className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors underline flex items-center"
+                className="text-sm text-amber-700 dark:text-orange-300 hover:text-amber-900 dark:hover:text-orange-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors underline flex items-center"
               >
                 {isGenerating ? (
                   <>
@@ -186,7 +186,7 @@ const JournalOnboarding = ({
               <button
                 onClick={handleSkipQuestionClick}
                 disabled={isGenerating}
-                className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-4 py-2 text-amber-700 dark:text-orange-300 hover:text-amber-900 dark:hover:text-orange-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Skip Question
               </button>
@@ -194,7 +194,7 @@ const JournalOnboarding = ({
               <button
                 onClick={handleContinue}
                 disabled={isGenerating}
-                className="px-6 py-2 bg-green-600 dark:bg-green-700 text-white rounded-lg hover:bg-green-700 dark:hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
+                className="px-6 py-2 bg-orange-700 dark:bg-orange-800 text-white rounded-lg hover:bg-orange-800 dark:hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
               >
                 {isGenerating ? (
                   <>
@@ -217,7 +217,7 @@ const JournalOnboarding = ({
   return (
     <div className="flex-1 flex items-center justify-center p-8">
       <div className="max-w-2xl w-full">
-        <h2 className="text-2xl font-serif text-gray-800 dark:text-green-400 mb-4">
+        <h2 className="text-2xl font-serif text-gray-800 dark:text-orange-400 mb-4">
           What's on your mind?
         </h2>
 
@@ -226,16 +226,16 @@ const JournalOnboarding = ({
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Take a moment to write freely about what you're thinking about, working on, or struggling with."
-          className="w-full h-64 p-4 font-serif text-lg bg-amber-50 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-2 border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:border-green-400 dark:focus:border-green-400 resize-none"
+          className="w-full h-64 p-4 font-sans text-lg bg-amber-50 dark:bg-stone-900 text-gray-800 dark:text-white placeholder:text-amber-600 dark:placeholder:text-orange-300 border-2 border-amber-200 dark:border-orange-900/50 rounded-lg focus:outline-none focus:border-orange-500 dark:focus:border-orange-500 resize-none"
           disabled={isGenerating}
         />
 
         <div className="flex items-center justify-between mt-4">
-          <div className="text-sm text-gray-500 dark:text-gray-400">
+          <div className="text-sm text-amber-700 dark:text-orange-300">
             {wordCount < 25 ? (
               <span>Write at least 25 words to continue ({wordCount}/25)</span>
             ) : (
-              <span className="text-green-600 dark:text-green-400">✓ Ready to continue</span>
+              <span className="text-orange-600 dark:text-orange-400">✓ Ready to continue</span>
             )}
           </div>
 
@@ -243,7 +243,7 @@ const JournalOnboarding = ({
             <button
               onClick={() => onSkip(text)}
               disabled={isGenerating}
-              className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-4 py-2 text-amber-700 dark:text-orange-300 hover:text-amber-900 dark:hover:text-orange-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Skip to Chat
             </button>
@@ -251,7 +251,7 @@ const JournalOnboarding = ({
             <button
               onClick={handleGenerate}
               disabled={!canGenerate || isGenerating}
-              className="px-6 py-2 bg-green-600 dark:bg-green-700 text-white rounded-lg hover:bg-green-700 dark:hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
+              className="px-6 py-2 bg-orange-700 dark:bg-orange-800 text-white rounded-lg hover:bg-orange-800 dark:hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
             >
               {isGenerating ? (
                 <>

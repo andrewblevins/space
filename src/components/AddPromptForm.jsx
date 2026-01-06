@@ -24,14 +24,14 @@ const AddPromptForm = ({ isOpen, onSubmit, onCancel }) => {
   return (
     <div className="fixed inset-0 bg-white/70 dark:bg-black/50 flex items-center justify-center z-50" onClick={handleCancel}>
       <div
-        className="bg-gray-100 border border-green-600 rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[80vh] overflow-y-auto overflow-x-hidden dark:bg-gray-900 dark:border-green-400"
+        className="bg-gray-100 border border-orange-700 rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[80vh] overflow-y-auto overflow-x-hidden dark:bg-stone-900 dark:border-orange-500"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-green-400 text-xl font-semibold">Add New Prompt</h2>
+          <h2 className="text-orange-400 text-xl font-semibold">Add New Prompt</h2>
           <button
             onClick={handleCancel}
-            className="text-gray-400 hover:text-green-400 transition-colors"
+            className="text-gray-400 hover:text-orange-400 transition-colors"
             title="Cancel"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -42,7 +42,7 @@ const AddPromptForm = ({ isOpen, onSubmit, onCancel }) => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-green-400 font-medium block mb-2">
+            <label className="text-orange-400 font-medium block mb-2">
               Prompt Name
             </label>
             <input
@@ -50,7 +50,7 @@ const AddPromptForm = ({ isOpen, onSubmit, onCancel }) => {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter prompt name..."
-              className="w-full bg-white text-gray-800 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-green-600 dark:bg-black dark:text-green-400 dark:border-green-400"
+              className="w-full bg-white text-gray-800 font-sans border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-orange-600 placeholder:text-amber-600 dark:placeholder:text-orange-300 dark:bg-stone-900 dark:text-white dark:border-orange-700"
               autoFocus
               autoComplete="off"
               spellCheck="true"
@@ -59,14 +59,14 @@ const AddPromptForm = ({ isOpen, onSubmit, onCancel }) => {
           </div>
 
           <div>
-            <label className="text-green-400 font-medium block mb-2">
+            <label className="text-orange-400 font-medium block mb-2">
               Prompt Text
             </label>
             <textarea
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder="Enter your prompt text..."
-              className="w-full h-40 bg-white text-gray-800 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-green-600 resize-none dark:bg-black dark:text-green-400 dark:border-green-400"
+              className="w-full h-40 bg-white text-gray-800 font-sans border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-orange-600 resize-none placeholder:text-amber-600 dark:placeholder:text-orange-300 dark:bg-stone-900 dark:text-white dark:border-orange-700"
               autoComplete="off"
               spellCheck="true"
               data-role="prompt-text"
@@ -84,7 +84,7 @@ const AddPromptForm = ({ isOpen, onSubmit, onCancel }) => {
             <button
               type="submit"
               disabled={!name.trim() || !text.trim()}
-              className="px-4 py-2 bg-white border border-green-600 rounded text-green-600 hover:bg-green-600 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed dark:bg-black dark:border-green-400 dark:text-green-400 dark:hover:bg-green-400 dark:hover:text-black"
+              className="px-4 py-2 bg-white border border-orange-700 rounded text-orange-600 hover:bg-orange-700 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed dark:bg-black dark:border-orange-500 dark:text-orange-400 dark:hover:bg-orange-500 dark:hover:text-black"
             >
               Add Prompt
             </button>

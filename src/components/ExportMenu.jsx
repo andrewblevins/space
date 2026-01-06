@@ -25,14 +25,14 @@ const ExportMenu = ({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={onClose}>
       <div
-        className="bg-gray-900 border border-green-400 rounded-lg p-6 w-full max-w-md mx-4 max-h-[80vh] overflow-y-auto overflow-x-hidden"
+        className="bg-gray-900 border border-orange-500 rounded-lg p-6 w-full max-w-md mx-4 max-h-[80vh] overflow-y-auto overflow-x-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-green-400 text-xl font-semibold">Export Options</h2>
+          <h2 className="text-orange-400 text-xl font-semibold">Export Options</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-green-400 transition-colors"
+            className="text-gray-400 hover:text-orange-400 transition-colors"
             title="Close Export Menu"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -44,16 +44,16 @@ const ExportMenu = ({
         <div className="space-y-4">
           {/* Export Options Checkboxes */}
           <div className="p-4 bg-black border border-gray-700 rounded space-y-3">
-            <h3 className="text-green-400 font-medium text-sm mb-3">Export Options</h3>
+            <h3 className="text-orange-400 font-medium text-sm mb-3">Export Options</h3>
             <label className="flex items-start space-x-3 cursor-pointer group">
               <input
                 type="checkbox"
                 checked={includePerspectives}
                 onChange={(e) => setIncludePerspectives(e.target.checked)}
-                className="mt-1 w-4 h-4 text-green-400 bg-gray-800 border-gray-600 rounded focus:ring-green-400 focus:ring-2"
+                className="mt-1 w-4 h-4 text-orange-400 bg-gray-800 border-gray-600 rounded focus:ring-orange-500 focus:ring-2"
               />
               <div className="flex-1">
-                <span className="text-gray-300 group-hover:text-green-400 transition-colors text-sm font-medium">
+                <span className="text-gray-300 group-hover:text-orange-400 transition-colors text-sm font-medium">
                   Export full conversation with all perspective responses
                 </span>
                 <p className="text-gray-500 text-xs mt-1">
@@ -66,10 +66,10 @@ const ExportMenu = ({
                 type="checkbox"
                 checked={!includePerspectives}
                 onChange={(e) => setIncludePerspectives(!e.target.checked)}
-                className="mt-1 w-4 h-4 text-green-400 bg-gray-800 border-gray-600 rounded focus:ring-green-400 focus:ring-2"
+                className="mt-1 w-4 h-4 text-orange-400 bg-gray-800 border-gray-600 rounded focus:ring-orange-500 focus:ring-2"
               />
               <div className="flex-1">
-                <span className="text-gray-300 group-hover:text-green-400 transition-colors text-sm font-medium">
+                <span className="text-gray-300 group-hover:text-orange-400 transition-colors text-sm font-medium">
                   Export only my responses
                 </span>
                 <p className="text-gray-500 text-xs mt-1">
@@ -82,12 +82,12 @@ const ExportMenu = ({
           {/* Export Current Session */}
           <button
             onClick={handleExportSession}
-            className="w-full text-left p-4 bg-black border border-green-400 rounded hover:bg-green-400 hover:text-black transition-colors group"
+            className="w-full text-left p-4 bg-black border border-orange-500 rounded hover:bg-orange-500 hover:text-black transition-colors group"
           >
             <div className="flex items-start space-x-3">
               <div className="flex-shrink-0 mt-1">
                 <svg 
-                  className="w-5 h-5 text-green-400 group-hover:text-black transition-colors" 
+                  className="w-5 h-5 text-orange-400 group-hover:text-black transition-colors" 
                   fill="none" 
                   stroke="currentColor" 
                   viewBox="0 0 24 24"
@@ -101,7 +101,7 @@ const ExportMenu = ({
                 </svg>
               </div>
               <div className="flex-1">
-                <h3 className="text-green-400 group-hover:text-black font-medium transition-colors">
+                <h3 className="text-orange-400 group-hover:text-black font-medium transition-colors">
                   Export Current Session
                 </h3>
                 <p className="text-gray-400 group-hover:text-gray-700 text-sm mt-1 transition-colors">

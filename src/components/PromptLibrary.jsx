@@ -42,15 +42,15 @@ const PromptLibrary = ({
   return (
     <div className="fixed inset-0 bg-white/70 dark:bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
       <div
-        className="bg-gray-100 border border-green-600 rounded-lg w-full max-w-4xl mx-4 max-h-[80vh] overflow-y-auto overflow-x-hidden flex flex-col dark:bg-gray-900 dark:border-green-400"
+        className="bg-gray-100 border border-orange-700 rounded-lg w-full max-w-4xl mx-4 max-h-[80vh] overflow-y-auto overflow-x-hidden flex flex-col dark:bg-stone-900 dark:border-orange-500"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-700">
-          <h2 className="text-green-400 text-xl font-semibold">Prompt Library</h2>
+          <h2 className="text-orange-400 text-xl font-semibold">Prompt Library</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-green-400 transition-colors"
+            className="text-gray-400 hover:text-orange-400 transition-colors"
             title="Close Prompt Library"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -68,7 +68,7 @@ const PromptLibrary = ({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search prompts..."
-                className="w-full bg-white text-gray-800 border border-gray-300 rounded px-3 py-2 pl-10 focus:outline-none focus:ring-1 focus:ring-green-600 dark:bg-black dark:text-green-400 dark:border-green-400"
+                className="w-full bg-white text-gray-800 font-sans border border-gray-300 rounded px-3 py-2 pl-10 focus:outline-none focus:ring-1 focus:ring-orange-600 placeholder:text-amber-600 dark:placeholder:text-orange-300 dark:bg-stone-900 dark:text-white dark:border-orange-700"
               />
               <svg 
                 className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"
@@ -81,7 +81,7 @@ const PromptLibrary = ({
             </div>
             <button
               onClick={onAddNewPrompt}
-              className="px-4 py-2 bg-white border border-green-600 rounded text-green-600 hover:bg-green-600 hover:text-white transition-colors dark:bg-black dark:border-green-400 dark:text-green-400 dark:hover:bg-green-400 dark:hover:text-black"
+              className="px-4 py-2 bg-white border border-orange-700 rounded text-orange-600 hover:bg-orange-700 hover:text-white transition-colors dark:bg-black dark:border-orange-500 dark:text-orange-400 dark:hover:bg-orange-500 dark:hover:text-black"
             >
               Add New Prompt
             </button>
@@ -98,7 +98,7 @@ const PromptLibrary = ({
               {!searchQuery && (
                 <button
                   onClick={onAddNewPrompt}
-                  className="px-4 py-2 bg-white border border-green-600 rounded text-green-600 hover:bg-green-600 hover:text-white transition-colors dark:bg-black dark:border-green-400 dark:text-green-400 dark:hover:bg-green-400 dark:hover:text-black"
+                  className="px-4 py-2 bg-white border border-orange-700 rounded text-orange-600 hover:bg-orange-700 hover:text-white transition-colors dark:bg-black dark:border-orange-500 dark:text-orange-400 dark:hover:bg-orange-500 dark:hover:text-black"
                 >
                   Create Your First Prompt
                 </button>
@@ -107,13 +107,13 @@ const PromptLibrary = ({
           ) : (
             <div className="space-y-4">
               {filteredPrompts.map((prompt) => (
-                <div key={prompt.name} className="bg-white border border-gray-300 rounded-lg p-4 dark:bg-black dark:border-gray-600">
+                <div key={prompt.name} className="bg-white border border-gray-300 rounded-lg p-4 dark:bg-black dark:border-stone-600">
                   <div className="flex items-start justify-between mb-3">
-                    <h3 className="text-green-400 font-semibold text-lg">{prompt.name}</h3>
+                    <h3 className="text-orange-400 font-semibold text-lg">{prompt.name}</h3>
                     <div className="flex items-center space-x-2">
                       <button
                         onClick={() => handleUsePrompt(prompt)}
-                        className="px-3 py-1 bg-green-400 text-black rounded text-sm hover:bg-green-300 transition-colors"
+                        className="px-3 py-1 bg-orange-500 text-black rounded text-sm hover:bg-orange-400 transition-colors"
                         title="Use this prompt"
                       >
                         Use
@@ -151,13 +151,13 @@ const PromptLibrary = ({
           onClick={(e) => e.stopPropagation()}
         >
           <div
-            className="bg-gray-100 border border-red-600 rounded-lg p-6 w-full max-w-sm mx-4 dark:bg-gray-900 dark:border-red-400"
+            className="bg-gray-100 border border-red-600 rounded-lg p-6 w-full max-w-sm mx-4 dark:bg-stone-900 dark:border-red-400"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-4">
               <h3 className="text-red-400 text-lg font-semibold mb-2">Delete Prompt?</h3>
               <p className="text-gray-300 text-sm mb-2">
-                Are you sure you want to delete "<span className="text-green-400 font-medium">{showDeleteConfirmation.name}</span>"?
+                Are you sure you want to delete "<span className="text-orange-400 font-medium">{showDeleteConfirmation.name}</span>"?
               </p>
               <p className="text-gray-400 text-xs">
                 This action cannot be undone.

@@ -2,6 +2,18 @@ import { useState, useEffect, useRef } from 'react';
 import AdvisorSuggestionsModal from './AdvisorSuggestionsModal';
 import { generatePerspectives, formatMessagesAsContext } from '../utils/perspectiveGeneration';
 
+// Shared color theme configurations
+const colorThemes = {
+  green: { border: 'border-orange-600/20', borderEnabled: 'border-orange-600/50', bg: 'bg-orange-500/10', hoverBg: 'hover:bg-orange-500/20', hoverBorder: 'hover:border-orange-500', text: 'text-orange-400', textDim: 'text-orange-500/60' },
+  mahogany: { border: 'border-rose-900/30', borderEnabled: 'border-rose-700/50', bg: 'bg-rose-900/20', hoverBg: 'hover:bg-rose-900/30', hoverBorder: 'hover:border-rose-600', text: 'text-rose-300', textDim: 'text-rose-400/60' },
+  burgundy: { border: 'border-red-900/30', borderEnabled: 'border-red-800/50', bg: 'bg-red-900/20', hoverBg: 'hover:bg-red-900/30', hoverBorder: 'hover:border-red-700', text: 'text-red-300', textDim: 'text-red-400/60' },
+  amber: { border: 'border-amber-500/20', borderEnabled: 'border-amber-500/50', bg: 'bg-amber-500/10', hoverBg: 'hover:bg-amber-500/20', hoverBorder: 'hover:border-amber-400', text: 'text-amber-400', textDim: 'text-amber-500/60' },
+  cyan: { border: 'border-cyan-500/20', borderEnabled: 'border-cyan-500/50', bg: 'bg-cyan-500/10', hoverBg: 'hover:bg-cyan-500/20', hoverBorder: 'hover:border-cyan-400', text: 'text-cyan-400', textDim: 'text-cyan-500/60' },
+  violet: { border: 'border-violet-500/20', borderEnabled: 'border-violet-500/50', bg: 'bg-violet-500/10', hoverBg: 'hover:bg-violet-500/20', hoverBorder: 'hover:border-violet-400', text: 'text-violet-400', textDim: 'text-violet-500/60' },
+  copper: { border: 'border-orange-700/20', borderEnabled: 'border-orange-600/50', bg: 'bg-orange-700/10', hoverBg: 'hover:bg-orange-700/20', hoverBorder: 'hover:border-orange-500', text: 'text-orange-300', textDim: 'text-orange-400/60' },
+  slate: { border: 'border-slate-500/20', borderEnabled: 'border-slate-500/50', bg: 'bg-slate-500/10', hoverBg: 'hover:bg-slate-500/20', hoverBorder: 'hover:border-slate-400', text: 'text-slate-300', textDim: 'text-slate-400/60' },
+};
+
 /**
  * Component for generating perspective suggestions in a modal
  * @param {object} props
@@ -12,6 +24,7 @@ import { generatePerspectives, formatMessagesAsContext } from '../utils/perspect
  * @param {Function} props.onEditAdvisor - Callback when editing an advisor
  * @param {boolean} props.disabled - Whether the generator button should be disabled
  * @param {'subtle' | 'terminal' | 'hybrid'} [props.variant='subtle'] - Style variant
+ * @param {string} [props.colorTheme='green'] - Color theme
  */
 export function PerspectiveGenerator({
   messages,
@@ -20,7 +33,8 @@ export function PerspectiveGenerator({
   trackUsage,
   onEditAdvisor,
   disabled = false,
-  variant = 'subtle'
+  variant = 'subtle',
+  colorTheme = 'copper'
 }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [generatedPerspectives, setGeneratedPerspectives] = useState([]);
@@ -115,38 +129,40 @@ export function PerspectiveGenerator({
     setGeneratedPerspectives([]);
   };
 
+  const ct = colorThemes[colorTheme] || colorThemes.green;
+
   // Style configurations based on variant
   const containerStyles = {
-    subtle: "mt-4 border-t border-gray-300 dark:border-gray-700 pt-3",
-    terminal: "mt-3 border-t border-green-500/20 pt-3",
-    hybrid: "mt-4 border-t border-gray-300 dark:border-green-500/20 pt-3",
+    subtle: "mt-4 border-t border-gray-300 dark:border-stone-700 pt-3",
+    terminal: `mt-3 border-t ${ct.border} pt-3`,
+    hybrid: `mt-4 border-t border-gray-300 dark:${ct.border} pt-3`,
   };
 
   const buttonStyles = {
     subtle: {
-      enabled: 'border-green-600 dark:border-green-500 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30',
-      disabled: 'border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800',
+      enabled: 'border-orange-700 dark:border-orange-600 bg-orange-50 dark:bg-orange-950/20 hover:bg-orange-100 dark:hover:bg-orange-950/30',
+      disabled: 'border-gray-300 dark:border-stone-700 bg-gray-100 dark:bg-stone-800',
     },
     terminal: {
-      enabled: 'border-green-500/50 bg-green-500/10 hover:bg-green-500/20 hover:border-green-400',
-      disabled: 'border-green-500/20 bg-black/20',
+      enabled: `${ct.borderEnabled} ${ct.bg} ${ct.hoverBg} ${ct.hoverBorder}`,
+      disabled: `${ct.border} bg-black/20`,
     },
     hybrid: {
-      enabled: 'border-green-600 dark:border-green-500/50 bg-green-50 dark:bg-green-500/10 hover:bg-green-100 dark:hover:bg-green-500/20',
-      disabled: 'border-gray-300 dark:border-green-500/20 bg-gray-100 dark:bg-black/20',
+      enabled: `border-orange-700 dark:${ct.borderEnabled} bg-orange-50 dark:${ct.bg} hover:bg-orange-100 dark:${ct.hoverBg}`,
+      disabled: `border-gray-300 dark:${ct.border} bg-gray-100 dark:bg-black/20`,
     },
   };
 
   const textStyles = {
-    subtle: "text-gray-800 dark:text-gray-200",
-    terminal: "text-green-400",
-    hybrid: "text-gray-800 dark:text-green-400",
+    subtle: "text-gray-800 dark:text-orange-100",
+    terminal: ct.text,
+    hybrid: `text-gray-800 dark:${ct.text}`,
   };
 
   const hintStyles = {
     subtle: "text-gray-500 dark:text-gray-400",
-    terminal: "text-green-500/60",
-    hybrid: "text-gray-500 dark:text-green-500/60",
+    terminal: ct.textDim,
+    hybrid: `text-gray-500 dark:${ct.textDim}`,
   };
 
   const currentButtonStyle = buttonStyles[variant] || buttonStyles.subtle;
@@ -170,7 +186,7 @@ export function PerspectiveGenerator({
             <span className={`font-medium ${textStyles[variant] || textStyles.subtle}`}>
               Generate Perspectives
             </span>
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-600 dark:text-green-400" viewBox="0 0 20 20" fill="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-orange-600 dark:text-orange-400" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
             </svg>
           </div>

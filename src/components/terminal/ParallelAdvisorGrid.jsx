@@ -73,7 +73,7 @@ export const ParallelAdvisorGrid = memo(({
     <div>
       {/* Global streaming indicator - only show when not all completed */}
       {!message.allCompleted && (
-        <div className="mb-3 text-sm text-green-600 dark:text-green-400 italic">
+        <div className="mb-3 text-sm text-orange-600 dark:text-orange-400 italic">
           ⚡ Parallel streaming in progress...
         </div>
       )}

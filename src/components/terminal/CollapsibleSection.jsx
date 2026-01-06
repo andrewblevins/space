@@ -1,5 +1,17 @@
 import { useState } from "react";
 
+// Shared color theme configurations
+const colorThemes = {
+  green: { border: 'border-orange-600/30', text: 'text-orange-400', hoverBg: 'hover:bg-orange-500/10' },
+  mahogany: { border: 'border-rose-900/50', text: 'text-rose-300', hoverBg: 'hover:bg-rose-900/30' },
+  burgundy: { border: 'border-red-900/40', text: 'text-red-300', hoverBg: 'hover:bg-red-900/30' },
+  amber: { border: 'border-amber-500/30', text: 'text-amber-400', hoverBg: 'hover:bg-amber-500/20' },
+  cyan: { border: 'border-cyan-500/30', text: 'text-cyan-400', hoverBg: 'hover:bg-cyan-500/20' },
+  violet: { border: 'border-violet-500/30', text: 'text-violet-400', hoverBg: 'hover:bg-violet-500/20' },
+  copper: { border: 'border-orange-700/40', text: 'text-orange-300', hoverBg: 'hover:bg-orange-700/20' },
+  slate: { border: 'border-slate-500/30', text: 'text-slate-300', hoverBg: 'hover:bg-slate-500/20' },
+};
+
 /**
  * A collapsible accordion section with a triangle toggle.
  * @param {object} props
@@ -8,6 +20,7 @@ import { useState } from "react";
  * @param {boolean} [props.defaultExpanded=true] - Whether to start expanded
  * @param {React.ReactNode} [props.headerRight] - Optional content to show on the right side of the header
  * @param {'subtle' | 'terminal' | 'hybrid'} [props.variant='subtle'] - Style variant
+ * @param {string} [props.colorTheme='green'] - Color theme
  */
 export function CollapsibleSection({
   title,
@@ -15,32 +28,34 @@ export function CollapsibleSection({
   defaultExpanded = true,
   headerRight,
   variant = 'subtle',
+  colorTheme = 'copper',
 }) {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
+  const ct = colorThemes[colorTheme] || colorThemes.green;
 
   // Style configurations based on variant
   const containerStyles = {
-    subtle: "border border-stone-300 dark:border-gray-700 rounded-md bg-amber-100 dark:bg-gray-800",
-    terminal: "border border-green-500/30 rounded-md bg-black/40",
-    hybrid: "border border-stone-300 dark:border-green-500/20 rounded-md bg-amber-100/80 dark:bg-black/40",
+    subtle: "border border-stone-300 dark:border-stone-700 rounded-md bg-amber-100 dark:bg-stone-800",
+    terminal: `border ${ct.border} rounded-md bg-black/40`,
+    hybrid: `border border-stone-300 dark:${ct.border} rounded-md bg-amber-100/80 dark:bg-black/40`,
   };
 
   const headerStyles = {
     subtle: "hover:bg-amber-200/50 dark:hover:bg-gray-700/50",
-    terminal: "hover:bg-green-500/10",
-    hybrid: "hover:bg-amber-200/50 dark:hover:bg-green-500/10",
+    terminal: ct.hoverBg,
+    hybrid: `hover:bg-amber-200/50 dark:${ct.hoverBg}`,
   };
 
   const iconStyles = {
-    subtle: "text-gray-600 dark:text-gray-300",
-    terminal: "text-green-400",
-    hybrid: "text-gray-600 dark:text-green-400",
+    subtle: "text-gray-600 dark:text-orange-200",
+    terminal: ct.text,
+    hybrid: `text-gray-600 dark:${ct.text}`,
   };
 
   const titleStyles = {
-    subtle: "text-gray-800 dark:text-gray-200",
-    terminal: "text-green-400",
-    hybrid: "text-gray-800 dark:text-green-400",
+    subtle: "text-gray-800 dark:text-orange-100",
+    terminal: ct.text,
+    hybrid: `text-gray-800 dark:${ct.text}`,
   };
 
   return (

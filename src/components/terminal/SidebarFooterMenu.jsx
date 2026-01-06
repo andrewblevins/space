@@ -1,11 +1,24 @@
 import React from 'react';
 
+// Shared color theme configurations
+const colorThemes = {
+  green: { text: 'text-orange-400', hoverBg: 'hover:bg-orange-500', border: 'border-orange-600/30', glow: 'via-orange-500/50' },
+  mahogany: { text: 'text-rose-300', hoverBg: 'hover:bg-rose-400', border: 'border-rose-900/50', glow: 'via-rose-500/50' },
+  burgundy: { text: 'text-red-300', hoverBg: 'hover:bg-red-400', border: 'border-red-900/40', glow: 'via-red-500/50' },
+  amber: { text: 'text-amber-400', hoverBg: 'hover:bg-amber-400', border: 'border-amber-500/30', glow: 'via-amber-500/50' },
+  cyan: { text: 'text-cyan-400', hoverBg: 'hover:bg-cyan-400', border: 'border-cyan-500/30', glow: 'via-cyan-500/50' },
+  violet: { text: 'text-violet-400', hoverBg: 'hover:bg-violet-400', border: 'border-violet-500/30', glow: 'via-violet-500/50' },
+  copper: { text: 'text-orange-300', hoverBg: 'hover:bg-orange-400', border: 'border-orange-700/40', glow: 'via-orange-500/50' },
+  slate: { text: 'text-slate-300', hoverBg: 'hover:bg-slate-400', border: 'border-slate-500/30', glow: 'via-slate-500/50' },
+};
+
 /**
  * Sidebar footer menu with tool buttons.
  * Supports multiple style variants for design exploration.
  * 
  * @param {object} props
  * @param {'subtle' | 'terminal' | 'hybrid'} [props.variant='terminal'] - Style variant
+ * @param {string} [props.colorTheme='green'] - Color theme
  * @param {function} props.onSessionManagerClick - Previous chats handler
  * @param {function} props.onExportClick - Export conversation handler
  * @param {function} props.onHelpClick - Help handler
@@ -13,11 +26,13 @@ import React from 'react';
  */
 export function SidebarFooterMenu({
   variant = 'terminal',
+  colorTheme = 'copper',
   onSessionManagerClick,
   onExportClick,
   onHelpClick,
   onSettingsClick,
 }) {
+  const ct = colorThemes[colorTheme] || colorThemes.green;
   const menuItems = [
     {
       id: 'sessions',
@@ -64,14 +79,14 @@ export function SidebarFooterMenu({
   // Variant A: Subtle Integration - warm tones with soft styling
   if (variant === 'subtle') {
     return (
-      <div className="mt-auto border-t border-stone-300 dark:border-gray-700 bg-amber-50/50 dark:bg-gray-850">
+      <div className="mt-auto border-t border-stone-300 dark:border-stone-700 bg-amber-50/50 dark:bg-gray-850">
         <div className="p-3">
           <div className="flex items-center justify-around">
             {menuItems.map((item) => (
               <button
                 key={item.id}
                 onClick={item.onClick}
-                className="flex flex-col items-center gap-1 p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:text-green-700 dark:hover:text-green-400 hover:bg-amber-200/50 dark:hover:bg-gray-700/50 transition-colors"
+                className="flex flex-col items-center gap-1 p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:text-orange-700 dark:hover:text-orange-400 hover:bg-amber-200/50 dark:hover:bg-gray-700/50 transition-colors"
                 title={item.label}
               >
                 {item.icon}
@@ -84,21 +99,21 @@ export function SidebarFooterMenu({
     );
   }
 
-  // Variant B: Terminal Dark - full black/green aesthetic
+  // Variant B: Terminal Dark - full themed aesthetic
   if (variant === 'terminal') {
     return (
       <div className="mt-auto">
         {/* Glowing separator line */}
-        <div className="h-px bg-gradient-to-r from-transparent via-green-500/50 to-transparent" />
+        <div className={`h-px bg-gradient-to-r from-transparent ${ct.glow} to-transparent`} />
         
-        <div className="bg-black/95 dark:bg-black border-t border-green-500/30 p-3">
+        <div className={`bg-black/95 dark:bg-black border-t ${ct.border} p-3`}>
           {/* Grid of buttons */}
           <div className="grid grid-cols-4 gap-1">
             {menuItems.map((item) => (
               <button
                 key={item.id}
                 onClick={item.onClick}
-                className="flex flex-col items-center gap-1.5 p-2.5 rounded text-green-400 hover:bg-green-400 hover:text-black transition-all group"
+                className={`flex flex-col items-center gap-1.5 p-2.5 rounded ${ct.text} ${ct.hoverBg} hover:text-black transition-all group`}
                 title={item.label}
               >
                 <span className="group-hover:scale-110 transition-transform">
@@ -109,11 +124,6 @@ export function SidebarFooterMenu({
                 </span>
               </button>
             ))}
-          </div>
-          
-          {/* Subtle scan line effect */}
-          <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-[0.03]">
-            <div className="absolute inset-0 bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(0,255,0,0.1)_2px,rgba(0,255,0,0.1)_4px)]" />
           </div>
         </div>
       </div>
@@ -127,9 +137,9 @@ export function SidebarFooterMenu({
         {/* Gradient transition overlay */}
         <div className="absolute inset-x-0 -top-8 h-8 bg-gradient-to-b from-transparent to-gray-900/90 dark:to-black/90 pointer-events-none" />
         
-        <div className="relative bg-gray-900/95 dark:bg-black/95 border-t border-green-500/20 backdrop-blur-sm">
+        <div className="relative bg-gray-900/95 dark:bg-black/95 border-t border-orange-600/20 backdrop-blur-sm">
           {/* Top accent line */}
-          <div className="h-0.5 bg-gradient-to-r from-amber-400/50 via-green-500 to-amber-400/50" />
+          <div className="h-0.5 bg-gradient-to-r from-amber-400/50 via-orange-500 to-amber-400/50" />
           
           <div className="p-3">
             <div className="flex items-center justify-between gap-2">
@@ -137,7 +147,7 @@ export function SidebarFooterMenu({
                 <button
                   key={item.id}
                   onClick={item.onClick}
-                  className="flex-1 flex flex-col items-center gap-1 py-2 px-1 rounded-md text-green-400/80 hover:text-green-300 hover:bg-green-500/10 border border-transparent hover:border-green-500/30 transition-all"
+                  className="flex-1 flex flex-col items-center gap-1 py-2 px-1 rounded-md text-orange-400/80 hover:text-orange-300 hover:bg-orange-500/10 border border-transparent hover:border-orange-600/30 transition-all"
                   title={item.label}
                 >
                   <span className="opacity-90">{item.icon}</span>
@@ -153,13 +163,13 @@ export function SidebarFooterMenu({
 
   // Default fallback to terminal variant
   return (
-    <div className="mt-auto border-t border-green-500/30 bg-black p-3">
+    <div className="mt-auto border-t border-orange-600/30 bg-black p-3">
       <div className="grid grid-cols-4 gap-1">
         {menuItems.map((item) => (
           <button
             key={item.id}
             onClick={item.onClick}
-            className="flex flex-col items-center gap-1 p-2 rounded text-green-400 hover:bg-green-400 hover:text-black transition-colors"
+            className="flex flex-col items-center gap-1 p-2 rounded text-orange-400 hover:bg-orange-500 hover:text-black transition-colors"
             title={item.label}
           >
             {item.icon}

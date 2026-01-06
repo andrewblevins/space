@@ -6,14 +6,14 @@ const PrivacyPolicy = ({ isOpen, onClose }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={onClose}>
       <div
-        className="bg-gray-900 border border-green-500 rounded-lg w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto"
+        className="bg-gray-900 border border-orange-600 rounded-lg w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-6 pb-4 border-b border-gray-700">
-          <h2 className="text-green-400 text-2xl font-semibold">Privacy Policy</h2>
+          <h2 className="text-orange-400 text-2xl font-semibold">Privacy Policy</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-green-400 transition-colors"
+            className="text-gray-400 hover:text-orange-400 transition-colors"
             title="Close Privacy Policy"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -32,7 +32,7 @@ const PrivacyPolicy = ({ isOpen, onClose }) => {
           </div>
 
           <section>
-            <h3 className="text-lg font-semibold text-green-400 mb-3">Information We Collect</h3>
+            <h3 className="text-lg font-semibold text-orange-400 mb-3">Information We Collect</h3>
             <div className="space-y-3">
               <div>
                 <h4 className="font-medium text-white mb-2">Account Information</h4>
@@ -67,7 +67,7 @@ const PrivacyPolicy = ({ isOpen, onClose }) => {
           </section>
 
           <section>
-            <h3 className="text-lg font-semibold text-green-400 mb-3">How We Use Your Information</h3>
+            <h3 className="text-lg font-semibold text-orange-400 mb-3">How We Use Your Information</h3>
             <ul className="list-disc list-inside space-y-2 text-sm">
               <li>Provide and improve the AI conversation experience</li>
               <li>Maintain conversation history and sync across devices</li>
@@ -79,7 +79,7 @@ const PrivacyPolicy = ({ isOpen, onClose }) => {
           </section>
 
           <section>
-            <h3 className="text-lg font-semibold text-green-400 mb-3">Data Storage and Access</h3>
+            <h3 className="text-lg font-semibold text-orange-400 mb-3">Data Storage and Access</h3>
             <div className="space-y-3">
               <div>
                 <h4 className="font-medium text-white mb-2">Database Storage</h4>
@@ -103,7 +103,7 @@ const PrivacyPolicy = ({ isOpen, onClose }) => {
           </section>
 
           <section>
-            <h3 className="text-lg font-semibold text-green-400 mb-3">Third-Party Services</h3>
+            <h3 className="text-lg font-semibold text-orange-400 mb-3">Third-Party Services</h3>
             <div className="space-y-3">
               <div>
                 <h4 className="font-medium text-white mb-2">Google Analytics</h4>
@@ -137,7 +137,7 @@ const PrivacyPolicy = ({ isOpen, onClose }) => {
           </section>
 
           <section>
-            <h3 className="text-lg font-semibold text-green-400 mb-3">Your Rights and Controls</h3>
+            <h3 className="text-lg font-semibold text-orange-400 mb-3">Your Rights and Controls</h3>
             <ul className="list-disc list-inside space-y-2 text-sm">
               <li><strong>Data Export:</strong> Export your conversations in JSON or Markdown format</li>
               <li><strong>Account Deletion:</strong> Request complete account and data deletion</li>
@@ -148,7 +148,7 @@ const PrivacyPolicy = ({ isOpen, onClose }) => {
           </section>
 
           <section>
-            <h3 className="text-lg font-semibold text-green-400 mb-3">Data Security</h3>
+            <h3 className="text-lg font-semibold text-orange-400 mb-3">Data Security</h3>
             <ul className="list-disc list-inside space-y-2 text-sm">
               <li>All data transmitted using HTTPS encryption</li>
               <li>Database access protected by authentication and row-level security</li>
@@ -159,7 +159,7 @@ const PrivacyPolicy = ({ isOpen, onClose }) => {
           </section>
 
           <section>
-            <h3 className="text-lg font-semibold text-green-400 mb-3">Data Retention</h3>
+            <h3 className="text-lg font-semibold text-orange-400 mb-3">Data Retention</h3>
             <ul className="list-disc list-inside space-y-2 text-sm">
               <li>Conversations stored indefinitely unless you request deletion</li>
               <li>Analytics data aggregated and stored for product improvement</li>
@@ -169,7 +169,7 @@ const PrivacyPolicy = ({ isOpen, onClose }) => {
           </section>
 
           <section>
-            <h3 className="text-lg font-semibold text-green-400 mb-3">Children's Privacy</h3>
+            <h3 className="text-lg font-semibold text-orange-400 mb-3">Children's Privacy</h3>
             <p className="text-sm">
               SPACE Terminal is not intended for use by children under 13. We do not knowingly 
               collect personal information from children under 13. If we become aware that we 
@@ -178,7 +178,7 @@ const PrivacyPolicy = ({ isOpen, onClose }) => {
           </section>
 
           <section>
-            <h3 className="text-lg font-semibold text-green-400 mb-3">Changes to This Policy</h3>
+            <h3 className="text-lg font-semibold text-orange-400 mb-3">Changes to This Policy</h3>
             <p className="text-sm">
               We may update this privacy policy from time to time. We will notify users of 
               significant changes by posting the new policy on our website and updating the 
@@ -188,13 +188,13 @@ const PrivacyPolicy = ({ isOpen, onClose }) => {
           </section>
 
           <section>
-            <h3 className="text-lg font-semibold text-green-400 mb-3">Contact Us</h3>
+            <h3 className="text-lg font-semibold text-orange-400 mb-3">Contact Us</h3>
             <p className="text-sm">
               If you have questions about this privacy policy or your data, please contact us at:
             </p>
             <div className="mt-2 text-sm">
-              <p>Email: <a href="mailto:privacy@spaceterminal.xyz" className="text-green-400 hover:text-green-300">privacy@spaceterminal.xyz</a></p>
-              <p>Website: <a href="https://spaceterminal.xyz" className="text-green-400 hover:text-green-300">https://spaceterminal.xyz</a></p>
+              <p>Email: <a href="mailto:privacy@spaceterminal.xyz" className="text-orange-400 hover:text-orange-300">privacy@spaceterminal.xyz</a></p>
+              <p>Website: <a href="https://spaceterminal.xyz" className="text-orange-400 hover:text-orange-300">https://spaceterminal.xyz</a></p>
             </div>
           </section>
         </div>
@@ -202,7 +202,7 @@ const PrivacyPolicy = ({ isOpen, onClose }) => {
         <div className="p-6 pt-4 border-t border-gray-700">
           <button
             onClick={onClose}
-            className="w-full px-4 py-2 bg-green-500 text-black rounded font-medium hover:bg-green-400 transition-colors"
+            className="w-full px-4 py-2 bg-orange-500 text-black rounded font-medium hover:bg-orange-500 transition-colors"
           >
             Close
           </button>

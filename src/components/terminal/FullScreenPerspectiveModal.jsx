@@ -85,17 +85,17 @@ export function FullScreenPerspectiveModal({
             key={index}
             className="mb-3"
             components={{
-              p: ({ children }) => <p className="font-serif w-full text-gray-800 dark:text-gray-200 leading-relaxed">{children}</p>,
+              p: ({ children }) => <p className="font-serif w-full text-gray-800 dark:text-orange-100 leading-relaxed">{children}</p>,
               em: ({ children }) => <em className="italic">{children}</em>,
               strong: ({ children }) => <strong className="font-bold">{children}</strong>,
               code: ({ node, inline, className, children, ...props }) => {
                 return inline ? (
-                  <code className="text-green-600 dark:text-green-400 font-mono bg-stone-200 dark:bg-gray-900 px-1 rounded" {...props}>
+                  <code className="text-orange-600 dark:text-orange-400 font-mono bg-stone-200 dark:bg-stone-900 px-1 rounded" {...props}>
                     {children}
                   </code>
                 ) : (
-                  <pre className="bg-stone-200 dark:bg-gray-900 p-4 rounded-md my-2 overflow-x-auto whitespace-pre-wrap break-all w-full">
-                    <code className="font-mono block text-gray-800 dark:text-gray-200" {...props}>
+                  <pre className="bg-stone-200 dark:bg-stone-900 p-4 rounded-md my-2 overflow-x-auto whitespace-pre-wrap break-all w-full">
+                    <code className="font-mono block text-gray-800 dark:text-orange-100" {...props}>
                       {children}
                     </code>
                   </pre>
@@ -134,11 +134,11 @@ export function FullScreenPerspectiveModal({
       tabIndex={-1}
     >
       <div
-        className="w-full max-w-6xl h-full flex flex-col bg-amber-50 dark:bg-gray-900 rounded-lg shadow-2xl border border-green-600"
+        className="w-full max-w-6xl h-full flex flex-col bg-amber-50 dark:bg-stone-900 rounded-lg shadow-2xl border border-orange-700"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header with tabs */}
-        <div className="flex flex-col border-b border-green-600">
+        <div className="flex flex-col border-b border-orange-700">
           {/* Tabs */}
           <div 
             className="flex overflow-x-auto scrollbar-hide px-4 pt-4 gap-2"
@@ -158,8 +158,8 @@ export function FullScreenPerspectiveModal({
                   className={`
                     flex items-center gap-2 px-4 py-2 rounded-t-lg transition-all whitespace-nowrap
                     ${isActive
-                      ? 'bg-green-600 dark:bg-green-700 text-white border-b-2 border-green-400'
-                      : 'bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700'
+                      ? 'bg-orange-700 dark:bg-orange-800 text-white border-b-2 border-orange-500'
+                      : 'bg-gray-200 dark:bg-stone-800 text-gray-700 dark:text-orange-200 hover:bg-gray-300 dark:hover:bg-gray-700'
                     }
                   `}
                   aria-label={`View perspective from ${advisor.name}`}
@@ -175,7 +175,7 @@ export function FullScreenPerspectiveModal({
           <div className="flex items-center justify-between p-4">
             <div className="flex items-center gap-3">
               <span className={`w-3 h-3 rounded-full flex-shrink-0 ${colorClass}`}></span>
-              <h3 className="text-green-600 dark:text-green-400 font-medium text-lg">
+              <h3 className="text-orange-600 dark:text-orange-400 font-medium text-lg">
                 {currentAdvisor.name}
               </h3>
               <span className="text-sm text-gray-500 dark:text-gray-400">
@@ -210,7 +210,7 @@ export function FullScreenPerspectiveModal({
               */}
               <button
                 onClick={onClose}
-                className="text-gray-400 hover:text-green-400 transition-colors p-1"
+                className="text-gray-400 hover:text-orange-400 transition-colors p-1"
                 title="Close (Esc)"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -223,13 +223,13 @@ export function FullScreenPerspectiveModal({
 
         {/* Content area */}
         <div className="flex-1 overflow-y-auto p-6 md:p-8">
-          <div className="text-gray-800 dark:text-gray-200">
+          <div className="text-gray-800 dark:text-orange-100">
             <StreamingMarkdownRenderer content={currentAdvisor.response || currentAdvisor.content || ''} />
           </div>
         </div>
 
         {/* Footer with navigation hints */}
-        <div className="p-3 border-t border-green-600 text-xs text-gray-500 dark:text-gray-400 flex justify-between items-center">
+        <div className="p-3 border-t border-orange-700 text-xs text-gray-500 dark:text-gray-400 flex justify-between items-center">
           <span>Click tabs or use ← → arrow keys to switch perspectives</span>
           <span>Press Esc to close</span>
         </div>

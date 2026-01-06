@@ -33,7 +33,7 @@ function AppContent() {
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-green-400">Loading...</div>
+        <div className="text-orange-400">Loading...</div>
       </div>
     );
   }

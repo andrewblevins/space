@@ -17,8 +17,8 @@ const VotingSummary = ({ voteHistory }) => {
   const recommended = Object.entries(tally).sort((a, b) => b[1] - a[1])[0][0];
 
   return (
-    <div className="mt-2 p-3 border border-green-400/20 rounded bg-gray-900/20 text-sm">
-      <div className="mb-2 text-green-300 font-medium text-xs">
+    <div className="mt-2 p-3 border border-orange-500/20 rounded bg-gray-900/20 text-sm">
+      <div className="mb-2 text-orange-300 font-medium text-xs">
         Latest Vote: "{question}"
       </div>
       
@@ -38,7 +38,7 @@ const VotingSummary = ({ voteHistory }) => {
           <div className="w-1/4 text-gray-400 text-xs">{pos}</div>
           <div className="w-3/4 bg-gray-700 rounded h-2 mr-2">
             <div
-              className="bg-green-500 h-2 rounded"
+              className="bg-orange-500 h-2 rounded"
               style={{ width: `${(count / total) * 100}%` }}
             />
           </div>
@@ -46,7 +46,7 @@ const VotingSummary = ({ voteHistory }) => {
         </div>
       ))}
       
-      <div className="mt-2 text-green-400 font-medium">
+      <div className="mt-2 text-orange-400 font-medium">
         {`${tally[recommended]}/${total} advisors recommend ${recommended} (confidence: ${avgConfidence}%)`}
       </div>
       

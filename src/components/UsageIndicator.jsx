@@ -27,7 +27,7 @@ export default function UsageIndicator() {
           className={`h-2 rounded-full transition-all duration-300 ${
             isNearLimit ? 'bg-red-500' :
             isApproachingLimit ? 'bg-yellow-500' :
-            'bg-green-500'
+            'bg-orange-500'
           }`}
           style={{ width: `${Math.min(percentage, 100)}%` }}
         />
