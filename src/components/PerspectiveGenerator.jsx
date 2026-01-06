@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import AdvisorSuggestionsModal from './AdvisorSuggestionsModal';
+import { generatePerspectives, formatMessagesAsContext } from '../utils/perspectiveGeneration';
 
 /**
  * Component for generating perspective suggestions in a modal
@@ -26,7 +27,7 @@ export function PerspectiveGenerator({
   const hasMessages = messages.filter(m => m.type === 'user' || m.type === 'assistant').length > 0;
   const isDisabled = disabled || !hasMessages;
 
-  const generatePerspectives = async () => {
+  const handleGeneratePerspectives = async () => {
     if (isDisabled) return;
 
     // Open modal and start generating
@@ -34,150 +35,31 @@ export function PerspectiveGenerator({
     setIsGenerating(true);
 
     try {
-      const useAuthSystem = import.meta.env.VITE_USE_AUTH === 'true';
-
-      // Get auth session if using auth system
-      let session = null;
-      if (useAuthSystem) {
-        const { supabase } = await import('../lib/supabase');
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
-        session = currentSession;
-        if (!session) {
-          console.error('Not signed in');
-          return;
-        }
-      }
-
-      // Use OpenRouter API endpoint
-      const { getApiEndpoint } = await import('../utils/apiConfig');
-      const apiUrl = useAuthSystem
-        ? `${getApiEndpoint()}/api/chat/openrouter`
-        : 'https://openrouter.ai/api/v1/chat/completions';
-
-      // Set up headers
-      const headers = {
-        'Content-Type': 'application/json'
-      };
-
-      if (useAuthSystem) {
-        headers['Authorization'] = `Bearer ${session.access_token}`;
-      } else {
-        // Get OpenRouter API key from secure storage
-        const { getDecryptedKey } = await import('../utils/secureStorage');
-        const openrouterKey = await getDecryptedKey('openrouter');
-        if (!openrouterKey) {
-          console.error('OpenRouter API key not set');
-          return;
-        }
-        headers['Authorization'] = `Bearer ${openrouterKey}`;
-        headers['HTTP-Referer'] = window.location.origin;
-        headers['X-Title'] = 'SPACE Terminal';
-      }
-
-      const recentMessages = messages
-        .slice(-6) // Last 6 messages (3 exchanges)
-        .filter(msg => msg.type === 'assistant' || msg.type === 'user')
-        .map(msg => `${msg.type === 'user' ? 'User' : 'Assistant'}: ${msg.content}`)
-        .join("\n\n");
-
+      // Format recent messages as context
+      const context = formatMessagesAsContext(messages);
       const existingNames = existingAdvisors.map(a => a.name);
-      const excludeClause = existingNames.length > 0
-        ? `\n\nIMPORTANT: Do NOT suggest any of these existing perspectives: ${existingNames.join(', ')}`
-        : '';
 
-      const promptContent = `Based on this recent conversation exchange, suggest exactly 5 specific perspectives that could add valuable insight to this discussion.
-
-IMPORTANT: Include a diverse mix across these categories:
-- At least 1-2 real historical figures, thinkers, or experts (living or dead)
-- At least 1-2 role-based perspectives (professional roles, mythological figures, or frameworks)
-- At least 1 perspective from wisdom traditions, philosophical schools, or cultural approaches
-- At least 1 perspective that is antagonistic to the user's apparent values and/or framing - someone who would challenge their assumptions in an abrasive or uncomfortable way
-
-Be sensitive to the content and tone of the conversation. If the conversation is a serious discussion of a difficult situation, make serious, practical suggestions. If the conversation is playful or humorous, make playful, original perspective suggestions.
-
-Always assume the user is highly intelligent, well-educated, and wants the most targeted and effective perspective for their situation.
-
-Focus on perspectives that would bring genuinely different viewpoints, challenge assumptions, or offer specialized knowledge that could deepen the exploration.
-
-When writing role-based titles, write them simply without articles. Use as much specificity as the context warrants. Always use title case. For mythological or symbolic figures, use only the figure name itself without any suffix like "Archetype" or "Figure".
-
-Do NOT include parenthetical descriptions of the perspectives, or anything other than a name or role.${excludeClause}
-
-Recent conversation:
-${recentMessages}
-
-For each perspective, generate a description using these instructions:
-
-You are generating a description of an AI advisor that will be used to instruct that entity in a conversation. Your description should be written in second-person (addressing the advisor as "you") and should instruct them on their identity, expertise, and approach. Include instructions about any specific lineages, practices, or frameworks they should embody, and how they should approach problems. Imitate the advisor, writing in their own distinct voice, as gleaned from any writings or public communications they have made. Do not include the advisor's name in the description. Do not include action cues, stage directions, or physical descriptions.
-
-Respond with JSON: {
-  "perspectives": [
-    {"name": "Perspective Name", "description": "Second-person description instructing this perspective on their identity, expertise, and approach..."},
-    ...
-  ]
-}`;
-
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          model: 'anthropic/claude-sonnet-4.5',
-          messages: [{
-            role: 'system',
-            content: 'You are a helpful assistant that responds only in valid JSON format.'
-          }, {
-            role: 'user',
-            content: promptContent
-          }],
-          max_tokens: 2000
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`API Error (${response.status}): ${JSON.stringify(errorData)}`);
-      }
-
-      const data = await response.json();
-      const content = data.choices[0].message.content;
-      
-      // Parse JSON response - handle cases where Claude includes extra text
-      let result;
-      try {
-        // Try to extract JSON if there's extra text or markdown
-        const jsonMatch = content.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          result = JSON.parse(jsonMatch[0]);
-        } else {
-          result = JSON.parse(content);
-        }
-      } catch (e) {
-        console.error('Failed to parse perspective suggestions:', content);
-        throw new Error('Failed to parse perspective suggestions from API response');
-      }
-      
-      if (!result.perspectives || !Array.isArray(result.perspectives)) {
-        throw new Error('Invalid response format - missing perspectives array');
-      }
-
-      // Track usage if handler provided
-      if (trackUsage) {
-        const inputTokens = Math.ceil((100 + promptContent.length) / 4);
-        const outputTokens = Math.ceil(data.choices[0].message.content.length / 4);
-        trackUsage('claude', inputTokens, outputTokens);
-      }
+      // Generate perspectives using shared utility
+      const perspectives = await generatePerspectives(context, existingNames, 'conversation');
 
       // Add unique IDs to each perspective
-      const perspectivesWithIds = (result.perspectives || []).map((p, idx) => ({
+      const perspectivesWithIds = perspectives.map((p, idx) => ({
         ...p,
         id: `${Date.now()}-${idx}`
       }));
 
       setGeneratedPerspectives(perspectivesWithIds);
 
+      // Track usage if handler provided (estimate tokens)
+      if (trackUsage) {
+        const inputTokens = Math.ceil((500 + context.length) / 4);
+        const outputTokens = Math.ceil(JSON.stringify(perspectives).length / 4);
+        trackUsage('claude', inputTokens, outputTokens);
+      }
+
     } catch (error) {
       console.error('Error generating perspectives:', error);
-      setIsModalOpen(false); // Close modal on error
+      setIsModalOpen(false);
     } finally {
       setIsGenerating(false);
     }
@@ -206,7 +88,7 @@ Respond with JSON: {
       <div className="mt-6 border-t border-gray-300 dark:border-gray-700 pt-4">
         {/* Generate Button */}
         <button
-          onClick={generatePerspectives}
+          onClick={handleGeneratePerspectives}
           disabled={isDisabled}
           className={`
             w-full p-3 rounded-lg border transition-colors text-left
@@ -238,7 +120,7 @@ Respond with JSON: {
         suggestions={generatedPerspectives}
         existingAdvisors={[]} // Don't show existing advisors section
         onAddSelected={handleAddSelected}
-        onRegenerate={generatePerspectives}
+        onRegenerate={handleGeneratePerspectives}
         onSkip={handleSkip}
         isRegenerating={isGenerating}
         hideSkipButton={true} // Hide "Start Without" button

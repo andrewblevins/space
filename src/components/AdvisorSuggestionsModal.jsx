@@ -101,6 +101,15 @@ const AdvisorSuggestionsModal = ({ suggestions, existingAdvisors, onAddSelected,
             const isSelected = selectedIds.has(advisor.id);
             const isExpanded = expandedIds.has(advisor.id);
             const shouldTruncate = advisor.description && advisor.description.length > 150;
+            
+            // Format category label
+            const categoryLabels = {
+              'named_figure': 'Named Figure',
+              'mythic_fictional': 'Mythic',
+              'role': 'Role',
+              'challenger': 'Challenger'
+            };
+            const categoryLabel = advisor.category ? categoryLabels[advisor.category] || advisor.category : null;
 
             return (
               <div
@@ -120,6 +129,11 @@ const AdvisorSuggestionsModal = ({ suggestions, existingAdvisors, onAddSelected,
                       <h3 className="text-lg font-serif font-medium text-gray-800 dark:text-green-400">
                         {advisor.name}
                       </h3>
+                      {categoryLabel && (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+                          {categoryLabel}
+                        </span>
+                      )}
                     </div>
 
                     {advisor.description && (
