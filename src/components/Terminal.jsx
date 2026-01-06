@@ -3776,7 +3776,7 @@ ${selectedText}
         }}
       /> */}
 
-      {/* Assertions Modal Component */}
+      {/* Assertions/Evaluations modals temporarily disabled - may be replaced with Instruct feature
       <AssertionsModal
         isOpen={showAssertionsModal}
         onClose={() => {
@@ -3798,11 +3798,9 @@ ${selectedText}
         }}
         onSave={(assertionsData) => {
           console.log('🎯 Assertions saved:', assertionsData);
-          // TODO: Show success message or update UI
         }}
       />
 
-      {/* Evaluations Modal Component */}
       <EvaluationsModal
         isOpen={showEvaluationsModal}
         onClose={() => {
@@ -3823,6 +3821,7 @@ ${selectedText}
           }]);
         }}
       />
+      */}
 
       <AdvisorSuggestionsModal
         isOpen={showJournalSuggestions}
