@@ -815,9 +815,42 @@ const Terminal = ({ theme, toggleTheme }) => {
           return;
         }
 
-        // In auth mode, we don't use encrypted storage
-        console.log('🔒 Legacy encrypted keys found but auth mode is enabled');
-        // Skip welcome screen since user has existing data but we're in auth mode
+        // API key exists in localStorage - mark as set and initialize client
+        console.log('✅ Found existing API key in localStorage');
+        const storedKey = await getDecrypted('space_openrouter_key');
+        if (storedKey) {
+          // Create an OpenRouter-compatible client wrapper for background analysis tasks
+          const openrouterClient = {
+            chat: {
+              completions: {
+                create: async (params) => {
+                  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${storedKey}`,
+                      'HTTP-Referer': window.location.origin,
+                      'X-Title': 'SPACE Terminal'
+                    },
+                    body: JSON.stringify({
+                      model: params.model === 'gpt-4o-mini' ? 'openai/gpt-4o-mini' : params.model,
+                      messages: params.messages,
+                      max_tokens: params.max_tokens,
+                      response_format: params.response_format
+                    })
+                  });
+                  if (!response.ok) {
+                    throw new Error(`OpenRouter API error: ${response.status}`);
+                  }
+                  return response.json();
+                }
+              }
+            }
+          };
+          setOpenaiClient(openrouterClient);
+          console.log('✅ OpenRouter client initialized from stored key');
+        }
+        setApiKeysSet(true);
       } finally {
         // Always stop the loading state once initialization is complete
         setIsInitializing(false);
