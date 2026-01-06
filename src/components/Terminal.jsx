@@ -63,6 +63,7 @@ import JournalOnboarding from './JournalOnboarding';
 import AdvisorSuggestionsModal from './AdvisorSuggestionsModal';
 import PerspectiveGenerator from './PerspectiveGenerator';
 import { generateAdvisorSuggestions } from '../utils/advisorSuggestions';
+import { SidebarFooterMenu } from './terminal/SidebarFooterMenu';
 
 
 
@@ -738,6 +739,8 @@ const Terminal = ({ theme, toggleTheme }) => {
   };
   const [openaiClient, setOpenaiClient] = useState(null);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
+  // Sidebar style variant for design exploration: 'subtle', 'terminal', or 'hybrid'
+  const [sidebarVariant, setSidebarVariant] = useState('terminal');
   // DEPRECATED: Prompt Library - Feature no longer maintained
   // const [showPromptLibrary, setShowPromptLibrary] = useState(false);
   const [showSessionPanel, setShowSessionPanel] = useState(false);
@@ -1557,6 +1560,19 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
   };
 
   const handleLoadSession = async (sessionId) => {
+    // Dismiss journal onboarding when loading a session
+    setShowJournalOnboarding(false);
+    setContextFlow({
+      active: false,
+      initialEntry: '',
+      questions: [],
+      answers: [],
+      currentQuestionIndex: 0
+    });
+    setJournalSuggestions([]);
+    setShowJournalSuggestions(false);
+    setIsGeneratingSuggestions(false);
+    
     // Check if sessionId looks like a UUID (database ID) or integer (localStorage ID)
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(sessionId);
     const isLocalStorageId = /^\d+$/.test(sessionId);
@@ -3259,12 +3275,26 @@ ${selectedText}
             >
               {/* Left Sidebar - Collapsible */}
               {!sidebarCollapsed && (
-                <div className="w-72 border-r border-gray-300 dark:border-gray-800 overflow-y-auto scrollbar-terminal flex-shrink-0 flex flex-col">
+                <div className={`w-72 border-r flex-shrink-0 flex flex-col overflow-hidden ${
+                  sidebarVariant === 'terminal' 
+                    ? 'border-green-500/30 bg-gradient-to-b from-gray-900 to-black' 
+                    : sidebarVariant === 'hybrid'
+                    ? 'border-gray-300 dark:border-gray-800 bg-gradient-to-b from-amber-50 via-amber-50 dark:from-gray-900 dark:via-gray-900 to-gray-900/95 dark:to-black/95'
+                    : 'border-gray-300 dark:border-gray-800'
+                }`}>
                   {/* Header with title and collapse button */}
-                  <div className="flex items-center justify-between p-4 border-b border-gray-300 dark:border-gray-700">
+                  <div className={`flex items-center justify-between p-4 border-b ${
+                    sidebarVariant === 'terminal' 
+                      ? 'border-green-500/30 bg-black/50' 
+                      : 'border-gray-300 dark:border-gray-700'
+                  }`}>
                     <a 
                       href="/"
-                      className="text-xl font-bold text-gray-800 dark:text-gray-200"
+                      className={`text-xl font-bold ${
+                        sidebarVariant === 'terminal' 
+                          ? 'text-green-400' 
+                          : 'text-gray-800 dark:text-gray-200'
+                      }`}
                       onClick={(e) => {
                         if (!useAuthSystem) {
                           e.preventDefault();
@@ -3275,22 +3305,49 @@ ${selectedText}
                     >
                       SPACE Terminal
                     </a>
-                    <button
-                      onClick={toggleSidebar}
-                      className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                      title="Close sidebar"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600 dark:text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                    </button>
+                    <div className="flex items-center gap-2">
+                      {/* Variant Selector for Mockup Exploration */}
+                      <select
+                        value={sidebarVariant}
+                        onChange={(e) => setSidebarVariant(e.target.value)}
+                        className={`text-xs px-1.5 py-0.5 rounded border ${
+                          sidebarVariant === 'terminal'
+                            ? 'bg-black border-green-500/50 text-green-400'
+                            : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300'
+                        }`}
+                        title="Switch sidebar style"
+                      >
+                        <option value="subtle">Subtle</option>
+                        <option value="terminal">Terminal</option>
+                        <option value="hybrid">Hybrid</option>
+                      </select>
+                      <button
+                        onClick={toggleSidebar}
+                        className={`p-1 rounded transition-colors ${
+                          sidebarVariant === 'terminal'
+                            ? 'hover:bg-green-500/20 text-green-400'
+                            : 'hover:bg-gray-200 dark:hover:bg-gray-700'
+                        }`}
+                        title="Close sidebar"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 ${
+                          sidebarVariant === 'terminal' ? 'text-green-400' : 'text-gray-600 dark:text-gray-400'
+                        }`} viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
 
                   {/* New Chat Button */}
                   <div className="p-4">
                     <button
                       onClick={handleNewSession}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white font-medium transition-colors"
+                      className={`w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+                        sidebarVariant === 'terminal'
+                          ? 'bg-green-500 hover:bg-green-400 text-black'
+                          : 'bg-green-600 hover:bg-green-700 text-white'
+                      }`}
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
@@ -3300,18 +3357,23 @@ ${selectedText}
                   </div>
 
                   {/* Scrollable content */}
-                  <div className="flex-1 overflow-y-auto px-4 space-y-4">
+                  <div className="flex-1 overflow-y-auto px-4 space-y-4 scrollbar-terminal">
                     {/* Perspectives Section - Collapsible */}
                     <CollapsibleSection
                       title="Perspectives"
                       defaultExpanded={true}
+                      variant={sidebarVariant}
                       headerRight={
                         <button
                           onClick={() => {
                             setSuggestedAdvisorName('');
                             setShowAdvisorForm(true);
                           }}
-                          className="text-green-700 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 transition-colors p-1"
+                          className={`transition-colors p-1 ${
+                            sidebarVariant === 'terminal'
+                              ? 'text-green-400 hover:text-green-300'
+                              : 'text-green-700 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300'
+                          }`}
                           title="Add new perspective"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -3331,9 +3393,14 @@ ${selectedText}
                         setEditingAdvisor={setEditingAdvisor}
                         setAdvisors={setAdvisors}
                         setMessages={setMessages}
+                        variant={sidebarVariant}
                       />
 
-                      <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                      <div className={`mt-3 pt-3 border-t ${
+                        sidebarVariant === 'terminal' 
+                          ? 'border-green-500/20' 
+                          : 'border-gray-200 dark:border-gray-700'
+                      }`}>
                         <PerspectiveGenerator
                           key={currentSessionId}
                           messages={messages}
@@ -3342,14 +3409,16 @@ ${selectedText}
                           trackUsage={trackUsage}
                           onEditAdvisor={setEditingAdvisor}
                           disabled={showJournalOnboarding}
+                          variant={sidebarVariant}
                         />
                       </div>
                     </CollapsibleSection>
 
-                    {/* Recent Chats Section */}
+                    {/* Previous Chats Section */}
                     <CollapsibleSection
-                      title="Recent Chats"
+                      title="Previous Chats"
                       defaultExpanded={true}
+                      variant={sidebarVariant}
                     >
                       <RecentChats
                         maxItems={5}
@@ -3358,31 +3427,19 @@ ${selectedText}
                         onShowMore={() => setShowSessionPanel(true)}
                         useDatabaseStorage={useDatabaseStorage}
                         storage={storage}
+                        variant={sidebarVariant}
                       />
                     </CollapsibleSection>
-
-                    {/* Tools Menu */}
-                    <div className="mb-4">
-                      <AccordionMenu
-                        onSettingsClick={() => setShowSettingsMenu(true)}
-                        // DEPRECATED: Prompt Library - Feature no longer maintained
-                        // onPromptLibraryClick={() => setShowPromptLibrary(true)}
-                        onSessionManagerClick={() => setShowSessionPanel(true)}
-                        // DEPRECATED: New Session - Now available in sidebar
-                        // onNewSessionClick={handleNewSession}
-                        onExportClick={() => setShowExportMenu(true)}
-                        // DEPRECATED: Knowledge Dossier - Feature no longer maintained
-                        // onDossierClick={() => setShowDossierModal(true)}
-                        onEvaluationsClick={() => setShowEvaluationsModal(true)}
-                        onImportExportAdvisorsClick={() => setShowImportExportModal(true)}
-                        // DEPRECATED: Call a Vote - Feature no longer maintained
-                        // onVotingClick={() => setShowVotingModal(true)}
-                        onHelpClick={() => setShowHelpModal(true)}
-                        onFullscreenClick={toggleFullscreen}
-                        isFullscreen={isFullscreen}
-                      />
-                    </div>
                   </div>
+
+                  {/* Footer Menu - Integrated at bottom */}
+                  <SidebarFooterMenu
+                    variant={sidebarVariant}
+                    onSessionManagerClick={() => setShowSessionPanel(true)}
+                    onExportClick={() => setShowExportMenu(true)}
+                    onHelpClick={() => setShowHelpModal(true)}
+                    onSettingsClick={() => setShowSettingsMenu(true)}
+                  />
                 </div>
               )}
 

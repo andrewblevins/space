@@ -166,27 +166,13 @@ const AccordionMenu = ({
         </svg>
       )
     },
-    {
-      id: 'import-export-advisors',
-      label: 'Import/Export Perspectives',
-      onClick: onImportExportAdvisorsClick,
-      icon: (
-        <svg 
-          xmlns="http://www.w3.org/2000/svg" 
-          className="h-4 w-4" 
-          fill="none" 
-          viewBox="0 0 24 24" 
-          stroke="currentColor"
-        >
-          <path 
-            strokeLinecap="round" 
-            strokeLinejoin="round" 
-            strokeWidth={2} 
-            d="M8 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-2m-4-1v8m0 0l3-3m-3 3L9 8"
-          />
-        </svg>
-      )
-    },
+    // REMOVED: Import/Export Perspectives - moved to settings or deprecated
+    // {
+    //   id: 'import-export-advisors',
+    //   label: 'Import/Export Perspectives',
+    //   onClick: onImportExportAdvisorsClick,
+    //   icon: (...)
+    // },
     // DEPRECATED: Call a Vote - Feature no longer maintained
     // {
     //   id: 'voting',
@@ -254,27 +240,13 @@ const AccordionMenu = ({
         </svg>
       )
     },
-    {
-      id: 'fullscreen',
-      label: 'Fullscreen',
-      onClick: onFullscreenClick,
-      icon: (
-        <svg 
-          xmlns="http://www.w3.org/2000/svg" 
-          className="h-4 w-4" 
-          fill="none" 
-          viewBox="0 0 24 24" 
-          stroke="currentColor"
-        >
-          <path 
-            strokeLinecap="round" 
-            strokeLinejoin="round" 
-            strokeWidth={2} 
-            d={isFullscreen ? "M6 18L18 6M6 6l12 12" : "M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5"}
-          />
-        </svg>
-      )
-    },
+    // REMOVED: Fullscreen - not needed in sidebar-integrated design
+    // {
+    //   id: 'fullscreen',
+    //   label: 'Fullscreen',
+    //   onClick: onFullscreenClick,
+    //   icon: (...)
+    // },
     {
       id: 'settings',
       label: 'Settings',

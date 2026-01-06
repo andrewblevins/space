@@ -9,6 +9,7 @@ import { useState, useEffect } from "react";
  * @param {function} props.onShowMore - Callback when "Show more..." is clicked
  * @param {boolean} [props.useDatabaseStorage=false] - Whether to use database storage
  * @param {object} [props.storage=null] - Storage service for database access
+ * @param {'subtle' | 'terminal' | 'hybrid'} [props.variant='subtle'] - Style variant
  */
 export function RecentChats({
   maxItems = 5,
@@ -17,6 +18,7 @@ export function RecentChats({
   onShowMore,
   useDatabaseStorage = false,
   storage = null,
+  variant = 'subtle',
 }) {
   const [recentSessions, setRecentSessions] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -106,13 +108,43 @@ export function RecentChats({
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
   };
 
+  // Style configurations based on variant
+  const emptyStyles = {
+    subtle: "text-gray-500 dark:text-gray-500",
+    terminal: "text-green-500/60",
+    hybrid: "text-gray-500 dark:text-green-500/60",
+  };
+
+  const buttonStyles = {
+    subtle: {
+      current: "bg-green-600/20 dark:bg-green-500/20 text-green-700 dark:text-green-300 font-medium",
+      normal: "hover:bg-gray-200/60 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-300",
+    },
+    terminal: {
+      current: "bg-green-500/20 text-green-300 font-medium border-l-2 border-green-400",
+      normal: "hover:bg-green-500/10 text-green-400/80 hover:text-green-300",
+    },
+    hybrid: {
+      current: "bg-green-600/20 dark:bg-green-500/20 text-green-700 dark:text-green-300 font-medium",
+      normal: "hover:bg-gray-200/60 dark:hover:bg-green-500/10 text-gray-700 dark:text-green-400/80",
+    },
+  };
+
+  const showMoreStyles = {
+    subtle: "text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:bg-gray-100 dark:hover:bg-gray-700/50",
+    terminal: "text-green-400 hover:text-green-300 hover:bg-green-500/10",
+    hybrid: "text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:bg-gray-100 dark:hover:bg-green-500/10",
+  };
+
   if (recentSessions.length === 0) {
     return (
-      <div className="text-gray-500 dark:text-gray-500 text-sm py-2">
+      <div className={`text-sm py-2 ${emptyStyles[variant] || emptyStyles.subtle}`}>
         No previous chats yet
       </div>
     );
   }
+
+  const currentVariant = buttonStyles[variant] || buttonStyles.subtle;
 
   return (
     <div className="space-y-0.5">
@@ -131,9 +163,7 @@ export function RecentChats({
             key={session.id}
             onClick={() => !isCurrentSession && onLoadSession(session.id)}
             className={`w-full text-left px-2.5 py-1.5 rounded transition-all truncate text-sm ${
-              isCurrentSession
-                ? "bg-green-600/20 dark:bg-green-500/20 text-green-700 dark:text-green-300 font-medium"
-                : "hover:bg-gray-200/60 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-300"
+              isCurrentSession ? currentVariant.current : currentVariant.normal
             }`}
             title={sessionTitle}
           >
@@ -146,7 +176,7 @@ export function RecentChats({
       {totalCount > maxItems && (
         <button
           onClick={onShowMore}
-          className="w-full text-left px-3 py-2 text-sm text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:bg-gray-100 dark:hover:bg-gray-700/50 rounded-md transition-colors flex items-center gap-2"
+          className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors flex items-center gap-2 ${showMoreStyles[variant] || showMoreStyles.subtle}`}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
