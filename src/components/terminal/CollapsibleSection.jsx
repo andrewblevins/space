@@ -26,17 +26,13 @@ export function CollapsibleSection({
         <div className="flex items-center gap-2">
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className={`h-3 w-3 text-gray-500 dark:text-gray-400 transition-transform duration-200 ${
+            className={`h-4 w-4 text-gray-600 dark:text-gray-300 transition-transform duration-200 ${
               isExpanded ? "rotate-90" : ""
             }`}
             viewBox="0 0 20 20"
             fill="currentColor"
           >
-            <path
-              fillRule="evenodd"
-              d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-              clipRule="evenodd"
-            />
+            <path d="M6 4l8 6-8 6V4z" />
           </svg>
           <h2 className="text-gray-800 dark:text-gray-200 font-medium">{title}</h2>
         </div>
