@@ -174,7 +174,7 @@ export function FullScreenPerspectiveModal({
           {/* Header bar with advisor info and actions */}
           <div className="flex items-center justify-between p-4">
             <div className="flex items-center gap-3">
-              <span className={`w-3 h-3 rounded-full ${colorClass}`}></span>
+              <span className={`w-3 h-3 rounded-full flex-shrink-0 ${colorClass}`}></span>
               <h3 className="text-green-600 dark:text-green-400 font-medium text-lg">
                 {currentAdvisor.name}
               </h3>

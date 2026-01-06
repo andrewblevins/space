@@ -254,7 +254,7 @@ const MobileLayout = ({
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
                       <div
-                        className={`w-3 h-3 rounded-full mr-2 ${advisor.color} ${!advisor.active ? 'opacity-50' : ''}`}
+                        className={`w-3 h-3 rounded-full flex-shrink-0 mr-2 ${advisor.color} ${!advisor.active ? 'opacity-50' : ''}`}
                       />
                       <span className={`font-medium ${advisor.active ? 'text-gray-800 dark:text-gray-200' : 'text-gray-500 dark:text-gray-500'}`}>
                         {advisor.name}

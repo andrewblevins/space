@@ -57,7 +57,7 @@ const AboutContent = ({ onShowChangelog }) => {
             <div className="text-center">
               <h3 className="text-green-400 text-lg font-semibold mb-2">SPACE Terminal v0.2.6</h3>
               <p className="text-gray-600 dark:text-gray-300 text-sm">
-                An experimental interface for conversations with AI advisors
+                An experimental tool for thinking with multiple AI perspectives
               </p>
             </div>
 
@@ -65,22 +65,21 @@ const AboutContent = ({ onShowChangelog }) => {
               <h4 className="text-green-400 font-medium mb-2">About</h4>
               <p className="text-gray-600 dark:text-gray-300 text-sm mb-3">
                 SPACE stands for Simple Perspective-Augmenting Conversation Environment. 
-                Create AI advisors with different perspectives and have collaborative conversations 
-                that build knowledge over time.
+                Generate AI perspectives with distinct viewpoints and think through things together.
               </p>
               
               <h4 className="text-green-400 font-medium mb-3">Features</h4>
               <div className="space-y-2">
                 <p className="text-gray-600 dark:text-gray-300 text-sm">
-                  <strong>Generate advisors frictionlessly.</strong> Create a constellation of advisors—each with distinct expertise and perspective.
+                  <strong>Create perspectives on the fly.</strong> Describe what you need and get a new viewpoint instantly.
                 </p>
                 
                 <p className="text-gray-600 dark:text-gray-300 text-sm">
-                  <strong>Reference previous conversations.</strong> Context carries across sessions, building understanding over time.
+                  <strong>Save and revisit conversations.</strong> Your conversations are stored so you can pick up where you left off.
                 </p>
                 
                 <p className="text-gray-600 dark:text-gray-300 text-sm">
-                  <strong>Smart advisor suggestions.</strong> Get intelligent suggestions based on your conversation context.
+                  <strong>Smart perspective suggestions.</strong> Get intelligent suggestions based on your conversation.
                 </p>
                 
                 <p className="text-gray-600 dark:text-gray-300 text-sm">
@@ -96,7 +95,7 @@ const AboutContent = ({ onShowChangelog }) => {
                 </p>
                 
                 <p className="text-gray-600 dark:text-gray-300 text-sm">
-                  <strong>Advisor evaluation system.</strong> Test responses with assertions and automated evaluation.
+                  <strong>Perspective evaluation.</strong> Test responses with assertions and automated evaluation.
                 </p>
               </div>
               

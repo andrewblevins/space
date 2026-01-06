@@ -124,7 +124,7 @@ const AdvisorSuggestionsModal = ({ suggestions, existingAdvisors, onAddSelected,
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       {advisor.color && (
-                        <span className={`w-3 h-3 rounded-full ${advisor.color}`}></span>
+                        <span className={`w-3 h-3 rounded-full flex-shrink-0 ${advisor.color}`}></span>
                       )}
                       <h3 className="text-lg font-serif font-medium text-gray-800 dark:text-green-400">
                         {advisor.name}
@@ -234,7 +234,7 @@ const AdvisorSuggestionsModal = ({ suggestions, existingAdvisors, onAddSelected,
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
                             {advisor.color && (
-                              <span className={`w-3 h-3 rounded-full ${advisor.color}`}></span>
+                              <span className={`w-3 h-3 rounded-full flex-shrink-0 ${advisor.color}`}></span>
                             )}
                             <h3 className="text-lg font-serif font-medium text-gray-800 dark:text-green-400">
                               {advisor.name}

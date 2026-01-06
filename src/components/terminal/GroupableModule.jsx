@@ -81,7 +81,7 @@ export function GroupableModule({
                         className="flex items-center space-x-2 flex-1 cursor-pointer"
                       >
                         {advisor.color && (
-                          <span className={`w-3 h-3 rounded-full ${advisor.color} ${!activeItems.includes(advisor) ? 'opacity-50' : ''}`}></span>
+                          <span className={`w-3 h-3 rounded-full flex-shrink-0 ${advisor.color} ${!activeItems.includes(advisor) ? 'opacity-50' : ''}`}></span>
                         )}
                         <span>{advisor.name}</span>
                       </div>
@@ -135,7 +135,7 @@ export function GroupableModule({
                 className="flex items-center space-x-2 flex-1 cursor-pointer"
               >
                 {item.color && (
-                  <span className={`w-3 h-3 rounded-full ${item.color} ${!activeItems.includes(item) ? 'opacity-50' : ''}`}></span>
+                  <span className={`w-3 h-3 rounded-full flex-shrink-0 ${item.color} ${!activeItems.includes(item) ? 'opacity-50' : ''}`}></span>
                 )}
                 <span>{item.name}</span>
               </div>
