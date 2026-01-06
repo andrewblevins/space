@@ -144,24 +144,27 @@ export function RecentChats({
           : null;
         const isCurrentSession = sessionIdStr === currentSessionIdStr;
 
+        const sessionTitle = session.title || `Session ${session.id}`;
+        
         return (
           <button
             key={session.id}
             onClick={() => !isCurrentSession && onLoadSession(session.id)}
-            className={`w-full text-left px-3 py-2 rounded-md transition-colors group ${
+            className={`w-full text-left px-3 py-2.5 rounded-lg transition-all group ${
               isCurrentSession
-                ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 cursor-default"
-                : "hover:bg-gray-100 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-300"
+                ? "bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 cursor-default ring-1 ring-green-300 dark:ring-green-700"
+                : "hover:bg-gray-100 dark:hover:bg-gray-700/60 text-gray-800 dark:text-gray-200"
             }`}
+            title={sessionTitle}
           >
-            <div className="flex items-center gap-2">
+            <div className="flex items-start gap-2.5">
               {/* Chat icon */}
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className={`h-4 w-4 flex-shrink-0 ${
+                className={`h-4 w-4 flex-shrink-0 mt-0.5 ${
                   isCurrentSession
                     ? "text-green-600 dark:text-green-400"
-                    : "text-gray-400 dark:text-gray-500"
+                    : "text-gray-500 dark:text-gray-400"
                 }`}
                 fill="none"
                 viewBox="0 0 24 24"
@@ -175,21 +178,29 @@ export function RecentChats({
                 />
               </svg>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="truncate text-sm font-medium">
-                    {session.title || `Session ${session.id}`}
+                <div className="flex items-start justify-between gap-2">
+                  <span 
+                    className="text-sm font-medium leading-snug line-clamp-2"
+                    style={{ 
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden'
+                    }}
+                  >
+                    {sessionTitle}
                   </span>
                   {isCurrentSession && (
-                    <span className="text-[10px] px-1.5 py-0.5 bg-green-200 dark:bg-green-800 text-green-700 dark:text-green-300 rounded flex-shrink-0">
+                    <span className="text-[10px] px-1.5 py-0.5 bg-green-200 dark:bg-green-800 text-green-700 dark:text-green-300 rounded font-semibold flex-shrink-0 mt-0.5">
                       NOW
                     </span>
                   )}
                 </div>
-                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-500">
+                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-1">
                   <span>{formatTimestamp(session.timestamp)}</span>
                   {session.messageCount > 0 && (
                     <>
-                      <span>•</span>
+                      <span className="opacity-50">•</span>
                       <span>{session.messageCount} msgs</span>
                     </>
                   )}

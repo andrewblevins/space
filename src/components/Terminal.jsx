@@ -707,6 +707,13 @@ const Terminal = ({ theme, toggleTheme }) => {
     const saved = localStorage.getItem('space_sidebar_collapsed');
     return saved === 'true';
   });
+  
+  // Sidebar width state (resizable)
+  const [sidebarWidth, setSidebarWidth] = useState(() => {
+    const saved = localStorage.getItem('space_sidebar_width');
+    return saved ? parseInt(saved) : 280;
+  });
+  const isResizingSidebar = useRef(false);
   const [maxTokens, setMaxTokens] = useState(() => {
     const saved = localStorage.getItem('space_max_tokens');
     return saved ? parseInt(saved) : 2048;
@@ -3197,6 +3204,34 @@ ${selectedText}
     localStorage.setItem('space_sidebar_collapsed', newCollapsed.toString());
   };
 
+  // Sidebar resize handlers
+  const handleSidebarMouseDown = useCallback((e) => {
+    e.preventDefault();
+    isResizingSidebar.current = true;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    
+    let currentWidth = sidebarWidth;
+    
+    const handleMouseMove = (e) => {
+      if (!isResizingSidebar.current) return;
+      currentWidth = Math.max(200, Math.min(500, e.clientX));
+      setSidebarWidth(currentWidth);
+    };
+    
+    const handleMouseUp = () => {
+      isResizingSidebar.current = false;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      localStorage.setItem('space_sidebar_width', currentWidth.toString());
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+    
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  }, [sidebarWidth]);
+
   const getCurrentQuestionId = () => {
     const template = WORKSHEET_TEMPLATES[currentWorksheetId];
     if (template.type === 'basic') {
@@ -3375,9 +3410,10 @@ ${selectedText}
                 scrollbarColor: '#374151 transparent'
               }}
             >
-              {/* Left Sidebar - Collapsible */}
+              {/* Left Sidebar - Collapsible & Resizable */}
               {!sidebarCollapsed && (
-                <div className="w-64 border-r border-gray-300 dark:border-gray-800 overflow-y-auto scrollbar-terminal flex-shrink-0 flex flex-col">
+                <div className="relative flex flex-shrink-0" style={{ width: sidebarWidth }}>
+                  <div className="flex-1 border-r border-gray-300 dark:border-gray-800 overflow-y-auto scrollbar-terminal flex flex-col">
                   {/* Header with title and collapse button */}
                   <div className="flex items-center justify-between p-4 border-b border-gray-300 dark:border-gray-700">
                     <a 
@@ -3499,6 +3535,15 @@ ${selectedText}
                         isFullscreen={isFullscreen}
                       />
                     </div>
+                  </div>
+                  </div>
+                  {/* Resize handle */}
+                  <div
+                    onMouseDown={handleSidebarMouseDown}
+                    className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-green-500/50 active:bg-green-500/70 transition-colors z-10 group"
+                    title="Drag to resize sidebar"
+                  >
+                    <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-12 rounded bg-gray-400/50 dark:bg-gray-600/50 group-hover:bg-green-500/70 transition-colors" />
                   </div>
                 </div>
               )}
