@@ -24,7 +24,7 @@ export const MemoizedMarkdownMessage = memo(({ content, advisors = [], paragraph
         const colorClass = advisor?.color || ADVISOR_COLORS[fallbackColorIndex % ADVISOR_COLORS.length];
         fallbackColorIndex++;
         return (
-          <h3 key={`advisor-${index}-${advisorName}`} className="font-bold font-serif text-lg mb-3 mt-6 text-gray-800 dark:text-orange-100 flex items-center">
+          <h3 key={`advisor-${index}-${advisorName}`} className="font-bold font-serif text-lg mb-3 mt-6 text-gray-800 dark:text-term-100 flex items-center">
             <span className={`w-2 h-2 rounded-full ${colorClass} mr-3`}></span>
             {advisorName}
           </h3>
@@ -46,24 +46,24 @@ export const MemoizedMarkdownMessage = memo(({ content, advisors = [], paragraph
                className="text-left font-serif w-full"
                components={{
                  h1: ({ children }) => <h1 className="text-blue-600 dark:text-blue-400 font-bold font-serif text-xl">{children}</h1>,
-                 h2: ({ children }) => <h2 className="text-orange-600 dark:text-orange-400 font-bold font-serif text-lg">{children}</h2>,
+                 h2: ({ children }) => <h2 className="text-term-600 dark:text-term-400 font-bold font-serif text-lg">{children}</h2>,
                  code: ({ node, inline, className, children, ...props }) => {
                    const match = /language-(\w+)/.exec(className || '');
                    return !inline ? (
                      <pre className="bg-stone-200 dark:bg-stone-900 p-4 rounded-md my-2 overflow-x-auto whitespace-pre-wrap break-all w-full">
-                       <code className={`${match ? `language-${match[1]}` : ''} font-mono block text-sm text-gray-800 dark:text-orange-100`} {...props}>
+                       <code className={`${match ? `language-${match[1]}` : ''} font-mono block text-sm text-gray-800 dark:text-term-100`} {...props}>
                          {children}
                        </code>
                      </pre>
                    ) : (
-                     <code className="text-orange-600 dark:text-orange-400 font-mono text-sm bg-stone-200 dark:bg-stone-900 px-1 rounded" {...props}>
+                     <code className="text-term-600 dark:text-term-400 font-mono text-sm bg-stone-200 dark:bg-stone-900 px-1 rounded" {...props}>
                        {children}
                      </code>
                    );
                  },
-                 p: ({ children }) => <p className="font-serif w-full text-lg text-gray-800 dark:text-orange-100" style={{ marginBottom: `${paragraphSpacing}rem`, lineHeight: '1.7' }}>{children}</p>,
-                 ul: ({ children }) => <ul className="list-disc pl-4 space-y-1 w-full text-lg text-gray-800 dark:text-orange-100" style={{ marginBottom: `${paragraphSpacing}rem` }}>{children}</ul>,
-                 li: ({ children }) => <li className="text-lg text-gray-800 dark:text-orange-100">{children}</li>,
+                 p: ({ children }) => <p className="font-serif w-full text-lg text-gray-800 dark:text-term-100" style={{ marginBottom: `${paragraphSpacing}rem`, lineHeight: '1.7' }}>{children}</p>,
+                 ul: ({ children }) => <ul className="list-disc pl-4 space-y-1 w-full text-lg text-gray-800 dark:text-term-100" style={{ marginBottom: `${paragraphSpacing}rem` }}>{children}</ul>,
+                 li: ({ children }) => <li className="text-lg text-gray-800 dark:text-term-100">{children}</li>,
                }}
              >
                {part.replace(/\n\n+/g, '\n\n')}
@@ -82,24 +82,24 @@ export const MemoizedMarkdownMessage = memo(({ content, advisors = [], paragraph
       className="text-left font-serif w-full"
       components={{
         h1: ({ children }) => <h1 className="text-blue-600 dark:text-blue-400 font-bold font-serif text-xl">{children}</h1>,
-        h2: ({ children }) => <h2 className="text-orange-600 dark:text-orange-400 font-bold font-serif text-lg">{children}</h2>,
+        h2: ({ children }) => <h2 className="text-term-600 dark:text-term-400 font-bold font-serif text-lg">{children}</h2>,
         code: ({ node, inline, className, children, ...props }) => {
           const match = /language-(\w+)/.exec(className || '');
           return !inline ? (
             <pre className="bg-stone-200 dark:bg-stone-900 p-4 rounded-md my-2 overflow-x-auto whitespace-pre-wrap break-all w-full">
-              <code className={`${match ? `language-${match[1]}` : ''} font-mono block text-sm text-gray-800 dark:text-orange-100`} {...props}>
+              <code className={`${match ? `language-${match[1]}` : ''} font-mono block text-sm text-gray-800 dark:text-term-100`} {...props}>
                 {children}
               </code>
             </pre>
           ) : (
-            <code className="text-orange-600 dark:text-orange-400 font-mono text-sm bg-stone-200 dark:bg-stone-900 px-1 rounded" {...props}>
+            <code className="text-term-600 dark:text-term-400 font-mono text-sm bg-stone-200 dark:bg-stone-900 px-1 rounded" {...props}>
               {children}
             </code>
           );
         },
-        p: ({ children }) => <p className="font-serif w-full text-lg text-gray-800 dark:text-orange-100" style={{ marginBottom: `${paragraphSpacing}rem`, lineHeight: '1.7' }}>{children}</p>,
-        ul: ({ children }) => <ul className="list-disc pl-4 space-y-1 w-full text-lg text-gray-800 dark:text-orange-100" style={{ marginBottom: `${paragraphSpacing}rem` }}>{children}</ul>,
-        li: ({ children }) => <li className="text-lg text-gray-800 dark:text-orange-100">{children}</li>,
+        p: ({ children }) => <p className="font-serif w-full text-lg text-gray-800 dark:text-term-100" style={{ marginBottom: `${paragraphSpacing}rem`, lineHeight: '1.7' }}>{children}</p>,
+        ul: ({ children }) => <ul className="list-disc pl-4 space-y-1 w-full text-lg text-gray-800 dark:text-term-100" style={{ marginBottom: `${paragraphSpacing}rem` }}>{children}</ul>,
+        li: ({ children }) => <li className="text-lg text-gray-800 dark:text-term-100">{children}</li>,
       }}
     >
       {processedContent}

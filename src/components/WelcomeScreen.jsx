@@ -33,14 +33,14 @@ const WelcomeScreen = ({ onGetStarted }) => {
   const features = [];
 
   return (
-    <div className="min-h-screen bg-black text-orange-400 flex flex-col relative overflow-hidden">
+    <div className="min-h-screen bg-black text-term-400 flex flex-col relative overflow-hidden">
       {/* Subtle background pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="grid grid-cols-8 gap-8 h-full">
           {Array.from({ length: 64 }).map((_, i) => (
             <div 
               key={i} 
-              className="border border-orange-500/10"
+              className="border border-term-500/10"
               style={{ opacity: Math.random() * 0.3 + 0.1 }}
             />
           ))}
@@ -50,7 +50,7 @@ const WelcomeScreen = ({ onGetStarted }) => {
       {/* Header */}
       <header className="relative z-10 flex items-center justify-between p-6">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-orange-500 rounded flex items-center justify-center text-black font-bold">
+          <div className="w-8 h-8 bg-term-500 rounded flex items-center justify-center text-black font-bold">
             S
           </div>
           <span className="text-xl font-semibold">SPACE Terminal</span>
@@ -58,7 +58,7 @@ const WelcomeScreen = ({ onGetStarted }) => {
         
         <button
           onClick={() => setShowInfoModal(true)}
-          className="flex items-center justify-center w-8 h-8 rounded-full border border-orange-500 text-orange-400 hover:bg-orange-500 hover:text-black transition-colors"
+          className="flex items-center justify-center w-8 h-8 rounded-full border border-term-500 text-term-400 hover:bg-term-500 hover:text-black transition-colors"
           title="About SPACE Terminal"
         >
           <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -75,7 +75,7 @@ const WelcomeScreen = ({ onGetStarted }) => {
             <span className="text-white">SPACE</span>
           </h1>
           
-          <h2 className="text-2xl md:text-3xl text-orange-400 font-light mb-8 tracking-wide">
+          <h2 className="text-2xl md:text-3xl text-term-400 font-light mb-8 tracking-wide">
             Change your minds
           </h2>
           
@@ -83,8 +83,8 @@ const WelcomeScreen = ({ onGetStarted }) => {
             Think through anything with multiple AI perspectives.
           </p>
           
-          <div className="bg-orange-500/5 border border-orange-500/20 rounded-lg p-4 mb-8 backdrop-blur-sm">
-            <p className="text-orange-300/80 text-sm font-light">
+          <div className="bg-term-500/5 border border-term-500/20 rounded-lg p-4 mb-8 backdrop-blur-sm">
+            <p className="text-term-300/80 text-sm font-light">
               Currently in beta
             </p>
           </div>
@@ -96,7 +96,7 @@ const WelcomeScreen = ({ onGetStarted }) => {
           <button
             onClick={handleGetStarted}
             disabled={loading}
-            className="bg-orange-500 text-black px-8 py-3 rounded-lg text-lg font-medium hover:bg-orange-400 disabled:opacity-50 transition-all duration-200 shadow-lg hover:shadow-orange-500/10 mx-auto"
+            className="bg-term-500 text-black px-8 py-3 rounded-lg text-lg font-medium hover:bg-term-400 disabled:opacity-50 transition-all duration-200 shadow-lg hover:shadow-term-500/10 mx-auto"
           >
             {loading ? 'Loading...' : 'Explore'}
           </button>
@@ -105,7 +105,7 @@ const WelcomeScreen = ({ onGetStarted }) => {
             By continuing, you agree to our{' '}
             <button 
               onClick={() => setShowPrivacyPolicy(true)}
-              className="text-orange-400 hover:text-orange-300 underline"
+              className="text-term-400 hover:text-term-300 underline"
             >
               Privacy Policy
             </button>
@@ -122,7 +122,7 @@ const WelcomeScreen = ({ onGetStarted }) => {
             href="https://www.andrewshadeblevins.com" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="text-orange-400 hover:text-orange-300 transition-colors"
+            className="text-term-400 hover:text-term-300 transition-colors"
           >
             Andrew Blevins
           </a>{' '}
@@ -131,7 +131,7 @@ const WelcomeScreen = ({ onGetStarted }) => {
             href="https://www.andrewshadeblevins.com" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="text-orange-400 hover:text-orange-300 transition-colors"
+            className="text-term-400 hover:text-term-300 transition-colors"
           >
             Andrew Blevins
           </a>{' '}
@@ -140,7 +140,7 @@ const WelcomeScreen = ({ onGetStarted }) => {
             href="https://x.com/jasnonaz/" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="text-orange-400 hover:text-orange-300 transition-colors"
+            className="text-term-400 hover:text-term-300 transition-colors"
           >
             Jason Ganz
           </a>{' '}
@@ -149,7 +149,7 @@ const WelcomeScreen = ({ onGetStarted }) => {
         <p className="text-xs mt-2">
           <button 
             onClick={() => setShowPrivacyPolicy(true)}
-            className="text-orange-400 hover:text-orange-300 transition-colors underline"
+            className="text-term-400 hover:text-term-300 transition-colors underline"
           >
             Privacy Policy
           </button>

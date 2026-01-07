@@ -2,13 +2,13 @@ import { useState } from "react";
 
 // Shared color theme configurations
 const colorThemes = {
-  green: { border: 'border-orange-600/30', text: 'text-orange-400', hoverBg: 'hover:bg-orange-500/10' },
+  green: { border: 'border-term-600/30', text: 'text-term-400', hoverBg: 'hover:bg-term-500/10' },
   mahogany: { border: 'border-rose-900/50', text: 'text-rose-300', hoverBg: 'hover:bg-rose-900/30' },
   burgundy: { border: 'border-red-900/40', text: 'text-red-300', hoverBg: 'hover:bg-red-900/30' },
   amber: { border: 'border-amber-500/30', text: 'text-amber-400', hoverBg: 'hover:bg-amber-500/20' },
   cyan: { border: 'border-cyan-500/30', text: 'text-cyan-400', hoverBg: 'hover:bg-cyan-500/20' },
   violet: { border: 'border-violet-500/30', text: 'text-violet-400', hoverBg: 'hover:bg-violet-500/20' },
-  copper: { border: 'border-orange-700/40', text: 'text-orange-300', hoverBg: 'hover:bg-orange-700/20' },
+  copper: { border: 'border-term-700/40', text: 'text-term-300', hoverBg: 'hover:bg-term-700/20' },
   slate: { border: 'border-slate-500/30', text: 'text-slate-300', hoverBg: 'hover:bg-slate-500/20' },
 };
 
@@ -47,13 +47,13 @@ export function CollapsibleSection({
   };
 
   const iconStyles = {
-    subtle: "text-gray-600 dark:text-orange-200",
+    subtle: "text-gray-600 dark:text-term-200",
     terminal: ct.text,
     hybrid: `text-gray-600 dark:${ct.text}`,
   };
 
   const titleStyles = {
-    subtle: "text-gray-800 dark:text-orange-100",
+    subtle: "text-gray-800 dark:text-term-100",
     terminal: ct.text,
     hybrid: `text-gray-800 dark:${ct.text}`,
   };

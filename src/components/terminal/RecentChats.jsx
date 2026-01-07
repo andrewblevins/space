@@ -2,13 +2,13 @@ import { useState, useEffect } from "react";
 
 // Shared color theme configurations
 const colorThemes = {
-  green: { text: 'text-orange-400', textDim: 'text-orange-500/50', textMid: 'text-orange-400/80', hoverBg: 'hover:bg-orange-500/10', activeBg: 'bg-orange-500/20', border: 'border-orange-500' },
+  green: { text: 'text-term-400', textDim: 'text-term-500/50', textMid: 'text-term-400/80', hoverBg: 'hover:bg-term-500/10', activeBg: 'bg-term-500/20', border: 'border-term-500' },
   mahogany: { text: 'text-rose-300', textDim: 'text-rose-400/50', textMid: 'text-rose-300/80', hoverBg: 'hover:bg-rose-900/30', activeBg: 'bg-rose-900/30', border: 'border-rose-400' },
   burgundy: { text: 'text-red-300', textDim: 'text-red-400/50', textMid: 'text-red-300/80', hoverBg: 'hover:bg-red-900/30', activeBg: 'bg-red-900/30', border: 'border-red-400' },
   amber: { text: 'text-amber-400', textDim: 'text-amber-500/50', textMid: 'text-amber-400/80', hoverBg: 'hover:bg-amber-500/20', activeBg: 'bg-amber-500/20', border: 'border-amber-400' },
   cyan: { text: 'text-cyan-400', textDim: 'text-cyan-500/50', textMid: 'text-cyan-400/80', hoverBg: 'hover:bg-cyan-500/20', activeBg: 'bg-cyan-500/20', border: 'border-cyan-400' },
   violet: { text: 'text-violet-400', textDim: 'text-violet-500/50', textMid: 'text-violet-400/80', hoverBg: 'hover:bg-violet-500/20', activeBg: 'bg-violet-500/20', border: 'border-violet-400' },
-  copper: { text: 'text-orange-300', textDim: 'text-orange-400/50', textMid: 'text-orange-300/80', hoverBg: 'hover:bg-orange-700/20', activeBg: 'bg-orange-700/20', border: 'border-orange-400' },
+  copper: { text: 'text-term-300', textDim: 'text-term-400/50', textMid: 'text-term-300/80', hoverBg: 'hover:bg-term-700/20', activeBg: 'bg-term-700/20', border: 'border-term-400' },
   slate: { text: 'text-slate-300', textDim: 'text-slate-400/50', textMid: 'text-slate-300/80', hoverBg: 'hover:bg-slate-500/20', activeBg: 'bg-slate-500/20', border: 'border-slate-400' },
 };
 
@@ -133,23 +133,23 @@ export function RecentChats({
 
   const buttonStyles = {
     subtle: {
-      current: "bg-orange-700/20 dark:bg-orange-500/20 text-orange-700 dark:text-orange-300 font-medium",
-      normal: "hover:bg-gray-200/60 dark:hover:bg-gray-700/50 text-gray-700 dark:text-orange-200",
+      current: "bg-term-700/20 dark:bg-term-500/20 text-term-700 dark:text-term-300 font-medium",
+      normal: "hover:bg-gray-200/60 dark:hover:bg-gray-700/50 text-gray-700 dark:text-term-200",
     },
     terminal: {
       current: `${ct.activeBg} ${ct.text} font-medium border-l-2 ${ct.border}`,
       normal: `${ct.hoverBg} ${ct.textMid} hover:${ct.text}`,
     },
     hybrid: {
-      current: `bg-orange-700/20 dark:${ct.activeBg} text-orange-700 dark:${ct.text} font-medium`,
+      current: `bg-term-700/20 dark:${ct.activeBg} text-term-700 dark:${ct.text} font-medium`,
       normal: `hover:bg-gray-200/60 dark:${ct.hoverBg} text-gray-700 dark:${ct.textMid}`,
     },
   };
 
   const showMoreStyles = {
-    subtle: "text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 hover:bg-gray-100 dark:hover:bg-gray-700/50",
+    subtle: "text-term-600 dark:text-term-400 hover:text-term-700 dark:hover:text-term-300 hover:bg-gray-100 dark:hover:bg-gray-700/50",
     terminal: `${ct.text} hover:${ct.text} ${ct.hoverBg}`,
-    hybrid: `text-orange-600 dark:${ct.text} hover:text-orange-700 hover:bg-gray-100 dark:${ct.hoverBg}`,
+    hybrid: `text-term-600 dark:${ct.text} hover:text-term-700 hover:bg-gray-100 dark:${ct.hoverBg}`,
   };
 
   if (recentSessions.length === 0) {

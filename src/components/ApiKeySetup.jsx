@@ -108,14 +108,14 @@ const ApiKeySetup = ({ onComplete }) => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-orange-400 flex flex-col relative overflow-hidden">
+    <div className="min-h-screen bg-black text-term-400 flex flex-col relative overflow-hidden">
       {/* Subtle background pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="grid grid-cols-8 gap-8 h-full">
           {Array.from({ length: 64 }).map((_, i) => (
             <div 
               key={i} 
-              className="border border-orange-500/10"
+              className="border border-term-500/10"
               style={{ opacity: Math.random() * 0.3 + 0.1 }}
             />
           ))}
@@ -125,7 +125,7 @@ const ApiKeySetup = ({ onComplete }) => {
       {/* Header */}
       <header className="relative z-10 flex items-center justify-between p-6">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-orange-500 rounded flex items-center justify-center text-black font-bold">
+          <div className="w-8 h-8 bg-term-500 rounded flex items-center justify-center text-black font-bold">
             S
           </div>
           <span className="text-xl font-semibold">SPACE Terminal</span>
@@ -133,7 +133,7 @@ const ApiKeySetup = ({ onComplete }) => {
         
         <button
           onClick={() => setShowInfoModal(true)}
-          className="flex items-center justify-center w-8 h-8 rounded-full border border-orange-500 text-orange-400 hover:bg-orange-500 hover:text-black transition-colors"
+          className="flex items-center justify-center w-8 h-8 rounded-full border border-term-500 text-term-400 hover:bg-term-500 hover:text-black transition-colors"
           title="About SPACE Terminal"
         >
           <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -161,8 +161,8 @@ const ApiKeySetup = ({ onComplete }) => {
 
         <div className="w-full max-w-xl space-y-6">
           {/* Instructions */}
-          <div className="bg-gray-900/30 border border-orange-500/10 rounded-lg p-6 backdrop-blur-sm">
-            <h3 className="text-orange-400 font-medium mb-4 flex items-center gap-2">
+          <div className="bg-gray-900/30 border border-term-500/10 rounded-lg p-6 backdrop-blur-sm">
+            <h3 className="text-term-400 font-medium mb-4 flex items-center gap-2">
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
@@ -175,7 +175,7 @@ const ApiKeySetup = ({ onComplete }) => {
                   href="https://openrouter.ai/keys" 
                   target="_blank" 
                   rel="noopener noreferrer" 
-                  className="text-orange-400 hover:text-orange-300 underline transition-colors"
+                  className="text-term-400 hover:text-term-300 underline transition-colors"
                 >
                   openrouter.ai/keys
                 </a>
@@ -185,7 +185,7 @@ const ApiKeySetup = ({ onComplete }) => {
               <li>Paste it below</li>
             </ol>
 
-            <div className="mt-4 pt-4 border-t border-orange-500/20">
+            <div className="mt-4 pt-4 border-t border-term-500/20">
               <p className="text-gray-400 text-sm">
                 <strong className="text-gray-300">Pay as you go</strong> — You only pay for the messages you send
               </p>
@@ -195,14 +195,14 @@ const ApiKeySetup = ({ onComplete }) => {
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4" data-testid="api-key-form">
             <div>
-              <label className="block mb-2 text-orange-400 font-medium text-sm">
+              <label className="block mb-2 text-term-400 font-medium text-sm">
                 OpenRouter API Key
               </label>
               <input
                 type="password"
                 value={openrouterKey}
                 onChange={handleInputChange}
-                className="w-full bg-stone-900 text-white border border-orange-700/50 p-3 rounded focus:outline-none focus:border-orange-500 transition-colors font-mono placeholder:text-orange-300"
+                className="w-full bg-stone-900 text-white border border-term-700/50 p-3 rounded focus:outline-none focus:border-term-500 transition-colors font-mono placeholder:text-term-300"
                 placeholder="sk-or-v1-..."
                 data-testid="openrouter-api-key"
                 id="openrouter-api-key"
@@ -213,7 +213,7 @@ const ApiKeySetup = ({ onComplete }) => {
             <button 
               type="submit"
               disabled={isValidating}
-              className="w-full bg-orange-500 text-black py-3 px-6 rounded-lg font-medium hover:bg-orange-400 transition-all duration-200 shadow-lg hover:shadow-orange-500/10 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-term-500 text-black py-3 px-6 rounded-lg font-medium hover:bg-term-400 transition-all duration-200 shadow-lg hover:shadow-term-500/10 disabled:opacity-50 disabled:cursor-not-allowed"
               data-testid="save-api-keys-button"
             >
               {isValidating ? (
@@ -233,7 +233,7 @@ const ApiKeySetup = ({ onComplete }) => {
           <div className="text-center">
             <button
               onClick={() => setShowApiKeysInfoModal(true)}
-              className="text-gray-400 hover:text-orange-400 text-sm transition-colors"
+              className="text-gray-400 hover:text-term-400 text-sm transition-colors"
             >
               What is an API key? Why do I need this?
             </button>
@@ -257,7 +257,7 @@ const ApiKeySetup = ({ onComplete }) => {
           Your key is encrypted and stored locally in your browser •{' '}
           <a 
             href="/privacy.html" 
-            className="text-orange-400/70 hover:text-orange-400 transition-colors"
+            className="text-term-400/70 hover:text-term-400 transition-colors"
           >
             Privacy Policy
           </a>
@@ -272,13 +272,13 @@ const ApiKeySetup = ({ onComplete }) => {
       {/* API Keys Info Modal */}
       {showApiKeysInfoModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
-          <div className="bg-gray-900 border border-orange-500/20 rounded-lg max-w-lg w-full max-h-[80vh] overflow-y-auto">
+          <div className="bg-gray-900 border border-term-500/20 rounded-lg max-w-lg w-full max-h-[80vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-semibold text-white">About API Keys</h2>
                 <button
                   onClick={() => setShowApiKeysInfoModal(false)}
-                  className="text-gray-400 hover:text-orange-400 transition-colors"
+                  className="text-gray-400 hover:text-term-400 transition-colors"
                 >
                   <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -288,7 +288,7 @@ const ApiKeySetup = ({ onComplete }) => {
               
               <div className="space-y-4 text-gray-300">
                 <div>
-                  <h3 className="text-orange-400 font-medium mb-2">What is an API key?</h3>
+                  <h3 className="text-term-400 font-medium mb-2">What is an API key?</h3>
                   <p className="text-sm leading-relaxed">
                     An API key is like a password that lets SPACE Terminal communicate with AI services on your behalf. 
                     It's how you get access to AI models like Claude and GPT.
@@ -296,7 +296,7 @@ const ApiKeySetup = ({ onComplete }) => {
                 </div>
                 
                 <div>
-                  <h3 className="text-orange-400 font-medium mb-2">Why OpenRouter?</h3>
+                  <h3 className="text-term-400 font-medium mb-2">Why OpenRouter?</h3>
                   <p className="text-sm leading-relaxed">
                     OpenRouter is a service that gives you access to many AI models through a single key. 
                     Instead of getting separate accounts with Anthropic, OpenAI, and others, you just need one OpenRouter account.
@@ -304,7 +304,7 @@ const ApiKeySetup = ({ onComplete }) => {
                 </div>
                 
                 <div>
-                  <h3 className="text-orange-400 font-medium mb-2">Is it safe?</h3>
+                  <h3 className="text-term-400 font-medium mb-2">Is it safe?</h3>
                   <p className="text-sm leading-relaxed">
                     Yes. Your API key is encrypted and stored only on your device. 
                     SPACE Terminal never sends your key to our servers—it goes directly from your browser to OpenRouter.
@@ -312,7 +312,7 @@ const ApiKeySetup = ({ onComplete }) => {
                 </div>
                 
                 <div>
-                  <h3 className="text-orange-400 font-medium mb-2">How much does it cost?</h3>
+                  <h3 className="text-term-400 font-medium mb-2">How much does it cost?</h3>
                   <p className="text-sm leading-relaxed">
                     You pay per message based on the AI model used.
                     Pricing is transparent and you only pay for what you use.
@@ -320,12 +320,12 @@ const ApiKeySetup = ({ onComplete }) => {
                   </p>
                 </div>
                 
-                <div className="pt-4 border-t border-orange-500/20">
+                <div className="pt-4 border-t border-term-500/20">
                   <a 
                     href="https://openrouter.ai" 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="text-orange-400 hover:text-orange-300 text-sm transition-colors"
+                    className="text-term-400 hover:text-term-300 text-sm transition-colors"
                   >
                     Learn more at openrouter.ai →
                   </a>

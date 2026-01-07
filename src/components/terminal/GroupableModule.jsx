@@ -2,13 +2,13 @@ import { useState } from "react";
 
 // Shared color theme configurations
 const colorThemes = {
-  green: { text: 'text-orange-400', textDim: 'text-orange-500/50', textMid: 'text-orange-400/70', hoverBg: 'hover:bg-orange-500/10', hoverText: 'hover:text-orange-300' },
+  green: { text: 'text-term-400', textDim: 'text-term-500/50', textMid: 'text-term-400/70', hoverBg: 'hover:bg-term-500/10', hoverText: 'hover:text-term-300' },
   mahogany: { text: 'text-rose-300', textDim: 'text-rose-400/50', textMid: 'text-rose-300/70', hoverBg: 'hover:bg-rose-900/30', hoverText: 'hover:text-rose-200' },
   burgundy: { text: 'text-red-300', textDim: 'text-red-400/50', textMid: 'text-red-300/70', hoverBg: 'hover:bg-red-900/30', hoverText: 'hover:text-red-200' },
   amber: { text: 'text-amber-400', textDim: 'text-amber-500/50', textMid: 'text-amber-400/70', hoverBg: 'hover:bg-amber-500/20', hoverText: 'hover:text-amber-300' },
   cyan: { text: 'text-cyan-400', textDim: 'text-cyan-500/50', textMid: 'text-cyan-400/70', hoverBg: 'hover:bg-cyan-500/20', hoverText: 'hover:text-cyan-300' },
   violet: { text: 'text-violet-400', textDim: 'text-violet-500/50', textMid: 'text-violet-400/70', hoverBg: 'hover:bg-violet-500/20', hoverText: 'hover:text-violet-300' },
-  copper: { text: 'text-orange-300', textDim: 'text-orange-400/50', textMid: 'text-orange-300/70', hoverBg: 'hover:bg-orange-700/20', hoverText: 'hover:text-orange-200' },
+  copper: { text: 'text-term-300', textDim: 'text-term-400/50', textMid: 'text-term-300/70', hoverBg: 'hover:bg-term-700/20', hoverText: 'hover:text-term-200' },
   slate: { text: 'text-slate-300', textDim: 'text-slate-400/50', textMid: 'text-slate-300/70', hoverBg: 'hover:bg-slate-500/20', hoverText: 'hover:text-slate-200' },
 };
 
@@ -90,8 +90,8 @@ export function GroupableModule({
                       key={advisorName}
                       className={`group flex items-center justify-between rounded-md px-2 py-1.5 -mx-2 transition-all ${
                         isActive
-                          ? 'bg-orange-600 text-white shadow-sm'
-                          : `${ct.textDim} ${ct.hoverBg} hover:text-orange-300`
+                          ? 'bg-term-600 text-white shadow-sm'
+                          : `${ct.textDim} ${ct.hoverBg} hover:text-term-300`
                       }`}
                     >
                       <div
@@ -123,7 +123,7 @@ export function GroupableModule({
                               setAdvisors && setAdvisors((prev) => prev.filter((a) => a.name !== advisor.name));
                             }
                           }}
-                          className={`p-1 ${isActive ? 'text-white/70 hover:text-red-300' : 'text-orange-500/50 hover:text-red-400'}`}
+                          className={`p-1 ${isActive ? 'text-white/70 hover:text-red-300' : 'text-term-500/50 hover:text-red-400'}`}
                           title="Delete perspective"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -147,8 +147,8 @@ export function GroupableModule({
               key={`item-${idx}`}
               className={`group flex items-center justify-between rounded-md px-2 py-1.5 -mx-2 transition-all ${
                 isActive
-                  ? 'bg-orange-600 text-white shadow-sm'
-                  : `${ct.textDim} ${ct.hoverBg} hover:text-orange-300`
+                  ? 'bg-term-600 text-white shadow-sm'
+                  : `${ct.textDim} ${ct.hoverBg} hover:text-term-300`
               }`}
             >
               <div
@@ -180,7 +180,7 @@ export function GroupableModule({
                       setAdvisors && setAdvisors((prev) => prev.filter((a) => a.name !== item.name));
                     }
                   }}
-                  className={`p-1 ${isActive ? 'text-white/70 hover:text-red-300' : 'text-orange-500/50 hover:text-red-400'}`}
+                  className={`p-1 ${isActive ? 'text-white/70 hover:text-red-300' : 'text-term-500/50 hover:text-red-400'}`}
                   title="Delete perspective"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -205,11 +205,11 @@ export function GroupableModule({
       className="border border-stone-300 dark:border-stone-700 rounded-md p-4 bg-amber-100 dark:bg-stone-800"
     >
       <div className="flex justify-between items-center mb-2">
-        <h2 className="text-gray-800 dark:text-orange-100">{title}</h2>
+        <h2 className="text-gray-800 dark:text-term-100">{title}</h2>
         {onAddClick && (
           <button
             onClick={onAddClick}
-            className="text-orange-700 dark:text-orange-400 hover:text-orange-800 dark:hover:text-orange-300 transition-colors"
+            className="text-term-700 dark:text-term-400 hover:text-term-800 dark:hover:text-term-300 transition-colors"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />

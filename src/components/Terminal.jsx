@@ -2867,7 +2867,7 @@ ${selectedText}
       const menu = document.createElement('div');
       menu.className = `
         absolute bg-gray-900 
-        border border-orange-500 
+        border border-term-500 
         rounded-md shadow-lg 
         py-1
       `;
@@ -2877,7 +2877,7 @@ ${selectedText}
       const captureButton = document.createElement('button');
       captureButton.className = `
         w-full px-4 py-2 
-        text-left text-orange-400 
+        text-left text-term-400 
         hover:bg-gray-800
       `;
       captureButton.textContent = 'Capture Selection';
@@ -3023,8 +3023,8 @@ ${selectedText}
             if (element) {
               element.scrollIntoView({ behavior: 'smooth', block: 'center' });
               // Add highlight effect
-              element.classList.add('bg-orange-950/20');
-              setTimeout(() => element.classList.remove('bg-orange-950/20'), 2000);
+              element.classList.add('bg-term-950/20');
+              setTimeout(() => element.classList.remove('bg-term-950/20'), 2000);
             }
           }, 100);
         }
@@ -3182,7 +3182,7 @@ ${selectedText}
       {isInitializing ? (
         // Loading state to prevent flash of wrong screen
         <div className="w-full h-screen bg-black flex items-center justify-center">
-          <div className="text-orange-400 animate-pulse">Loading SPACE Terminal...</div>
+          <div className="text-term-400 animate-pulse">Loading SPACE Terminal...</div>
         </div>
       ) : showWelcome && !useAuthSystem ? (
         // Welcome screen only shown in legacy mode (auth mode handles this at App level)
@@ -3267,7 +3267,7 @@ ${selectedText}
           desktopLayout={
             <div
               ref={terminalRef}
-              className="w-full h-screen font-serif flex relative bg-gradient-to-b from-amber-50 to-amber-100 text-gray-800 dark:bg-gradient-to-b dark:from-gray-900 dark:to-black dark:text-orange-400"
+              className="w-full h-screen font-serif flex relative bg-gradient-to-b from-amber-50 to-amber-100 text-gray-800 dark:bg-gradient-to-b dark:from-gray-900 dark:to-black dark:text-term-400"
               onContextMenu={handleContextMenu}
               style={{
                 /* Custom scrollbar styling for webkit browsers */
@@ -3280,13 +3280,13 @@ ${selectedText}
                 const themes = {
                   green: {
                     name: 'Terminal Green',
-                    border: 'border-orange-600/30',
-                    title: 'text-orange-400',
-                    hoverBg: 'hover:bg-orange-500/20',
-                    button: 'bg-orange-500 hover:bg-orange-500',
-                    accent: 'text-orange-400',
-                    accentHover: 'hover:text-orange-300',
-                    swatch: 'bg-orange-500',
+                    border: 'border-term-600/30',
+                    title: 'text-term-400',
+                    hoverBg: 'hover:bg-term-500/20',
+                    button: 'bg-term-500 hover:bg-term-500',
+                    accent: 'text-term-400',
+                    accentHover: 'hover:text-term-300',
+                    swatch: 'bg-term-500',
                   },
                   mahogany: {
                     name: 'Rich Mahogany',
@@ -3340,13 +3340,13 @@ ${selectedText}
                   },
                   copper: {
                     name: 'Burnished Copper',
-                    border: 'border-orange-700/40',
-                    title: 'text-orange-300',
-                    hoverBg: 'hover:bg-orange-700/20',
-                    button: 'bg-orange-700 hover:bg-orange-600',
-                    accent: 'text-orange-300',
-                    accentHover: 'hover:text-orange-200',
-                    swatch: 'bg-orange-600',
+                    border: 'border-term-700/40',
+                    title: 'text-term-300',
+                    hoverBg: 'hover:bg-term-700/20',
+                    button: 'bg-term-700 hover:bg-term-600',
+                    accent: 'text-term-300',
+                    accentHover: 'hover:text-term-200',
+                    swatch: 'bg-term-600',
                   },
                   slate: {
                     name: 'Modern Slate',
@@ -3378,10 +3378,10 @@ ${selectedText}
                         // In auth mode, let the link navigate normally to "/"
                       }}
                     >
-                      <div className="w-8 h-8 bg-orange-500 rounded flex items-center justify-center text-black font-bold">
+                      <div className="w-8 h-8 bg-term-500 rounded flex items-center justify-center text-black font-bold">
                         S
                       </div>
-                      <span className="text-xl font-semibold font-sans text-orange-400">SPACE Terminal</span>
+                      <span className="text-xl font-semibold font-sans text-term-400">SPACE Terminal</span>
                     </a>
                     <button
                       onClick={toggleSidebar}
@@ -3501,7 +3501,7 @@ ${selectedText}
                   className="absolute top-2 left-2 z-10 p-2 rounded bg-gray-200 dark:bg-stone-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors shadow-md"
                   title="Expand sidebar"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-700 dark:text-orange-200" viewBox="0 0 20 20" fill="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-700 dark:text-term-200" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
                   </svg>
                 </button>
@@ -3565,7 +3565,7 @@ ${selectedText}
                           value={editText}
                           onChange={(e) => setEditText(e.target.value)}
                           onKeyDown={handleEditKeyDown}
-                          className="w-full h-40 bg-white text-gray-800 font-sans p-2 border border-gray-300 focus:outline-none resize-none placeholder:text-amber-600 dark:placeholder:text-orange-300 dark:bg-stone-900 dark:text-white dark:border-orange-700"
+                          className="w-full h-40 bg-white text-gray-800 font-sans p-2 border border-gray-300 focus:outline-none resize-none placeholder:text-amber-600 dark:placeholder:text-term-300 dark:bg-stone-900 dark:text-white dark:border-term-700"
                           placeholder="Edit your prompt..."
                           autoFocus
                           autoComplete="off"
@@ -3590,7 +3590,7 @@ ${selectedText}
                               setEditAdvisorText('');
                             }
                           }}
-                          className="w-full h-40 bg-white text-gray-800 font-sans p-2 border border-gray-300 focus:outline-none resize-none placeholder:text-amber-600 dark:placeholder:text-orange-300 dark:bg-stone-900 dark:text-white dark:border-orange-700"
+                          className="w-full h-40 bg-white text-gray-800 font-sans p-2 border border-gray-300 focus:outline-none resize-none placeholder:text-amber-600 dark:placeholder:text-term-300 dark:bg-stone-900 dark:text-white dark:border-term-700"
                           placeholder="Edit advisor description..."
                           autoFocus
                           autoComplete="off"
@@ -3616,7 +3616,7 @@ ${selectedText}
               {/* Info Button - Top Right */}
               <div className="fixed top-4 right-4 z-50">
                 <button
-                  className="flex items-center justify-center w-8 h-8 rounded-full bg-black border border-orange-500 text-orange-400 hover:bg-orange-500 hover:text-black transition-colors"
+                  className="flex items-center justify-center w-8 h-8 rounded-full bg-black border border-term-500 text-term-400 hover:bg-term-500 hover:text-black transition-colors"
                   title="About SPACE Terminal"
                   onClick={() => setShowInfoModal(true)}
                 >

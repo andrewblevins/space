@@ -30,7 +30,7 @@ const UsageDisplay = () => {
   if (!usageSummary) {
     return (
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-orange-400">API Usage</h3>
+        <h3 className="text-lg font-semibold text-term-400">API Usage</h3>
         <p className="text-gray-400">Loading usage statistics...</p>
       </div>
     );
@@ -52,13 +52,13 @@ const UsageDisplay = () => {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-orange-400">API Usage</h3>
+        <h3 className="text-lg font-semibold text-term-400">API Usage</h3>
         <button
           onClick={() => {
             refreshUsage();
             if (isEnabled) refetchCredits();
           }}
-          className="text-xs text-gray-400 hover:text-orange-400 transition-colors"
+          className="text-xs text-gray-400 hover:text-term-400 transition-colors"
           title="Refresh usage statistics"
         >
           🔄 Refresh
@@ -67,10 +67,10 @@ const UsageDisplay = () => {
 
       {/* OpenRouter Credits (Real Balance) */}
       {isEnabled && credits && !creditsError && (
-        <div className="bg-orange-950/20 border border-orange-500/30 rounded-lg p-4">
+        <div className="bg-term-950/20 border border-term-500/30 rounded-lg p-4">
           <div className="text-center">
             <div className="text-xs text-gray-400 mb-1">OpenRouter Balance</div>
-            <div className="text-2xl font-bold text-orange-400">
+            <div className="text-2xl font-bold text-term-400">
               {formatCost(credits.remaining)}
             </div>
             <div className="text-xs text-gray-500 mt-2">
@@ -90,9 +90,9 @@ const UsageDisplay = () => {
       )}
 
       {/* Total Cost Display (Estimated from usage) */}
-      <div className="bg-gray-900/30 border border-orange-500/20 rounded-lg p-4">
+      <div className="bg-gray-900/30 border border-term-500/20 rounded-lg p-4">
         <div className="text-center">
-          <div className="text-2xl font-bold text-orange-400">
+          <div className="text-2xl font-bold text-term-400">
             {formatCost(totalCost)}
           </div>
           <div className="text-sm text-gray-400">This Session</div>
@@ -101,11 +101,11 @@ const UsageDisplay = () => {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="bg-gray-900/20 border border-orange-500/10 rounded-lg p-3">
+        <div className="bg-gray-900/20 border border-term-500/10 rounded-lg p-3">
           <div className="text-lg font-semibold text-white">{sessions}</div>
           <div className="text-xs text-gray-400">Sessions</div>
         </div>
-        <div className="bg-gray-900/20 border border-orange-500/10 rounded-lg p-3">
+        <div className="bg-gray-900/20 border border-term-500/10 rounded-lg p-3">
           <div className="text-lg font-semibold text-white">{totalTokens.toLocaleString()}</div>
           <div className="text-xs text-gray-400">Total Tokens</div>
         </div>
@@ -125,7 +125,7 @@ const UsageDisplay = () => {
 
       {/* Provider Breakdown */}
       <div className="space-y-2">
-        <h4 className="text-sm font-medium text-orange-400">By Provider</h4>
+        <h4 className="text-sm font-medium text-term-400">By Provider</h4>
         <div className="space-y-1">
           <div className="flex justify-between text-sm">
             <span className="text-gray-400">Claude (Anthropic):</span>

@@ -109,18 +109,18 @@ const ImportExportModal = ({ isOpen, onClose, advisors, onImport }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={onClose}>
       <div 
-        className="bg-gray-900 border border-orange-500 rounded-lg p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto" 
+        className="bg-gray-900 border border-term-500 rounded-lg p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto" 
         onClick={e => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-orange-400 text-xl font-semibold">Import/Export Advisors</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-orange-400 text-xl">✕</button>
+          <h2 className="text-term-400 text-xl font-semibold">Import/Export Advisors</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-term-400 text-xl">✕</button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Export Section */}
           <div className="border border-gray-700 rounded p-4">
-            <h3 className="text-orange-400 text-lg mb-3">Export Advisors</h3>
+            <h3 className="text-term-400 text-lg mb-3">Export Advisors</h3>
             
             {advisors.length === 0 ? (
               <p className="text-gray-400">No advisors to export</p>
@@ -130,14 +130,14 @@ const ImportExportModal = ({ isOpen, onClose, advisors, onImport }) => {
                   <div className="flex gap-2 mb-2">
                     <button 
                       onClick={handleSelectAll}
-                      className="text-sm text-orange-400 hover:text-orange-300"
+                      className="text-sm text-term-400 hover:text-term-300"
                     >
                       Select All
                     </button>
                     <span className="text-gray-500">|</span>
                     <button 
                       onClick={handleSelectNone}
-                      className="text-sm text-orange-400 hover:text-orange-300"
+                      className="text-sm text-term-400 hover:text-term-300"
                     >
                       Select None
                     </button>
@@ -154,7 +154,7 @@ const ImportExportModal = ({ isOpen, onClose, advisors, onImport }) => {
                         type="checkbox"
                         checked={selectedAdvisors.has(index)}
                         onChange={() => handleAdvisorToggle(index)}
-                        className="text-orange-400"
+                        className="text-term-400"
                       />
                       <span className="text-gray-300 truncate">
                         {advisor.name}
@@ -167,7 +167,7 @@ const ImportExportModal = ({ isOpen, onClose, advisors, onImport }) => {
                 <button
                   onClick={handleExport}
                   disabled={selectedAdvisors.size === 0}
-                  className="w-full px-4 py-2 bg-orange-800 text-white rounded hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full px-4 py-2 bg-term-800 text-white rounded hover:bg-term-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Export Selected Advisors
                 </button>
@@ -177,11 +177,11 @@ const ImportExportModal = ({ isOpen, onClose, advisors, onImport }) => {
 
           {/* Import Section */}
           <div className="border border-gray-700 rounded p-4">
-            <h3 className="text-orange-400 text-lg mb-3">Import Advisors</h3>
+            <h3 className="text-term-400 text-lg mb-3">Import Advisors</h3>
             
             <div
               className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-                dragOver ? 'border-orange-500 bg-orange-950 bg-opacity-20' : 'border-gray-600'
+                dragOver ? 'border-term-500 bg-term-950 bg-opacity-20' : 'border-gray-600'
               }`}
               onDrop={handleDrop}
               onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
@@ -189,7 +189,7 @@ const ImportExportModal = ({ isOpen, onClose, advisors, onImport }) => {
             >
               <p className="text-gray-300 mb-2">Drop advisor file here or</p>
               <label className="cursor-pointer">
-                <span className="text-orange-400 hover:text-orange-300 underline">
+                <span className="text-term-400 hover:text-term-300 underline">
                   browse files
                 </span>
                 <input
@@ -210,7 +210,7 @@ const ImportExportModal = ({ isOpen, onClose, advisors, onImport }) => {
 
             {previewData && (
               <div className="mt-4">
-                <h4 className="text-orange-400 mb-2">Preview:</h4>
+                <h4 className="text-term-400 mb-2">Preview:</h4>
                 <div className="bg-black border border-gray-600 rounded p-2 max-h-32 overflow-y-auto">
                   <p className="text-gray-300 text-sm mb-1">
                     Found {previewData.advisors.length} advisors:
@@ -231,7 +231,7 @@ const ImportExportModal = ({ isOpen, onClose, advisors, onImport }) => {
                       value="add"
                       checked={importMode === 'add'}
                       onChange={(e) => setImportMode(e.target.value)}
-                      className="text-orange-400"
+                      className="text-term-400"
                     />
                     <span className="text-gray-300 text-sm">Add to existing advisors</span>
                   </label>
@@ -242,7 +242,7 @@ const ImportExportModal = ({ isOpen, onClose, advisors, onImport }) => {
                       value="replace"
                       checked={importMode === 'replace'}
                       onChange={(e) => setImportMode(e.target.value)}
-                      className="text-orange-400"
+                      className="text-term-400"
                     />
                     <span className="text-gray-300 text-sm">Replace all advisors</span>
                   </label>
@@ -262,7 +262,7 @@ const ImportExportModal = ({ isOpen, onClose, advisors, onImport }) => {
         <div className="flex justify-end mt-6">
           <button
             onClick={onClose}
-            className="px-4 py-2 border border-orange-500 text-orange-400 rounded hover:bg-orange-500 hover:text-black"
+            className="px-4 py-2 border border-term-500 text-term-400 rounded hover:bg-term-500 hover:text-black"
           >
             Close
           </button>

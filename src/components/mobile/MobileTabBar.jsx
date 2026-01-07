@@ -53,8 +53,8 @@ const MobileTabBar = ({ activeTab, setActiveTab }) => {
           onClick={() => setActiveTab(tab.id)}
           className={`flex-1 flex flex-col items-center justify-center py-3 px-2 transition-colors min-h-[60px] ${
             activeTab === tab.id
-              ? 'text-orange-400 bg-orange-50 dark:bg-orange-950/20'
-              : 'text-gray-600 dark:text-gray-400 hover:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/10'
+              ? 'text-term-400 bg-term-50 dark:bg-term-950/20'
+              : 'text-gray-600 dark:text-gray-400 hover:text-term-400 hover:bg-term-50 dark:hover:bg-term-950/10'
           }`}
         >
           <div className="mb-1">

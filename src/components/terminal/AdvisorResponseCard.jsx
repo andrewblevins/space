@@ -52,17 +52,17 @@ export const AdvisorResponseCard = memo(({ advisor, allAdvisors = [], onAssertio
             key={index}
             className="mb-3"
             components={{
-              p: ({ children }) => <p className="font-serif w-full text-gray-800 dark:text-orange-100 leading-relaxed">{children}</p>,
+              p: ({ children }) => <p className="font-serif w-full text-gray-800 dark:text-term-100 leading-relaxed">{children}</p>,
               em: ({ children }) => <em className="italic">{children}</em>,
               strong: ({ children }) => <strong className="font-bold">{children}</strong>,
               code: ({ node, inline, className, children, ...props }) => {
                 return inline ? (
-                  <code className="text-orange-600 dark:text-orange-400 font-mono bg-stone-200 dark:bg-stone-900 px-1 rounded" {...props}>
+                  <code className="text-term-600 dark:text-term-400 font-mono bg-stone-200 dark:bg-stone-900 px-1 rounded" {...props}>
                     {children}
                   </code>
                 ) : (
                   <pre className="bg-stone-200 dark:bg-stone-900 p-4 rounded-md my-2 overflow-x-auto whitespace-pre-wrap break-all w-full">
-                    <code className="font-mono block text-gray-800 dark:text-orange-100" {...props}>
+                    <code className="font-mono block text-gray-800 dark:text-term-100" {...props}>
                       {children}
                     </code>
                   </pre>
@@ -137,8 +137,8 @@ export const AdvisorResponseCard = memo(({ advisor, allAdvisors = [], onAssertio
     : "flex items-center justify-between mb-3";
 
   const titleClasses = compact
-    ? "font-bold font-serif text-base text-gray-800 dark:text-orange-100 flex items-center"
-    : "font-bold font-serif text-lg text-gray-800 dark:text-orange-100 flex items-center";
+    ? "font-bold font-serif text-base text-gray-800 dark:text-term-100 flex items-center"
+    : "font-bold font-serif text-lg text-gray-800 dark:text-term-100 flex items-center";
 
   return (
     <div className={cardClasses} onClick={handleCardClick}>
@@ -174,7 +174,7 @@ export const AdvisorResponseCard = memo(({ advisor, allAdvisors = [], onAssertio
       </div>
 
       {/* Response content */}
-      <div className="text-gray-800 dark:text-orange-100">
+      <div className="text-gray-800 dark:text-term-100">
         <StreamingMarkdownRenderer content={displayContent} />
       </div>
 
