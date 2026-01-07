@@ -322,7 +322,7 @@ const SettingsMenu = ({
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="text-gray-800 dark:text-term-100 font-medium">
-                          Claude Sonnet 4
+                          Claude Sonnet 4.5
                         </div>
                         <div className="text-sm text-gray-600 dark:text-gray-400">
                           Anthropic's latest model via OpenRouter
@@ -334,7 +334,7 @@ const SettingsMenu = ({
                     </div>
                   </div>
                   <p className="text-xs text-gray-400 mt-2">
-                    Production uses Claude Sonnet 4 for optimal performance
+                    Production uses Claude Sonnet 4.5 for optimal performance
                   </p>
                 </div>
               )}
