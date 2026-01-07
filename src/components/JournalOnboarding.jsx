@@ -44,13 +44,15 @@ const JournalOnboarding = ({
   };
 
   const handleKeyDown = (e) => {
-    // Handle Shift+Enter to proceed
-    if (e.key === 'Enter' && e.shiftKey && !e.metaKey && !e.ctrlKey) {
+    // Handle Enter to proceed (Shift+Enter for newline - default behavior)
+    if (e.key === 'Enter' && !e.shiftKey && !e.metaKey && !e.ctrlKey) {
       e.preventDefault();
 
       // In question phase, proceed to next question
       if (contextFlow && contextFlow.phase === 'questions') {
-        handleContinue();
+        if (!isGenerating) {
+          handleContinue();
+        }
       }
       // In initial phase, proceed if we have enough words
       else if (canGenerate && !isGenerating) {
@@ -159,7 +161,13 @@ const JournalOnboarding = ({
             autoFocus
           />
 
-          <div className="flex items-center justify-between mt-4">
+          <div className="flex items-center justify-between mt-2">
+            <span className="text-xs text-amber-600/60 dark:text-term-500">
+              Enter to continue · Shift+Enter for new line
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between mt-2">
             {/* Only show "Generate Perspectives Now" if NOT on last question */}
             {!isLastQuestion && (
               <button
@@ -234,7 +242,13 @@ const JournalOnboarding = ({
           data-form-type="other"
         />
 
-        <div className="flex items-center justify-between mt-4">
+        <div className="flex items-center justify-between mt-2">
+          <span className="text-xs text-amber-600/60 dark:text-term-500">
+            Enter to continue · Shift+Enter for new line
+          </span>
+        </div>
+
+        <div className="flex items-center justify-between mt-2">
           <div className="text-sm text-amber-700 dark:text-term-300">
             {wordCount < 25 ? (
               <span>Write at least 25 words to continue ({wordCount}/25)</span>
