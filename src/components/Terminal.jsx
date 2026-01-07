@@ -1574,15 +1574,18 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
     setJournalSuggestions([]);
     setShowJournalSuggestions(false);
     setIsGeneratingSuggestions(false);
-    
+
+    // Ensure sessionId is a string for regex testing
+    const sessionIdStr = String(sessionId);
+
     // Check if sessionId looks like a UUID (database ID) or integer (localStorage ID)
-    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(sessionId);
-    const isLocalStorageId = /^\d+$/.test(sessionId);
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(sessionIdStr);
+    const isLocalStorageId = /^\d+$/.test(sessionIdStr);
     
     if (useDatabaseStorage && isUUID) {
       // Load from database - sessionId is a proper UUID
       try {
-        const conversation = await storage.loadConversation(sessionId);
+        const conversation = await storage.loadConversation(sessionIdStr);
         setCurrentConversationId(conversation.id);
         setCurrentSessionId(conversation.id);
         persistCurrentSession(conversation.id, conversation.id); // Persist so it survives refresh
@@ -1680,7 +1683,7 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
       }
     } else if (isLocalStorageId) {
       // Legacy localStorage loading (works for both database and localStorage modes)
-      const sessionData = localStorage.getItem(`space_session_${sessionId}`);
+      const sessionData = localStorage.getItem(`space_session_${sessionIdStr}`);
       if (sessionData) {
         const session = JSON.parse(sessionData);
         setCurrentSessionId(session.id);
@@ -2730,9 +2733,14 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
         }
         
         async function saveLegacySession() {
+          // Get timestamp from the last message, or current time if no messages
+          const lastMessageTimestamp = messages.length > 0
+            ? messages[messages.length - 1].timestamp
+            : new Date().toISOString();
+
           const sessionData = {
             id: currentSessionId,
-            timestamp: new Date().toISOString(),
+            timestamp: lastMessageTimestamp,
             messages: messages.map(msg => ({
               ...msg,
               tags: msg.tags || []
