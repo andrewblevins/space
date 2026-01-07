@@ -11,16 +11,16 @@ const EditPromptForm = ({ prompt, onSubmit, onCancel }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-      <div className="bg-gray-900 p-6 rounded-lg border border-orange-500 w-96 max-h-[80vh] overflow-y-auto overflow-x-hidden">
-        <h2 className="text-orange-400 text-xl mb-4">Edit Prompt</h2>
+      <div className="bg-gray-900 p-6 rounded-lg border border-term-500 w-96 max-h-[80vh] overflow-y-auto overflow-x-hidden">
+        <h2 className="text-term-400 text-xl mb-4">Edit Prompt</h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label className="block text-orange-400 mb-2">Name:</label>
+            <label className="block text-term-400 mb-2">Name:</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full bg-stone-900 text-white font-sans border border-orange-700 p-2 focus:outline-none placeholder:text-orange-300"
+              className="w-full bg-stone-900 text-white font-sans border border-term-700 p-2 focus:outline-none placeholder:text-term-300"
               autoFocus
               autoComplete="off"
               spellCheck="true"
@@ -28,11 +28,11 @@ const EditPromptForm = ({ prompt, onSubmit, onCancel }) => {
             />
           </div>
           <div className="mb-4">
-            <label className="block text-orange-400 mb-2">Text:</label>
+            <label className="block text-term-400 mb-2">Text:</label>
             <textarea
               value={text}
               onChange={(e) => setText(e.target.value)}
-              className="w-full bg-stone-900 text-white font-sans border border-orange-700 p-2 h-32 focus:outline-none resize-none placeholder:text-orange-300"
+              className="w-full bg-stone-900 text-white font-sans border border-term-700 p-2 h-32 focus:outline-none resize-none placeholder:text-term-300"
               autoComplete="off"
               spellCheck="true"
               data-role="prompt-text"
@@ -42,13 +42,13 @@ const EditPromptForm = ({ prompt, onSubmit, onCancel }) => {
             <button
               type="button"
               onClick={onCancel}
-              className="text-orange-400 hover:text-orange-300"
+              className="text-term-400 hover:text-term-300"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="text-orange-400 hover:text-orange-300"
+              className="text-term-400 hover:text-term-300"
             >
               Save Changes
             </button>

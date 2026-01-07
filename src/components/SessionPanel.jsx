@@ -186,14 +186,14 @@ const SessionPanel = ({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={onClose}>
       <div 
-        className="bg-gray-900 border border-orange-500 rounded-lg p-6 w-full max-w-md mx-4 max-h-[80vh] overflow-y-auto overflow-x-hidden flex flex-col"
+        className="bg-gray-900 border border-term-500 rounded-lg p-6 w-full max-w-md mx-4 max-h-[80vh] overflow-y-auto overflow-x-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-orange-400 text-xl font-semibold">Previous Chats</h2>
+          <h2 className="text-term-400 text-xl font-semibold">Previous Chats</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-orange-400 transition-colors"
+            className="text-gray-400 hover:text-term-400 transition-colors"
             title="Close Previous Chats"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -206,7 +206,7 @@ const SessionPanel = ({
         <div className="mb-6 space-y-3">
           <button
             onClick={handleNewSession}
-            className="w-full px-4 py-2 bg-black border border-orange-500 rounded text-orange-400 hover:bg-orange-500 hover:text-black transition-colors"
+            className="w-full px-4 py-2 bg-black border border-term-500 rounded text-term-400 hover:bg-term-500 hover:text-black transition-colors"
           >
             New Session
           </button>
@@ -223,7 +223,7 @@ const SessionPanel = ({
 
         {/* Sessions List */}
         <div className="flex-1 overflow-y-auto">
-          <h3 className="text-orange-400 font-medium mb-3">
+          <h3 className="text-term-400 font-medium mb-3">
             Sessions {isLoading ? '(loading...)' : `(${sessions.length})`}
           </h3>
 
@@ -247,23 +247,23 @@ const SessionPanel = ({
                   key={session.id}
                   className={`p-3 rounded border ${
                     isCurrentSession
-                      ? 'border-orange-500 bg-orange-500 bg-opacity-10' 
+                      ? 'border-term-500 bg-term-500 bg-opacity-10' 
                       : 'border-gray-600 bg-gray-800'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center">
                       {isCurrentSession ? (
-                        <div className="w-2 h-2 bg-orange-500 rounded-full mr-2" title="Current Session"></div>
+                        <div className="w-2 h-2 bg-term-500 rounded-full mr-2" title="Current Session"></div>
                       ) : (
                         <div className="w-2 h-2 bg-gray-600 rounded-full mr-2"></div>
                       )}
-                      <span className="text-orange-400 font-medium">
+                      <span className="text-term-400 font-medium">
                         {session.title || `Session ${session.id}`}
                       </span>
                     </div>
                     {isCurrentSession && (
-                      <span className="text-xs text-orange-400 bg-orange-500 bg-opacity-20 px-2 py-1 rounded">
+                      <span className="text-xs text-term-400 bg-term-500 bg-opacity-20 px-2 py-1 rounded">
                         CURRENT
                       </span>
                     )}
@@ -277,7 +277,7 @@ const SessionPanel = ({
                     <div className="flex space-x-2">
                       <button
                         onClick={() => handleLoadSession(session.id)}
-                        className="flex-1 px-3 py-1 text-xs bg-black border border-orange-500 rounded text-orange-400 hover:bg-orange-500 hover:text-black transition-colors"
+                        className="flex-1 px-3 py-1 text-xs bg-black border border-term-500 rounded text-term-400 hover:bg-term-500 hover:text-black transition-colors"
                       >
                         Load
                       </button>

@@ -80,10 +80,10 @@ const TouchInput = ({
           font-sans 
           p-3 
           border 
-          border-orange-700 
+          border-term-700 
           focus:outline-none 
           focus:ring-2 
-          focus:ring-orange-600 
+          focus:ring-term-600 
           focus:border-transparent
           rounded-md 
           resize-none 
@@ -91,9 +91,9 @@ const TouchInput = ({
           text-gray-800 
           dark:bg-stone-900 
           dark:text-white 
-          dark:border-orange-700 
-          dark:focus:ring-orange-500
-          placeholder:text-amber-600 dark:placeholder:text-orange-300
+          dark:border-term-700 
+          dark:focus:ring-term-500
+          placeholder:text-amber-600 dark:placeholder:text-term-300
           text-base
           leading-relaxed
           ${isFocused ? 'shadow-lg' : ''}

@@ -277,12 +277,12 @@ const AccordionMenu = ({
     <div ref={menuRef} className="fixed bottom-4 left-4 z-50">
       {/* Expanded Menu Items */}
       {isExpanded && (
-        <div className="absolute bottom-full mb-2 bg-black border border-orange-500 rounded-lg shadow-lg">
+        <div className="absolute bottom-full mb-2 bg-black border border-term-500 rounded-lg shadow-lg">
           {menuItems.map((item) => (
             <button
               key={item.id}
               onClick={() => handleItemClick(item)}
-              className="flex items-center w-full px-4 py-3 text-orange-400 hover:bg-orange-500 hover:text-black transition-colors first:rounded-t-lg last:rounded-b-lg border-b border-orange-500 last:border-b-0"
+              className="flex items-center w-full px-4 py-3 text-term-400 hover:bg-term-500 hover:text-black transition-colors first:rounded-t-lg last:rounded-b-lg border-b border-term-500 last:border-b-0"
               title={item.label}
             >
               {item.icon}
@@ -295,10 +295,10 @@ const AccordionMenu = ({
       {/* Toggle Button */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className={`flex items-center justify-center w-8 h-8 rounded-full border border-orange-500 transition-colors ${
+        className={`flex items-center justify-center w-8 h-8 rounded-full border border-term-500 transition-colors ${
           isExpanded 
-            ? 'bg-orange-500 text-black' 
-            : 'bg-black text-orange-400 hover:bg-orange-500 hover:text-black'
+            ? 'bg-term-500 text-black' 
+            : 'bg-black text-term-400 hover:bg-term-500 hover:text-black'
         }`}
         title={isExpanded ? 'Close Menu' : 'Open Menu'}
       >

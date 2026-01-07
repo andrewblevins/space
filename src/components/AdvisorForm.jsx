@@ -142,8 +142,8 @@ const AdvisorForm = ({ onSubmit, onCancel, initialName = '', existingAdvisors = 
 
   return (
     <div className="fixed inset-0 bg-white/70 dark:bg-black/50 flex items-center justify-center z-[60]">
-      <div className="bg-gray-100 p-6 rounded-lg border border-orange-700 w-96 max-h-[80vh] overflow-y-auto overflow-x-hidden dark:bg-stone-900 dark:border-orange-500">
-        <h2 className="text-orange-400 text-xl mb-4">Add New Advisor</h2>
+      <div className="bg-gray-100 p-6 rounded-lg border border-term-700 w-96 max-h-[80vh] overflow-y-auto overflow-x-hidden dark:bg-stone-900 dark:border-term-500">
+        <h2 className="text-term-400 text-xl mb-4">Add New Advisor</h2>
         {error && (
           <div className="text-red-400 mb-4">{error}</div>
         )}
@@ -152,13 +152,13 @@ const AdvisorForm = ({ onSubmit, onCancel, initialName = '', existingAdvisors = 
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Advisor name"
-          className="w-full bg-white text-gray-800 font-sans p-2 mb-4 border border-gray-300 focus:outline-none placeholder:text-amber-600 dark:placeholder:text-orange-300 dark:bg-stone-900 dark:text-white dark:border-orange-700"
+          className="w-full bg-white text-gray-800 font-sans p-2 mb-4 border border-gray-300 focus:outline-none placeholder:text-amber-600 dark:placeholder:text-term-300 dark:bg-stone-900 dark:text-white dark:border-term-700"
           autoComplete="off"
           spellCheck="true"
           data-role="advisor-name"
         />
         
-        <label className="block text-sm font-medium text-gray-700 dark:text-orange-200 mb-2">
+        <label className="block text-sm font-medium text-gray-700 dark:text-term-200 mb-2">
           Description (Optional):
         </label>
         <div className="relative">
@@ -166,7 +166,7 @@ const AdvisorForm = ({ onSubmit, onCancel, initialName = '', existingAdvisors = 
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Leave blank to grow through assertions"
-            className="w-full h-40 bg-white text-gray-800 font-sans p-2 mb-2 border border-gray-300 focus:outline-none resize-none placeholder:text-amber-600 dark:placeholder:text-orange-300 dark:bg-stone-900 dark:text-white dark:border-orange-700"
+            className="w-full h-40 bg-white text-gray-800 font-sans p-2 mb-2 border border-gray-300 focus:outline-none resize-none placeholder:text-amber-600 dark:placeholder:text-term-300 dark:bg-stone-900 dark:text-white dark:border-term-700"
             autoComplete="off"
             spellCheck="true"
             data-role="advisor-description"
@@ -185,9 +185,9 @@ const AdvisorForm = ({ onSubmit, onCancel, initialName = '', existingAdvisors = 
                   onClick={() => setSelectedColor(color)}
                   className={`w-7 h-7 rounded-full ${color} border-2 ${
                     selectedColor === color 
-                      ? 'border-orange-500 ring-2 ring-orange-500 ring-opacity-50' 
+                      ? 'border-term-500 ring-2 ring-term-500 ring-opacity-50' 
                       : 'border-gray-300 dark:border-stone-600'
-                  } hover:border-orange-500 transition-all duration-200 hover:scale-110`}
+                  } hover:border-term-500 transition-all duration-200 hover:scale-110`}
                 />
               ))}
             </div>
@@ -200,9 +200,9 @@ const AdvisorForm = ({ onSubmit, onCancel, initialName = '', existingAdvisors = 
                   onClick={() => setSelectedColor(color)}
                   className={`w-7 h-7 rounded-full ${color} border-2 ${
                     selectedColor === color 
-                      ? 'border-orange-500 ring-2 ring-orange-500 ring-opacity-50' 
+                      ? 'border-term-500 ring-2 ring-term-500 ring-opacity-50' 
                       : 'border-gray-300 dark:border-stone-600'
-                  } hover:border-orange-500 transition-all duration-200 hover:scale-110`}
+                  } hover:border-term-500 transition-all duration-200 hover:scale-110`}
                 />
               ))}
             </div>
@@ -222,7 +222,7 @@ const AdvisorForm = ({ onSubmit, onCancel, initialName = '', existingAdvisors = 
         <div className="flex justify-between">
           <button
             onClick={onCancel}
-            className="px-4 py-2 text-orange-600 border border-orange-700 rounded hover:bg-orange-700 hover:text-white dark:text-orange-400 dark:border-orange-500 dark:hover:bg-orange-500 dark:hover:text-black"
+            className="px-4 py-2 text-term-600 border border-term-700 rounded hover:bg-term-700 hover:text-white dark:text-term-400 dark:border-term-500 dark:hover:bg-term-500 dark:hover:text-black"
           >
             Cancel
           </button>
@@ -239,7 +239,7 @@ const AdvisorForm = ({ onSubmit, onCancel, initialName = '', existingAdvisors = 
               onSubmit({ name, description, color: selectedColor });
             }}
             disabled={isGenerating}
-            className="px-4 py-2 text-orange-600 border border-orange-700 rounded hover:bg-orange-700 hover:text-white dark:text-orange-400 dark:border-orange-500 dark:hover:bg-orange-500 dark:hover:text-black disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 text-term-600 border border-term-700 rounded hover:bg-term-700 hover:text-white dark:text-term-400 dark:border-term-500 dark:hover:bg-term-500 dark:hover:text-black disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Add Advisor
           </button>

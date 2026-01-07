@@ -13,16 +13,16 @@ const EditAdvisorForm = ({ advisor, onSubmit, onCancel }) => {
 
   return (
     <div className="fixed inset-0 bg-white/70 dark:bg-black/70 flex items-center justify-center z-[60]">
-      <div className="bg-gray-100 p-6 rounded-lg border border-orange-700 w-96 max-h-[80vh] overflow-y-auto overflow-x-hidden dark:bg-stone-900 dark:border-orange-500 relative">
-        <h2 className="text-orange-400 text-xl mb-4">Edit Advisor</h2>
+      <div className="bg-gray-100 p-6 rounded-lg border border-term-700 w-96 max-h-[80vh] overflow-y-auto overflow-x-hidden dark:bg-stone-900 dark:border-term-500 relative">
+        <h2 className="text-term-400 text-xl mb-4">Edit Advisor</h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label className="block text-orange-400 mb-2">Name:</label>
+            <label className="block text-term-400 mb-2">Name:</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full bg-white text-gray-800 font-sans border border-gray-300 p-2 focus:outline-none placeholder:text-amber-600 dark:placeholder:text-orange-300 dark:bg-stone-900 dark:text-white dark:border-orange-700"
+              className="w-full bg-white text-gray-800 font-sans border border-gray-300 p-2 focus:outline-none placeholder:text-amber-600 dark:placeholder:text-term-300 dark:bg-stone-900 dark:text-white dark:border-term-700"
               autoFocus
               autoComplete="off"
               spellCheck="true"
@@ -30,11 +30,11 @@ const EditAdvisorForm = ({ advisor, onSubmit, onCancel }) => {
             />
           </div>
           <div className="mb-4">
-            <label className="block text-orange-400 mb-2">Description:</label>
+            <label className="block text-term-400 mb-2">Description:</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full bg-white text-gray-800 font-sans border border-gray-300 p-2 h-32 focus:outline-none resize-none placeholder:text-amber-600 dark:placeholder:text-orange-300 dark:bg-stone-900 dark:text-white dark:border-orange-700"
+              className="w-full bg-white text-gray-800 font-sans border border-gray-300 p-2 h-32 focus:outline-none resize-none placeholder:text-amber-600 dark:placeholder:text-term-300 dark:bg-stone-900 dark:text-white dark:border-term-700"
               autoComplete="off"
               spellCheck="true"
               data-role="advisor-description"
@@ -53,9 +53,9 @@ const EditAdvisorForm = ({ advisor, onSubmit, onCancel }) => {
                     onClick={() => setSelectedColor(color)}
                     className={`w-7 h-7 rounded-full ${color} border-2 ${
                       selectedColor === color 
-                        ? 'border-orange-500 ring-2 ring-orange-500 ring-opacity-50' 
+                        ? 'border-term-500 ring-2 ring-term-500 ring-opacity-50' 
                         : 'border-gray-300 dark:border-stone-600'
-                    } hover:border-orange-500 transition-all duration-200 hover:scale-110`}
+                    } hover:border-term-500 transition-all duration-200 hover:scale-110`}
                   />
                 ))}
               </div>
@@ -68,9 +68,9 @@ const EditAdvisorForm = ({ advisor, onSubmit, onCancel }) => {
                     onClick={() => setSelectedColor(color)}
                     className={`w-7 h-7 rounded-full ${color} border-2 ${
                       selectedColor === color 
-                        ? 'border-orange-500 ring-2 ring-orange-500 ring-opacity-50' 
+                        ? 'border-term-500 ring-2 ring-term-500 ring-opacity-50' 
                         : 'border-gray-300 dark:border-stone-600'
-                    } hover:border-orange-500 transition-all duration-200 hover:scale-110`}
+                    } hover:border-term-500 transition-all duration-200 hover:scale-110`}
                   />
                 ))}
               </div>
@@ -81,13 +81,13 @@ const EditAdvisorForm = ({ advisor, onSubmit, onCancel }) => {
             <button
               type="button"
               onClick={onCancel}
-              className="text-orange-400 hover:text-orange-300"
+              className="text-term-400 hover:text-term-300"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="text-orange-400 hover:text-orange-300"
+              className="text-term-400 hover:text-term-300"
             >
               Save Changes
             </button>

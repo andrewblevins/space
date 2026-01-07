@@ -18,8 +18,8 @@ export function Module({ title, items = [], onItemClick, activeItems = [] }) {
             className={`
               text-gray-300
               whitespace-pre-wrap
-              ${onItemClick ? 'cursor-pointer hover:text-orange-400 transition-colors' : ''}
-              ${activeItems.includes(item) ? 'text-orange-400' : ''}
+              ${onItemClick ? 'cursor-pointer hover:text-term-400 transition-colors' : ''}
+              ${activeItems.includes(item) ? 'text-term-400' : ''}
             `}
             onClick={() => onItemClick && onItemClick(item)}
           >

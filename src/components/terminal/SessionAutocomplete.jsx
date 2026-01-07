@@ -122,7 +122,7 @@ export function SessionAutocomplete({
               className={`
                 p-3 rounded-md cursor-pointer transition-colors border
                 ${isSelected 
-                  ? 'bg-orange-50 dark:bg-orange-950/20 border-orange-400 dark:border-orange-700' 
+                  ? 'bg-term-50 dark:bg-term-950/20 border-term-400 dark:border-term-700' 
                   : 'bg-transparent border-transparent hover:bg-gray-50 dark:hover:bg-gray-800'
                 }
               `}
