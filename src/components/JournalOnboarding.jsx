@@ -217,7 +217,7 @@ const JournalOnboarding = ({
   return (
     <div className="flex-1 flex items-center justify-center p-8">
       <div className="max-w-2xl w-full">
-        <h2 className="text-2xl font-serif text-gray-800 dark:text-sage-400 mb-4">
+        <h2 className="text-2xl font-serif text-amber-800 dark:text-term-300 mb-4">
           What's on your mind?
         </h2>
 
