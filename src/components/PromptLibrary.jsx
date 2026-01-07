@@ -47,7 +47,7 @@ const PromptLibrary = ({
       >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-700">
-          <h2 className="text-term-400 text-xl font-semibold">Prompt Library</h2>
+          <h2 className="text-sage-400 text-xl font-semibold">Prompt Library</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-term-400 transition-colors"
@@ -68,7 +68,7 @@ const PromptLibrary = ({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search prompts..."
-                className="w-full bg-white text-gray-800 font-sans border border-gray-300 rounded px-3 py-2 pl-10 focus:outline-none focus:ring-1 focus:ring-term-600 placeholder:text-amber-600 dark:placeholder:text-term-300 dark:bg-stone-900 dark:text-white dark:border-term-700"
+                className="w-full bg-white text-gray-800 font-sans border border-gray-300 rounded px-3 py-2 pl-10 focus:outline-none focus:ring-1 focus:ring-term-600 placeholder:text-amber-600 dark:placeholder:text-sage-400 dark:bg-stone-900 dark:text-white dark:border-term-700"
               />
               <svg 
                 className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"
@@ -109,7 +109,7 @@ const PromptLibrary = ({
               {filteredPrompts.map((prompt) => (
                 <div key={prompt.name} className="bg-white border border-gray-300 rounded-lg p-4 dark:bg-black dark:border-stone-600">
                   <div className="flex items-start justify-between mb-3">
-                    <h3 className="text-term-400 font-semibold text-lg">{prompt.name}</h3>
+                    <h3 className="text-sage-400 font-semibold text-lg">{prompt.name}</h3>
                     <div className="flex items-center space-x-2">
                       <button
                         onClick={() => handleUsePrompt(prompt)}

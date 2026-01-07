@@ -93,7 +93,7 @@ const TouchInput = ({
           dark:text-white 
           dark:border-term-700 
           dark:focus:ring-term-500
-          placeholder:text-amber-600 dark:placeholder:text-term-300
+          placeholder:text-amber-600 dark:placeholder:text-sage-400
           text-base
           leading-relaxed
           ${isFocused ? 'shadow-lg' : ''}

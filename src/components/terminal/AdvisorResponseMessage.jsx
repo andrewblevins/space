@@ -112,7 +112,7 @@ export const AdvisorResponseMessage = memo(({ content, paragraphSpacing = 0.25, 
       {sections.map((section, index) => (
         <div key={index} className={index > 0 ? 'mt-6' : ''}>
           {section.name && (
-            <h3 className="font-bold font-serif text-lg mb-3 text-gray-800 dark:text-term-100 flex items-center">
+            <h3 className="font-bold font-serif text-lg mb-3 text-sage-600 dark:text-sage-400 flex items-center">
               <span className={`w-2 h-2 rounded-full ${section.colorClass} mr-3`}></span>
               {section.name}
             </h3>

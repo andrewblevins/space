@@ -137,8 +137,8 @@ export const AdvisorResponseCard = memo(({ advisor, allAdvisors = [], onAssertio
     : "flex items-center justify-between mb-3";
 
   const titleClasses = compact
-    ? "font-bold font-serif text-base text-gray-800 dark:text-term-100 flex items-center"
-    : "font-bold font-serif text-lg text-gray-800 dark:text-term-100 flex items-center";
+    ? "font-bold font-serif text-base text-sage-600 dark:text-sage-400 flex items-center"
+    : "font-bold font-serif text-lg text-sage-600 dark:text-sage-400 flex items-center";
 
   return (
     <div className={cardClasses} onClick={handleCardClick}>

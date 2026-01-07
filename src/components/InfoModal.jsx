@@ -24,7 +24,7 @@ const InfoModal = ({ isOpen, onClose }) => {
                 </svg>
               </button>
             )}
-            <h2 className="text-term-400 text-xl font-semibold">
+            <h2 className="text-sage-400 text-xl font-semibold">
               {showChangelog ? 'Changelog v0.2.6' : 'About SPACE Terminal'}
             </h2>
           </div>

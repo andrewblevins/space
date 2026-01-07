@@ -28,7 +28,7 @@ const HighCouncilModal = ({ isOpen, onClose, onStartCouncil }) => {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-6 pb-4">
-          <h2 className="text-term-400 text-xl font-semibold">High Council Debate</h2>
+          <h2 className="text-sage-400 text-xl font-semibold">High Council Debate</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-term-400 transition-colors"
@@ -55,7 +55,7 @@ const HighCouncilModal = ({ isOpen, onClose, onStartCouncil }) => {
               onChange={(e) => setTopic(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="What should the advisors debate?"
-              className="w-full bg-stone-50 text-gray-800 font-sans border border-stone-300 rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-term-600 placeholder:text-amber-600 dark:placeholder:text-term-300 dark:bg-stone-900 dark:text-white dark:border-term-700"
+              className="w-full bg-stone-50 text-gray-800 font-sans border border-stone-300 rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-term-600 placeholder:text-amber-600 dark:placeholder:text-sage-400 dark:bg-stone-900 dark:text-white dark:border-term-700"
               autoFocus
             />
           </div>

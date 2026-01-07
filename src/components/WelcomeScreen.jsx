@@ -50,10 +50,10 @@ const WelcomeScreen = ({ onGetStarted }) => {
       {/* Header */}
       <header className="relative z-10 flex items-center justify-between p-6">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-term-500 rounded flex items-center justify-center text-black font-bold">
+          <div className="w-8 h-8 bg-sage-500 rounded flex items-center justify-center text-white font-bold">
             S
           </div>
-          <span className="text-xl font-semibold">SPACE Terminal</span>
+          <span className="text-xl font-semibold text-sage-400">SPACE Terminal</span>
         </div>
         
         <button
@@ -72,7 +72,7 @@ const WelcomeScreen = ({ onGetStarted }) => {
         {/* Hero section */}
         <div className="text-center max-w-4xl mx-auto mb-16">
           <h1 className="text-5xl md:text-7xl font-bold mb-6 tracking-tight">
-            <span className="text-white">SPACE</span>
+            <span className="text-sage-400">SPACE</span>
           </h1>
           
           <h2 className="text-2xl md:text-3xl text-term-400 font-light mb-8 tracking-wide">

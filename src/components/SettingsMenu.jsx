@@ -236,7 +236,7 @@ const SettingsMenu = ({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-6 pb-4">
-          <h2 className="text-term-400 text-xl font-semibold">Settings</h2>
+          <h2 className="text-sage-400 text-xl font-semibold">Settings</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-term-400 transition-colors"
@@ -256,8 +256,8 @@ const SettingsMenu = ({
               onClick={() => setActiveTab(tab.id)}
               className={`flex-1 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === tab.id
-                  ? 'border-term-500 text-term-400'
-                  : 'border-transparent text-gray-400 hover:text-term-400'
+                  ? 'border-sage-500 text-sage-400'
+                  : 'border-transparent text-gray-400 hover:text-sage-400'
               }`}
             >
               {tab.label}
@@ -322,7 +322,7 @@ const SettingsMenu = ({
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="text-gray-800 dark:text-term-100 font-medium">
-                          Claude Sonnet 4.5
+                          Claude Sonnet 4
                         </div>
                         <div className="text-sm text-gray-600 dark:text-gray-400">
                           Anthropic's latest model via OpenRouter
@@ -334,7 +334,7 @@ const SettingsMenu = ({
                     </div>
                   </div>
                   <p className="text-xs text-gray-400 mt-2">
-                    Production uses Claude Sonnet 4.5 for optimal performance
+                    Production uses Claude Sonnet 4 for optimal performance
                   </p>
                 </div>
               )}

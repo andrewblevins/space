@@ -20,7 +20,7 @@ const EditPromptForm = ({ prompt, onSubmit, onCancel }) => {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full bg-stone-900 text-white font-sans border border-term-700 p-2 focus:outline-none placeholder:text-term-300"
+              className="w-full bg-stone-900 text-white font-sans border border-term-700 p-2 focus:outline-none placeholder:text-sage-400"
               autoFocus
               autoComplete="off"
               spellCheck="true"
@@ -32,7 +32,7 @@ const EditPromptForm = ({ prompt, onSubmit, onCancel }) => {
             <textarea
               value={text}
               onChange={(e) => setText(e.target.value)}
-              className="w-full bg-stone-900 text-white font-sans border border-term-700 p-2 h-32 focus:outline-none resize-none placeholder:text-term-300"
+              className="w-full bg-stone-900 text-white font-sans border border-term-700 p-2 h-32 focus:outline-none resize-none placeholder:text-sage-400"
               autoComplete="off"
               spellCheck="true"
               data-role="prompt-text"

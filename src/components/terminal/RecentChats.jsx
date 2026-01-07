@@ -133,15 +133,15 @@ export function RecentChats({
 
   const buttonStyles = {
     subtle: {
-      current: "bg-term-700/20 dark:bg-term-500/20 text-term-700 dark:text-term-300 font-medium",
+      current: "bg-sage-500/20 dark:bg-sage-500/20 text-sage-600 dark:text-sage-400 font-medium border-l-2 border-sage-500",
       normal: "hover:bg-gray-200/60 dark:hover:bg-gray-700/50 text-gray-700 dark:text-term-200",
     },
     terminal: {
-      current: `${ct.activeBg} ${ct.text} font-medium border-l-2 ${ct.border}`,
+      current: `bg-sage-500/20 text-sage-400 font-medium border-l-2 border-sage-500`,
       normal: `${ct.hoverBg} ${ct.textMid} hover:${ct.text}`,
     },
     hybrid: {
-      current: `bg-term-700/20 dark:${ct.activeBg} text-term-700 dark:${ct.text} font-medium`,
+      current: `bg-sage-500/20 dark:bg-sage-500/20 text-sage-600 dark:text-sage-400 font-medium border-l-2 border-sage-500`,
       normal: `hover:bg-gray-200/60 dark:${ct.hoverBg} text-gray-700 dark:${ct.textMid}`,
     },
   };

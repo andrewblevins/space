@@ -344,7 +344,6 @@ const Terminal = ({ theme, toggleTheme }) => {
   const generatePerspectivesFromContext = async (journalText, answers) => {
     try {
       setIsGeneratingSuggestions(true);
-      setJournalStreamingStatus({ isStreaming: true, count: 0, total: 8 });
 
       // Generate a new session ID for this new conversation
       const newSessionId = getNextSessionId();
@@ -375,27 +374,10 @@ const Terminal = ({ theme, toggleTheme }) => {
       // Store full context in input field
       setInput(fullContext);
 
-      // Generate perspective suggestions with streaming
+      // Generate perspective suggestions with full context
       const existingNames = advisors.map(a => a.name);
-      const { generateAdvisorSuggestionsStream } = await import('../utils/advisorSuggestions');
-
-      const suggestions = await generateAdvisorSuggestionsStream(
-        fullContext,
-        advisors,
-        existingNames,
-        (partialSuggestions) => {
-          // Streaming callback - update suggestions incrementally
-          setJournalSuggestions(partialSuggestions);
-          setJournalStreamingStatus({
-            isStreaming: true,
-            count: partialSuggestions.length,
-            total: 8
-          });
-        }
-      );
-
+      const suggestions = await generateAdvisorSuggestions(fullContext, advisors, existingNames);
       setJournalSuggestions(suggestions);
-      setJournalStreamingStatus({ isStreaming: false, count: 8, total: 8 });
 
       // Track these names for future regenerations
       setPreviousSuggestionNames([...existingNames, ...suggestions.map(s => s.name)]);
@@ -414,7 +396,6 @@ const Terminal = ({ theme, toggleTheme }) => {
     } catch (error) {
       console.error('Error generating perspective suggestions:', error);
       setIsGeneratingSuggestions(false);
-      setJournalStreamingStatus({ isStreaming: false, count: 0, total: 8 });
 
       // Show error message
       setMessages(prev => [...prev, {
@@ -785,11 +766,6 @@ const Terminal = ({ theme, toggleTheme }) => {
   const [journalSuggestions, setJournalSuggestions] = useState([]);
   const [showJournalSuggestions, setShowJournalSuggestions] = useState(false);
   const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false);
-  const [journalStreamingStatus, setJournalStreamingStatus] = useState({
-    isStreaming: false,
-    count: 0,
-    total: 8
-  });
   const [customPerspectives, setCustomPerspectives] = useState([]);
   const [previousSuggestionNames, setPreviousSuggestionNames] = useState([]);
 
@@ -1598,18 +1574,15 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
     setJournalSuggestions([]);
     setShowJournalSuggestions(false);
     setIsGeneratingSuggestions(false);
-
-    // Ensure sessionId is a string for regex testing
-    const sessionIdStr = String(sessionId);
-
+    
     // Check if sessionId looks like a UUID (database ID) or integer (localStorage ID)
-    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(sessionIdStr);
-    const isLocalStorageId = /^\d+$/.test(sessionIdStr);
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(sessionId);
+    const isLocalStorageId = /^\d+$/.test(sessionId);
     
     if (useDatabaseStorage && isUUID) {
       // Load from database - sessionId is a proper UUID
       try {
-        const conversation = await storage.loadConversation(sessionIdStr);
+        const conversation = await storage.loadConversation(sessionId);
         setCurrentConversationId(conversation.id);
         setCurrentSessionId(conversation.id);
         persistCurrentSession(conversation.id, conversation.id); // Persist so it survives refresh
@@ -1707,7 +1680,7 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
       }
     } else if (isLocalStorageId) {
       // Legacy localStorage loading (works for both database and localStorage modes)
-      const sessionData = localStorage.getItem(`space_session_${sessionIdStr}`);
+      const sessionData = localStorage.getItem(`space_session_${sessionId}`);
       if (sessionData) {
         const session = JSON.parse(sessionData);
         setCurrentSessionId(session.id);
@@ -2757,14 +2730,9 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
         }
         
         async function saveLegacySession() {
-          // Get timestamp from the last message, or current time if no messages
-          const lastMessageTimestamp = messages.length > 0
-            ? messages[messages.length - 1].timestamp
-            : new Date().toISOString();
-
           const sessionData = {
             id: currentSessionId,
-            timestamp: lastMessageTimestamp,
+            timestamp: new Date().toISOString(),
             messages: messages.map(msg => ({
               ...msg,
               tags: msg.tags || []
@@ -3410,10 +3378,10 @@ ${selectedText}
                         // In auth mode, let the link navigate normally to "/"
                       }}
                     >
-                      <div className="w-8 h-8 bg-term-500 rounded flex items-center justify-center text-black font-bold">
+                      <div className="w-8 h-8 bg-sage-500 rounded flex items-center justify-center text-white font-bold">
                         S
                       </div>
-                      <span className="text-xl font-semibold font-sans text-term-400">SPACE Terminal</span>
+                      <span className="text-xl font-semibold font-sans text-sage-400">SPACE Terminal</span>
                     </a>
                     <button
                       onClick={toggleSidebar}
@@ -3597,7 +3565,7 @@ ${selectedText}
                           value={editText}
                           onChange={(e) => setEditText(e.target.value)}
                           onKeyDown={handleEditKeyDown}
-                          className="w-full h-40 bg-white text-gray-800 font-sans p-2 border border-gray-300 focus:outline-none resize-none placeholder:text-amber-600 dark:placeholder:text-term-300 dark:bg-stone-900 dark:text-white dark:border-term-700"
+                          className="w-full h-40 bg-white text-gray-800 font-sans p-2 border border-gray-300 focus:outline-none resize-none placeholder:text-amber-600 dark:placeholder:text-sage-400 dark:bg-stone-900 dark:text-white dark:border-term-700"
                           placeholder="Edit your prompt..."
                           autoFocus
                           autoComplete="off"
@@ -3622,7 +3590,7 @@ ${selectedText}
                               setEditAdvisorText('');
                             }
                           }}
-                          className="w-full h-40 bg-white text-gray-800 font-sans p-2 border border-gray-300 focus:outline-none resize-none placeholder:text-amber-600 dark:placeholder:text-term-300 dark:bg-stone-900 dark:text-white dark:border-term-700"
+                          className="w-full h-40 bg-white text-gray-800 font-sans p-2 border border-gray-300 focus:outline-none resize-none placeholder:text-amber-600 dark:placeholder:text-sage-400 dark:bg-stone-900 dark:text-white dark:border-term-700"
                           placeholder="Edit advisor description..."
                           autoFocus
                           autoComplete="off"
@@ -3931,7 +3899,6 @@ ${selectedText}
         onEditAdvisor={setEditingAdvisor}
         customPerspectives={customPerspectives}
         onCreateCustom={handleCreateCustomPerspective}
-        streamingStatus={journalStreamingStatus}
       />
     </>
   );

@@ -113,7 +113,7 @@ const ImportExportModal = ({ isOpen, onClose, advisors, onImport }) => {
         onClick={e => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-term-400 text-xl font-semibold">Import/Export Advisors</h2>
+          <h2 className="text-sage-400 text-xl font-semibold">Import/Export Advisors</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-term-400 text-xl">✕</button>
         </div>
 

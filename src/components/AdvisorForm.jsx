@@ -152,7 +152,7 @@ const AdvisorForm = ({ onSubmit, onCancel, initialName = '', existingAdvisors = 
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Advisor name"
-          className="w-full bg-white text-gray-800 font-sans p-2 mb-4 border border-gray-300 focus:outline-none placeholder:text-amber-600 dark:placeholder:text-term-300 dark:bg-stone-900 dark:text-white dark:border-term-700"
+          className="w-full bg-white text-gray-800 font-sans p-2 mb-4 border border-gray-300 focus:outline-none placeholder:text-amber-600 dark:placeholder:text-sage-400 dark:bg-stone-900 dark:text-white dark:border-term-700"
           autoComplete="off"
           spellCheck="true"
           data-role="advisor-name"
@@ -166,7 +166,7 @@ const AdvisorForm = ({ onSubmit, onCancel, initialName = '', existingAdvisors = 
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Leave blank to grow through assertions"
-            className="w-full h-40 bg-white text-gray-800 font-sans p-2 mb-2 border border-gray-300 focus:outline-none resize-none placeholder:text-amber-600 dark:placeholder:text-term-300 dark:bg-stone-900 dark:text-white dark:border-term-700"
+            className="w-full h-40 bg-white text-gray-800 font-sans p-2 mb-2 border border-gray-300 focus:outline-none resize-none placeholder:text-amber-600 dark:placeholder:text-sage-400 dark:bg-stone-900 dark:text-white dark:border-term-700"
             autoComplete="off"
             spellCheck="true"
             data-role="advisor-description"

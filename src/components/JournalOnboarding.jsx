@@ -44,15 +44,13 @@ const JournalOnboarding = ({
   };
 
   const handleKeyDown = (e) => {
-    // Handle Enter to proceed (Shift+Enter for newline - default behavior)
-    if (e.key === 'Enter' && !e.shiftKey && !e.metaKey && !e.ctrlKey) {
+    // Handle Shift+Enter to proceed
+    if (e.key === 'Enter' && e.shiftKey && !e.metaKey && !e.ctrlKey) {
       e.preventDefault();
 
       // In question phase, proceed to next question
       if (contextFlow && contextFlow.phase === 'questions') {
-        if (!isGenerating) {
-          handleContinue();
-        }
+        handleContinue();
       }
       // In initial phase, proceed if we have enough words
       else if (canGenerate && !isGenerating) {
@@ -157,17 +155,11 @@ const JournalOnboarding = ({
             onChange={(e) => setText(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Your answer..."
-            className="w-full h-48 p-4 font-sans text-lg bg-amber-50 dark:bg-stone-900 text-gray-800 dark:text-white placeholder:text-amber-600 dark:placeholder:text-term-300 border-2 border-amber-200 dark:border-term-900/50 rounded-lg focus:outline-none focus:border-term-500 dark:focus:border-term-500 resize-none"
+            className="w-full h-48 p-4 font-sans text-lg bg-amber-50 dark:bg-stone-900 text-gray-800 dark:text-white placeholder:text-amber-600 dark:placeholder:text-sage-400 border-2 border-amber-200 dark:border-term-900/50 rounded-lg focus:outline-none focus:border-term-500 dark:focus:border-term-500 resize-none"
             autoFocus
           />
 
-          <div className="flex items-center justify-between mt-2">
-            <span className="text-xs text-amber-600/60 dark:text-term-500">
-              Enter to continue · Shift+Enter for new line
-            </span>
-          </div>
-
-          <div className="flex items-center justify-between mt-2">
+          <div className="flex items-center justify-between mt-4">
             {/* Only show "Generate Perspectives Now" if NOT on last question */}
             {!isLastQuestion && (
               <button
@@ -196,7 +188,7 @@ const JournalOnboarding = ({
                 disabled={isGenerating}
                 className="px-4 py-2 text-amber-700 dark:text-term-300 hover:text-amber-900 dark:hover:text-term-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {isLastQuestion ? 'Start Chat' : 'Skip Question'}
+                Skip Question
               </button>
 
               <button
@@ -234,21 +226,11 @@ const JournalOnboarding = ({
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Take a moment to write freely about what you're thinking about, working on, or struggling with."
-          className="w-full h-64 p-4 font-sans text-lg bg-amber-50 dark:bg-stone-900 text-gray-800 dark:text-white placeholder:text-amber-600 dark:placeholder:text-term-300 border-2 border-amber-200 dark:border-term-900/50 rounded-lg focus:outline-none focus:border-term-500 dark:focus:border-term-500 resize-none"
+          className="w-full h-64 p-4 font-sans text-lg bg-amber-50 dark:bg-stone-900 text-gray-800 dark:text-white placeholder:text-amber-600 dark:placeholder:text-sage-400 border-2 border-amber-200 dark:border-term-900/50 rounded-lg focus:outline-none focus:border-term-500 dark:focus:border-term-500 resize-none"
           disabled={isGenerating}
-          autoComplete="off"
-          data-lpignore="true"
-          data-1p-ignore="true"
-          data-form-type="other"
         />
 
-        <div className="flex items-center justify-between mt-2">
-          <span className="text-xs text-amber-600/60 dark:text-term-500">
-            Enter to continue · Shift+Enter for new line
-          </span>
-        </div>
-
-        <div className="flex items-center justify-between mt-2">
+        <div className="flex items-center justify-between mt-4">
           <div className="text-sm text-amber-700 dark:text-term-300">
             {wordCount < 25 ? (
               <span>Write at least 25 words to continue ({wordCount}/25)</span>

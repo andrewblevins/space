@@ -225,7 +225,7 @@ const MobileLayout = ({
         return (
           <div className="flex-1 p-4 overflow-y-auto scrollable-area">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-term-400 text-xl font-semibold">Advisors</h2>
+              <h2 className="text-sage-400 text-xl font-semibold">Advisors</h2>
               <button
                 onClick={() => setShowAdvisorForm(true)}
                 className="w-8 h-8 rounded-full bg-term-500 text-black flex items-center justify-center hover:bg-term-400 transition-colors"
@@ -296,7 +296,7 @@ const MobileLayout = ({
       case 'insights':
         return (
           <div className="flex-1 p-4 overflow-y-auto scrollable-area">
-            <h2 className="text-term-400 text-xl font-semibold mb-4">Insights</h2>
+            <h2 className="text-sage-400 text-xl font-semibold mb-4">Insights</h2>
             <p className="text-gray-500 dark:text-gray-400">
               Insights features coming soon. Check the Tools tab for session management.
             </p>
@@ -306,7 +306,7 @@ const MobileLayout = ({
       case 'tools':
         return (
           <div className="flex-1 p-4 overflow-y-auto scrollable-area">
-            <h2 className="text-term-400 text-xl font-semibold mb-4">Tools</h2>
+            <h2 className="text-sage-400 text-xl font-semibold mb-4">Tools</h2>
             
             {/* Tool buttons */}
             <div className="space-y-3">

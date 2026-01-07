@@ -21,6 +21,12 @@ export default {
           900: '#422810',
           950: '#2a1a0a',
         },
+        sage: {
+          300: '#c8d4c0',
+          400: '#a8c4a0',
+          500: '#8ab480',
+          600: '#6a9460',
+        },
       },
       fontFamily: {
         'serif': ['Vollkorn', 'serif'],

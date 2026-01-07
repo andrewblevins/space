@@ -29,10 +29,10 @@ const ExportMenu = ({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-term-400 text-xl font-semibold">Export Options</h2>
+          <h2 className="text-sage-400 text-xl font-semibold">Export Options</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-term-400 transition-colors"
+            className="text-gray-400 hover:text-sage-400 transition-colors"
             title="Close Export Menu"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -44,7 +44,7 @@ const ExportMenu = ({
         <div className="space-y-4">
           {/* Export Options Checkboxes */}
           <div className="p-4 bg-black border border-gray-700 rounded space-y-3">
-            <h3 className="text-term-400 font-medium text-sm mb-3">Export Options</h3>
+            <h3 className="text-sage-400 font-medium text-sm mb-3">Export Options</h3>
             <label className="flex items-start space-x-3 cursor-pointer group">
               <input
                 type="checkbox"
@@ -53,7 +53,7 @@ const ExportMenu = ({
                 className="mt-1 w-4 h-4 text-term-400 bg-gray-800 border-gray-600 rounded focus:ring-term-500 focus:ring-2"
               />
               <div className="flex-1">
-                <span className="text-gray-300 group-hover:text-term-400 transition-colors text-sm font-medium">
+                <span className="text-gray-300 group-hover:text-sage-400 transition-colors text-sm font-medium">
                   Export full conversation with all perspective responses
                 </span>
                 <p className="text-gray-500 text-xs mt-1">
@@ -69,7 +69,7 @@ const ExportMenu = ({
                 className="mt-1 w-4 h-4 text-term-400 bg-gray-800 border-gray-600 rounded focus:ring-term-500 focus:ring-2"
               />
               <div className="flex-1">
-                <span className="text-gray-300 group-hover:text-term-400 transition-colors text-sm font-medium">
+                <span className="text-gray-300 group-hover:text-sage-400 transition-colors text-sm font-medium">
                   Export only my responses
                 </span>
                 <p className="text-gray-500 text-xs mt-1">
@@ -101,7 +101,7 @@ const ExportMenu = ({
                 </svg>
               </div>
               <div className="flex-1">
-                <h3 className="text-term-400 group-hover:text-black font-medium transition-colors">
+                <h3 className="text-sage-400 group-hover:text-black font-medium transition-colors">
                   Export Current Session
                 </h3>
                 <p className="text-gray-400 group-hover:text-gray-700 text-sm mt-1 transition-colors">

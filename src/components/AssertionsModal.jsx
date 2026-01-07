@@ -210,7 +210,7 @@ const AssertionsModal = ({
             className="w-full h-40 p-3 font-sans border border-gray-300 dark:border-stone-600 rounded-md 
                      bg-white dark:bg-stone-800 text-gray-800 dark:text-white
                      focus:outline-none focus:ring-2 focus:ring-term-500 focus:border-transparent
-                     placeholder:text-amber-600 dark:placeholder:text-term-300
+                     placeholder:text-amber-600 dark:placeholder:text-sage-400
                      resize-none"
             placeholder="Response should mention specific psychological frameworks&#10;Response should provide actionable insights&#10;Response should cite relevant research or evidence"
             autoFocus

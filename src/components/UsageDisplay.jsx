@@ -30,7 +30,7 @@ const UsageDisplay = () => {
   if (!usageSummary) {
     return (
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-term-400">API Usage</h3>
+        <h3 className="text-lg font-semibold text-sage-400">API Usage</h3>
         <p className="text-gray-400">Loading usage statistics...</p>
       </div>
     );
@@ -52,7 +52,7 @@ const UsageDisplay = () => {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-term-400">API Usage</h3>
+        <h3 className="text-lg font-semibold text-sage-400">API Usage</h3>
         <button
           onClick={() => {
             refreshUsage();

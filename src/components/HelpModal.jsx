@@ -10,10 +10,10 @@ const HelpModal = ({ isOpen, onClose }) => {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-6 pb-4">
-          <h2 className="text-term-400 text-xl font-semibold">SPACE Terminal - How to Use</h2>
+          <h2 className="text-sage-400 text-xl font-semibold">SPACE Terminal - How to Use</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-term-400 transition-colors"
+            className="text-gray-400 hover:text-sage-400 transition-colors"
             title="Close Help"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -26,7 +26,7 @@ const HelpModal = ({ isOpen, onClose }) => {
           <div className="space-y-6">
             {/* What is SPACE */}
             <section>
-              <h3 className="text-term-400 font-semibold mb-3">What is SPACE Terminal?</h3>
+              <h3 className="text-sage-400 font-semibold mb-3">What is SPACE Terminal?</h3>
               <p className="text-gray-600 dark:text-term-200 mb-3">
                 SPACE is a multi-perspective AI conversation interface. Create diverse AI perspectives that respond simultaneously
                 in parallel, helping you stress-test ideas, explore complex problems, and build interconnected knowledge over time.
@@ -35,7 +35,7 @@ const HelpModal = ({ isOpen, onClose }) => {
 
             {/* Getting Started */}
             <section>
-              <h3 className="text-term-400 font-semibold mb-3">Getting Started</h3>
+              <h3 className="text-sage-400 font-semibold mb-3">Getting Started</h3>
               <div className="space-y-2 text-gray-600 dark:text-term-200">
                 <p><strong>1. Journal Entry:</strong> Start a new chat to be guided through a context-gathering flow</p>
                 <p><strong>2. Generate Perspectives:</strong> Answer 3 brief questions, then get AI-suggested perspectives (or add your own)</p>
@@ -46,7 +46,7 @@ const HelpModal = ({ isOpen, onClose }) => {
 
             {/* Key Features */}
             <section>
-              <h3 className="text-term-400 font-semibold mb-3">Key Features</h3>
+              <h3 className="text-sage-400 font-semibold mb-3">Key Features</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div>
                   <h4 className="text-term-400 font-medium mb-2">🎨 Interface</h4>
@@ -89,7 +89,7 @@ const HelpModal = ({ isOpen, onClose }) => {
 
             {/* Quick Tips */}
             <section>
-              <h3 className="text-term-400 font-semibold mb-3">Quick Tips</h3>
+              <h3 className="text-sage-400 font-semibold mb-3">Quick Tips</h3>
               <div className="bg-gray-100 dark:bg-stone-800 rounded p-4 text-sm">
                 <ul className="space-y-2 text-gray-600 dark:text-term-200">
                   <li>• <strong>Triangle buttons (▼):</strong> Click to analyze conversation for metaphors or get advisor suggestions</li>
@@ -104,7 +104,7 @@ const HelpModal = ({ isOpen, onClose }) => {
 
             {/* Commands */}
             <section>
-              <h3 className="text-term-400 font-semibold mb-3">Available Commands</h3>
+              <h3 className="text-sage-400 font-semibold mb-3">Available Commands</h3>
               <div className="bg-gray-100 dark:bg-stone-800 rounded p-4 text-sm">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-600 dark:text-term-200">
                   <div>

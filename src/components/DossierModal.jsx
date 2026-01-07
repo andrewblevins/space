@@ -119,7 +119,7 @@ const DossierModal = ({ isOpen, onClose, onJumpToSession }) => {
       >
         {/* Header */}
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-term-400 text-xl font-semibold">Knowledge Dossier (Beta)</h2>
+          <h2 className="text-sage-400 text-xl font-semibold">Knowledge Dossier (Beta)</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-term-400 text-xl">✕</button>
         </div>
 
@@ -251,7 +251,7 @@ const DossierModal = ({ isOpen, onClose, onJumpToSession }) => {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                     placeholder="Search your dossier by content or tags..."
-                    className="flex-1 bg-stone-900 border border-term-700 text-white font-sans px-3 py-2 rounded focus:outline-none focus:border-term-500 placeholder:text-term-300"
+                    className="flex-1 bg-stone-900 border border-term-700 text-white font-sans px-3 py-2 rounded focus:outline-none focus:border-term-500 placeholder:text-sage-400"
                   />
                   <button
                     onClick={handleSearch}
