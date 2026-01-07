@@ -155,7 +155,7 @@ const JournalOnboarding = ({
             onChange={(e) => setText(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Your answer..."
-            className="w-full h-48 p-4 font-sans text-lg bg-amber-50 dark:bg-stone-900 text-gray-800 dark:text-white placeholder:text-amber-600 dark:placeholder:text-sage-400 border-2 border-amber-200 dark:border-term-900/50 rounded-lg focus:outline-none focus:border-term-500 dark:focus:border-term-500 resize-none"
+            className="w-full h-48 p-4 font-sans text-lg bg-amber-50 dark:bg-stone-900 text-gray-800 dark:text-white placeholder:text-amber-600 dark:placeholder:text-term-300 border-2 border-amber-200 dark:border-term-900/50 rounded-lg focus:outline-none focus:border-term-500 dark:focus:border-term-500 resize-none"
             autoFocus
           />
 
@@ -217,7 +217,7 @@ const JournalOnboarding = ({
   return (
     <div className="flex-1 flex items-center justify-center p-8">
       <div className="max-w-2xl w-full">
-        <h2 className="text-2xl font-serif text-gray-800 dark:text-term-400 mb-4">
+        <h2 className="text-2xl font-serif text-gray-800 dark:text-sage-400 mb-4">
           What's on your mind?
         </h2>
 
@@ -226,7 +226,7 @@ const JournalOnboarding = ({
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Take a moment to write freely about what you're thinking about, working on, or struggling with."
-          className="w-full h-64 p-4 font-sans text-lg bg-amber-50 dark:bg-stone-900 text-gray-800 dark:text-white placeholder:text-amber-600 dark:placeholder:text-sage-400 border-2 border-amber-200 dark:border-term-900/50 rounded-lg focus:outline-none focus:border-term-500 dark:focus:border-term-500 resize-none"
+          className="w-full h-64 p-4 font-sans text-lg bg-amber-50 dark:bg-stone-900 text-gray-800 dark:text-white placeholder:text-amber-600 dark:placeholder:text-term-300 border-2 border-amber-200 dark:border-term-900/50 rounded-lg focus:outline-none focus:border-term-500 dark:focus:border-term-500 resize-none"
           disabled={isGenerating}
         />
 
