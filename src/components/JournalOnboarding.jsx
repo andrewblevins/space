@@ -228,6 +228,10 @@ const JournalOnboarding = ({
           placeholder="Take a moment to write freely about what you're thinking about, working on, or struggling with."
           className="w-full h-64 p-4 font-sans text-lg bg-amber-50 dark:bg-stone-900 text-gray-800 dark:text-white placeholder:text-amber-600 dark:placeholder:text-term-300 border-2 border-amber-200 dark:border-term-900/50 rounded-lg focus:outline-none focus:border-term-500 dark:focus:border-term-500 resize-none"
           disabled={isGenerating}
+          autoComplete="off"
+          data-lpignore="true"
+          data-1p-ignore="true"
+          data-form-type="other"
         />
 
         <div className="flex items-center justify-between mt-4">
