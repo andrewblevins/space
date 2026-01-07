@@ -39,7 +39,12 @@ export function PerspectiveGenerator({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [generatedPerspectives, setGeneratedPerspectives] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
-  
+  const [streamingStatus, setStreamingStatus] = useState({
+    isStreaming: false,
+    count: 0,
+    total: 8
+  });
+
   // Use ref to always have access to the latest messages (prevents stale closure issues)
   const messagesRef = useRef(messages);
   useEffect(() => {
@@ -66,12 +71,13 @@ export function PerspectiveGenerator({
     // Open modal and start generating
     setIsModalOpen(true);
     setIsGenerating(true);
+    setStreamingStatus({ isStreaming: true, count: 0, total: 8 });
 
     try {
       // CRITICAL: Use messagesRef.current to get the LATEST messages at call time
       // This prevents stale closure issues when switching sessions
       const currentMessages = messagesRef.current;
-      
+
       // Debug logging
       const userAssistantMessages = currentMessages.filter(m => m.type === 'user' || m.type === 'assistant');
       console.log('🎯 Generate Perspectives called with:', {
@@ -80,21 +86,51 @@ export function PerspectiveGenerator({
         firstUserMessage: userAssistantMessages[0]?.content?.substring(0, 50) + '...',
         lastMessage: userAssistantMessages[userAssistantMessages.length - 1]?.content?.substring(0, 50) + '...'
       });
-      
+
       // Format recent messages as context
       const context = formatMessagesAsContext(currentMessages);
       const existingNames = existingAdvisors.map(a => a.name);
 
-      // Generate perspectives using shared utility
-      const perspectives = await generatePerspectives(context, existingNames, 'conversation');
+      // Import streaming function and color utility
+      const { generatePerspectivesStream } = await import('../utils/perspectiveGeneration');
+      const { getNextAvailableColor } = await import('../lib/advisorColors');
 
-      // Add unique IDs to each perspective
+      const assignedColors = existingAdvisors.map(a => a.color).filter(Boolean);
+
+      // Generate perspectives with streaming
+      const perspectives = await generatePerspectivesStream(
+        context,
+        existingNames,
+        'conversation',
+        (partialPerspectives) => {
+          // Streaming callback - assign IDs and update
+          const perspectivesWithIds = partialPerspectives.map((p, idx) => {
+            const newColor = getNextAvailableColor([...assignedColors].slice(0, idx));
+            return {
+              ...p,
+              id: p.id || `${Date.now()}-${idx}`,
+              color: newColor,
+              active: false
+            };
+          });
+
+          setGeneratedPerspectives(perspectivesWithIds);
+          setStreamingStatus({
+            isStreaming: true,
+            count: perspectivesWithIds.length,
+            total: 8
+          });
+        }
+      );
+
+      // Add unique IDs to final complete perspectives
       const perspectivesWithIds = perspectives.map((p, idx) => ({
         ...p,
         id: `${Date.now()}-${idx}`
       }));
 
       setGeneratedPerspectives(perspectivesWithIds);
+      setStreamingStatus({ isStreaming: false, count: 8, total: 8 });
 
       // Track usage if handler provided (estimate tokens)
       if (trackUsage) {
@@ -105,6 +141,7 @@ export function PerspectiveGenerator({
 
     } catch (error) {
       console.error('Error generating perspectives:', error);
+      setStreamingStatus({ isStreaming: false, count: 0, total: 8 });
       setIsModalOpen(false);
     } finally {
       setIsGenerating(false);
@@ -184,7 +221,7 @@ export function PerspectiveGenerator({
         >
           <div className="flex items-center justify-between">
             <span className={`font-medium ${textStyles[variant] || textStyles.subtle}`}>
-              Generate Perspectives
+              Suggest Perspectives
             </span>
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-term-600 dark:text-term-400" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
@@ -210,6 +247,7 @@ export function PerspectiveGenerator({
         hideSkipButton={true} // Hide "Start Without" button
         generatingText="Generating..." // Show "Generating..." instead of "Regenerating..."
         onEditAdvisor={onEditAdvisor}
+        streamingStatus={streamingStatus}
       />
     </>
   );
