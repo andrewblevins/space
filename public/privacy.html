@@ -17,27 +17,27 @@
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             line-height: 1.7;
             background: #0a0a0a;
             color: #d4d4d4;
         }
-        
+
         .container {
             max-width: 800px;
             margin: 0 auto;
             padding: 2rem;
         }
-        
+
         header {
             text-align: center;
             margin-bottom: 3rem;
             padding: 2rem 0;
             border-bottom: 1px solid #333;
         }
-        
+
         .logo {
             font-size: 1.2rem;
             color: #00ff00;
@@ -45,22 +45,22 @@
             margin-bottom: 1rem;
             display: inline-block;
         }
-        
+
         .logo:hover {
             text-decoration: underline;
         }
-        
+
         h1 {
             font-size: 2.5rem;
             margin-bottom: 0.5rem;
             color: #00ff00;
         }
-        
+
         .last-updated {
             color: #888;
             font-size: 0.9rem;
         }
-        
+
         h2 {
             font-size: 1.5rem;
             color: #00ff00;
@@ -69,42 +69,42 @@
             padding-bottom: 0.5rem;
             border-bottom: 1px solid #333;
         }
-        
+
         h3 {
             font-size: 1.1rem;
             color: #fff;
             margin-top: 1.5rem;
             margin-bottom: 0.75rem;
         }
-        
+
         p {
             margin-bottom: 1rem;
             color: #bbb;
         }
-        
+
         ul, ol {
             margin-bottom: 1rem;
             padding-left: 1.5rem;
         }
-        
+
         li {
             margin-bottom: 0.5rem;
             color: #bbb;
         }
-        
+
         strong {
             color: #fff;
         }
-        
+
         a {
             color: #00ff00;
             text-decoration: none;
         }
-        
+
         a:hover {
             text-decoration: underline;
         }
-        
+
         .highlight-box {
             background: #1a1a1a;
             border: 1px solid #333;
@@ -113,11 +113,11 @@
             margin: 1.5rem 0;
             border-radius: 4px;
         }
-        
+
         .highlight-box p:last-child {
             margin-bottom: 0;
         }
-        
+
         .contact-box {
             background: #1a1a1a;
             border: 1px solid #00ff00;
@@ -126,12 +126,12 @@
             border-radius: 8px;
             text-align: center;
         }
-        
+
         .contact-box h3 {
             margin-top: 0;
             color: #00ff00;
         }
-        
+
         footer {
             margin-top: 4rem;
             padding-top: 2rem;
@@ -140,28 +140,28 @@
             color: #666;
             font-size: 0.9rem;
         }
-        
+
         footer a {
             color: #888;
         }
-        
+
         footer a:hover {
             color: #00ff00;
         }
-        
+
         .nav-links {
             margin-top: 1rem;
         }
-        
+
         .nav-links a {
             margin: 0 1rem;
         }
-        
+
         @media (max-width: 600px) {
             .container {
                 padding: 1rem;
             }
-            
+
             h1 {
                 font-size: 2rem;
             }
@@ -173,108 +173,128 @@
         <header>
             <a href="/" class="logo">← Back to SPACE Terminal</a>
             <h1>Privacy Policy</h1>
-            <p class="last-updated">Last updated: December 28, 2024</p>
+            <p class="last-updated">Last updated: January 7, 2025</p>
         </header>
-        
+
         <main>
             <div class="highlight-box">
-                <p><strong>Summary:</strong> SPACE Terminal is designed with privacy in mind. Your conversations are stored locally in your browser and never leave your device (except when sent to AI providers for responses). We only collect what's necessary to provide the service, and we're transparent about exactly what that is.</p>
+                <p><strong>Summary:</strong> SPACE Terminal stores all your conversations locally in your browser. We collect minimal analytics to understand how the app is used. We don't store your conversations, API keys, or personal information on any server.</p>
             </div>
-            
+
             <h2>Who We Are</h2>
-            <p>SPACE Terminal is an experimental AI conversation platform that helps you think through complex problems with the help of AI advisors. The service is operated by SPACE Terminal and is available at <a href="https://spaceterminal.xyz">spaceterminal.xyz</a>.</p>
-            
+            <p>SPACE Terminal is an open-source AI conversation interface available at <a href="https://spaceterminal.xyz">spaceterminal.xyz</a>. The service is provided as-is with no accounts, authentication, or server-side storage of your data.</p>
+
+            <h2>How SPACE Works</h2>
+            <p>SPACE uses a "Bring Your Own Key" (BYOK) model. You provide your own API key from <a href="https://openrouter.ai" target="_blank" rel="noopener">OpenRouter</a>, which gives you access to AI models like Claude, GPT, and Gemini.</p>
+
+            <p>When you send a message:</p>
+            <ol>
+                <li>Your browser encrypts and stores your API key locally using AES-256 encryption</li>
+                <li>Your browser sends your message directly to OpenRouter's API using your key</li>
+                <li>The AI response is displayed and stored locally in your browser</li>
+                <li>No conversation data passes through or is stored on SPACE servers</li>
+            </ol>
+
             <h2>Data Storage</h2>
-            
-            <h3>Local Storage Only</h3>
-            <p>SPACE Terminal stores all your data locally in your web browser using localStorage. This includes:</p>
+
+            <h3>What's Stored Locally (In Your Browser)</h3>
+            <p>All of the following data is stored exclusively in your browser's localStorage and never leaves your device:</p>
             <ul>
-                <li>Complete conversation history and messages</li>
+                <li>Your complete conversation history and messages</li>
                 <li>Custom AI advisors you create</li>
+                <li>Your encrypted API key (AES-256 encryption with password protection)</li>
                 <li>Saved prompts and preferences</li>
                 <li>Session settings (theme, sidebar state, etc.)</li>
             </ul>
-            <p><strong>This data never leaves your device</strong> except when you send messages to AI services for responses (see "AI Service Providers" below). You can clear this data at any time through your browser settings or by using the in-app commands.</p>
-            <p><strong>We do not store your conversations on any server or database.</strong> Your data stays on your device.</p>
-            
-            <h2>Information We Collect</h2>
-            
-            <h3>When You Use the App</h3>
-            <ul>
-                <li><strong>Nothing persistent on our servers.</strong> We don't create accounts or track you across sessions.</li>
-                <li>Your conversations are stored only in your browser's localStorage.</li>
-                <li>We use Google Analytics to understand aggregate usage patterns (see below).</li>
-            </ul>
-            
-            <h2>Third-Party Services</h2>
-            
-            <h3>AI Service Providers</h3>
-            <p>When you send a message in SPACE Terminal, your message is sent to one or more AI service providers to generate responses:</p>
-            <ul>
-                <li><strong>Anthropic (Claude)</strong> - Primary AI provider. <a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener">Privacy Policy</a></li>
-                <li><strong>OpenAI (GPT)</strong> - Used for title generation and optional features. <a href="https://openai.com/privacy" target="_blank" rel="noopener">Privacy Policy</a></li>
-                <li><strong>OpenRouter</strong> - Used for model selection and routing. <a href="https://openrouter.ai/privacy" target="_blank" rel="noopener">Privacy Policy</a></li>
-            </ul>
-            <p>These services process your messages to generate AI responses. They may temporarily store your messages according to their respective privacy policies. We use server-side API calls so your API credentials are never exposed to the browser.</p>
-            
-            <h3>Google Analytics</h3>
-            <p>We use Google Analytics to understand how people use SPACE Terminal. This collects:</p>
+            <p>You can clear this data at any time through your browser settings or using in-app commands.</p>
+
+            <h3>What We Store (On Our Servers)</h3>
+            <p><strong>Nothing.</strong> We do not store your conversations, API keys, or any personal information on any server or database.</p>
+
+            <h2>Analytics</h2>
+            <p>We use Google Analytics 4 to understand aggregate usage patterns. This helps us improve the app and understand which features are valuable.</p>
+
+            <h3>What Analytics Collects</h3>
+            <p>Google Analytics automatically collects:</p>
             <ul>
                 <li>Page views and session duration</li>
-                <li>Device and browser information</li>
-                <li>Geographic location (country/region level)</li>
-                <li>Feature usage patterns</li>
+                <li>Device type and browser information</li>
+                <li>Geographic location (country/region level only)</li>
+                <li>A random cookie ID to group events by browser (not linked to your identity)</li>
             </ul>
-            <p><strong>No conversation content is ever sent to Google Analytics.</strong> You can opt out using browser settings, ad blockers, or browser extensions like uBlock Origin.</p>
-            
-            
-            <h2>How We Use Your Information</h2>
+
+            <p>We also track specific events:</p>
             <ul>
-                <li>Provide and improve the AI conversation experience</li>
-                <li>Analyze aggregate usage patterns to improve features</li>
+                <li><strong>Message sent:</strong> When you send a message (includes: whether you have advisors active, message count)</li>
+                <li><strong>Advisor created:</strong> When you create a new advisor (includes: advisor name)</li>
+                <li><strong>Feature usage:</strong> When you use features like voting or high council</li>
+                <li><strong>Session tracking:</strong> When you start/end a session</li>
             </ul>
-            
-            <h2>Data Security</h2>
+
+            <h3>What We Don't Track</h3>
             <ul>
-                <li>All data transmitted to AI providers uses HTTPS encryption</li>
-                <li>Your conversation data stays in your browser's localStorage</li>
-                <li>We conduct regular security reviews</li>
+                <li>❌ Conversation content or message text</li>
+                <li>❌ API keys or credentials</li>
+                <li>❌ Email addresses or personal information</li>
+                <li>❌ Your identity (no login, no authentication)</li>
             </ul>
-            
+
+            <h3>Opting Out of Analytics</h3>
+            <p>You can block Google Analytics using:</p>
+            <ul>
+                <li>Browser privacy settings (disable third-party cookies)</li>
+                <li>Ad blockers (uBlock Origin, Privacy Badger, etc.)</li>
+                <li>Google's <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener">Analytics Opt-out Browser Add-on</a></li>
+            </ul>
+
+            <h2>Third-Party Services</h2>
+
+            <h3>OpenRouter (AI Service Provider)</h3>
+            <p>When you use your own API key with OpenRouter, your messages are sent directly from your browser to OpenRouter's servers. OpenRouter processes your messages to generate AI responses from providers like Anthropic (Claude), OpenAI (GPT), and Google (Gemini).</p>
+
+            <p><strong>We do not see, store, or have access to these messages.</strong> Your data relationship is directly with OpenRouter and the underlying AI providers.</p>
+
+            <p>Relevant privacy policies:</p>
+            <ul>
+                <li><a href="https://openrouter.ai/privacy" target="_blank" rel="noopener">OpenRouter Privacy Policy</a></li>
+                <li><a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener">Anthropic (Claude) Privacy Policy</a></li>
+                <li><a href="https://openai.com/privacy" target="_blank" rel="noopener">OpenAI Privacy Policy</a></li>
+                <li><a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google Privacy Policy</a></li>
+            </ul>
+
+            <h3>Google Analytics</h3>
+            <p>Google Analytics is a web analytics service. See <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google's Privacy Policy</a> for details on how they process data.</p>
+
             <h2>Your Rights and Controls</h2>
             <ul>
-                <li><strong>Data Export:</strong> Export your conversations in JSON or Markdown format using the in-app export feature</li>
-                <li><strong>Deletion:</strong> Delete individual sessions, or clear all local data through your browser settings</li>
-                <li><strong>Analytics Opt-out:</strong> Use browser settings or ad blockers to disable Google Analytics</li>
+                <li><strong>Data Export:</strong> Export your conversations anytime in JSON or Markdown format using the in-app export feature</li>
+                <li><strong>Data Deletion:</strong> Delete individual sessions or clear all local data through your browser settings (localStorage)</li>
+                <li><strong>Analytics Opt-out:</strong> Block Google Analytics using browser settings or ad blockers</li>
+                <li><strong>API Key Control:</strong> Your API key is stored encrypted in your browser. Delete it anytime through the app or browser settings</li>
             </ul>
-            
-            <h2>Data Retention</h2>
-            <ul>
-                <li><strong>Local storage:</strong> Retained until you clear your browser data</li>
-                <li><strong>Analytics:</strong> Aggregated data retained for product improvement</li>
-            </ul>
-            
+
             <h2>Children's Privacy</h2>
-            <p>SPACE Terminal is not intended for use by children under 13. We do not knowingly collect personal information from children under 13. If we become aware that we have collected such information, we will take steps to delete it.</p>
-            
+            <p>SPACE Terminal is not intended for use by children under 13. We do not knowingly collect information from children. Since we don't collect personal information or require accounts, there is no data to delete if a child has used the service.</p>
+
             <h2>Open Source</h2>
-            <p>SPACE Terminal is open source software. You can review our code, self-host your own instance, and verify our privacy practices at <a href="https://github.com/andrewblevins/space" target="_blank" rel="noopener">github.com/andrewblevins/space</a>.</p>
-            
+            <p>SPACE Terminal is open source software. You can review the code, verify our privacy practices, and self-host your own instance at <a href="https://github.com/andrewblevins/space" target="_blank" rel="noopener">github.com/andrewblevins/space</a>.</p>
+
             <h2>Changes to This Policy</h2>
-            <p>We may update this privacy policy from time to time. We will notify users of significant changes by posting the new policy on our website and updating the "last updated" date. Continued use of SPACE Terminal after changes constitutes acceptance of the updated policy.</p>
-            
+            <p>We may update this privacy policy from time to time. We will notify users of significant changes by updating the "last updated" date and posting the new policy on this page. Since we don't collect contact information, we cannot notify you directly of changes.</p>
+
             <div class="contact-box">
-                <h3>Contact Us</h3>
-                <p>If you have questions about this privacy policy or your data:</p>
+                <h3>Questions?</h3>
+                <p>If you have questions about this privacy policy:</p>
                 <p>
                     Email: <a href="mailto:privacy@spaceterminal.xyz">privacy@spaceterminal.xyz</a><br>
-                    Website: <a href="https://spaceterminal.xyz">spaceterminal.xyz</a>
+                    Website: <a href="https://spaceterminal.xyz">spaceterminal.xyz</a><br>
+                    GitHub: <a href="https://github.com/andrewblevins/space">github.com/andrewblevins/space</a>
                 </p>
             </div>
         </main>
-        
+
         <footer>
-            <p>&copy; 2024 SPACE Terminal. All rights reserved.</p>
+            <p>&copy; 2025 SPACE Terminal. All rights reserved.</p>
             <p>Open source under MIT License.</p>
             <div class="nav-links">
                 <a href="/">Home</a>
@@ -285,4 +305,3 @@
     </div>
 </body>
 </html>
-
