@@ -1686,7 +1686,7 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
         setCurrentSessionId(session.id);
         setCurrentConversationId(null);
         persistCurrentSession(session.id, null); // Persist localStorage session ID
-        
+
         // Process messages to restore advisor_json format if needed and ensure timestamps
         const processedMessages = session.messages.map((msg, idx) => {
           const baseTimestamp = msg.timestamp || new Date(Date.now() - (session.messages.length - idx) * 1000).toISOString();
@@ -2730,9 +2730,17 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
         }
         
         async function saveLegacySession() {
+          // Get existing session to preserve timestamp and other data
+          const existingSession = localStorage.getItem(`space_session_${currentSessionId}`);
+          const existingData = existingSession ? JSON.parse(existingSession) : null;
+
+          // Only update timestamp if we're adding new messages (not just loading)
+          // Compare message count to determine if this is a new message or just a reload
+          const isNewMessage = !existingData || messages.length > existingData.messages.length;
+
           const sessionData = {
             id: currentSessionId,
-            timestamp: new Date().toISOString(),
+            timestamp: isNewMessage ? new Date().toISOString() : (existingData?.timestamp || new Date().toISOString()),
             messages: messages.map(msg => ({
               ...msg,
               tags: msg.tags || []
@@ -2742,8 +2750,7 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
           };
 
           // Generate title if this is a new session with enough content and no title yet
-          const existingSession = localStorage.getItem(`space_session_${currentSessionId}`);
-          const hasTitle = existingSession ? JSON.parse(existingSession).title : false;
+          const hasTitle = existingData?.title;
           
           if (!hasTitle && nonSystemMessages.length >= 2) {
             // Generate title when we have a back-and-forth conversation
@@ -2753,19 +2760,17 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
             }
           } else if (hasTitle) {
             // Preserve existing title and existing summary
-            const existing = JSON.parse(existingSession);
-            sessionData.title = existing.title;
-            if (existing.summary) {
-              sessionData.summary = existing.summary;
-              sessionData.summaryTimestamp = existing.summaryTimestamp;
-              sessionData.summaryMessageCount = existing.summaryMessageCount;
+            sessionData.title = existingData.title;
+            if (existingData.summary) {
+              sessionData.summary = existingData.summary;
+              sessionData.summaryTimestamp = existingData.summaryTimestamp;
+              sessionData.summaryMessageCount = existingData.summaryMessageCount;
             }
           }
 
           // Auto-generate summary for long conversations (every 20 messages)
           if (nonSystemMessages.length > 0 && nonSystemMessages.length % 20 === 0 && openaiClient) {
-            const existing = existingSession ? JSON.parse(existingSession) : null;
-            if (!existing?.summary || existing.summaryMessageCount < nonSystemMessages.length - 10) {
+            if (!existingData?.summary || existingData.summaryMessageCount < nonSystemMessages.length - 10) {
               console.log(`📄 Auto-generating summary for long session ${currentSessionId} (${nonSystemMessages.length} messages)`);
               try {
                 // Generate summary in background without blocking UI
