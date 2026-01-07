@@ -344,6 +344,7 @@ const Terminal = ({ theme, toggleTheme }) => {
   const generatePerspectivesFromContext = async (journalText, answers) => {
     try {
       setIsGeneratingSuggestions(true);
+      setJournalStreamingStatus({ isStreaming: true, count: 0, total: 8 });
 
       // Generate a new session ID for this new conversation
       const newSessionId = getNextSessionId();
@@ -374,10 +375,27 @@ const Terminal = ({ theme, toggleTheme }) => {
       // Store full context in input field
       setInput(fullContext);
 
-      // Generate perspective suggestions with full context
+      // Generate perspective suggestions with streaming
       const existingNames = advisors.map(a => a.name);
-      const suggestions = await generateAdvisorSuggestions(fullContext, advisors, existingNames);
+      const { generateAdvisorSuggestionsStream } = await import('../utils/advisorSuggestions');
+
+      const suggestions = await generateAdvisorSuggestionsStream(
+        fullContext,
+        advisors,
+        existingNames,
+        (partialSuggestions) => {
+          // Streaming callback - update suggestions incrementally
+          setJournalSuggestions(partialSuggestions);
+          setJournalStreamingStatus({
+            isStreaming: true,
+            count: partialSuggestions.length,
+            total: 8
+          });
+        }
+      );
+
       setJournalSuggestions(suggestions);
+      setJournalStreamingStatus({ isStreaming: false, count: 8, total: 8 });
 
       // Track these names for future regenerations
       setPreviousSuggestionNames([...existingNames, ...suggestions.map(s => s.name)]);
@@ -396,6 +414,7 @@ const Terminal = ({ theme, toggleTheme }) => {
     } catch (error) {
       console.error('Error generating perspective suggestions:', error);
       setIsGeneratingSuggestions(false);
+      setJournalStreamingStatus({ isStreaming: false, count: 0, total: 8 });
 
       // Show error message
       setMessages(prev => [...prev, {
@@ -766,6 +785,11 @@ const Terminal = ({ theme, toggleTheme }) => {
   const [journalSuggestions, setJournalSuggestions] = useState([]);
   const [showJournalSuggestions, setShowJournalSuggestions] = useState(false);
   const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false);
+  const [journalStreamingStatus, setJournalStreamingStatus] = useState({
+    isStreaming: false,
+    count: 0,
+    total: 8
+  });
   const [customPerspectives, setCustomPerspectives] = useState([]);
   const [previousSuggestionNames, setPreviousSuggestionNames] = useState([]);
 
@@ -3907,6 +3931,7 @@ ${selectedText}
         onEditAdvisor={setEditingAdvisor}
         customPerspectives={customPerspectives}
         onCreateCustom={handleCreateCustomPerspective}
+        streamingStatus={journalStreamingStatus}
       />
     </>
   );

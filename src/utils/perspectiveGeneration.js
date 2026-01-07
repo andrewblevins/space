@@ -160,6 +160,134 @@ export const generatePerspectives = async (context, excludeNames = [], contextTy
 };
 
 /**
+ * Parse streaming perspective JSON - extract complete and partial perspectives
+ * Similar to useClaude.js:236-313 partial JSON parsing
+ */
+const parseStreamingPerspectives = (buffer) => {
+  const perspectives = [];
+
+  try {
+    // Find perspectives array in streaming buffer
+    const arrayMatch = buffer.match(/"perspectives":\s*\[([\s\S]*?)(?:\]|$)/);
+    if (!arrayMatch) return perspectives;
+
+    const arrayContent = arrayMatch[1];
+
+    // Match perspective objects (may be incomplete)
+    const objectPattern = /\{\s*"name":\s*"([^"]*)"(?:\s*,\s*"category":\s*"([^"]*)")?(?:\s*,\s*"description":\s*"([^"]*(?:[^"\\]|\\.)*)")?(?:\s*,\s*"rationale":\s*"([^"]*(?:[^"\\]|\\.)*)")?\s*\}/g;
+
+    let match;
+    while ((match = objectPattern.exec(arrayContent)) !== null) {
+      const [, name, category, description, rationale] = match;
+
+      perspectives.push({
+        id: `stream-${Date.now()}-${perspectives.length}`,
+        name: name || 'Loading...',
+        category: category || '',
+        description: description || 'Generating description...',
+        rationale: rationale || '',
+        isComplete: !!(name && category && description && rationale),
+        isPartial: !(name && category && description && rationale)
+      });
+    }
+  } catch (e) {
+    console.error('Error parsing streaming perspectives:', e);
+  }
+
+  return perspectives;
+};
+
+/**
+ * Stream perspective generation with progressive updates
+ * Replicates SSE streaming pattern from useClaude.js:315-459
+ * @param {string} context - The context text (journal entry or formatted messages)
+ * @param {string[]} excludeNames - Names to exclude from suggestions
+ * @param {string} contextType - 'journal' or 'conversation'
+ * @param {Function} onPerspectiveUpdate - Callback for progressive updates with partial perspectives
+ * @returns {Promise<Array>} Array of complete perspective objects
+ */
+export const generatePerspectivesStream = async (
+  context,
+  excludeNames = [],
+  contextType = 'journal',
+  onPerspectiveUpdate = null
+) => {
+  const { headers, apiUrl } = await setupApiAuth();
+  const prompt = buildPerspectivePrompt(context, excludeNames, contextType);
+
+  const response = await fetch(apiUrl, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      model: 'anthropic/claude-sonnet-4.5',
+      messages: [{
+        role: 'system',
+        content: 'You are a helpful assistant that responds only in valid JSON format.'
+      }, {
+        role: 'user',
+        content: prompt
+      }],
+      max_tokens: 4000,
+      stream: true  // Enable SSE streaming
+    })
+  });
+
+  if (!response.ok) {
+    await handleApiError(response);
+  }
+
+  // SSE streaming loop (pattern from useClaude.js:315-445)
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let fullContent = '';
+  let lastParsedCount = 0;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const events = buffer.split('\n\n');
+    buffer = events.pop() || '';
+
+    for (const event of events) {
+      const dataMatch = event.match(/^data: (.+)$/m);
+      if (!dataMatch || dataMatch[1] === '[DONE]') continue;
+
+      try {
+        const data = JSON.parse(dataMatch[1]);
+
+        // Extract text delta (OpenRouter format)
+        const text = data.choices?.[0]?.delta?.content;
+        if (text) {
+          fullContent += text;
+
+          // Parse partial perspectives
+          const perspectives = parseStreamingPerspectives(fullContent);
+
+          // Update callback when we have new perspectives
+          if (perspectives.length > lastParsedCount && onPerspectiveUpdate) {
+            lastParsedCount = perspectives.length;
+            onPerspectiveUpdate(perspectives);
+          }
+        }
+      } catch (e) {
+        console.error('Error parsing SSE event:', e);
+      }
+    }
+  }
+
+  // Final complete parse
+  const parsed = parseJsonResponse(fullContent);
+  if (!parsed.perspectives || !Array.isArray(parsed.perspectives)) {
+    throw new Error('Invalid response format - missing perspectives array');
+  }
+
+  return parsed.perspectives;
+};
+
+/**
  * Format conversation messages into context string
  */
 export const formatMessagesAsContext = (messages, maxMessages = 6) => {
