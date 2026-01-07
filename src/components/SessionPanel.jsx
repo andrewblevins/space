@@ -190,10 +190,10 @@ const SessionPanel = ({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-term-400 text-xl font-semibold">Previous Chats</h2>
+          <h2 className="text-sage-400 text-xl font-semibold">Previous Chats</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-term-400 transition-colors"
+            className="text-gray-400 hover:text-sage-400 transition-colors"
             title="Close Previous Chats"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -223,7 +223,7 @@ const SessionPanel = ({
 
         {/* Sessions List */}
         <div className="flex-1 overflow-y-auto">
-          <h3 className="text-term-400 font-medium mb-3">
+          <h3 className="text-sage-400 font-medium mb-3">
             Sessions {isLoading ? '(loading...)' : `(${sessions.length})`}
           </h3>
 

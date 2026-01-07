@@ -70,7 +70,7 @@ const PasswordModal = ({
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="w-full bg-stone-900 text-white font-sans border border-term-700 p-2 mb-4 focus:outline-none placeholder:text-term-300"
+          className="w-full bg-stone-900 text-white font-sans border border-term-700 p-2 mb-4 focus:outline-none placeholder:text-sage-400"
           placeholder="Enter password"
           data-testid="password-input"
           autoComplete={isCreatingPassword ? "new-password" : "current-password"}

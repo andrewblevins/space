@@ -125,10 +125,10 @@ const ApiKeySetup = ({ onComplete }) => {
       {/* Header */}
       <header className="relative z-10 flex items-center justify-between p-6">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-term-500 rounded flex items-center justify-center text-black font-bold">
+          <div className="w-8 h-8 bg-sage-500 rounded flex items-center justify-center text-white font-bold">
             S
           </div>
-          <span className="text-xl font-semibold">SPACE Terminal</span>
+          <span className="text-xl font-semibold text-sage-400">SPACE Terminal</span>
         </div>
         
         <button
@@ -202,7 +202,7 @@ const ApiKeySetup = ({ onComplete }) => {
                 type="password"
                 value={openrouterKey}
                 onChange={handleInputChange}
-                className="w-full bg-stone-900 text-white border border-term-700/50 p-3 rounded focus:outline-none focus:border-term-500 transition-colors font-mono placeholder:text-term-300"
+                className="w-full bg-stone-900 text-white border border-term-700/50 p-3 rounded focus:outline-none focus:border-term-500 transition-colors font-mono placeholder:text-sage-400"
                 placeholder="sk-or-v1-..."
                 data-testid="openrouter-api-key"
                 id="openrouter-api-key"

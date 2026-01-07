@@ -3378,10 +3378,10 @@ ${selectedText}
                         // In auth mode, let the link navigate normally to "/"
                       }}
                     >
-                      <div className="w-8 h-8 bg-term-500 rounded flex items-center justify-center text-black font-bold">
+                      <div className="w-8 h-8 bg-sage-500 rounded flex items-center justify-center text-white font-bold">
                         S
                       </div>
-                      <span className="text-xl font-semibold font-sans text-term-400">SPACE Terminal</span>
+                      <span className="text-xl font-semibold font-sans text-sage-400">SPACE Terminal</span>
                     </a>
                     <button
                       onClick={toggleSidebar}
@@ -3565,7 +3565,7 @@ ${selectedText}
                           value={editText}
                           onChange={(e) => setEditText(e.target.value)}
                           onKeyDown={handleEditKeyDown}
-                          className="w-full h-40 bg-white text-gray-800 font-sans p-2 border border-gray-300 focus:outline-none resize-none placeholder:text-amber-600 dark:placeholder:text-term-300 dark:bg-stone-900 dark:text-white dark:border-term-700"
+                          className="w-full h-40 bg-white text-gray-800 font-sans p-2 border border-gray-300 focus:outline-none resize-none placeholder:text-amber-600 dark:placeholder:text-sage-400 dark:bg-stone-900 dark:text-white dark:border-term-700"
                           placeholder="Edit your prompt..."
                           autoFocus
                           autoComplete="off"
@@ -3590,7 +3590,7 @@ ${selectedText}
                               setEditAdvisorText('');
                             }
                           }}
-                          className="w-full h-40 bg-white text-gray-800 font-sans p-2 border border-gray-300 focus:outline-none resize-none placeholder:text-amber-600 dark:placeholder:text-term-300 dark:bg-stone-900 dark:text-white dark:border-term-700"
+                          className="w-full h-40 bg-white text-gray-800 font-sans p-2 border border-gray-300 focus:outline-none resize-none placeholder:text-amber-600 dark:placeholder:text-sage-400 dark:bg-stone-900 dark:text-white dark:border-term-700"
                           placeholder="Edit advisor description..."
                           autoFocus
                           autoComplete="off"

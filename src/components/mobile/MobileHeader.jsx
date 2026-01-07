@@ -34,11 +34,11 @@ const MobileHeader = ({ activeTab, setActiveTab, setShowInfoModal, onLogoClick }
           }}
           className="flex items-center gap-2"
         >
-          <div className="w-8 h-8 bg-term-500 rounded flex items-center justify-center text-black font-bold">
+          <div className="w-8 h-8 bg-sage-500 rounded flex items-center justify-center text-white font-bold">
             S
           </div>
           <div className="flex flex-col">
-            <span className="text-lg font-semibold text-gray-800 dark:text-term-400">
+            <span className="text-lg font-semibold text-gray-800 dark:text-sage-400">
               SPACE
             </span>
             <span className="text-sm text-gray-600 dark:text-gray-400">

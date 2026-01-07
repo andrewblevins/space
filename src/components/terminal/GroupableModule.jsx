@@ -90,7 +90,7 @@ export function GroupableModule({
                       key={advisorName}
                       className={`group flex items-center justify-between rounded-md px-2 py-1.5 -mx-2 transition-all ${
                         isActive
-                          ? 'bg-term-600 text-white shadow-sm'
+                          ? 'bg-sage-500/20 border border-sage-500 text-sage-400 shadow-sm'
                           : `${ct.textDim} ${ct.hoverBg} hover:text-term-300`
                       }`}
                     >
@@ -109,7 +109,7 @@ export function GroupableModule({
                             e.stopPropagation();
                             setEditingAdvisor && setEditingAdvisor(advisor);
                           }}
-                          className={`p-1 ${isActive ? 'text-white/70 hover:text-white' : `${ct.textDim} ${ct.hoverText}`}`}
+                          className={`p-1 ${isActive ? 'text-sage-300 hover:text-sage-200' : `${ct.textDim} ${ct.hoverText}`}`}
                           title="Edit advisor"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -147,7 +147,7 @@ export function GroupableModule({
               key={`item-${idx}`}
               className={`group flex items-center justify-between rounded-md px-2 py-1.5 -mx-2 transition-all ${
                 isActive
-                  ? 'bg-term-600 text-white shadow-sm'
+                  ? 'bg-sage-500/20 border border-sage-500 text-sage-400 shadow-sm'
                   : `${ct.textDim} ${ct.hoverBg} hover:text-term-300`
               }`}
             >
@@ -166,7 +166,7 @@ export function GroupableModule({
                     e.stopPropagation();
                     setEditingAdvisor && setEditingAdvisor(item);
                   }}
-                  className={`p-1 ${isActive ? 'text-white/70 hover:text-white' : `${ct.textDim} ${ct.hoverText}`}`}
+                  className={`p-1 ${isActive ? 'text-sage-300 hover:text-sage-200' : `${ct.textDim} ${ct.hoverText}`}`}
                   title="Edit advisor"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">

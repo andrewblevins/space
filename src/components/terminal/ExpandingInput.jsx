@@ -187,7 +187,7 @@ export function ExpandingInput({ value, onChange, onSubmit, isLoading, sessions 
               rounded-lg
               resize-none
               bg-transparent text-gray-800 dark:text-white
-              placeholder:text-amber-600 dark:placeholder:text-term-300
+              placeholder:text-amber-600 dark:placeholder:text-sage-400
               ${isLoading ? 'opacity-50' : ''}
             `}
             placeholder={isLoading ? 'Waiting for response...' : 'Type your message... (use @ to reference past sessions)'}
@@ -278,7 +278,7 @@ export function ExpandingInput({ value, onChange, onSubmit, isLoading, sessions 
                 onSubmit(e);
               }
             }}
-            className="flex-1 w-full p-6 font-sans text-lg resize-none focus:outline-none bg-amber-50 text-gray-800 dark:bg-stone-900 dark:text-white placeholder:text-amber-600 dark:placeholder:text-term-300"
+            className="flex-1 w-full p-6 font-sans text-lg resize-none focus:outline-none bg-amber-50 text-gray-800 dark:bg-stone-900 dark:text-white placeholder:text-amber-600 dark:placeholder:text-sage-400"
             placeholder="Write your thoughts... (⌘/Ctrl+Enter to send, Esc to close)"
             disabled={isLoading}
             autoComplete="off"

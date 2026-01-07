@@ -126,7 +126,7 @@ const AdvisorSuggestionsModal = ({ suggestions, existingAdvisors, onAddSelected,
                       {advisor.color && (
                         <span className={`w-3 h-3 rounded-full flex-shrink-0 ${advisor.color}`}></span>
                       )}
-                      <h3 className="text-lg font-serif font-medium text-gray-800 dark:text-term-400">
+                      <h3 className="text-lg font-serif font-medium text-sage-600 dark:text-sage-400">
                         {advisor.name}
                       </h3>
                       {categoryLabel && (
@@ -236,7 +236,7 @@ const AdvisorSuggestionsModal = ({ suggestions, existingAdvisors, onAddSelected,
                             {advisor.color && (
                               <span className={`w-3 h-3 rounded-full flex-shrink-0 ${advisor.color}`}></span>
                             )}
-                            <h3 className="text-lg font-serif font-medium text-gray-800 dark:text-term-400">
+                            <h3 className="text-lg font-serif font-medium text-sage-600 dark:text-sage-400">
                               {advisor.name}
                             </h3>
                           </div>

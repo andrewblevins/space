@@ -70,7 +70,7 @@ const VotingModal = ({ isOpen, onClose, advisors, onSubmitVote }) => {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-term-400 text-xl font-semibold">Create Advisor Vote</h2>
+          <h2 className="text-sage-400 text-xl font-semibold">Create Advisor Vote</h2>
           <button
             onClick={handleCancel}
             className="text-gray-400 hover:text-term-400 transition-colors"
@@ -92,7 +92,7 @@ const VotingModal = ({ isOpen, onClose, advisors, onSubmitVote }) => {
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
               placeholder="Enter your question for the advisors..."
-              className="w-full bg-stone-900 text-white font-sans border border-term-700 rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-term-600 resize-none placeholder:text-term-300"
+              className="w-full bg-stone-900 text-white font-sans border border-term-700 rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-term-600 resize-none placeholder:text-sage-400"
               rows={3}
               autoFocus
               autoComplete="off"
@@ -114,7 +114,7 @@ const VotingModal = ({ isOpen, onClose, advisors, onSubmitVote }) => {
                     value={option}
                     onChange={(e) => updateOption(index, e.target.value)}
                     placeholder={`Option ${index + 1}`}
-                    className="flex-1 bg-stone-900 text-white font-sans border border-term-700 rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-term-600 placeholder:text-term-300"
+                    className="flex-1 bg-stone-900 text-white font-sans border border-term-700 rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-term-600 placeholder:text-sage-400"
                     autoComplete="off"
                     spellCheck="true"
                   />

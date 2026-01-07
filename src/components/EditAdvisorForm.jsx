@@ -22,7 +22,7 @@ const EditAdvisorForm = ({ advisor, onSubmit, onCancel }) => {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full bg-white text-gray-800 font-sans border border-gray-300 p-2 focus:outline-none placeholder:text-amber-600 dark:placeholder:text-term-300 dark:bg-stone-900 dark:text-white dark:border-term-700"
+              className="w-full bg-white text-gray-800 font-sans border border-gray-300 p-2 focus:outline-none placeholder:text-amber-600 dark:placeholder:text-sage-400 dark:bg-stone-900 dark:text-white dark:border-term-700"
               autoFocus
               autoComplete="off"
               spellCheck="true"
@@ -34,7 +34,7 @@ const EditAdvisorForm = ({ advisor, onSubmit, onCancel }) => {
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full bg-white text-gray-800 font-sans border border-gray-300 p-2 h-32 focus:outline-none resize-none placeholder:text-amber-600 dark:placeholder:text-term-300 dark:bg-stone-900 dark:text-white dark:border-term-700"
+              className="w-full bg-white text-gray-800 font-sans border border-gray-300 p-2 h-32 focus:outline-none resize-none placeholder:text-amber-600 dark:placeholder:text-sage-400 dark:bg-stone-900 dark:text-white dark:border-term-700"
               autoComplete="off"
               spellCheck="true"
               data-role="advisor-description"

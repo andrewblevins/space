@@ -28,7 +28,7 @@ const AddPromptForm = ({ isOpen, onSubmit, onCancel }) => {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-term-400 text-xl font-semibold">Add New Prompt</h2>
+          <h2 className="text-sage-400 text-xl font-semibold">Add New Prompt</h2>
           <button
             onClick={handleCancel}
             className="text-gray-400 hover:text-term-400 transition-colors"
@@ -50,7 +50,7 @@ const AddPromptForm = ({ isOpen, onSubmit, onCancel }) => {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter prompt name..."
-              className="w-full bg-white text-gray-800 font-sans border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-term-600 placeholder:text-amber-600 dark:placeholder:text-term-300 dark:bg-stone-900 dark:text-white dark:border-term-700"
+              className="w-full bg-white text-gray-800 font-sans border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-term-600 placeholder:text-amber-600 dark:placeholder:text-sage-400 dark:bg-stone-900 dark:text-white dark:border-term-700"
               autoFocus
               autoComplete="off"
               spellCheck="true"
@@ -66,7 +66,7 @@ const AddPromptForm = ({ isOpen, onSubmit, onCancel }) => {
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder="Enter your prompt text..."
-              className="w-full h-40 bg-white text-gray-800 font-sans border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-term-600 resize-none placeholder:text-amber-600 dark:placeholder:text-term-300 dark:bg-stone-900 dark:text-white dark:border-term-700"
+              className="w-full h-40 bg-white text-gray-800 font-sans border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-term-600 resize-none placeholder:text-amber-600 dark:placeholder:text-sage-400 dark:bg-stone-900 dark:text-white dark:border-term-700"
               autoComplete="off"
               spellCheck="true"
               data-role="prompt-text"
