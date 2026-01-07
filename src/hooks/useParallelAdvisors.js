@@ -73,55 +73,58 @@ When it serves your point, share relevant stories, anecdotes, or examples to ill
 
 Ask clarifying questions when needed, and offer strong opinions, frameworks, and recommendations based on your worldview.
 
-Respond naturally and directly without JSON formatting, name labels, or meta-commentary about being a voice or perspective. Other voices are responding independently in parallel - you don't see their responses and shouldn't reference them.`;
+Respond naturally and directly without JSON formatting or name labels. You're one of several perspectives the user is consulting. The conversation history includes what other perspectives have said, though you won't see what they're saying in response to this particular message. Use whatever context is useful, but speak in your own voice. There's no need to reference other perspectives' responses - only do so when it's genuinely relevant.`;
 
-    // Build conversation context - user messages + this advisor's own responses only
+    // Build conversation context - user messages + ALL completed advisor responses from previous turns
     const conversationMessages = [];
-    
+
     // Add historical conversation with proper context filtering
     if (totalTokens < contextLimit) {
       const historical = messages
         .filter((m) => {
           // Always include user messages
           if (m.type === 'user' && m.content?.trim() !== '' && m.content !== userMessage) return true;
-          
-          // Include only THIS advisor's previous responses (not other advisors)
+
+          // Include ALL completed advisor responses from previous turns (not just this advisor's)
+          // This allows advisors to see what others said in earlier conversation turns
           if (m.type === 'parallel_advisor_response' && m.advisorResponses) {
-            return Object.values(m.advisorResponses).some(resp => resp.name === advisor.name);
+            // Only include if all advisors have completed (message is from a previous turn)
+            return m.allCompleted === true;
           }
-          
-          // For legacy advisor_json messages, include only if this advisor participated
+
+          // For legacy advisor_json messages, include all (they're always complete)
           if (m.type === 'advisor_json' && m.parsedAdvisors) {
-            return m.parsedAdvisors.advisors.some(a => a.name === advisor.name);
+            return true;
           }
-          
+
           return false;
         })
         .map((m) => {
           let role = m.type;
           let content = m.content;
-          
-          // Handle parallel advisor responses - extract only this advisor's response
+
+          // Handle parallel advisor responses - format ALL advisors' responses
           if (m.type === 'parallel_advisor_response' && m.advisorResponses) {
-            const thisAdvisorResponse = Object.values(m.advisorResponses).find(resp => resp.name === advisor.name);
-            if (thisAdvisorResponse) {
-              role = 'assistant';
-              content = thisAdvisorResponse.content;
-            }
+            role = 'assistant';
+            // Format as multi-advisor response so this advisor can see what others said
+            const advisorTexts = Object.values(m.advisorResponses)
+              .map(resp => `${resp.name}: ${resp.content}`)
+              .join('\n\n---\n\n');
+            content = advisorTexts;
           }
-          // Handle legacy advisor_json - extract only this advisor's response  
+          // Handle legacy advisor_json - format ALL advisors' responses
           else if (m.type === 'advisor_json' && m.parsedAdvisors) {
-            const thisAdvisorResponse = m.parsedAdvisors.advisors.find(a => a.name === advisor.name);
-            if (thisAdvisorResponse) {
-              role = 'assistant';
-              content = thisAdvisorResponse.response;
-            }
+            role = 'assistant';
+            const advisorTexts = m.parsedAdvisors.advisors
+              .map(a => `${a.name}: ${a.response}`)
+              .join('\n\n---\n\n');
+            content = advisorTexts;
           }
           // User messages stay as-is
           else if (m.type === 'user') {
             role = 'user';
           }
-          
+
           return {
             role,
             // Only add timestamps to user messages, not assistant responses
