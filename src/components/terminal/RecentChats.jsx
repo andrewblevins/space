@@ -38,6 +38,7 @@ export function RecentChats({
 }) {
   const [recentSessions, setRecentSessions] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
+  const [pendingDelete, setPendingDelete] = useState(null); // { id, title }
 
   // Load sessions from localStorage
   const loadLocalStorageSessions = () => {
@@ -194,7 +195,7 @@ export function RecentChats({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  onDeleteSession(session.id);
+                  setPendingDelete({ id: session.id, title: sessionTitle });
                 }}
                 className="opacity-0 group-hover:opacity-100 p-1 rounded transition-opacity text-gray-400 hover:text-red-400 hover:bg-red-500/10"
                 title="Delete chat"
@@ -205,12 +206,12 @@ export function RecentChats({
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
-                  strokeWidth={2}
+                  strokeWidth={1.5}
                 >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    d="M6 18L18 6M6 6l12 12"
+                    d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
                   />
                 </svg>
               </button>
@@ -241,6 +242,35 @@ export function RecentChats({
           </svg>
           Show more... ({totalCount - maxItems} more)
         </button>
+      )}
+
+      {/* Delete confirmation modal */}
+      {pendingDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-gray-800 border border-gray-600 rounded-lg p-4 max-w-sm mx-4 shadow-xl">
+            <h3 className="text-white font-medium mb-2">Delete chat?</h3>
+            <p className="text-gray-300 text-sm mb-4">
+              "{pendingDelete.title}" will be permanently deleted. This cannot be undone.
+            </p>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setPendingDelete(null)}
+                className="px-3 py-1.5 text-sm text-gray-300 hover:text-white hover:bg-gray-700 rounded transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  onDeleteSession(pendingDelete.id);
+                  setPendingDelete(null);
+                }}
+                className="px-3 py-1.5 text-sm bg-red-600 hover:bg-red-700 text-white rounded transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
