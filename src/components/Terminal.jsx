@@ -3477,6 +3477,7 @@ ${selectedText}
                         maxItems={5}
                         currentSessionId={currentSessionId || currentConversationId}
                         onLoadSession={handleLoadSession}
+                        onDeleteSession={handleDeleteSession}
                         onShowMore={() => setShowSessionPanel(true)}
                         useDatabaseStorage={useDatabaseStorage}
                         storage={storage}

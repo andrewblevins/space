@@ -18,6 +18,7 @@ const colorThemes = {
  * @param {number} [props.maxItems=5] - Maximum number of items to show
  * @param {string} [props.currentSessionId] - The current session ID to highlight
  * @param {function} props.onLoadSession - Callback when a session is clicked
+ * @param {function} props.onDeleteSession - Callback when delete button is clicked
  * @param {function} props.onShowMore - Callback when "Show more..." is clicked
  * @param {boolean} [props.useDatabaseStorage=false] - Whether to use database storage
  * @param {object} [props.storage=null] - Storage service for database access
@@ -28,6 +29,7 @@ export function RecentChats({
   maxItems = 5,
   currentSessionId,
   onLoadSession,
+  onDeleteSession,
   onShowMore,
   useDatabaseStorage = false,
   storage = null,
@@ -173,18 +175,47 @@ export function RecentChats({
 
         const rawTitle = session.title || `Session ${session.id}`;
         const sessionTitle = toSentenceCase(rawTitle);
-        
+
         return (
-          <button
+          <div
             key={session.id}
-            onClick={() => !isCurrentSession && onLoadSession(session.id)}
-            className={`w-full text-left px-2.5 py-1.5 rounded transition-all truncate text-sm ${
-              isCurrentSession ? currentVariant.current : currentVariant.normal
-            }`}
-            title={sessionTitle}
+            className="group flex items-center gap-1"
           >
-            {sessionTitle}
-          </button>
+            <button
+              onClick={() => !isCurrentSession && onLoadSession(session.id)}
+              className={`flex-1 text-left px-2.5 py-1.5 rounded transition-all truncate text-sm ${
+                isCurrentSession ? currentVariant.current : currentVariant.normal
+              }`}
+              title={sessionTitle}
+            >
+              {sessionTitle}
+            </button>
+            {!isCurrentSession && onDeleteSession && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDeleteSession(session.id);
+                }}
+                className="opacity-0 group-hover:opacity-100 p-1 rounded transition-opacity text-gray-400 hover:text-red-400 hover:bg-red-500/10"
+                title="Delete chat"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-3.5 w-3.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            )}
+          </div>
         );
       })}
 
