@@ -356,13 +356,13 @@ const Terminal = ({ theme, toggleTheme }) => {
       // Build full context with questions and answers interleaved
       const contextParts = [journalText];
 
-      // Add question/answer pairs
+      // Add question/answer pairs (number questions to differentiate from answers)
       for (let i = 0; i < contextFlow.questions.length; i++) {
         const question = contextFlow.questions[i];
         const answer = answers[i];
 
         if (question) {
-          contextParts.push(question);
+          contextParts.push(`${i + 1}. ${question}`);
           if (answer && answer.trim()) {
             contextParts.push(answer);
           }
