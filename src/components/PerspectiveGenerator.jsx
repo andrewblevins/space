@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import AdvisorSuggestionsModal from './AdvisorSuggestionsModal';
-import { generatePerspectives, formatMessagesAsContext } from '../utils/perspectiveGeneration';
+import { formatMessagesAsContext } from '../utils/perspectiveGeneration';
 
 // Shared color theme configurations
 const colorThemes = {
@@ -62,8 +62,7 @@ export function PerspectiveGenerator({
     prevMessageCount.current = messages.length;
   }, [messages.length]);
 
-  const hasMessages = messages.filter(m => m.type === 'user' || m.type === 'assistant').length > 0;
-  const isDisabled = disabled || !hasMessages;
+  const isDisabled = disabled;
 
   const handleGeneratePerspectives = async () => {
     if (isDisabled) return;
@@ -196,12 +195,6 @@ export function PerspectiveGenerator({
     hybrid: `text-gray-800 dark:${ct.text}`,
   };
 
-  const hintStyles = {
-    subtle: "text-gray-500 dark:text-gray-400",
-    terminal: ct.textDim,
-    hybrid: `text-gray-500 dark:${ct.textDim}`,
-  };
-
   const currentButtonStyle = buttonStyles[variant] || buttonStyles.subtle;
 
   return (
@@ -227,11 +220,6 @@ export function PerspectiveGenerator({
               <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
             </svg>
           </div>
-          {!hasMessages && !disabled && (
-            <p className={`text-xs mt-1 ${hintStyles[variant] || hintStyles.subtle}`}>
-              Start a conversation to generate perspectives
-            </p>
-          )}
         </button>
       </div>
 

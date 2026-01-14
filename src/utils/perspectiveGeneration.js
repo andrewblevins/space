@@ -10,6 +10,56 @@ const buildPerspectivePrompt = (context, excludeNames = [], contextType = 'journ
     ? `\n\nIMPORTANT: Do NOT suggest any of these perspectives (already suggested or exist): ${excludeNames.join(', ')}. Generate completely different perspectives.`
     : '';
 
+  // Handle empty context case - generate versatile starter perspectives
+  const hasContext = context && context.trim().length > 0;
+
+  if (!hasContext) {
+    return `The user is starting a new conversation and wants a diverse panel of perspectives to begin exploring their thoughts with.${excludeClause}
+
+Generate 8 versatile, thought-provoking perspectives that would be valuable for a wide range of personal explorations - questions of meaning, direction, relationships, creativity, work, or self-understanding.
+
+GENERATE PERSPECTIVES FROM THESE FOUR CATEGORIES (2 each):
+
+1. NAMED FIGURES — Real people (historical or living) known for their distinctive approaches to understanding the human condition. Choose thinkers who offer genuinely different lenses - not the most famous defaults, but people with substantive and specific intellectual approaches.
+
+2. MYTHIC & FICTIONAL BEINGS — Gods, tricksters, culture heroes, legendary figures, or fictional characters whose archetypal energy offers useful perspective. Draw from any tradition: Greek, Norse, Hindu, Indigenous, African, East Asian, literary, cinematic.
+
+3. ROLES & FRAMEWORKS — Professional or practical perspectives that bring specific methodologies for understanding or navigating human challenges. Be unusually specific about orientation and approach.
+
+4. CHALLENGERS — Figures (named people, not generic "devil's advocate") known for productively challenging assumptions or conventional wisdom. Choose someone whose known positions create useful friction.
+
+YOUR SUGGESTIONS MUST BE:
+- Non-obvious choices that show genuine depth of selection
+- Capable of genuine depth - voices with real substance to draw on
+- Balanced between support and challenge
+- Useful across many types of conversations
+
+AVOID:
+- The most famous/default figure in any domain (dig past the obvious)
+- Generic role descriptions (be specific about orientation and approach)
+- Safe or flattering choices
+- Anything that feels like a "greatest hits" list of thinkers
+
+NAMING:
+- Named figures: Use their actual name
+- Mythic/fictional: Use the figure's name directly (no "Archetype" suffix)
+- Roles: Be specific, no articles (e.g., "Somatic Experiencing Practitioner" not "A Therapist")
+
+For each perspective, write a 2-3 sentence description in second-person ("you") that instructs this perspective on their identity and approach. For named figures, capture their actual intellectual voice and style. For mythic beings, embody their specific archetypal qualities. Make each description feel like it could only describe THIS perspective.
+
+Return ONLY valid JSON:
+{
+  "perspectives": [
+    {
+      "name": "Name",
+      "category": "named_figure|mythic_fictional|role|challenger",
+      "description": "You are... [second-person instructions capturing this specific voice]",
+      "rationale": "One sentence on why this perspective is valuable for self-exploration"
+    }
+  ]
+}`;
+  }
+
   const contextIntro = contextType === 'journal'
     ? `The user has written this journal entry to begin exploring their thoughts:\n\n${context}`
     : `Based on this recent conversation exchange:\n\n${context}`;
