@@ -3456,6 +3456,7 @@ ${selectedText}
                       <PerspectiveGenerator
                         key={currentSessionId}
                         messages={messages}
+                        currentInput={input}
                         existingAdvisors={advisors}
                         onAddPerspective={handleAddGeneratedPerspective}
                         trackUsage={trackUsage}

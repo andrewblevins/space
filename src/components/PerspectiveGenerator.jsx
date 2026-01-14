@@ -18,6 +18,7 @@ const colorThemes = {
  * Component for generating perspective suggestions in a modal
  * @param {object} props
  * @param {Array} props.messages - Conversation messages for context
+ * @param {string} props.currentInput - Current text in the input field (for context when no messages)
  * @param {Array} props.existingAdvisors - Currently saved advisors
  * @param {Function} props.onAddPerspective - Callback when adding perspectives
  * @param {Function} props.trackUsage - Usage tracking function
@@ -28,6 +29,7 @@ const colorThemes = {
  */
 export function PerspectiveGenerator({
   messages,
+  currentInput = '',
   existingAdvisors = [],
   onAddPerspective,
   trackUsage,
@@ -45,11 +47,15 @@ export function PerspectiveGenerator({
     total: 8
   });
 
-  // Use ref to always have access to the latest messages (prevents stale closure issues)
+  // Use refs to always have access to the latest values (prevents stale closure issues)
   const messagesRef = useRef(messages);
+  const currentInputRef = useRef(currentInput);
   useEffect(() => {
     messagesRef.current = messages;
   }, [messages]);
+  useEffect(() => {
+    currentInputRef.current = currentInput;
+  }, [currentInput]);
 
   // Clear generated perspectives when messages change significantly (session switch)
   const prevMessageCount = useRef(messages.length);
@@ -79,15 +85,21 @@ export function PerspectiveGenerator({
 
       // Debug logging
       const userAssistantMessages = currentMessages.filter(m => m.type === 'user' || m.type === 'assistant');
+      const inputText = currentInputRef.current;
       console.log('🎯 Generate Perspectives called with:', {
         totalMessages: currentMessages.length,
         userAssistantMessages: userAssistantMessages.length,
+        currentInput: inputText?.substring(0, 50) + (inputText?.length > 50 ? '...' : ''),
         firstUserMessage: userAssistantMessages[0]?.content?.substring(0, 50) + '...',
         lastMessage: userAssistantMessages[userAssistantMessages.length - 1]?.content?.substring(0, 50) + '...'
       });
 
-      // Format recent messages as context
-      const context = formatMessagesAsContext(currentMessages);
+      // Format recent messages as context, or use current input if no messages yet
+      let context = formatMessagesAsContext(currentMessages);
+      if (!context && inputText && inputText.trim()) {
+        // Use the current input text as context when there are no messages
+        context = `User: ${inputText.trim()}`;
+      }
       const existingNames = existingAdvisors.map(a => a.name);
 
       // Import streaming function and color utility
