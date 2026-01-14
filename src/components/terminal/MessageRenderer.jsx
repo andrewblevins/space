@@ -33,7 +33,7 @@ const MessageRenderer = memo(({
   const getMessageClassName = (type) => {
     switch (type) {
       case 'user':
-        return 'text-gray-900 dark:text-gray-100 whitespace-pre-wrap border-l-4 border-gray-300 dark:border-stone-600 pl-4 font-sans';
+        return 'text-gray-900 dark:text-gray-100 whitespace-pre-wrap border-l-4 border-gray-300 dark:border-stone-600 pl-4 font-sans text-base';
       case 'assistant':
         return 'text-gray-800 dark:text-term-100';
       case 'system':
