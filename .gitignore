@@ -56,3 +56,6 @@ marketing/
 pricing/
 customer-data/
 .wrangler/
+
+# Conductor workspace context
+.context/
