@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-SPACE Terminal is an open-source React-based interface for AI conversations featuring multi-perspective advisors, conversation analysis, and user-defined evaluation systems. Built with React 18, Vite, TailwindCSS, and Cloudflare Pages Functions.
+SPACE Terminal is an open-source React-based interface for exploring complex questions through multi-perspective AI conversations. Users converse with multiple distinct AI perspectives simultaneously, with tools for generating, modifying, and swapping perspectives on the fly. Built with React 18, Vite, TailwindCSS, and Cloudflare Pages Functions.
 
 ## Development Commands
 
@@ -84,7 +84,6 @@ VITE_USE_AUTH=false                   # Authentication disabled (localStorage mo
 # Backend (wrangler.toml)
 ANTHROPIC_API_KEY=                    # Claude API (primary)
 OPENAI_API_KEY=                       # GPT-4o-mini (analysis)
-GEMINI_API_KEY=                       # Gemini (evaluation system)
 OPENROUTER_API_KEY=                   # OpenRouter (additional models)
 ```
 
@@ -104,7 +103,6 @@ Terminal.jsx manages 20+ useState hooks organizing:
 ### API Integration Strategy
 - **Primary AI**: Claude Sonnet 4 via useClaude hook
 - **Analysis**: OpenAI GPT-4o-mini for metaphors/questions/suggestions
-- **Evaluation**: Gemini Pro for advisor improvement system
 - **Streaming**: Real-time response rendering with token estimation
 
 ### Module System
@@ -164,7 +162,7 @@ When working with Puppeteer/automation:
 The modular architecture supports:
 - New terminal modules for custom panel types
 - Additional AI service integrations
-- Custom advisor personalities and evaluation criteria
+- Custom advisor personalities and perspective types
 - Export formats and automation tools
 
 ## Common Development Tasks

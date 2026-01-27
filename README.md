@@ -1,8 +1,8 @@
 # SPACE Terminal
 
-[SPACE Terminal](https://spaceterminal.xyz) is a free, open-source interface for exploring complex problems with AI through multi-perspective conversations, iterative self-improvement, and user-defined alignment.
+[SPACE Terminal](https://spaceterminal.xyz) is a free, open-source interface for exploring complex questions through multi-perspective AI conversations.
 
-SPACE stands for Simple Perspective-Augmenting Conversation Environment (or, Simulated People Advising Convincingly Enough).
+SPACE stands for Simple Perspective-Augmenting Chat Environment (or, Simulated People Aspecting Convincingly Enough).
 
 <img src="screenshots/terminal-screenshot.png" alt="SPACE Terminal Interface" width="800"/>
 
@@ -11,53 +11,60 @@ SPACE stands for Simple Perspective-Augmenting Conversation Environment (or, Sim
 **SPACE uses your own API key.** You'll need an [OpenRouter](https://openrouter.ai) account.
 
 1. Visit [spaceterminal.xyz](https://spaceterminal.xyz)
-2. Get an API key from [openrouter.ai/keys](https://openrouter.ai/keys) (takes 2 minutes)
+2. Get an API key from [openrouter.ai/keys](https://openrouter.ai/keys)
 3. Paste your key and start exploring
 
 Your conversations are stored locally in your browser—we don't store your data on our servers.
 
 ## What SPACE Does
 
-Traditional AI chat systems impose hidden biases and limitations on users. SPACE attempts to flip this relationship. You define where the AI can improve, and the AI adapts to meet your standards.
+Standard AI chat interfaces give you one voice: authoritative, fluid, and singular. SPACE gives you many. Each response from the user generates a multiplicity of simultaneous responses from the AI, each from a distinct perspective. The result is a fundamentally different kind of conversation—one that requires active participation rather than passive reception.
 
-The interface invites you to create and "grow" AI advisors with distinct perspectives, swap them out freely as the conversation evolves, and improve them iteratively through the embedded Evaluation system.
+A brief onboarding flow helps you surface what's actually on your mind before the conversation begins. The system then suggests relevant perspectives from four categories: simulated actual humans, mythic figures, role-based entities, and challengers designed to question your implicit assumptions. You can use the suggestions, modify them, or write your own from scratch. You can swap perspectives freely as the conversation evolves—the experience is designed to feel more like a laboratory than a fixed panel.
 
-The result is a fluid, modular, deliberately developmental environment that aims to give you as much sovereignty as possible in the ongoing process of shaping the AI's perspectives.
+SPACE grew out of [Insight Cascade](https://medium.com/@jasnonaz), a protocol co-created with Jason Ganz in late 2024 and introduced through a series of workshops at the Fractal Tech Hub in Brooklyn.
+
+## Why Multiple Perspectives
+
+The media theorist Marshall McLuhan distinguished between "hot" and "cool" media. A hot medium delivers high-definition information to a single sense—your role is to receive. A cool medium is low-definition; it requires participation to fill in what's missing.
+
+A standard AI chat interface is hot. A multi-perspective interface is cooler. When you're presented with several different framings of your situation, none of them complete, you have to do something with them—compare, weigh, integrate, reject. The temperature drops, and participation rises.
+
+This matters beyond aesthetics. One voice, always available, optimized to be helpful, can train a kind of passivity—the expectation that there is an answer, that someone will provide it. It can also enable confirmation bias spirals, where user and system arrive at a shared frame and stay there, each reinforcing the other. Multiple voices push against both tendencies. They restore the kind of friction that produces insight.
 
 ## Key Features
 
-- **Multi-Perspective Conversations**: Create and manage AI advisors with distinct personalities that respond simultaneously in parallel
-- **Quality Criteria System**: Define assertions for responses and iteratively optimize advisors through improve-and-test loops
-- **Knowledge Dossier**: Track conversation history, search past sessions, and build interconnected knowledge over time
-- **Journal Onboarding**: Smart context-gathering flow that asks follow-up questions before generating relevant perspectives
-- **Session Management**: Export conversations, reference past sessions with @-mentions, and maintain conversation continuity
-- **Full Transparency**: See exactly what's sent to AI models in Debug mode
-- **Privacy-First**: All data stored locally in your browser—no accounts required, no server-side storage
-  
-## Why SPACE Exists
+- **Parallel Multi-Perspective Conversations**: Perspectives respond simultaneously, displayed in a responsive grid for direct comparison
+- **Journal Onboarding**: A context-gathering flow that asks follow-up questions before generating relevant perspectives—surfacing assumptions that might otherwise stay implicit
+- **Perspective Fluidity**: Generate, swap, modify, and create perspectives at any point in the conversation
+- **Full Transparency**: See exactly what's sent to AI models in Debug mode—no hidden system prompts
+- **Privacy-First**: All data stored locally in your browser. No accounts required, no server-side storage
+- **Session Management**: Save conversations, reference past sessions with @-mentions, and maintain continuity across explorations
 
-LLM conversations are a mind-altering technology. For those who choose to engage with them, the current default interfaces offered by frontier AI companies a) hide significant choices from the user, b) prioritize hegemonic default perspectives, and c) implicitly nudge users to behave as passive receivers of an endlessly generating flood of information and ideas.
+## Use Cases
 
-SPACE implements three core principles to redirect these tendencies:
+- **Complex decisions**: Assemble perspectives representing different stakeholders, frameworks, or values to see a situation from angles you hadn't considered
 
-- **Transparent Alignment**: See exactly how AI advisors are instructed and iteratively modify them to meet your needs.
-- **Opponent Processing**: Use multiple perspectives to stress-test ideas and avoid spirals of confirmation bias.
-- **User Sovereignty**: Where most apps track usage patterns and use them to optimize for engagement, SPACE gives users the power to define what constitutes improvement, and repeatedly invites an attitude of responsibility and curiosity toward the shaping of cognitive tools.
+- **Getting unstuck**: When you're cycling through the same thoughts, genuinely different framings can create movement where sympathy alone cannot
+
+- **Philosophical inquiry**: Engage multiple wisdom traditions or intellectual approaches with the same question and see where they converge and diverge
+
+- **Creative exploration**: Use the collision of perspectives to generate possibilities that wouldn't emerge from a single voice
+
+- **Adversarial reflection**: Push back against the perspectives, correct their framings—the act of engaging with external viewpoints, even simulated ones, can be activating and clarifying in itself
 
 ## Bring Your Own Key (BYOK)
 
 SPACE is free to use, but you bring your own API key. This means:
 
-- **You control costs**: Pay only for what you use (typically $5-15/month for regular use)
+- **You control costs**: Pay only for what you use
 - **No subscriptions**: No monthly fees to us—just pay-as-you-go to OpenRouter
 - **Privacy**: Your API key is stored encrypted in your browser, never on our servers
-- **Access to 200+ models**: OpenRouter provides access to Claude, GPT, Gemini, and more through a single key
-
-**Why OpenRouter?** Instead of managing multiple API keys from different providers, OpenRouter gives you access to all major AI models with one key and one account.
+- **Model access**: OpenRouter provides access to Claude, GPT, Gemini, and more through a single key
 
 ## Self-Hosting
 
-Want to run your own instance? Clone this repository:
+Clone the repository and run your own instance:
 
 ```bash
 git clone https://github.com/andrewblevins/space.git
@@ -70,35 +77,15 @@ npm run dev:watch
 
 See [SETUP.md](SETUP.md) for detailed instructions.
 
-## How the Evaluation System Works
-
-1. Have a conversation with an advisor
-2. Create assertions that define good responses by clicking the Assert button next to an advisor response
-3. Run the optimization process (10 iterations of testing and improvement)
-4. Accept or reject the optimized advisor
-
-The system uses one AI model (Gemini) to suggest improvements and another (Claude) to test them against your criteria.
-
-## Potential Use Cases
-
-- **Academic Research**: Create a panel with your field's leading theorist, a methodologist, and a constructive critic to pressure-test arguments from multiple angles
-  
-- **Creative Writing**: Assemble different editorial voices—a first reader, a mentor, an agent—switching between them as your manuscript develops
-  
-- **Business Strategy**: Build advisors representing different frameworks (Porter's Five Forces analyst, Blue Ocean strategist, Jobs-to-be-Done practitioner) to examine decisions through tested frames
-  
-- **Personal Decisions**: Design advisors who embody different aspects of wisdom—your future self, a teacher in your preferred lineage, a devil's advocate—to explore life choices seriously
-
 ## Technical Details
 
-Built with React, Vite, TailwindCSS, and Cloudflare Pages. Uses Claude, GPT-4o, and Gemini via OpenRouter.
+Built with React, Vite, TailwindCSS, and Cloudflare Pages. Uses Claude (via OpenRouter) as the primary model.
 
 All conversation data is stored in your browser's localStorage. No database or cloud storage is used.
 
 ## Documentation
 
 - [SETUP.md](SETUP.md) - Installation and setup
-- [docs/EVALUATION-SYSTEM.md](docs/EVALUATION-SYSTEM.md) - How the evaluation system works
 - [docs/](docs/) - Additional documentation
 
 ## Contributing
@@ -117,6 +104,10 @@ See [SETUP.md](SETUP.md) for development setup.
 - [GitHub Discussions](https://github.com/andrewblevins/space/discussions) for questions
 - andrew.s.blevins@gmail.com for direct contact
 
+## Acknowledgments
+
+This project wouldn't exist without Jason Ganz, who co-created the original Insight Cascade protocol, and Varun Godbole, whose coaching and insight shaped its development. Thanks to the HCI Club for playtesting and support, Fractal Tech for providing the physical environment, and the Cosmos Institute for the FIRE grant that made the final push possible.
+
 ## License
 
 MIT License - see [LICENSE](LICENSE) file.
@@ -124,5 +115,3 @@ MIT License - see [LICENSE](LICENSE) file.
 Author: [Andrew Blevins](https://www.andrewshadeblevins.com)
 
 Protocol by [Andrew Blevins](https://www.andrewshadeblevins.com) and [Jason Ganz](https://www.linkedin.com/in/jasnonaz/)
-
-Much appreciation to [Varun Godbole](https://varungodbole.github.io/) for his help shaping this project, and for contributing the core insight behind user-directed evals.

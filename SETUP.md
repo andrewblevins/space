@@ -2,7 +2,7 @@
 
 ## Quick Start
 
-SPACE Terminal is a revolutionary AI advisor system with user-sovereign evaluation capabilities. This guide will help you get it running locally.
+SPACE Terminal is an open-source interface for exploring complex questions through multi-perspective AI conversations. This guide will help you get it running locally.
 
 ## Prerequisites
 
@@ -49,7 +49,6 @@ You'll need API keys from these providers:
 ### Required APIs
 - **Anthropic (Claude)**: Get from [console.anthropic.com](https://console.anthropic.com)
 - **OpenAI (GPT)**: Get from [platform.openai.com](https://platform.openai.com)
-- **Google (Gemini)**: Get from [ai.google.dev](https://ai.google.dev)
 
 ### Configuration Files
 
@@ -63,7 +62,6 @@ VITE_USE_AUTH=false
 [vars]
 ANTHROPIC_API_KEY = "sk-ant-api03-your-anthropic-key"
 OPENAI_API_KEY = "sk-proj-your-openai-key"
-GEMINI_API_KEY = "your-gemini-api-key"
 ```
 
 ## Data Storage
@@ -75,9 +73,9 @@ All conversation data is stored locally in your browser's localStorage. No datab
 
 ## Key Features to Test
 
-1. **Multi-Advisor Conversations**: Create advisors and have them debate
-2. **Evaluation System**: Create assertions and optimize advisor responses
-3. **High Council Mode**: Get multiple perspectives on complex topics
+1. **Journal Onboarding**: Go through the context-gathering flow and let the system suggest relevant perspectives
+2. **Parallel Perspectives**: See multiple perspectives respond simultaneously in the grid layout
+3. **Perspective Fluidity**: Generate new perspectives, swap them out, or create your own mid-conversation
 4. **Session Management**: Save and load conversation sessions
 
 ## Architecture Overview
@@ -116,13 +114,6 @@ lsof -ti:3000 | xargs kill -9
 rm -rf node_modules package-lock.json
 npm install
 ```
-
-## Testing the Evaluation System
-
-1. **Create an Advisor**: Use the + button to add a new advisor
-2. **Have a Conversation**: Ask the advisor questions
-3. **Create Assertions**: Click "Evaluate" to set quality criteria
-4. **Run Optimization**: Let the system improve the advisor automatically
 
 ## Contributing
 
