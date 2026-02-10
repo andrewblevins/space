@@ -162,7 +162,7 @@ You are a voice in SPACE Terminal, a multi-perspective conversation interface wh
 
 ${conversationTurns < 3 ? EARLY_PROTOCOL : ONGOING_PROTOCOL}
 
-Respond naturally and directly without JSON formatting, name labels, or meta-commentary about being a voice or perspective. Other voices are responding independently in parallel - you don't see their responses and shouldn't reference them.`;
+Respond naturally and directly without JSON formatting, name labels, or meta-commentary about being a voice or perspective. Other perspectives are responding independently in parallel. You may occasionally see a summary of what they said in the previous turn — use it if it's relevant, but don't feel obligated to respond to it. Speak in your own voice and stay grounded in your perspective.`;
 ```
 
 ### Early Protocol (Turns 1-3)
@@ -288,17 +288,43 @@ while (true) {
 
 ### What Each Advisor Sees
 
+Each advisor's API call receives an isolated conversation history to prevent "context contamination" — a bug where advisors mimic the multi-perspective format after seeing all advisors' responses in their assistant message history.
+
 ✅ **Included in context:**
 - ALL user messages from conversation history
-- ONLY their own previous responses
+- ONLY their own previous responses (as `assistant` role messages)
+- A reference summary of other advisors' responses from the **most recent turn only** (as a `user` role message, clearly bracketed)
 - The current user message
 - Their current system prompt (appropriate for turn count)
 
 ❌ **NOT included in context:**
-- Other advisors' responses
+- Other advisors' responses in the `assistant` role (this caused the contamination bug)
+- Other advisors' responses from turns older than the most recent
 - System messages
 - Previous versions of system prompts
 - Metadata about turn counts or protocol phases
+
+### Cross-Advisor Awareness (Last Turn Reference)
+
+To allow users to naturally reference what other advisors said, each advisor receives a bracketed reference block containing the other advisors' responses from the previous turn. This is injected as a `user` role message immediately before the current user message.
+
+```javascript
+// Injected as user role — NOT assistant — to avoid pattern mimicking
+{
+  role: 'user',
+  content: `[For reference, here's what the other perspectives said last turn:
+
+Seth Godin: ...response text...
+
+Pema Chödrön: ...response text...]`
+}
+```
+
+**Design rationale:**
+- **`user` role, not `assistant`**: The LLM never sees multi-voice text as its own output, preventing the contamination pattern
+- **Only the last turn**: Keeps token cost bounded regardless of conversation length
+- **Bracketed framing**: Clearly marked as reference material, not a directive to respond to
+- **Excludes this advisor's own response**: No redundancy — they already have it in their assistant history
 
 ### Example Context for "Martin Buber" on Turn 4
 
@@ -312,19 +338,19 @@ while (true) {
   You now have enough context to engage more fully...`
 }
 
-// Conversation history
+// Conversation history (this advisor's isolated thread)
 { role: 'user', content: '[2025-10-30T12:00] First user message' }
 { role: 'assistant', content: 'Martin Buber turn 1 response' }
 { role: 'user', content: '[2025-10-30T12:05] Second user message' }
 { role: 'assistant', content: 'Martin Buber turn 2 response' }
 { role: 'user', content: '[2025-10-30T12:10] Third user message' }
 { role: 'assistant', content: 'Martin Buber turn 3 response' }
-{ role: 'user', content: '[2025-10-30T12:15] Fourth user message' }
 
-// Martin Buber does NOT see:
-// - Seth Godin's responses
-// - Pema Chödrön's responses
-// - System prompts from turns 1-3
+// Last turn reference (other advisors' most recent responses)
+{ role: 'user', content: '[For reference, here\'s what the other perspectives said last turn:\n\nSeth Godin: ...turn 3 response...\n\nPema Chödrön: ...turn 3 response...]' }
+
+// Current user message
+{ role: 'user', content: '[2025-10-30T12:15] Fourth user message' }
 ```
 
 ## UI Rendering
@@ -442,12 +468,19 @@ console.log(`🎭 ${advisor.name} Response received:`, { status, ok });
 
 Enable with `debugMode` state in Terminal.jsx.
 
+## Change History
+
+### Context contamination fix (2026-02-10)
+- **Problem**: Advisors saw all other advisors' responses in the `assistant` role, causing them to mimic the multi-perspective format after 2-3 turns
+- **Fix**: Reverted to isolated context model where each advisor only sees its own responses as `assistant` messages
+- **Enhancement**: Added "last turn reference" — other advisors' most recent responses injected as a bracketed `user` role message, giving awareness without contamination
+- **Commit**: `81f08e9` introduced the bug; current commit fixes it
+
 ## Future Enhancements
 
 Potential improvements to this architecture:
 
-1. **Memory Integration**: Use memory system for smarter context pruning
+1. **Graceful context windowing**: Instead of the current binary cliff (full history or user-messages-only), trim oldest turns first when approaching the token limit
 2. **Cross-Advisor Synthesis**: Optional synthesis step after all advisors respond
 3. **Dynamic Protocol Phases**: Allow users to configure when early protocol ends
 4. **Advisor Interruptions**: Allow advisors to respond to each other in certain modes
-5. **Context Sharing Controls**: User-configurable visibility of other advisors' responses

@@ -39,7 +39,6 @@ export function useParallelAdvisors({ messages, setMessages, maxTokens, contextL
     // API key handling moved to headers section for proper routing
 
     const estimateTokens = (text) => Math.ceil(text.length / 4);
-    const totalTokens = messages.reduce((sum, msg) => sum + estimateTokens(msg.content || ''), 0);
 
     // Count conversation turns (how many times this advisor has responded)
     const conversationTurns = messages.filter(m => {
@@ -73,80 +72,99 @@ When it serves your point, share relevant stories, anecdotes, or examples to ill
 
 Ask clarifying questions when needed, and offer strong opinions, frameworks, and recommendations based on your worldview.
 
-Respond naturally and directly without JSON formatting, name labels, or meta-commentary about being a voice or perspective. Other voices are responding independently in parallel - you don't see their responses and shouldn't reference them.`;
+Respond naturally and directly without JSON formatting, name labels, or meta-commentary about being a voice or perspective. Other perspectives are responding independently in parallel. You may occasionally see a summary of what they said in the previous turn — use it if it's relevant, but don't feel obligated to respond to it. Speak in your own voice and stay grounded in your perspective.`;
 
-    // Build conversation context - user messages + only THIS advisor's previous responses
-    const conversationMessages = [];
+    // Build conversation context with graceful windowing
+    // Each advisor sees: system prompt + own history + last-turn reference + current message
+    // When over contextLimit, oldest turns are dropped first
 
-    // Add historical conversation with proper context filtering
-    if (totalTokens < contextLimit) {
-      const historical = messages
-        .filter((m) => {
-          // Always include user messages
-          if (m.type === 'user' && m.content?.trim() !== '' && m.content !== userMessage) return true;
+    // Step 1: Build full filtered history for this advisor
+    const historical = messages
+      .filter((m) => {
+        if (m.type === 'user' && m.content?.trim() !== '' && m.content !== userMessage) return true;
+        if (m.type === 'parallel_advisor_response' && m.advisorResponses) {
+          return Object.values(m.advisorResponses).some(resp => resp.name === advisor.name);
+        }
+        if (m.type === 'advisor_json' && m.parsedAdvisors) {
+          return m.parsedAdvisors.advisors.some(a => a.name === advisor.name);
+        }
+        return false;
+      })
+      .map((m) => {
+        let role = m.type;
+        let content = m.content;
 
-          // Include only THIS advisor's previous responses (not other advisors)
-          if (m.type === 'parallel_advisor_response' && m.advisorResponses) {
-            return Object.values(m.advisorResponses).some(resp => resp.name === advisor.name);
+        if (m.type === 'parallel_advisor_response' && m.advisorResponses) {
+          const thisAdvisorResponse = Object.values(m.advisorResponses).find(resp => resp.name === advisor.name);
+          if (thisAdvisorResponse) {
+            role = 'assistant';
+            content = thisAdvisorResponse.content;
           }
-
-          // For legacy advisor_json messages, include only if this advisor participated
-          if (m.type === 'advisor_json' && m.parsedAdvisors) {
-            return m.parsedAdvisors.advisors.some(a => a.name === advisor.name);
+        } else if (m.type === 'advisor_json' && m.parsedAdvisors) {
+          const thisAdvisorResponse = m.parsedAdvisors.advisors.find(a => a.name === advisor.name);
+          if (thisAdvisorResponse) {
+            role = 'assistant';
+            content = thisAdvisorResponse.response;
           }
+        } else if (m.type === 'user') {
+          role = 'user';
+        }
 
-          return false;
-        })
-        .map((m) => {
-          let role = m.type;
-          let content = m.content;
+        return {
+          role,
+          content: (role === 'user' && m.timestamp) ? `[${formatTimestamp(m.timestamp)}] ${content}` : content
+        };
+      });
 
-          // Handle parallel advisor responses - extract only THIS advisor's response
-          if (m.type === 'parallel_advisor_response' && m.advisorResponses) {
-            const thisAdvisorResponse = Object.values(m.advisorResponses).find(resp => resp.name === advisor.name);
-            if (thisAdvisorResponse) {
-              role = 'assistant';
-              content = thisAdvisorResponse.content;
-            }
-          }
-          // Handle legacy advisor_json - extract only THIS advisor's response
-          else if (m.type === 'advisor_json' && m.parsedAdvisors) {
-            const thisAdvisorResponse = m.parsedAdvisors.advisors.find(a => a.name === advisor.name);
-            if (thisAdvisorResponse) {
-              role = 'assistant';
-              content = thisAdvisorResponse.response;
-            }
-          }
-          // User messages stay as-is
-          else if (m.type === 'user') {
-            role = 'user';
-          }
-
-          return {
-            role,
-            // Only add timestamps to user messages, not assistant responses
-            content: (role === 'user' && m.timestamp) ? `[${formatTimestamp(m.timestamp)}] ${content}` : content
-          };
-        });
-      
-      conversationMessages.push(...historical);
-    } else {
-      // For memory-managed context, we might need to adapt buildConversationContext
-      // For now, fall back to simpler approach
-      const userMessages = messages
-        .filter((m) => m.type === 'user' && m.content?.trim() !== '' && m.content !== userMessage)
-        .map((m) => ({
-          role: 'user',
-          content: m.timestamp ? `[${formatTimestamp(m.timestamp)}] ${m.content}` : m.content
-        }));
-      conversationMessages.push(...userMessages);
+    // Step 2: Build last-turn reference block (other advisors' most recent responses)
+    const lastAdvisorTurn = [...messages].reverse().find(
+      m => m.type === 'parallel_advisor_response' && m.advisorResponses && m.allCompleted
+    );
+    let referenceBlock = null;
+    if (lastAdvisorTurn) {
+      const otherResponses = Object.values(lastAdvisorTurn.advisorResponses)
+        .filter(resp => resp.name !== advisor.name && resp.content?.trim())
+        .map(resp => `${resp.name}: ${resp.content}`)
+        .join('\n\n');
+      if (otherResponses) {
+        referenceBlock = `[For reference, here's what the other perspectives said last turn:\n\n${otherResponses}]`;
+      }
     }
-    
-    // Add current user message
+
+    // Step 3: Calculate token budget and trim oldest turns if needed
+    const systemTokens = estimateTokens(systemPromptText);
+    const currentMessageTokens = estimateTokens(userMessage);
+    const referenceBlockTokens = referenceBlock ? estimateTokens(referenceBlock) : 0;
+    const fixedTokens = systemTokens + currentMessageTokens;
+    let availableForHistory = contextLimit - fixedTokens - referenceBlockTokens;
+
+    let historyTokens = historical.reduce((s, m) => s + estimateTokens(m.content), 0);
+
+    // Drop oldest user/assistant pairs until history fits
+    while (historyTokens > availableForHistory && historical.length > 0) {
+      const removed = historical.shift();
+      historyTokens -= estimateTokens(removed.content);
+      // If we removed a user message, also remove the following assistant message to keep pairs
+      if (removed.role === 'user' && historical.length > 0 && historical[0].role === 'assistant') {
+        const removedAssistant = historical.shift();
+        historyTokens -= estimateTokens(removedAssistant.content);
+      }
+    }
+
+    // If still over budget, drop the reference block
+    if (historyTokens > contextLimit - fixedTokens && referenceBlock) {
+      referenceBlock = null;
+      availableForHistory = contextLimit - fixedTokens;
+    }
+
+    // Step 4: Assemble final message array
+    const conversationMessages = [...historical];
+    if (referenceBlock) {
+      conversationMessages.push({ role: 'user', content: referenceBlock });
+    }
     conversationMessages.push({ role: 'user', content: userMessage });
 
-    // Calculate input tokens
-    const systemTokens = estimateTokens(systemPromptText);
+    // Calculate input tokens for tracking
     const contextTokens = conversationMessages.reduce((s, m) => s + estimateTokens(m.content), 0);
     const inputTokens = systemTokens + contextTokens;
 
