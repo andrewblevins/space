@@ -73,9 +73,9 @@ When it serves your point, share relevant stories, anecdotes, or examples to ill
 
 Ask clarifying questions when needed, and offer strong opinions, frameworks, and recommendations based on your worldview.
 
-Respond naturally and directly without JSON formatting or name labels. You're one of several perspectives the user is consulting. The conversation history includes what other perspectives have said, though you won't see what they're saying in response to this particular message. Use whatever context is useful, but speak in your own voice. There's no need to reference other perspectives' responses - only do so when it's genuinely relevant.`;
+Respond naturally and directly without JSON formatting, name labels, or meta-commentary about being a voice or perspective. Other voices are responding independently in parallel - you don't see their responses and shouldn't reference them.`;
 
-    // Build conversation context - user messages + ALL completed advisor responses from previous turns
+    // Build conversation context - user messages + only THIS advisor's previous responses
     const conversationMessages = [];
 
     // Add historical conversation with proper context filtering
@@ -85,16 +85,14 @@ Respond naturally and directly without JSON formatting or name labels. You're on
           // Always include user messages
           if (m.type === 'user' && m.content?.trim() !== '' && m.content !== userMessage) return true;
 
-          // Include ALL completed advisor responses from previous turns (not just this advisor's)
-          // This allows advisors to see what others said in earlier conversation turns
+          // Include only THIS advisor's previous responses (not other advisors)
           if (m.type === 'parallel_advisor_response' && m.advisorResponses) {
-            // Only include if all advisors have completed (message is from a previous turn)
-            return m.allCompleted === true;
+            return Object.values(m.advisorResponses).some(resp => resp.name === advisor.name);
           }
 
-          // For legacy advisor_json messages, include all (they're always complete)
+          // For legacy advisor_json messages, include only if this advisor participated
           if (m.type === 'advisor_json' && m.parsedAdvisors) {
-            return true;
+            return m.parsedAdvisors.advisors.some(a => a.name === advisor.name);
           }
 
           return false;
@@ -103,22 +101,21 @@ Respond naturally and directly without JSON formatting or name labels. You're on
           let role = m.type;
           let content = m.content;
 
-          // Handle parallel advisor responses - format ALL advisors' responses
+          // Handle parallel advisor responses - extract only THIS advisor's response
           if (m.type === 'parallel_advisor_response' && m.advisorResponses) {
-            role = 'assistant';
-            // Format as multi-advisor response so this advisor can see what others said
-            const advisorTexts = Object.values(m.advisorResponses)
-              .map(resp => `${resp.name}: ${resp.content}`)
-              .join('\n\n---\n\n');
-            content = advisorTexts;
+            const thisAdvisorResponse = Object.values(m.advisorResponses).find(resp => resp.name === advisor.name);
+            if (thisAdvisorResponse) {
+              role = 'assistant';
+              content = thisAdvisorResponse.content;
+            }
           }
-          // Handle legacy advisor_json - format ALL advisors' responses
+          // Handle legacy advisor_json - extract only THIS advisor's response
           else if (m.type === 'advisor_json' && m.parsedAdvisors) {
-            role = 'assistant';
-            const advisorTexts = m.parsedAdvisors.advisors
-              .map(a => `${a.name}: ${a.response}`)
-              .join('\n\n---\n\n');
-            content = advisorTexts;
+            const thisAdvisorResponse = m.parsedAdvisors.advisors.find(a => a.name === advisor.name);
+            if (thisAdvisorResponse) {
+              role = 'assistant';
+              content = thisAdvisorResponse.response;
+            }
           }
           // User messages stay as-is
           else if (m.type === 'user') {

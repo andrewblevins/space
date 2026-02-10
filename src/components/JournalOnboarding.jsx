@@ -160,27 +160,35 @@ const JournalOnboarding = ({
           />
 
           <div className="flex items-center justify-between mt-4">
-            {/* Only show "Generate Perspectives Now" if NOT on last question */}
-            {!isLastQuestion && (
+            <div className="flex items-center gap-4">
               <button
-                onClick={handleGenerateNow}
+                onClick={() => onSkip(text)}
                 disabled={isGenerating}
-                className="text-sm text-amber-700 dark:text-term-300 hover:text-amber-900 dark:hover:text-term-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors underline flex items-center"
+                className="text-sm text-amber-700 dark:text-term-300 hover:text-amber-900 dark:hover:text-term-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors underline"
               >
-                {isGenerating ? (
-                  <>
-                    <svg className="animate-spin mr-1 h-3 w-3" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Generating...
-                  </>
-                ) : (
-                  'Generate Perspectives Now'
-                )}
+                Skip to Chat
               </button>
-            )}
-            {isLastQuestion && <div></div>}
+              {/* Only show "Generate Perspectives Now" if NOT on last question */}
+              {!isLastQuestion && (
+                <button
+                  onClick={handleGenerateNow}
+                  disabled={isGenerating}
+                  className="text-sm text-amber-700 dark:text-term-300 hover:text-amber-900 dark:hover:text-term-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors underline flex items-center"
+                >
+                  {isGenerating ? (
+                    <>
+                      <svg className="animate-spin mr-1 h-3 w-3" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Generating...
+                    </>
+                  ) : (
+                    'Generate Perspectives Now'
+                  )}
+                </button>
+              )}
+            </div>
 
             <div className="flex gap-3">
               <button
