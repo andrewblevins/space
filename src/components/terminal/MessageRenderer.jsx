@@ -4,9 +4,6 @@ import { AdvisorResponseCard } from './AdvisorResponseCard';
 import { ParallelAdvisorGrid } from './ParallelAdvisorGrid';
 import ThinkingBlock from '../ThinkingBlock';
 import FullScreenPerspectiveModal from './FullScreenPerspectiveModal';
-// DEPRECATED: DebateBlock no longer used after High Council removal
-// import DebateBlock from '../DebateBlock';
-
 /**
  * Individual message renderer component with React.memo optimization
  * This prevents re-rendering of unchanged messages during streaming

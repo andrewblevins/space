@@ -17,12 +17,7 @@ import { useModal } from '../contexts/ModalContext';
 import { useAuthSafe } from '../contexts/AuthContext';
 import AccordionMenu from './AccordionMenu';
 import SessionPanel from './SessionPanel';
-// DEPRECATED: Prompt Library - Feature no longer maintained
-// import PromptLibrary from './PromptLibrary';
-// import AddPromptForm from './AddPromptForm';
 import ExportMenu from './ExportMenu';
-// DEPRECATED: Knowledge Dossier - Feature no longer maintained
-// import DossierModal from './DossierModal';
 import ImportExportModal from './ImportExportModal';
 import HelpModal from './HelpModal';
 import InfoModal from './InfoModal';
@@ -34,12 +29,7 @@ import { CollapsibleModule } from "./terminal/CollapsibleModule";
 import { CollapsibleSection } from "./terminal/CollapsibleSection";
 import { RecentChats } from "./terminal/RecentChats";
 import { CollapsibleClickableModule } from "./terminal/CollapsibleClickableModule";
-// DEPRECATED: High Council Mode components
-// import DebateBlock from './DebateBlock';
 import { CollapsibleSuggestionsModule } from "./terminal/CollapsibleSuggestionsModule";
-// DEPRECATED: Call a Vote - Feature no longer maintained
-// import VotingModal from './VotingModal';
-// import HighCouncilModal from './HighCouncilModal';
 import { ExpandingInput } from "./terminal/ExpandingInput";
 import { MemoizedMarkdownMessage } from "./terminal/MemoizedMarkdownMessage";
 import { AdvisorResponseMessage } from "./terminal/AdvisorResponseMessage";
@@ -52,9 +42,6 @@ import { summarizeSession, generateSessionSummary } from "../utils/terminalHelpe
 import { trackUsage, trackSession } from '../utils/usageTracking';
 import { worksheetQuestions, WORKSHEET_TEMPLATES } from "../utils/worksheetTemplates";
 import { useConversationStorage } from '../hooks/useConversationStorage';
-// DEPRECATED: Migration system no longer needed
-// import { needsMigration } from '../utils/migrationHelper';
-// import MigrationModal from './MigrationModal';
 import AssertionsModal from './AssertionsModal';
 import EvaluationsModal from './EvaluationsModal';
 import ResponsiveContainer from './responsive/ResponsiveContainer';

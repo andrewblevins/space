@@ -4,7 +4,6 @@ import MobileTabBar from './MobileTabBar';
 import { MemoizedMarkdownMessage } from '../terminal/MemoizedMarkdownMessage';
 import { AdvisorResponseCard } from '../terminal/AdvisorResponseCard';
 import ThinkingBlock from '../ThinkingBlock';
-import DebateBlock from '../DebateBlock';
 import TouchInput from './TouchInput';
 import FullScreenPerspectiveModal from '../terminal/FullScreenPerspectiveModal';
 
