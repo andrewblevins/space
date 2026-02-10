@@ -1,6 +1,10 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code when working with code in this repository.
+
+## Documentation Maintenance
+
+When you make changes that affect the architecture — new files, renamed/deleted files, new hooks, new components, changed data flow, new environment variables — update this file and any relevant docs/ files to reflect the change. Do this as part of the same piece of work. Don't wait to be asked.
 
 ## Project Overview
 
@@ -49,68 +53,195 @@ npm run lint                  # ESLint validation
 
 ### Core Components Structure
 ```
-src/components/Terminal.jsx          # Central hub (~800 lines, main application state)
+src/components/
+├── Terminal.jsx                     # Central hub (~3900 lines, main application state)
+├── JournalOnboarding.jsx            # Onboarding context-gathering flow
+├── PerspectiveGenerator.jsx         # Perspective suggestion UI
+├── AdvisorSuggestionsModal.jsx      # Perspective suggestions modal
+├── AdvisorForm.jsx                  # Create new advisor
+├── EditAdvisorForm.jsx              # Edit existing advisor
+├── ApiKeySetup.jsx                  # API key entry UI
+├── SettingsMenu.jsx                 # Settings panel
+├── SessionPanel.jsx                 # Chat session sidebar
+├── AccordionMenu.jsx                # Collapsible menu
+├── ExportMenu.jsx                   # Export options
+├── ImportExportModal.jsx            # Import/export conversations
+├── HelpModal.jsx                    # Help overlay
+├── InfoModal.jsx                    # Info overlay
+├── WelcomeScreen.jsx                # First-visit welcome
+├── ThinkingBlock.jsx                # AI thinking indicator
+├── AssertionsModal.jsx              # Assertion/evaluation creation
+├── EvaluationsModal.jsx             # Evaluation results
+├── UsageDisplay.jsx                 # Usage stats
+├── UsageIndicator.jsx               # Inline usage indicator
+├── PrivacyPolicy.jsx                # Privacy policy page
+│
 ├── terminal/                        # Terminal-specific UI modules
 │   ├── Module.jsx                   # Basic display module
 │   ├── CollapsibleModule.jsx        # Expandable panels
-│   ├── GroupableModule.jsx          # Advisor grouping system
-│   └── ExpandingInput.jsx           # Resizable text input
-├── [Modal Components]               # AdvisorForm, SettingsMenu, etc.
-└── mobile/                          # Mobile-responsive components
+│   ├── CollapsibleClickableModule.jsx
+│   ├── CollapsibleSection.jsx       # Collapsible content sections
+│   ├── CollapsibleSuggestionsModule.jsx  # Interactive suggestion panels
+│   ├── GroupableModule.jsx          # Advisor grouping with color coding
+│   ├── ExpandingInput.jsx           # Resizable text input
+│   ├── AdvisorResponseCard.jsx      # Individual perspective response card
+│   ├── AdvisorResponseMessage.jsx   # Legacy advisor response format
+│   ├── ParallelAdvisorGrid.jsx      # Grid layout for parallel responses
+│   ├── MessageRenderer.jsx          # Renders different message types
+│   ├── MemoizedMarkdownMessage.jsx  # Memoized markdown rendering
+│   ├── RecentChats.jsx              # Chat history list
+│   ├── SessionAutocomplete.jsx      # @-mention session autocomplete
+│   ├── SidebarFooterMenu.jsx        # Sidebar bottom menu
+│   └── FullScreenPerspectiveModal.jsx  # Expanded perspective view
+│
+├── mobile/                          # Mobile-responsive components
+│   ├── MobileLayout.jsx             # Mobile container layout
+│   ├── MobileHeader.jsx             # Mobile top bar
+│   ├── MobileTabBar.jsx             # Mobile bottom navigation
+│   └── TouchInput.jsx               # Touch-optimized input
+│
+└── responsive/
+    └── ResponsiveContainer.jsx      # Desktop/mobile breakpoint switching
 ```
 
-### Key Integration Points
-- **API Integration**: `src/hooks/useClaude.js` - Primary AI API hook with streaming
-- **Memory System**: `src/lib/memory.ts` - Conversation context management
-- **Analysis Pipeline**: `src/utils/terminalHelpers.js` - Metaphors/questions analysis
-- **Storage**: `src/utils/secureStorage.js` - Encrypted API key storage
+### Hooks
+```
+src/hooks/
+├── useParallelAdvisors.js     # Core hook: calls multiple advisors in parallel via OpenRouter
+├── useClaude.js               # Single-advisor Claude calls (legacy, still used for some flows)
+├── useOpenRouter.js            # OpenRouter API integration
+├── useGemini.js               # Gemini API integration
+├── useOpenAI.js               # OpenAI direct calls
+├── useConversationStorage.js   # Conversation save/load (localStorage or Supabase)
+├── useUsageTracking.js         # Token/cost tracking
+└── useOpenRouterCredits.js     # OpenRouter credit balance
+```
+
+### Utilities
+```
+src/utils/
+├── perspectiveGeneration.js    # Prompt building + API calls for perspective generation
+├── advisorSuggestions.js       # Wrapper around perspectiveGeneration for advisor suggestions
+├── contextQuestions.js         # Journal onboarding question generation (gpt-4o-mini)
+├── terminalHelpers.js          # buildConversationContext, summarizeSession
+├── apiConfig.js                # API endpoint routing (auth mode vs legacy)
+├── apiErrorHandler.js          # Consistent API error handling
+├── secureStorage.js            # Plain localStorage wrapper for API keys (no encryption)
+├── usageTracking.js            # Usage tracking utilities
+├── evaluationHelpers.js        # Evaluation/assertion system
+├── worksheetTemplates.js       # Worksheet question templates
+├── analytics.js                # Analytics tracking
+├── migrationHelper.js          # Data migration utilities
+├── fileLogger.js               # File-based logging
+└── automationHelpers.js        # Puppeteer automation helpers
+```
+
+### Libraries
+```
+src/lib/
+├── memory.ts          # MemorySystem: cross-session context via tag-based retrieval
+├── tagAnalyzer.ts     # Tag analysis via gpt-4o-mini
+├── advisorColors.js   # Color assignment for advisors
+├── defaultPrompts.js  # Default system prompts
+└── supabase.js        # Supabase client initialization
+```
+
+### Backend (Cloudflare Pages Functions)
+```
+functions/
+├── api/
+│   ├── chat/
+│   │   ├── openrouter.js      # OpenRouter proxy (primary)
+│   │   ├── claude.js           # Direct Anthropic proxy
+│   │   ├── openai.js           # OpenAI proxy
+│   │   └── gemini.js           # Gemini proxy
+│   ├── conversations/
+│   │   ├── index.js            # List/create conversations
+│   │   └── [id].js             # Get/update/delete conversation
+│   ├── subscriptions/
+│   │   ├── status.js           # Subscription status
+│   │   ├── create-checkout.js  # Stripe checkout
+│   │   ├── billing-portal.js   # Stripe billing portal
+│   │   └── webhook.js          # Stripe webhooks
+│   ├── usage.js                # Usage tracking endpoint
+│   └── health.js               # Health check
+└── middleware/                  # Auth middleware, rate limiting
+```
 
 ### Data Flow
+
+**Chat message flow:**
 ```
-User Input → Terminal.jsx → useClaude Hook → Claude API
-                ↓
-Message Processing ← Streaming Response ← API Response
-        ↓
-State Update → UI Refresh → Analysis Triggers (OpenAI GPT-4o-mini)
+User Input → Terminal.jsx handleSendMessage()
+  → useParallelAdvisors.callParallelAdvisors()
+    → For each active advisor in parallel:
+      → Build per-advisor system prompt + context window
+      → POST to /api/chat/openrouter (or direct OpenRouter in legacy mode)
+      → Stream response tokens back
+    → Update messages[] state with parallel_advisor_response
+  → Render via ParallelAdvisorGrid → AdvisorResponseCard
+```
+
+**Journal onboarding flow:**
+```
+User enters journal text → JournalOnboarding
+  → contextQuestions.generateContextQuestion() (gpt-4o-mini via OpenRouter)
+  → 3 follow-up questions gathered
+  → perspectiveGeneration.generatePerspectivesStream() (gpt-4o-mini via OpenRouter)
+  → 8 perspective suggestions displayed
+  → User selects/modifies → advisors[] state in Terminal.jsx
 ```
 
 ## Environment Configuration
 
-### Required Environment Variables
+### Frontend Environment Variables (.env)
 ```bash
-# Frontend (.env)
-VITE_USE_AUTH=false                   # Authentication disabled (localStorage mode)
-
-# Backend (wrangler.toml)
-ANTHROPIC_API_KEY=                    # Claude API (primary)
-OPENAI_API_KEY=                       # GPT-4o-mini (analysis)
-OPENROUTER_API_KEY=                   # OpenRouter (additional models)
+VITE_USE_AUTH=false                   # 'true' enables Supabase auth; 'false' for BYOK localStorage mode
+VITE_SUPABASE_URL=                    # Supabase project URL (only needed if VITE_USE_AUTH=true)
+VITE_SUPABASE_ANON_KEY=               # Supabase anon key (only needed if VITE_USE_AUTH=true)
+VITE_AUTH_REDIRECT_URL=               # OAuth redirect URL (defaults to window.location.origin)
+VITE_OPENROUTER_API_KEY=              # Optional: auto-fill API key in development
+VITE_DEV_PASSWORD=                    # Optional: dev password for automation (default: development123)
 ```
 
-### Development Mode
-- **Local Storage**: All conversation data is stored in browser localStorage
-- No database or cloud storage is used for conversations
+### Backend Environment Variables (wrangler.toml)
+```bash
+ANTHROPIC_API_KEY=                    # For /api/chat/claude proxy
+OPENAI_API_KEY=                       # For /api/chat/openai proxy
+OPENROUTER_API_KEY=                   # For /api/chat/openrouter proxy
+```
+
+### Two Operating Modes
+- **BYOK mode** (`VITE_USE_AUTH=false`): User provides their own OpenRouter API key, stored in browser localStorage. No backend auth needed. This is the default.
+- **Auth mode** (`VITE_USE_AUTH=true`): Google OAuth via Supabase. API calls proxied through backend functions. Subscription/usage tracking enabled.
 
 ## Key Architectural Patterns
 
 ### State Management
-Terminal.jsx manages 20+ useState hooks organizing:
+Terminal.jsx manages ~68 useState hooks organized as:
 - **Core State**: messages[], advisors[], input, isLoading
-- **UI State**: Modal visibility, panel expansion states
-- **Settings State**: maxTokens, contextLimit, debugMode
-- **Analysis State**: metaphors[], questions[], advisorSuggestions[]
+- **UI State**: Modal visibility, panel expansion, sidebar state
+- **Settings State**: maxTokens, contextLimit, debugMode, reasoningMode, openrouterModel
+- **Onboarding State**: showJournalOnboarding, journalSuggestions, contextFlow
+- **Analysis State**: advisorSuggestions[], customPerspectives[]
+- **Session State**: sessions, currentConversationId, conversationTitle
 
-### API Integration Strategy
-- **Primary AI**: Claude Sonnet 4 via useClaude hook
-- **Analysis**: OpenAI GPT-4o-mini for metaphors/questions/suggestions
-- **Streaming**: Real-time response rendering with token estimation
+### API Integration
+- **Primary chat**: OpenRouter API (`anthropic/claude-sonnet-4.5` default model) via `useParallelAdvisors`
+- **Analysis/generation**: `openai/gpt-4o-mini` via OpenRouter for context questions, perspective generation, session summaries, and tag analysis
+- **Streaming**: All chat responses stream via SSE-like chunked responses
 
-### Module System
-Terminal uses modular UI components:
-- `CollapsibleModule`: Basic expandable panels
-- `GroupableModule`: Advisor organization with color coding
-- `CollapsibleSuggestionsModule`: Interactive suggestion panels
-- All modules support consistent theming and responsive design
+### Context Windowing (useParallelAdvisors)
+Each advisor gets an independent context window:
+1. System prompt with advisor identity
+2. Filtered conversation history (only this advisor's past responses + user messages)
+3. Last-turn reference block (summary of what other advisors said)
+4. Current user message
+
+When total tokens exceed `contextLimit` (default 150,000 chars), oldest turn pairs are dropped first. If still over budget, the cross-advisor reference block is dropped.
+
+### API Key Storage
+`secureStorage.js` stores API keys in plain text in localStorage. Despite the legacy function names (`setEncrypted`, `getDecrypted`), there is no encryption. The file explicitly states this.
 
 ## Testing & Development Guidelines
 
@@ -123,7 +254,7 @@ When working with Puppeteer/automation:
 
 ### Component Development
 - Follow React 18 patterns with hooks
-- Use TailwindCSS for styling (green terminal aesthetic)
+- Use TailwindCSS for styling (sage/copper color scheme)
 - Implement responsive design for mobile compatibility
 - Add TypeScript types in `src/types/` for complex data structures
 
@@ -135,8 +266,8 @@ When working with Puppeteer/automation:
 ## Performance Considerations
 
 ### Context Management
-- Token limit: 150,000 characters before context pruning
-- Memory system intelligently retains relevant messages
+- Token limit: 150,000 characters before context pruning (configurable via settings)
+- Per-advisor context windowing drops oldest turns first
 - Streaming responses for real-time user feedback
 
 ### React Optimizations
@@ -144,43 +275,14 @@ When working with Puppeteer/automation:
 - `useCallback` hooks for function reference stability
 - State batching to reduce re-renders
 
-## Security Implementation
+## Documentation
 
-### API Key Management
-- AES-256 encryption for browser-stored keys
-- Password-protected secure storage system
-- Automatic cleanup on logout/session end
-- Backend proxy for authenticated API calls
+Technical docs are in `docs/`. Key references:
+- `MESSAGE_AND_PROMPT_FLOW.md` — detailed message and prompt flow documentation
+- `ADVISOR-SYSTEM.md` — advisor implementation details
+- `CONTEXT-MANAGEMENT.md` — context windowing and memory system
+- `ARCHITECTURE.md` — full architecture overview
+- `DESIGN_PRINCIPLES.md` — UI/UX design principles
+- `PRODUCT-PHILOSOPHY.md` — product vision and design rationale
 
-### Authentication Flow
-- Google OAuth via Supabase Auth
-- Session-based authentication for API access
-- Rate limiting and usage tracking
-
-## Extension Points
-
-The modular architecture supports:
-- New terminal modules for custom panel types
-- Additional AI service integrations
-- Custom advisor personalities and perspective types
-- Export formats and automation tools
-
-## Common Development Tasks
-
-### Adding New Advisors
-1. Use AdvisorForm component for creation UI
-2. Store in localStorage (local mode) or Supabase (auth mode)
-3. Color assignment via `src/lib/advisorColors.js`
-4. System prompt generation in Terminal.jsx
-
-### Implementing New Analysis Features
-1. Add analysis function to `src/utils/terminalHelpers.js`
-2. Integrate with OpenAI API call pattern
-3. Create corresponding UI module in `src/components/terminal/`
-4. Wire into Terminal.jsx state and useEffect hooks
-
-### Testing New Features
-- Use `npm run test:api` for backend integration testing
-- Implement Jest tests for utility functions
-- Use automated setup script: `npm run dev:setup`
-- Test responsive design across viewport sizes
+Business/strategy docs are in `docs/business/`. Archived plans and old changelogs are in `docs/archived/`.
