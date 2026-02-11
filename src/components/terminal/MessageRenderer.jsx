@@ -145,12 +145,15 @@ const MessageRenderer = memo(({
     }
   };
 
+  // Card-type messages (advisor grids) get full width; text messages stay at readable width
+  const isCardMessage = msg.type === 'parallel_advisor_response' || msg.type === 'advisor_json';
+
   return (
     <>
     <div
       key={messageKey}
       id={`msg-${idx}`}
-      className={`mb-4 break-words text-lg ${getMessageClassName(msg.type)}`}
+      className={`mb-4 break-words text-lg ${isCardMessage ? '' : 'max-w-3xl mx-auto'} ${getMessageClassName(msg.type)}`}
     >
       {renderMessageContent()}
     </div>
