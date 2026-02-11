@@ -214,7 +214,14 @@ export function ExpandingInput({ value, onChange, onSubmit, isLoading, sessions 
             </svg>
           </button>
         </div>
-      
+
+        {/* Keyboard hint */}
+        {!isLoading && (
+          <div className="mt-1.5 px-1 text-xs text-gray-400 dark:text-gray-500">
+            <span className="font-sans">⏎</span> to send, <span className="font-sans">⇧⏎</span> for new line
+          </div>
+        )}
+
       <SessionAutocomplete
         show={showAutocomplete}
         searchTerm={autocompleteSearch}
