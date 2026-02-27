@@ -1,5 +1,6 @@
 import { getApiEndpoint } from './apiConfig';
 import { handleApiError } from './apiErrorHandler';
+import { parseStreamingPerspectives } from './perspectiveParser';
 
 /**
  * Core prompt template for perspective generation
@@ -210,44 +211,6 @@ export const generatePerspectives = async (context, excludeNames = [], contextTy
 };
 
 /**
- * Parse streaming perspective JSON - extract complete and partial perspectives
- * Similar to useClaude.js:236-313 partial JSON parsing
- */
-const parseStreamingPerspectives = (buffer) => {
-  const perspectives = [];
-
-  try {
-    // Find perspectives array in streaming buffer
-    const arrayMatch = buffer.match(/"perspectives":\s*\[([\s\S]*?)(?:\]|$)/);
-    if (!arrayMatch) return perspectives;
-
-    const arrayContent = arrayMatch[1];
-
-    // Match perspective objects (may be incomplete)
-    const objectPattern = /\{\s*"name":\s*"([^"]*)"(?:\s*,\s*"category":\s*"([^"]*)")?(?:\s*,\s*"description":\s*"([^"]*(?:[^"\\]|\\.)*)")?(?:\s*,\s*"rationale":\s*"([^"]*(?:[^"\\]|\\.)*)")?\s*\}/g;
-
-    let match;
-    while ((match = objectPattern.exec(arrayContent)) !== null) {
-      const [, name, category, description, rationale] = match;
-
-      perspectives.push({
-        id: `stream-${Date.now()}-${perspectives.length}`,
-        name: name || 'Loading...',
-        category: category || '',
-        description: description || 'Generating description...',
-        rationale: rationale || '',
-        isComplete: !!(name && category && description && rationale),
-        isPartial: !(name && category && description && rationale)
-      });
-    }
-  } catch (e) {
-    console.error('Error parsing streaming perspectives:', e);
-  }
-
-  return perspectives;
-};
-
-/**
  * Stream perspective generation with progressive updates
  * Replicates SSE streaming pattern from useClaude.js:315-459
  * @param {string} context - The context text (journal entry or formatted messages)
@@ -291,7 +254,7 @@ export const generatePerspectivesStream = async (
   const decoder = new TextDecoder();
   let buffer = '';
   let fullContent = '';
-  let lastParsedCount = 0;
+  let lastContentHash = '';
 
   while (true) {
     const { done, value } = await reader.read();
@@ -316,10 +279,16 @@ export const generatePerspectivesStream = async (
           // Parse partial perspectives
           const perspectives = parseStreamingPerspectives(fullContent);
 
-          // Update callback when we have new perspectives
-          if (perspectives.length > lastParsedCount && onPerspectiveUpdate) {
-            lastParsedCount = perspectives.length;
-            onPerspectiveUpdate(perspectives);
+          // Update callback when any content changes (not just count)
+          if (perspectives.length > 0 && onPerspectiveUpdate) {
+            const contentHash = perspectives.map(p =>
+              `${p.name}|${(p.description || '').length}|${p.isComplete}`
+            ).join(';;');
+
+            if (contentHash !== lastContentHash) {
+              lastContentHash = contentHash;
+              onPerspectiveUpdate(perspectives);
+            }
           }
         }
       } catch (e) {

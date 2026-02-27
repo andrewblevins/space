@@ -23,17 +23,21 @@ const AdvisorSuggestionsModal = ({ suggestions, existingAdvisors, onAddSelected,
   // Stagger entrance animation for new cards
   useEffect(() => {
     if (suggestions.length > prevCountRef.current) {
-      // New cards arrived — stagger their entrance
       const newCards = suggestions.slice(prevCountRef.current);
-      newCards.forEach((advisor, idx) => {
-        const id = advisor.id;
-        setTimeout(() => {
-          setVisibleIds(prev => new Set([...prev, id]));
-        }, idx * 80); // 80ms stagger between cards
-      });
+      if (newCards.length === 1) {
+        // Single new card (streaming) — show immediately
+        setVisibleIds(prev => new Set([...prev, newCards[0].id]));
+      } else {
+        // Batch of new cards — stagger entrance
+        newCards.forEach((advisor, idx) => {
+          setTimeout(() => {
+            setVisibleIds(prev => new Set([...prev, advisor.id]));
+          }, idx * 80);
+        });
+      }
     }
     prevCountRef.current = suggestions.length;
-  }, [suggestions]);
+  }, [suggestions.length]);
 
   // Reset visible IDs when modal opens fresh
   useEffect(() => {
@@ -242,21 +246,12 @@ const AdvisorSuggestionsModal = ({ suggestions, existingAdvisors, onAddSelected,
 
           {suggestions.map((advisor) => renderAdvisorCard(advisor, advisor.id, false))}
 
-          {/* Placeholder slots while streaming */}
+          {/* Inline loading indicator while streaming */}
           {isStreaming && suggestions.length < streamTotal && (
-            Array.from({ length: Math.min(2, streamTotal - suggestions.length) }).map((_, idx) => (
-              <div
-                key={`placeholder-${idx}`}
-                className="border-2 border-dashed border-gray-200 dark:border-stone-800 rounded-lg p-4 animate-pulse"
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="w-3 h-3 rounded-full bg-gray-200 dark:bg-stone-700"></span>
-                  <div className="h-5 w-32 bg-gray-200 dark:bg-stone-700 rounded"></div>
-                </div>
-                <div className="h-4 w-full bg-gray-100 dark:bg-stone-800 rounded mt-2"></div>
-                <div className="h-4 w-2/3 bg-gray-100 dark:bg-stone-800 rounded mt-1"></div>
-              </div>
-            ))
+            <div className="flex items-center gap-2 text-sm text-gray-400 dark:text-gray-500 py-2">
+              <span className="inline-block w-3 h-3 border-2 border-gray-300 dark:border-stone-600 border-t-transparent rounded-full animate-spin"></span>
+              <span>Loading more perspectives...</span>
+            </div>
           )}
 
           {/* Create Your Own Perspective Button */}
