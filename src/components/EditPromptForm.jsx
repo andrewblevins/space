@@ -10,8 +10,8 @@ const EditPromptForm = ({ prompt, onSubmit, onCancel }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-      <div className="bg-gray-900 p-6 rounded-lg border border-term-500 w-96 max-h-[80vh] overflow-y-auto overflow-x-hidden">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+      <div className="bg-gray-900 p-6 rounded-lg border border-term-500 w-full max-w-96 max-h-[80vh] overflow-y-auto overflow-x-hidden">
         <h2 className="text-term-400 text-xl mb-4">Edit Prompt</h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">

@@ -292,7 +292,7 @@ const AdvisorSuggestionsModal = ({ suggestions, existingAdvisors, onAddSelected,
         </div>
 
         {/* Footer Actions */}
-        <div className="p-6 border-t border-gray-300 dark:border-stone-700 flex items-center justify-between">
+        <div className="p-6 border-t border-gray-300 dark:border-stone-700 flex flex-wrap items-center justify-between gap-2">
           <div className="flex gap-3">
             <button
               onClick={onRegenerate}

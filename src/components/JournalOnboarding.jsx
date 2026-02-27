@@ -159,7 +159,7 @@ const JournalOnboarding = ({
             autoFocus
           />
 
-          <div className="flex items-center justify-between mt-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 mt-4">
             <div className="flex items-center gap-4">
               <button
                 onClick={() => onSkip(text)}

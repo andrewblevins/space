@@ -6,6 +6,7 @@ import { AdvisorResponseCard } from '../terminal/AdvisorResponseCard';
 import ThinkingBlock from '../ThinkingBlock';
 import TouchInput from './TouchInput';
 import FullScreenPerspectiveModal from '../terminal/FullScreenPerspectiveModal';
+import MobileDisclaimerModal from './MobileDisclaimerModal';
 
 /**
  * MobileLayout component provides the main layout structure for mobile devices
@@ -348,6 +349,7 @@ const MobileLayout = ({
 
   return (
     <>
+    <MobileDisclaimerModal />
     <div className="flex flex-col h-full">
       <MobileHeader 
         activeTab={activeTab}

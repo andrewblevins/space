@@ -46,7 +46,7 @@ const MobileTabBar = ({ activeTab, setActiveTab }) => {
   ];
 
   return (
-    <nav className="flex bg-amber-50 dark:bg-stone-900 border-t border-gray-300 dark:border-stone-700">
+    <nav className="safe-area-bottom flex bg-amber-50 dark:bg-stone-900 border-t border-gray-300 dark:border-stone-700">
       {tabs.map((tab) => (
         <button
           key={tab.id}

@@ -1052,7 +1052,7 @@ const Terminal = ({ theme, toggleTheme }) => {
           messageCount: messages.length,
           sessionId: currentSessionId,
           timestamp: Date.now(),
-          isMobile: window.innerWidth < 768
+          isMobile: window.innerWidth < 1024
         });
       }, 10000); // Log every 10 seconds when debug mode is on
 
