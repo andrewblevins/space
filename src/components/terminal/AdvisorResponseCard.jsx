@@ -1,6 +1,54 @@
 import { memo, useState } from "react";
 import ReactMarkdown from 'react-markdown';
 
+// Stable markdown components object - defined once outside render cycle
+const markdownComponents = {
+  p: ({ children }) => <p className="font-serif w-full text-gray-800 dark:text-term-100 leading-relaxed">{children}</p>,
+  em: ({ children }) => <em className="italic">{children}</em>,
+  strong: ({ children }) => <strong className="font-bold">{children}</strong>,
+  code: ({ node, inline, className, children, ...props }) => {
+    return inline ? (
+      <code className="text-term-600 dark:text-term-400 font-mono bg-stone-200 dark:bg-stone-900 px-1 rounded" {...props}>
+        {children}
+      </code>
+    ) : (
+      <pre className="bg-stone-200 dark:bg-stone-900 p-4 rounded-md my-2 overflow-x-auto whitespace-pre-wrap break-all w-full">
+        <code className="font-mono block text-gray-800 dark:text-term-100" {...props}>
+          {children}
+        </code>
+      </pre>
+    );
+  },
+};
+
+// Preprocess response content for better streaming display
+const processResponseContent = (content) => {
+  if (!content) return '';
+  return content.replace(/\n\n+/g, '\n\n');
+};
+
+// Extracted as a standalone component so React preserves its identity across parent re-renders
+const StreamingMarkdownRenderer = memo(({ content }) => {
+  const processedContent = processResponseContent(content);
+  const paragraphs = processedContent.split(/\n\n+/).filter(p => p.trim());
+
+  return (
+    <div className="text-left font-serif w-full">
+      {paragraphs.map((paragraph, index) => (
+        <ReactMarkdown
+          key={index}
+          className="mb-3"
+          components={markdownComponents}
+        >
+          {paragraph}
+        </ReactMarkdown>
+      ))}
+    </div>
+  );
+});
+
+StreamingMarkdownRenderer.displayName = 'StreamingMarkdownRenderer';
+
 /**
  * Component to render individual advisor responses from JSON format with assertion button
  * @param {object} props
@@ -17,72 +65,18 @@ export const AdvisorResponseCard = memo(({ advisor, allAdvisors = [], onAssertio
   const [isExpanded, setIsExpanded] = useState(false);
 
   // Find advisor configuration for color
-  const advisorConfig = allAdvisors.find(a => 
+  const advisorConfig = allAdvisors.find(a =>
     a.name.toLowerCase() === advisor.name.toLowerCase()
   );
   const colorClass = advisorConfig?.color || 'bg-gray-500';
-  
-  // Preprocess response content for better streaming display
-  const processResponseContent = (content) => {
-    if (!content) return '';
-    
-    // Handle streaming content that might be incomplete
-    let processed = content;
-    
-    // Ensure proper paragraph breaks for streaming content
-    // ReactMarkdown needs proper markdown formatting, so ensure double newlines are preserved
-    processed = processed.replace(/\n\n+/g, '\n\n');
-    
-    // No ellipsis added - let content stream naturally
-    return processed;
-  };
-
-  // Custom streaming-aware renderer for better real-time formatting
-  const StreamingMarkdownRenderer = ({ content }) => {
-    // Pre-process content to ensure proper markdown formatting during streaming
-    const processedContent = processResponseContent(content);
-    
-    // Split content by double newlines to create paragraphs
-    const paragraphs = processedContent.split(/\n\n+/).filter(p => p.trim());
-    
-    return (
-      <div className="text-left font-serif w-full">
-        {paragraphs.map((paragraph, index) => (
-          <ReactMarkdown
-            key={index}
-            className="mb-3"
-            components={{
-              p: ({ children }) => <p className="font-serif w-full text-gray-800 dark:text-term-100 leading-relaxed">{children}</p>,
-              em: ({ children }) => <em className="italic">{children}</em>,
-              strong: ({ children }) => <strong className="font-bold">{children}</strong>,
-              code: ({ node, inline, className, children, ...props }) => {
-                return inline ? (
-                  <code className="text-term-600 dark:text-term-400 font-mono bg-stone-200 dark:bg-stone-900 px-1 rounded" {...props}>
-                    {children}
-                  </code>
-                ) : (
-                  <pre className="bg-stone-200 dark:bg-stone-900 p-4 rounded-md my-2 overflow-x-auto whitespace-pre-wrap break-all w-full">
-                    <code className="font-mono block text-gray-800 dark:text-term-100" {...props}>
-                      {children}
-                    </code>
-                  </pre>
-                );
-              },
-            }}
-          >
-            {paragraph}
-          </ReactMarkdown>
-        ))}
-      </div>
-    );
-  };
 
   // Truncation logic for collapsible cards
   const TRUNCATE_THRESHOLD = 250; // characters
-  // Only show toggle if response is long enough AND there are multiple advisors
-  // When there's a single advisor, always show full content (no truncation)
-  const shouldShowToggle = totalAdvisorCount !== 1 && 
-                          advisor.response && 
+  // Don't truncate while streaming - show full content as it arrives
+  // Only show toggle if: response is long enough, multiple advisors, AND streaming is complete
+  const shouldShowToggle = !advisor.isStreaming &&
+                          totalAdvisorCount !== 1 &&
+                          advisor.response &&
                           advisor.response.length > TRUNCATE_THRESHOLD;
 
   // Determine display content based on expand state

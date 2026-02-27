@@ -226,6 +226,11 @@ export function FullScreenPerspectiveModal({
           <div className="text-gray-800 dark:text-term-100">
             <StreamingMarkdownRenderer content={currentAdvisor.response || currentAdvisor.content || ''} />
           </div>
+          {currentAdvisor.isStreaming && (
+            <div className="mt-4 text-sm text-term-600 dark:text-term-400 italic">
+              Streaming...
+            </div>
+          )}
         </div>
 
         {/* Footer with navigation hints */}
