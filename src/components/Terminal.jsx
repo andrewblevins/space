@@ -774,14 +774,13 @@ const Terminal = ({ theme, toggleTheme }) => {
   }); // Spacing between paragraphs
 
   // AI Model Settings - Always use OpenRouter
+  const ALLOWED_MODELS = ['anthropic/claude-sonnet-4.6', 'anthropic/claude-opus-4.6'];
   const [openrouterModel, setOpenrouterModel] = useState(() => {
-    // In production, always use Claude Sonnet 4.5
-    if (!import.meta.env.DEV) {
-      return 'anthropic/claude-sonnet-4.5';
-    }
-    // In development, allow user selection
     const saved = localStorage.getItem('space_openrouter_model');
-    return saved || 'anthropic/claude-sonnet-4.5';
+    if (saved && ALLOWED_MODELS.includes(saved)) {
+      return saved;
+    }
+    return 'anthropic/claude-sonnet-4.6';
   });
 
   // Check for API keys after modal controller is initialized
@@ -1177,7 +1176,7 @@ After the debate section, provide:
 
 const { callClaude } = useClaude({ messages, setMessages, maxTokens, contextLimit, memory, debugMode, reasoningMode, getSystemPrompt });
 const { callOpenRouter } = useOpenRouter({ messages, setMessages, maxTokens, contextLimit, memory, debugMode, getSystemPrompt, model: openrouterModel });
-const { callParallelAdvisors } = useParallelAdvisors({ messages, setMessages, maxTokens, contextLimit, memory, debugMode, reasoningMode });
+const { callParallelAdvisors } = useParallelAdvisors({ messages, setMessages, maxTokens, contextLimit, memory, debugMode, reasoningMode, model: openrouterModel });
 
   // Generate a creative starting prompt for new conversations
   const generateStartingPrompt = async () => {

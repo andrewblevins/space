@@ -19,7 +19,7 @@ import { useUsageTracking } from './useUsageTracking';
  * @param {boolean} params.reasoningMode
  * @returns {{ callParallelAdvisors: (userMessage: string, activeAdvisors: Array<object>) => Promise<void> }}
  */
-export function useParallelAdvisors({ messages, setMessages, maxTokens, contextLimit, memory, debugMode, reasoningMode }) {
+export function useParallelAdvisors({ messages, setMessages, maxTokens, contextLimit, memory, debugMode, reasoningMode, model = 'anthropic/claude-sonnet-4.6' }) {
   const useAuthSystem = import.meta.env.VITE_USE_AUTH === 'true';
   const authData = useAuthSystem ? useAuth() : { session: null };
   const { session } = authData;
@@ -169,7 +169,7 @@ Respond naturally and directly without JSON formatting, name labels, or meta-com
     const inputTokens = systemTokens + contextTokens;
 
     const requestBody = {
-      model: 'anthropic/claude-sonnet-4.5',
+      model: model,
       messages: [
         { role: 'system', content: systemPromptText },
         ...conversationMessages
@@ -377,7 +377,7 @@ Respond naturally and directly without JSON formatting, name labels, or meta-com
     trackUsage('claude', inputTokens, outputTokens);
     
     return currentContent;
-  }, [messages, setMessages, maxTokens, contextLimit, memory, debugMode, reasoningMode, useAuthSystem, session, updateFromHeaders]);
+  }, [messages, setMessages, maxTokens, contextLimit, memory, debugMode, reasoningMode, model, useAuthSystem, session, updateFromHeaders]);
 
   /**
    * Call multiple advisors in parallel
