@@ -344,7 +344,7 @@ IMPORTANT: Return ONLY the improved advisor description text itself. Do NOT incl
           maxOutputTokens: 1500
         });
 
-        let improvedPrompt = geminiResult.choices[0].message.content.trim();
+        let improvedPrompt = geminiResult.choices?.[0]?.message?.content?.trim() || '';
         
         // Clean up the response - remove any meta-commentary while preserving any writing style
         // Look for common meta-commentary patterns and extract the actual description
@@ -481,7 +481,7 @@ Format: [{"passed": true/false, "reason": "explanation"}, ...]`;
 
         let batchResults;
         try {
-          const content = batchEvalResult.choices[0].message.content.trim();
+          const content = batchEvalResult.choices?.[0]?.message?.content?.trim() || '';
           // Extract JSON from response
           const jsonMatch = content.match(/\[[\s\S]*\]/);
           if (jsonMatch) {

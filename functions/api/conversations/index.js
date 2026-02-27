@@ -38,7 +38,7 @@ export async function onRequestGet(context) {
     console.error('Error fetching conversations:', error);
     return new Response(JSON.stringify({
       error: 'Failed to fetch conversations',
-      message: error.message
+      message: 'An internal error occurred'
     }), {
       status: 500,
       headers: {
@@ -93,7 +93,7 @@ export async function onRequestPost(context) {
     console.error('Error creating conversation:', error);
     return new Response(JSON.stringify({
       error: 'Failed to create conversation',
-      message: error.message
+      message: 'An internal error occurred'
     }), {
       status: 500,
       headers: {

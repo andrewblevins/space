@@ -41,7 +41,16 @@ export const getUsageStats = () => {
     return JSON.parse(stored);
   } catch (error) {
     console.error('Error reading usage stats:', error);
-    return getUsageStats(); // Return fresh stats if corrupted
+    // Return fresh default stats (don't recurse — corrupted localStorage would cause infinite loop)
+    return {
+      claude: { inputTokens: 0, outputTokens: 0, cost: 0 },
+      gpt: { inputTokens: 0, outputTokens: 0, cost: 0 },
+      openrouter: { inputTokens: 0, outputTokens: 0, cost: 0 },
+      total: { inputTokens: 0, outputTokens: 0, cost: 0 },
+      sessions: 0,
+      firstUse: new Date().toISOString(),
+      lastUse: new Date().toISOString()
+    };
   }
 };
 

@@ -152,12 +152,13 @@ export default class TagAnalyzer {
           response_format: { type: "json_object" }
         });
 
-        console.log('🔍 TagAnalyzer - Raw OpenAI response:', response.choices[0].message.content);
+        const rawContent = response.choices?.[0]?.message?.content || '{}';
+        console.log('🔍 TagAnalyzer - Raw OpenAI response:', rawContent);
 
-        const result = JSON.parse(response.choices[0].message.content || '{}');
-        
+        const result = JSON.parse(rawContent);
+
         // Track usage
-        const outputTokens = Math.ceil((response.choices[0].message.content || '').length / 4);
+        const outputTokens = Math.ceil(rawContent.length / 4);
         trackUsage('gpt', inputTokens, outputTokens);
         
         console.log('🔍 TagAnalyzer - Parsed result:', {

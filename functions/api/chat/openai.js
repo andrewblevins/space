@@ -43,7 +43,7 @@ export async function onRequestPost(context) {
   } catch (error) {
     return new Response(JSON.stringify({
       error: 'Error communicating with OpenAI',
-      message: error.message
+      message: 'An internal error occurred'
     }), {
       status: 500,
       headers: {

@@ -96,7 +96,7 @@ export async function onRequestPost(context) {
     console.error('Error adding message:', error);
     return new Response(JSON.stringify({
       error: 'Failed to add message',
-      message: error.message
+      message: 'An internal error occurred'
     }), {
       status: 500,
       headers: {
@@ -110,14 +110,16 @@ export async function onRequestPost(context) {
 export async function onRequestGet(context) {
   // GET /api/conversations/:id/messages - Get messages for conversation
   const conversationId = context.params.id;
-  const userId = context.user?.id;
-  
-  if (!userId) {
-    return new Response('Unauthorized', { 
-      status: 401,
+  const authResult = await verifyAuth(context);
+
+  if (!authResult.success) {
+    return new Response('Unauthorized', {
+      status: authResult.status || 401,
       headers: { 'Access-Control-Allow-Origin': '*' }
     });
   }
+
+  const userId = authResult.user.id;
 
   try {
     const supabase = createClient(
@@ -162,7 +164,7 @@ export async function onRequestGet(context) {
     console.error('Error fetching messages:', error);
     return new Response(JSON.stringify({
       error: 'Failed to fetch messages',
-      message: error.message
+      message: 'An internal error occurred'
     }), {
       status: 500,
       headers: {

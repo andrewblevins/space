@@ -121,7 +121,7 @@ export async function generateSessionSummary(session, openaiClient) {
       max_tokens: 150
     });
 
-    const summary = response.choices[0].message.content.trim();
+    const summary = response.choices?.[0]?.message?.content?.trim() || '';
     
     // Track usage
     const outputTokens = Math.ceil(summary.length / 4);

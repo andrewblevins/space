@@ -2519,7 +2519,7 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
         temperature: 0.7
       });
       
-      let title = response.choices[0].message.content.trim();
+      let title = response.choices?.[0]?.message?.content?.trim() || 'Untitled';
       
       // Enforce sentence case as a fallback
       title = toSentenceCase(title);
