@@ -141,8 +141,8 @@ const AdvisorForm = ({ onSubmit, onCancel, initialName = '', existingAdvisors = 
   };
 
   return (
-    <div className="fixed inset-0 bg-white/70 dark:bg-black/50 flex items-center justify-center z-[60]">
-      <div className="bg-gray-100 p-6 rounded-lg border border-term-700 w-96 max-h-[80vh] overflow-y-auto overflow-x-hidden dark:bg-stone-900 dark:border-term-500">
+    <div className="fixed inset-0 bg-white/70 dark:bg-black/50 flex items-center justify-center z-[60] p-4">
+      <div className="bg-gray-100 p-6 rounded-lg border border-term-700 w-full max-w-96 max-h-[80vh] overflow-y-auto overflow-x-hidden dark:bg-stone-900 dark:border-term-500">
         <h2 className="text-term-400 text-xl mb-4">Add New Advisor</h2>
         {error && (
           <div className="text-red-400 mb-4">{error}</div>
@@ -219,7 +219,7 @@ const AdvisorForm = ({ onSubmit, onCancel, initialName = '', existingAdvisors = 
           </div>
         </div>
         
-        <div className="flex justify-between">
+        <div className="flex flex-wrap gap-2 justify-between">
           <button
             onClick={onCancel}
             className="px-4 py-2 text-term-600 border border-term-700 rounded hover:bg-term-700 hover:text-white dark:text-term-400 dark:border-term-500 dark:hover:bg-term-500 dark:hover:text-black"

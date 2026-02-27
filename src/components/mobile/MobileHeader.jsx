@@ -21,7 +21,7 @@ const MobileHeader = ({ activeTab, setActiveTab, setShowInfoModal, onLogoClick }
   };
 
   return (
-    <header className="flex items-center justify-between p-4 bg-amber-50 dark:bg-stone-900 border-b border-gray-300 dark:border-stone-700">
+    <header className="safe-area-top flex items-center justify-between p-4 bg-amber-50 dark:bg-stone-900 border-b border-gray-300 dark:border-stone-700">
       {/* Left side - App branding */}
       <div className="flex items-center">
         <a 

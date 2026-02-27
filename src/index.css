@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Fallback for browsers that don't support dvh */
+@supports not (height: 1dvh) {
+  .h-\[100dvh\] {
+    height: 100vh;
+  }
+}
+
 /* Mobile-specific optimizations */
 @layer base {
   /* Prevent horizontal scroll on mobile */
