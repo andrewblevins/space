@@ -62,7 +62,8 @@ StreamingMarkdownRenderer.displayName = 'StreamingMarkdownRenderer';
  * @param {number} props.cardIndex - Index of this card in the message
  */
 export const AdvisorResponseCard = memo(({ advisor, allAdvisors = [], onAssertionsClick, compact = false, totalAdvisorCount, allAdvisorsInMessage = [], onCardClick, cardIndex }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+  // Start expanded so cards don't snap shut when streaming completes
+  const [isExpanded, setIsExpanded] = useState(true);
 
   // Find advisor configuration for color
   const advisorConfig = allAdvisors.find(a =>
