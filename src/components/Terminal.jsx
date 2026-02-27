@@ -3746,7 +3746,7 @@ ${selectedText}
         autoScroll={autoScroll}
         setAutoScroll={setAutoScroll}
         openrouterModel={openrouterModel}
-        setOpenrouterModel={import.meta.env.DEV ? setOpenrouterModel : () => {}}
+        setOpenrouterModel={setOpenrouterModel}
       />
 
       {/* DEPRECATED: Prompt Library Component - Feature no longer maintained */}
