@@ -32,17 +32,12 @@ const SettingsMenu = ({
   const [apiKeyStatus, setApiKeyStatus] = useState({ anthropic: false, openai: false });
   const [isCheckingKeys, setIsCheckingKeys] = useState(false);
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
-  const [openrouterModels, setOpenrouterModels] = useState([]);
-  const [isLoadingModels, setIsLoadingModels] = useState(false);
   
   // Auth system
   const useAuthSystem = import.meta.env.VITE_USE_AUTH === 'true';
   const authData = useAuthSystem ? useAuth() : { user: null, signOut: () => {} };
   const { user, signOut } = authData;
   
-  // Check if we're in development mode
-  const isDevelopment = import.meta.env.DEV;
-
   // Check API keys when modal opens or when switching to API tab
   const checkApiKeys = async () => {
     // Skip in auth mode - no API keys to check
@@ -66,13 +61,6 @@ const SettingsMenu = ({
       checkApiKeys();
     }
   }, [isOpen, activeTab]);
-
-  // Fetch models when component mounts or modal opens (development only)
-  useEffect(() => {
-    if (isOpen && isDevelopment && openrouterModels.length === 0) {
-      fetchOpenRouterModels();
-    }
-  }, [isOpen, isDevelopment]);
 
   if (!isOpen) return null;
 
@@ -154,6 +142,9 @@ const SettingsMenu = ({
     
     setParagraphSpacing(defaultParagraphSpacing);
     localStorage.setItem('space_paragraph_spacing', defaultParagraphSpacing.toString());
+
+    setOpenrouterModel('anthropic/claude-sonnet-4.6');
+    localStorage.setItem('space_openrouter_model', 'anthropic/claude-sonnet-4.6');
   };
 
   const tabs = [
@@ -162,71 +153,9 @@ const SettingsMenu = ({
     { id: 'api', label: useAuthSystem ? 'Account & Usage' : 'API Keys' }
   ];
 
-  // Fetch available models from OpenRouter API
-  const fetchOpenRouterModels = async () => {
-    setIsLoadingModels(true);
-    try {
-      const response = await fetch('https://openrouter.ai/api/v1/models');
-      if (!response.ok) {
-        throw new Error(`Failed to fetch models: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      
-      // Filter and format models for popular/recommended ones
-      const popularProviders = ['anthropic', 'openai', 'google', 'meta-llama', 'mistralai', 'cohere'];
-      const filteredModels = data.data
-        .filter(model => {
-          // Only include models from popular providers
-          const provider = model.id.split('/')[0];
-          return popularProviders.includes(provider);
-        })
-        .map(model => {
-          // Extract provider name and clean up model name
-          const provider = model.id.split('/')[0];
-          const providerNames = {
-            'anthropic': 'Anthropic',
-            'openai': 'OpenAI', 
-            'google': 'Google',
-            'meta-llama': 'Meta',
-            'mistralai': 'Mistral',
-            'cohere': 'Cohere'
-          };
-          
-          return {
-            id: model.id,
-            name: model.name,
-            provider: providerNames[provider] || provider
-          };
-        })
-        .sort((a, b) => {
-          // Sort by provider, then by name
-          if (a.provider !== b.provider) {
-            return a.provider.localeCompare(b.provider);
-          }
-          return a.name.localeCompare(b.name);
-        });
-      
-      setOpenrouterModels(filteredModels);
-    } catch (error) {
-      console.error('Failed to fetch OpenRouter models:', error);
-      // Fallback to a minimal list if API fails
-      setOpenrouterModels([
-        { id: 'anthropic/claude-3.5-sonnet', name: 'Claude 3.5 Sonnet', provider: 'Anthropic' },
-        { id: 'openai/gpt-4o', name: 'GPT-4o', provider: 'OpenAI' },
-        { id: 'google/gemini-pro-1.5', name: 'Gemini Pro 1.5', provider: 'Google' }
-      ]);
-    } finally {
-      setIsLoadingModels(false);
-    }
-  };
-
   const handleModelChange = (model) => {
-    // Only allow model changes in development
-    if (isDevelopment) {
-      setOpenrouterModel(model);
-      localStorage.setItem('space_openrouter_model', model);
-    }
+    setOpenrouterModel(model);
+    localStorage.setItem('space_openrouter_model', model);
   };
 
   return (
@@ -269,75 +198,35 @@ const SettingsMenu = ({
         <div className="flex-1 overflow-y-auto p-6">
           {activeTab === 'general' && (
             <div className="space-y-6">
-              {/* AI Model Selection - Only show in development */}
-              {isDevelopment && (
-                <div>
-                  <label className="text-term-400 font-medium block mb-3">
-                    AI Model
-                  </label>
-                  <p className="text-gray-400 text-sm mb-4">
-                    Choose which AI model to use for conversations
-                  </p>
-                  <select
-                    value={openrouterModel}
-                    onChange={(e) => handleModelChange(e.target.value)}
-                    disabled={isLoadingModels}
-                    className="w-full bg-stone-50 text-gray-800 border border-stone-300 rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-term-600 dark:bg-stone-900 dark:text-white dark:border-term-700 disabled:opacity-50"
+              {/* AI Model Selection */}
+              <div>
+                <label className="text-term-400 font-medium block mb-3">AI Model</label>
+                <p className="text-gray-400 text-sm mb-4">Choose which AI model powers your conversations</p>
+                <div className="space-y-2">
+                  <button
+                    onClick={() => handleModelChange('anthropic/claude-sonnet-4.6')}
+                    className={`w-full text-left p-3 rounded border transition-colors ${
+                      openrouterModel === 'anthropic/claude-sonnet-4.6'
+                        ? 'border-term-500 bg-term-500/10 dark:bg-term-500/10'
+                        : 'border-stone-300 dark:border-stone-600 hover:border-term-500/50'
+                    }`}
                   >
-                    {isLoadingModels ? (
-                      <option>Loading models...</option>
-                    ) : openrouterModels.length > 0 ? (
-                      openrouterModels.map((model) => (
-                        <option key={model.id} value={model.id}>
-                          {model.name} ({model.provider})
-                        </option>
-                      ))
-                    ) : (
-                      <option>No models available</option>
-                    )}
-                  </select>
-                  <div className="flex items-center justify-between mt-2">
-                    <p className="text-xs text-gray-400">
-                      Live from OpenRouter API • Pricing varies by model
-                    </p>
-                    {!isLoadingModels && (
-                      <button
-                        onClick={fetchOpenRouterModels}
-                        className="text-xs text-term-400 hover:text-term-300 underline"
-                      >
-                        Refresh Models
-                      </button>
-                    )}
-                  </div>
+                    <div className="text-gray-800 dark:text-term-100 font-medium">Claude Sonnet 4.6</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Fast, capable, cost-effective (default)</div>
+                  </button>
+                  <button
+                    onClick={() => handleModelChange('anthropic/claude-opus-4.6')}
+                    className={`w-full text-left p-3 rounded border transition-colors ${
+                      openrouterModel === 'anthropic/claude-opus-4.6'
+                        ? 'border-term-500 bg-term-500/10 dark:bg-term-500/10'
+                        : 'border-stone-300 dark:border-stone-600 hover:border-term-500/50'
+                    }`}
+                  >
+                    <div className="text-gray-800 dark:text-term-100 font-medium">Claude Opus 4.6</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Highest quality, higher cost</div>
+                  </button>
                 </div>
-              )}
-
-              {/* Production Model Info */}
-              {!isDevelopment && (
-                <div>
-                  <label className="text-term-400 font-medium block mb-3">
-                    AI Model
-                  </label>
-                  <div className="p-3 bg-gray-100 dark:bg-stone-800 rounded border">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="text-gray-800 dark:text-term-100 font-medium">
-                          Claude Sonnet 4
-                        </div>
-                        <div className="text-sm text-gray-600 dark:text-gray-400">
-                          Anthropic's latest model via OpenRouter
-                        </div>
-                      </div>
-                      <div className="text-term-400 text-sm font-medium">
-                        Active
-                      </div>
-                    </div>
-                  </div>
-                  <p className="text-xs text-gray-400 mt-2">
-                    Production uses Claude Sonnet 4 for optimal performance
-                  </p>
-                </div>
-              )}
+              </div>
 
               {/* Debug Mode */}
               <div className="flex items-center justify-between">
