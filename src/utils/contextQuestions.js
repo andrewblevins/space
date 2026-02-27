@@ -82,7 +82,10 @@ Respond with just the question, no preamble.`;
   }
 
   const data = await response.json();
-  const question = data.choices[0].message.content.trim();
+  const question = data.choices?.[0]?.message?.content?.trim();
+  if (!question) {
+    throw new Error('Unexpected API response: no content in response');
+  }
 
   return question;
 }

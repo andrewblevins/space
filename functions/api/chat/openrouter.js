@@ -85,7 +85,7 @@ export async function onRequestPost(context) {
     console.error('OpenRouter API Error:', error);
     return new Response(JSON.stringify({
       error: 'Error communicating with OpenRouter',
-      message: error.message
+      message: 'An internal error occurred'
     }), {
       status: 500,
       headers: {

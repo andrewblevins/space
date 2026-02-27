@@ -78,7 +78,7 @@ export async function onRequestPost(context) {
     // Fail open - allow request even if rate limiting fails
     return new Response(JSON.stringify({
       error: 'Error communicating with Claude',
-      message: error.message
+      message: 'An internal error occurred'
     }), {
       status: 500,
       headers: {

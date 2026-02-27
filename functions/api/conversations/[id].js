@@ -61,7 +61,7 @@ export async function onRequestGet(context) {
     console.error('Error fetching conversation:', error);
     return new Response(JSON.stringify({
       error: 'Failed to fetch conversation',
-      message: error.message
+      message: 'An internal error occurred'
     }), {
       status: 500,
       headers: {
@@ -88,15 +88,14 @@ export async function onRequestPut(context) {
 
   try {
     const requestBody = await context.request.json();
+
+    // Whitelist allowed fields to prevent unintended column writes
     const updates = {
-      ...requestBody,
       updated_at: new Date().toISOString()
     };
-
-    // Remove fields that shouldn't be updated
-    delete updates.id;
-    delete updates.user_id;
-    delete updates.created_at;
+    if (requestBody.title !== undefined) updates.title = requestBody.title;
+    if (requestBody.metadata !== undefined) updates.metadata = requestBody.metadata;
+    if (requestBody.messages !== undefined) updates.messages = requestBody.messages;
 
     const supabase = createClient(
       context.env.SUPABASE_URL,
@@ -131,7 +130,7 @@ export async function onRequestPut(context) {
     console.error('Error updating conversation:', error);
     return new Response(JSON.stringify({
       error: 'Failed to update conversation',
-      message: error.message
+      message: 'An internal error occurred'
     }), {
       status: 500,
       headers: {
@@ -180,7 +179,7 @@ export async function onRequestDelete(context) {
     console.error('Error deleting conversation:', error);
     return new Response(JSON.stringify({
       error: 'Failed to delete conversation',
-      message: error.message
+      message: 'An internal error occurred'
     }), {
       status: 500,
       headers: {

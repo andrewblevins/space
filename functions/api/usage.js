@@ -41,7 +41,7 @@ export async function onRequestGet(context) {
   } catch (error) {
     return new Response(JSON.stringify({
       error: 'Failed to fetch usage',
-      message: error.message
+      message: 'An internal error occurred'
     }), {
       status: 500,
       headers: {
