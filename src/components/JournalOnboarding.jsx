@@ -212,7 +212,7 @@ const JournalOnboarding = ({
                     </svg>
                     Generating Perspectives...
                   </>
-                ) : (isLastQuestion ? 'Generate Perspectives' : 'Continue')}
+                ) : (<>{isLastQuestion ? 'Generate Perspectives' : 'Continue'} <span className="ml-1.5 text-white/40 text-xs font-sans">⇧⏎</span></>)}
               </button>
             </div>
           </div>
@@ -270,7 +270,7 @@ const JournalOnboarding = ({
                   Loading...
                 </>
               ) : (
-                'Continue'
+                <>Continue <span className="ml-1.5 text-white/40 text-xs font-sans">⇧⏎</span></>
               )}
             </button>
           </div>
