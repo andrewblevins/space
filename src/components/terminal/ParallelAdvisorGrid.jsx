@@ -21,10 +21,9 @@ export const ParallelAdvisorGrid = memo(({
   messages,
   getSystemPrompt
 }) => {
-  // State for fullscreen perspective modal
+  // State for fullscreen perspective modal - only track open/index, use live data
   const [fullscreenModal, setFullscreenModal] = useState({
     isOpen: false,
-    advisors: [],
     selectedIndex: 0
   });
 
@@ -111,7 +110,6 @@ export const ParallelAdvisorGrid = memo(({
                   allAdvisorsInMessage={advisorsArray}
                   onCardClick={(cardIndex) => setFullscreenModal({
                     isOpen: true,
-                    advisors: advisorsArray,
                     selectedIndex: cardIndex
                   })}
                   cardIndex={index}
@@ -129,15 +127,15 @@ export const ParallelAdvisorGrid = memo(({
       </div>
     </div>
 
-      {/* Fullscreen perspective modal */}
+      {/* Fullscreen perspective modal - uses live advisorsArray so content updates during streaming */}
       {fullscreenModal.isOpen && (
         <FullScreenPerspectiveModal
           isOpen={fullscreenModal.isOpen}
-          advisors={fullscreenModal.advisors}
+          advisors={advisorsArray}
           selectedIndex={fullscreenModal.selectedIndex}
-          onClose={() => setFullscreenModal({ isOpen: false, advisors: [], selectedIndex: 0 })}
+          onClose={() => setFullscreenModal({ isOpen: false, selectedIndex: 0 })}
           onAssertionsClick={(advisorData) => {
-            setFullscreenModal({ isOpen: false, advisors: [], selectedIndex: 0 });
+            setFullscreenModal({ isOpen: false, selectedIndex: 0 });
             onAssertionsClick(advisorData, messages, getSystemPrompt);
           }}
           allAdvisors={advisors}
