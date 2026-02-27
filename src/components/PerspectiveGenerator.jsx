@@ -102,12 +102,12 @@ export function PerspectiveGenerator({
         existingNames,
         'conversation',
         (partialPerspectives) => {
-          // Streaming callback - assign IDs and update
+          // Streaming callback - assign stable IDs and update
           const perspectivesWithIds = partialPerspectives.map((p, idx) => {
             const newColor = getNextAvailableColor([...assignedColors].slice(0, idx));
             return {
               ...p,
-              id: p.id || `${Date.now()}-${idx}`,
+              id: `stream-${idx}`,
               color: newColor,
               active: false
             };
@@ -116,7 +116,7 @@ export function PerspectiveGenerator({
           setGeneratedPerspectives(perspectivesWithIds);
           setStreamingStatus({
             isStreaming: true,
-            count: perspectivesWithIds.length,
+            count: perspectivesWithIds.filter(p => p.isComplete).length,
             total: 8
           });
         }
