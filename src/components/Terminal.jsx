@@ -49,7 +49,7 @@ import MobileLayout from './mobile/MobileLayout';
 import JournalOnboarding from './JournalOnboarding';
 import AdvisorSuggestionsModal from './AdvisorSuggestionsModal';
 import PerspectiveGenerator from './PerspectiveGenerator';
-import { generateAdvisorSuggestions } from '../utils/advisorSuggestions';
+import { generateAdvisorSuggestions, generateAdvisorSuggestionsStream } from '../utils/advisorSuggestions';
 import { SidebarFooterMenu } from './terminal/SidebarFooterMenu';
 
 
@@ -361,15 +361,7 @@ const Terminal = ({ theme, toggleTheme }) => {
       // Store full context in input field
       setInput(fullContext);
 
-      // Generate perspective suggestions with full context
-      const existingNames = advisors.map(a => a.name);
-      const suggestions = await generateAdvisorSuggestions(fullContext, advisors, existingNames);
-      setJournalSuggestions(suggestions);
-
-      // Track these names for future regenerations
-      setPreviousSuggestionNames([...existingNames, ...suggestions.map(s => s.name)]);
-
-      // Reset context flow and hide onboarding
+      // Reset context flow and hide onboarding, show suggestions modal immediately
       setContextFlow({
         active: false,
         initialEntry: '',
@@ -378,11 +370,31 @@ const Terminal = ({ theme, toggleTheme }) => {
         currentQuestionIndex: 0
       });
       setShowJournalOnboarding(false);
+      setJournalSuggestions([]);
       setShowJournalSuggestions(true);
+      setJournalStreamingStatus({ isStreaming: true, count: 0, total: 8 });
+
+      // Generate perspective suggestions with streaming
+      const existingNames = advisors.map(a => a.name);
+      const suggestions = await generateAdvisorSuggestionsStream(
+        fullContext,
+        advisors,
+        existingNames,
+        (partialSuggestions) => {
+          setJournalSuggestions(partialSuggestions);
+          setJournalStreamingStatus({ isStreaming: true, count: partialSuggestions.length, total: 8 });
+        }
+      );
+      setJournalSuggestions(suggestions);
+      setJournalStreamingStatus({ isStreaming: false, count: suggestions.length, total: 8 });
+
+      // Track these names for future regenerations
+      setPreviousSuggestionNames([...existingNames, ...suggestions.map(s => s.name)]);
       setIsGeneratingSuggestions(false);
     } catch (error) {
       console.error('Error generating perspective suggestions:', error);
       setIsGeneratingSuggestions(false);
+      setJournalStreamingStatus({ isStreaming: false, count: 0, total: 8 });
 
       // Show error message
       setMessages(prev => [...prev, {
@@ -468,13 +480,24 @@ const Terminal = ({ theme, toggleTheme }) => {
   const handleRegenerateSuggestions = async () => {
     try {
       setIsGeneratingSuggestions(true);
+      setJournalSuggestions([]);
+      setJournalStreamingStatus({ isStreaming: true, count: 0, total: 8 });
 
       // Get the first user message (journal entry)
       const journalMessage = messages.find(m => m.type === 'user');
       if (journalMessage) {
         // Pass previous names to avoid duplicates
-        const suggestions = await generateAdvisorSuggestions(journalMessage.content, advisors, previousSuggestionNames);
+        const suggestions = await generateAdvisorSuggestionsStream(
+          journalMessage.content,
+          advisors,
+          previousSuggestionNames,
+          (partialSuggestions) => {
+            setJournalSuggestions(partialSuggestions);
+            setJournalStreamingStatus({ isStreaming: true, count: partialSuggestions.length, total: 8 });
+          }
+        );
         setJournalSuggestions(suggestions);
+        setJournalStreamingStatus({ isStreaming: false, count: suggestions.length, total: 8 });
 
         // Add these new names to the previous list
         setPreviousSuggestionNames(prev => [...prev, ...suggestions.map(s => s.name)]);
@@ -484,6 +507,7 @@ const Terminal = ({ theme, toggleTheme }) => {
     } catch (error) {
       console.error('Error regenerating suggestions:', error);
       setIsGeneratingSuggestions(false);
+      setJournalStreamingStatus({ isStreaming: false, count: 0, total: 8 });
 
       setMessages(prev => [...prev, {
         type: 'system',
@@ -755,6 +779,7 @@ const Terminal = ({ theme, toggleTheme }) => {
   const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false);
   const [customPerspectives, setCustomPerspectives] = useState([]);
   const [previousSuggestionNames, setPreviousSuggestionNames] = useState([]);
+  const [journalStreamingStatus, setJournalStreamingStatus] = useState({ isStreaming: false, count: 0, total: 8 });
 
   // Context question flow state
   const [contextFlow, setContextFlow] = useState({
@@ -3891,6 +3916,7 @@ ${selectedText}
         onEditAdvisor={setEditingAdvisor}
         customPerspectives={customPerspectives}
         onCreateCustom={handleCreateCustomPerspective}
+        streamingStatus={journalStreamingStatus}
       />
     </>
   );
