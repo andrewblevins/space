@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 import SessionAutocomplete from "./SessionAutocomplete";
+// VAULT: query vault files for the @-mention dropdown.
+import { searchVaultFiles, isVaultActive } from "../../vault/bootstrap";
 
 /**
  * Textarea that can be resized vertically by dragging the handle.
- * Now includes session autocomplete when user types @
+ * Now includes session + vault file autocomplete when user types @
  * @param {object} props
  * @param {string} props.value
  * @param {(e: React.ChangeEvent<HTMLTextAreaElement>) => void} props.onChange
@@ -11,12 +13,15 @@ import SessionAutocomplete from "./SessionAutocomplete";
  * @param {boolean} props.isLoading
  * @param {Array} props.sessions - Array of session objects for autocomplete
  * @param {(session: object) => void} props.onSessionSelect - Called when user selects a session from autocomplete
+ * @param {(file: object) => void} [props.onVaultFileSelect] - Called when user selects a vault markdown file
  */
-export function ExpandingInput({ value, onChange, onSubmit, isLoading, sessions = [], onSessionSelect }) {
+export function ExpandingInput({ value, onChange, onSubmit, isLoading, sessions = [], onSessionSelect, onVaultFileSelect }) {
   const [showAutocomplete, setShowAutocomplete] = useState(false);
   const [autocompleteSearch, setAutocompleteSearch] = useState('');
   const [autocompletePosition, setAutocompletePosition] = useState({ top: 0, left: 0 });
   const [atPosition, setAtPosition] = useState(-1); // Track where the @ symbol is
+  // VAULT: vault files matching the current @ search term.
+  const [vaultFiles, setVaultFiles] = useState([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const textareaRef = useRef(null);
   const fullscreenTextareaRef = useRef(null);
@@ -96,8 +101,22 @@ export function ExpandingInput({ value, onChange, onSubmit, isLoading, sessions 
       setShowAutocomplete(false);
       setAtPosition(-1);
       setAutocompleteSearch('');
+      setVaultFiles([]);
     }
   };
+
+  // VAULT: refresh vault file matches whenever the @ search term changes.
+  useEffect(() => {
+    if (!showAutocomplete || !isVaultActive()) {
+      setVaultFiles([]);
+      return;
+    }
+    let cancelled = false;
+    searchVaultFiles(autocompleteSearch, { limit: 8 }).then((files) => {
+      if (!cancelled) setVaultFiles(files);
+    });
+    return () => { cancelled = true; };
+  }, [showAutocomplete, autocompleteSearch]);
 
   const handleKeyDown = (e) => {
     // If autocomplete is open, let it handle navigation keys
@@ -116,28 +135,51 @@ export function ExpandingInput({ value, onChange, onSubmit, isLoading, sessions 
   // Handle session selection from autocomplete
   const handleSessionSelect = (session) => {
     if (atPosition === -1 || !onSessionSelect) return;
-    
+
     const title = session.title || `Session ${session.id}`;
     const beforeAt = value.slice(0, atPosition);
     const afterSearch = value.slice(atPosition + 1 + autocompleteSearch.length);
     const newValue = beforeAt + `@"${title}"` + afterSearch;
-    
+
     // Create synthetic event to update the value
     const syntheticEvent = {
       target: { value: newValue }
     };
     onChange(syntheticEvent);
-    
+
     // Store session for summary insertion
     onSessionSelect(session, title);
-    
+
     setShowAutocomplete(false);
     setAtPosition(-1);
     setAutocompleteSearch('');
-    
+
     // Focus back to textarea
     if (textareaRef.current) {
       const newCursorPos = beforeAt.length + title.length + 3; // +3 for @""
+      setTimeout(() => {
+        textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
+        textareaRef.current.focus();
+      }, 0);
+    }
+  };
+
+  // VAULT: handle vault file selection from autocomplete. Inserts the file
+  // name as @"name.md" and notifies the parent so it can fetch and inline
+  // the content at send time.
+  const handleVaultFileSelect = (file) => {
+    if (atPosition === -1) return;
+    const beforeAt = value.slice(0, atPosition);
+    const afterSearch = value.slice(atPosition + 1 + autocompleteSearch.length);
+    const newValue = beforeAt + `@"${file.name}"` + afterSearch;
+    onChange({ target: { value: newValue } });
+    if (onVaultFileSelect) onVaultFileSelect(file, file.name);
+    setShowAutocomplete(false);
+    setAtPosition(-1);
+    setAutocompleteSearch('');
+    setVaultFiles([]);
+    if (textareaRef.current) {
+      const newCursorPos = beforeAt.length + file.name.length + 3;
       setTimeout(() => {
         textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
         textareaRef.current.focus();
@@ -226,7 +268,9 @@ export function ExpandingInput({ value, onChange, onSubmit, isLoading, sessions 
         show={showAutocomplete}
         searchTerm={autocompleteSearch}
         sessions={sessions}
+        vaultFiles={vaultFiles}
         onSelect={handleSessionSelect}
+        onVaultFileSelect={handleVaultFileSelect}
         onClose={() => setShowAutocomplete(false)}
         position={autocompletePosition}
       />

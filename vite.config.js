@@ -14,6 +14,13 @@ export default defineConfig(({ command }) => ({
         target: 'https://api.anthropic.com',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, '')
+      },
+      // VAULT: proxy /vault/* to the local sidecar started by `dev:vault`.
+      // The sidecar requires an Origin header matching http://localhost:3000,
+      // which browser fetches already send automatically.
+      '/vault': {
+        target: 'http://127.0.0.1:3001',
+        changeOrigin: false,
       }
     }
   } : undefined

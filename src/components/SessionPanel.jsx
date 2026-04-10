@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+// VAULT: route session reads through the bootstrap shim — vault in vault mode,
+// localStorage in legacy mode.
+import { getAllSessionsFromStorage as vaultGetAllSessions } from '../vault/bootstrap';
 
 const SessionPanel = ({
   isOpen,
@@ -16,78 +19,45 @@ const SessionPanel = ({
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Load sessions from localStorage
-  const loadLocalStorageSessions = () => {
-    const sessionList = [];
-    const seenIds = new Set();
-    
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key.startsWith('space_session_')) {
-        try {
-          const sessionData = localStorage.getItem(key);
-          if (sessionData) {
-            const session = JSON.parse(sessionData);
-            if (session && session.id && !seenIds.has(session.id)) {
-              seenIds.add(session.id);
-              sessionList.push(session);
-            }
-          }
-        } catch (error) {
-          console.warn(`Failed to parse session data: ${key}`, error);
-          // Optionally remove corrupted session data
-          localStorage.removeItem(key);
-        }
+  // VAULT: load sessions via the bootstrap shim. The shim returns full
+  // session objects from the vault (or localStorage in legacy mode).
+  const loadLocalStorageSessions = async () => {
+    const sessionList = await vaultGetAllSessions();
+    const seen = new Set();
+    const deduped = [];
+    for (const session of sessionList) {
+      if (session && session.id != null && !seen.has(session.id)) {
+        seen.add(session.id);
+        deduped.push(session);
       }
     }
-    
-    return sessionList
+    return deduped
       .filter(session => {
-        // Only include sessions with actual user/assistant messages (not just system messages)
-        const nonSystemMessages = session.messages.filter(m => m.type !== 'system');
+        const messages = session.messages || [];
+        const nonSystemMessages = messages.filter(m => m.type !== 'system');
         return nonSystemMessages.length > 0;
       })
-      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)) // Most recent first
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
       .map(session => ({
         ...session,
-        messageCount: session.messages.filter(m => m.type !== 'system').length,
+        messageCount: (session.messages || []).filter(m => m.type !== 'system').length,
       }));
   };
 
   useEffect(() => {
     if (isOpen) {
-      // Clean up any empty sessions that might exist from before this change
-      const allKeys = Object.keys(localStorage).filter(key => key.startsWith('space_session_'));
-      allKeys.forEach(key => {
-        const sessionData = localStorage.getItem(key);
-        if (sessionData) {
-          try {
-            const session = JSON.parse(sessionData);
-            if (session && session.messages) {
-              const nonSystemMessages = session.messages.filter(m => m.type !== 'system');
-              if (nonSystemMessages.length === 0) {
-                localStorage.removeItem(key);
-              }
-            } else {
-              // Remove corrupted session data
-              localStorage.removeItem(key);
-            }
-          } catch (error) {
-            console.warn(`Failed to parse session data for cleanup: ${key}`, error);
-            localStorage.removeItem(key);
-          }
-        }
-      });
-      
+      // VAULT: removed pre-load cleanup pass. The vault sidecar is the
+      // source of truth; we don't garbage-collect stale files from here.
+      // Empty sessions are filtered at display time below.
       loadAllSessions();
     }
   }, [isOpen, currentSessionId, useDatabaseStorage, storage]);
 
-  // Load all sessions (localStorage + database if enabled)
+  // Load all sessions (vault/localStorage + database if enabled)
   const loadAllSessions = async () => {
     setIsLoading(true);
     try {
-      const localStorageSessions = loadLocalStorageSessions();
+      const localStorageSessions = await loadLocalStorageSessions();
       let allSessions = [...localStorageSessions];
 
       // If using database storage, fetch and merge database conversations

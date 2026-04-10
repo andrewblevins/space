@@ -1,6 +1,11 @@
 /** Helper functions used by the Terminal component. */
 
 import { trackUsage } from './usageTracking';
+// VAULT: route session reads/writes through the bootstrap shim.
+import {
+  loadSessionFromStorage as vaultLoadSession,
+  persistSession as vaultPersistSession,
+} from '../vault/bootstrap';
 
 /**
  * Build a conversation context for Claude when the full history is too large.
@@ -76,11 +81,10 @@ export function buildConversationContext(userMessage, messages, memory) {
 export async function summarizeSession(sessionId, { openaiClient }) {
   if (!openaiClient) return null;
 
-  const sessionData = localStorage.getItem(`space_session_${sessionId}`);
-  if (!sessionData) return null;
+  // VAULT: load session via the shim.
+  const session = await vaultLoadSession(sessionId);
+  if (!session) return null;
 
-  const session = JSON.parse(sessionData);
-  
   // Check if we have a cached summary that's still relevant
   if (session.summary && session.summaryMessageCount) {
     const currentMessageCount = session.messages.filter(m => m.type === 'user' || m.type === 'assistant').length;
@@ -135,7 +139,8 @@ export async function generateSessionSummary(session, openaiClient) {
       summaryMessageCount: session.messages.filter(m => m.type === 'user' || m.type === 'assistant').length
     };
     
-    localStorage.setItem(`space_session_${session.id}`, JSON.stringify(updatedSession));
+    // VAULT: persist via the shim.
+    await vaultPersistSession(updatedSession);
     console.log(`📄 Cached summary for session ${session.id}`);
     
     return summary;

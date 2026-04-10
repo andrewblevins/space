@@ -5,6 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "vault:install": "cd vault-sidecar && npm install",
+    "vault:start": "node vault-sidecar/server.js",
+    "vault:test": "cd vault-sidecar && npm test",
+    "dev:vault": "concurrently -n vault,vite -c magenta,cyan \"node vault-sidecar/server.js\" \"vite --host 127.0.0.1\"",
     "dev:functions": "npm run build && wrangler pages dev dist --compatibility-date=2023-05-18 --port 3000",
     "dev:watch": "vite build --watch & wrangler pages dev dist --compatibility-date=2023-05-18 --port 3000",
     "dev:setup": "node scripts/improved-setup.js",
@@ -53,6 +57,7 @@
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",
     "babel-jest": "^29.7.0",
+    "concurrently": "^9.2.1",
     "eslint": "^9.15.0",
     "eslint-plugin-react": "^7.37.2",
     "eslint-plugin-react-hooks": "^5.0.0",

@@ -13,6 +13,25 @@ import { defaultPrompts } from '../lib/defaultPrompts';
 import { handleApiError } from '../utils/apiErrorHandler';
 import { getNextAvailableColor, ADVISOR_COLORS } from '../lib/advisorColors';
 import { setEncrypted, removeEncrypted, setModalController, hasEncryptedData, getDecrypted } from '../utils/secureStorage';
+// VAULT: route advisors, advisor groups, and conversations through the local
+// markdown vault when the sidecar is running, falling back to localStorage
+// when it isn't.
+import {
+  isVaultActive as vaultIsActive,
+  getInitialAdvisors as vaultGetInitialAdvisors,
+  persistAdvisors as vaultPersistAdvisors,
+  getInitialAdvisorGroups as vaultGetInitialAdvisorGroups,
+  persistAdvisorGroups as vaultPersistAdvisorGroups,
+  getInitialSessionIndex as vaultGetInitialSessionIndex,
+  getNextSessionIdFromStorage as vaultGetNextSessionId,
+  loadSessionFromStorage as vaultLoadSession,
+  readSessionSync as vaultReadSessionSync,
+  persistSession as vaultPersistSession,
+  deleteSessionFromStorage as vaultDeleteSession,
+  getAllSessionsFromStorage as vaultGetAllSessions,
+  getInitialCurrentSession as vaultGetInitialCurrentSession,
+  persistCurrentSessionPointer as vaultPersistCurrentSessionPointer,
+} from '../vault/bootstrap';
 import { useModal } from '../contexts/ModalContext';
 import { useAuthSafe } from '../contexts/AuthContext';
 import AccordionMenu from './AccordionMenu';
@@ -61,37 +80,12 @@ const Terminal = ({ theme, toggleTheme }) => {
   const { user, session, loading: authLoading } = useAuthSafe();
   const storage = useConversationStorage();
   
-  // Helper functions for session persistence (must be defined before useState calls that use them)
-  const loadPersistedCurrentSession = () => {
-    try {
-      const conversationId = localStorage.getItem('space_current_conversation_id');
-      const sessionId = localStorage.getItem('space_current_session_id');
-      
-      return {
-        conversationId: conversationId || null,
-        sessionId: sessionId || null
-      };
-    } catch (error) {
-      console.error('Failed to load persisted current session:', error);
-      return { conversationId: null, sessionId: null };
-    }
-  };
-
-  const persistCurrentSession = (sessionId, conversationId) => {
-    try {
-      if (conversationId) {
-        // Database storage: persist conversation ID
-        localStorage.setItem('space_current_conversation_id', conversationId);
-        localStorage.setItem('space_current_session_id', conversationId); // Use conversation ID as session ID
-      } else if (sessionId) {
-        // LocalStorage storage: persist session ID
-        localStorage.setItem('space_current_session_id', sessionId.toString());
-        localStorage.removeItem('space_current_conversation_id'); // Clear if switching to localStorage mode
-      }
-    } catch (error) {
-      console.error('Failed to persist current session:', error);
-    }
-  };
+  // VAULT: delegate session pointer persistence to the bootstrap shim. In
+  // vault mode, the pointer lives in vault config.json. In legacy mode, it
+  // lives in localStorage exactly as before.
+  const loadPersistedCurrentSession = () => vaultGetInitialCurrentSession();
+  const persistCurrentSession = (sessionId, conversationId) =>
+    vaultPersistCurrentSessionPointer(sessionId, conversationId);
   
   // Database storage state - initialize from persisted value
   const [currentConversationId, setCurrentConversationId] = useState(() => {
@@ -149,13 +143,9 @@ const Terminal = ({ theme, toggleTheme }) => {
     }
   }, [user, useAuthSystem, useDatabaseStorage]);
 
-  const getNextSessionId = () => {
-    const keys = Object.keys(localStorage).filter(key => key.startsWith('space_session_'));
-    if (keys.length === 0) return 1;
-    
-    const ids = keys.map(key => parseInt(key.replace('space_session_', '')));
-    return Math.max(...ids) + 1;
-  };
+  // VAULT: route through bootstrap shim — scans the vault index in vault mode,
+  // localStorage keys in legacy mode.
+  const getNextSessionId = () => vaultGetNextSessionId();
 
 
   const handleAdvisorImport = (importedAdvisors, mode) => {
@@ -594,21 +584,24 @@ const Terminal = ({ theme, toggleTheme }) => {
     return getNextSessionId();
   });
   const [advisors, setAdvisors] = useState(() => {
-    const saved = localStorage.getItem('space_advisors');
-    const savedAdvisors = saved ? JSON.parse(saved) : [];
-    
+    // VAULT: read initial advisors from the vault cache (or localStorage in
+    // legacy mode). The auto-color-assignment side effect that used to live
+    // here is preserved below — if any advisor lacks a color we assign one
+    // and persist via vaultPersistAdvisors / localStorage.
+    const savedAdvisors = vaultGetInitialAdvisors();
+
     // Auto-assign colors to advisors that don't have them
     let hasChanges = false;
     const updatedAdvisors = [];
     const assignedColors = [];
-    
+
     // First pass: collect all existing colors
     savedAdvisors.forEach(advisor => {
       if (advisor.color) {
         assignedColors.push(advisor.color);
       }
     });
-    
+
     // Second pass: assign colors to advisors without them
     savedAdvisors.forEach(advisor => {
       if (!advisor.color) {
@@ -625,17 +618,18 @@ const Terminal = ({ theme, toggleTheme }) => {
         updatedAdvisors.push(advisor);
       }
     });
-    
-    // If we made changes, save them back to localStorage
+
+    // VAULT: persist newly-assigned colors via the bootstrap shim. This
+    // routes to the vault when active and falls back to localStorage.
     if (hasChanges) {
-      localStorage.setItem('space_advisors', JSON.stringify(updatedAdvisors));
+      vaultPersistAdvisors(updatedAdvisors);
     }
-    
+
     return updatedAdvisors;
   });
   const [advisorGroups, setAdvisorGroups] = useState(() => {
-    const saved = localStorage.getItem('space_advisor_groups');
-    return saved ? JSON.parse(saved) : [];
+    // VAULT: read advisor groups from vault config or fall back to localStorage.
+    return vaultGetInitialAdvisorGroups();
   });
   const [activeGroups, setActiveGroups] = useState([]);
   const [debugMode, setDebugMode] = useState(false);
@@ -767,6 +761,8 @@ const Terminal = ({ theme, toggleTheme }) => {
 
   const [sessions, setSessions] = useState([]);
   const [sessionSelections, setSessionSelections] = useState(new Map()); // Map from title to session object
+  // VAULT: Map from "filename.md" to file descriptor for the @-mention feature.
+  const [vaultFileSelections, setVaultFileSelections] = useState(new Map());
   const [currentSessionContexts, setCurrentSessionContexts] = useState([]); // Current @ reference contexts
   const [paragraphSpacing, setParagraphSpacing] = useState(() => {
     const saved = localStorage.getItem('space_paragraph_spacing');
@@ -910,6 +906,9 @@ const Terminal = ({ theme, toggleTheme }) => {
         });
       }
 
+      // VAULT: cross-tab sync via the `storage` event is a legacy-mode-only
+      // feature. In vault mode the sidecar doesn't fire `storage` events, so
+      // multi-tab edits won't sync until the user reloads. Out of MVP scope.
       // Sync advisors across tabs/views
       if (e.key === 'space_advisors' && e.newValue) {
         try {
@@ -986,11 +985,13 @@ const Terminal = ({ theme, toggleTheme }) => {
   useEffect(() => {
     if (!isInitializing && advisors.length > 0) {
       const timeoutId = setTimeout(() => {
-        localStorage.setItem('space_advisors', JSON.stringify(advisors));
+        // VAULT: route advisors persistence through the bootstrap shim.
+        vaultPersistAdvisors(advisors);
         if (debugMode) {
-          console.log('[State Sync] Advisors persisted to localStorage:', {
+          console.log('[State Sync] Advisors persisted:', {
             count: advisors.length,
             active: advisors.filter(a => a.active).length,
+            vault: vaultIsActive(),
             timestamp: Date.now()
           });
         }
@@ -1004,10 +1005,12 @@ const Terminal = ({ theme, toggleTheme }) => {
   useEffect(() => {
     if (!isInitializing && advisorGroups.length > 0) {
       const timeoutId = setTimeout(() => {
-        localStorage.setItem('space_advisor_groups', JSON.stringify(advisorGroups));
+        // VAULT: route advisor groups persistence through the bootstrap shim.
+        vaultPersistAdvisorGroups(advisorGroups);
         if (debugMode) {
-          console.log('[State Sync] Advisor groups persisted to localStorage:', {
+          console.log('[State Sync] Advisor groups persisted:', {
             count: advisorGroups.length,
+            vault: vaultIsActive(),
             timestamp: Date.now()
           });
         }
@@ -1429,50 +1432,37 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [generateTestPrompt]);
 
-  const loadSessions = () => {
-    const sessions = [];
+  // VAULT: now async — in vault mode this fans out to fetch each conversation,
+  // in legacy mode it's synchronous-but-wrapped-in-Promise.
+  const loadSessions = async () => {
+    const sessions = await vaultGetAllSessions();
     const seenIds = new Set();
-    
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith('space_session_')) {
-        const sessionData = localStorage.getItem(key);
-        if (sessionData) {
-          try {
-            const session = JSON.parse(sessionData);
-            if (session && session.id && !seenIds.has(session.id)) {
-              seenIds.add(session.id);
-              sessions.push(session);
-            }
-          } catch (error) {
-            console.warn(`Failed to parse session data for key ${key}:`, error);
-            // Optionally remove corrupted data
-            localStorage.removeItem(key);
-          }
-        }
+    const deduped = [];
+    for (const session of sessions) {
+      if (session && session.id != null && !seenIds.has(session.id)) {
+        seenIds.add(session.id);
+        deduped.push(session);
       }
     }
-    
-    return sessions
+    return deduped
       .filter(session => {
-        // Only include sessions with actual user/assistant messages (not just system messages)
-        const nonSystemMessages = session.messages.filter(m => m.type !== 'system');
+        const messages = session.messages || [];
+        const nonSystemMessages = messages.filter(m => m.type !== 'system');
         return nonSystemMessages.length > 0;
       })
       .sort((a, b) => {
         // Sort by most recent user message timestamp (descending - most recent first)
         const getLastUserMessageTime = (session) => {
-          const userMessages = session.messages.filter(m => m.type === 'user');
+          const userMessages = (session.messages || []).filter(m => m.type === 'user');
           if (userMessages.length === 0) return new Date(session.timestamp);
           const lastUserMsg = userMessages[userMessages.length - 1];
           return new Date(lastUserMsg.timestamp || session.timestamp);
         };
-        
-        return getLastUserMessageTime(b) - getLastUserMessageTime(a);  // Descending order - most recent first
+        return getLastUserMessageTime(b) - getLastUserMessageTime(a);
       })
       .map(session => ({
         ...session,
-        messageCount: session.messages.filter(m => m.type !== 'system').length,
+        messageCount: (session.messages || []).filter(m => m.type !== 'system').length,
       }));
   };
 
@@ -1665,10 +1655,10 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
         }]);
       }
     } else if (isLocalStorageId) {
-      // Legacy localStorage loading (works for both database and localStorage modes)
-      const sessionData = localStorage.getItem(`space_session_${sessionId}`);
-      if (sessionData) {
-        const session = JSON.parse(sessionData);
+      // VAULT: load via the bootstrap shim — vault in vault mode, localStorage
+      // otherwise. Returns the parsed session object directly.
+      const session = await vaultLoadSession(sessionId);
+      if (session) {
         setCurrentSessionId(session.id);
         setCurrentConversationId(null);
         persistCurrentSession(session.id, null); // Persist localStorage session ID
@@ -1763,9 +1753,10 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
     handleLoadSessionRef.current = handleLoadSession;
   }, [handleLoadSession]);
 
-  const handleLoadPrevious = () => {
-    const sessions = loadSessions();
-    
+  const handleLoadPrevious = async () => {
+    // VAULT: loadSessions is async (vault mode fetches each file).
+    const sessions = await loadSessions();
+
     // Find the most recent session that the user has sent a message in, excluding current session
     const sessionsWithUserMessages = sessions.filter(session => {
       // Skip current session
@@ -1871,13 +1862,10 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
   };
 
 
-  const handleResetAllSessions = () => {
-    // Clear all sessions from localStorage
-    Object.keys(localStorage).forEach(key => {
-      if (key.startsWith('space_session_')) {
-        localStorage.removeItem(key);
-      }
-    });
+  const handleResetAllSessions = async () => {
+    // VAULT: enumerate via the bootstrap shim and delete each session.
+    const allSessions = await vaultGetAllSessions();
+    await Promise.all(allSessions.map((s) => vaultDeleteSession(s.id)));
     // Reset current session
     setCurrentSessionId(1);
     setMessages([{ type: 'system', content: 'All sessions cleared. Starting fresh with Session 1' }]);
@@ -1885,16 +1873,11 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
     setVoteHistory([]);
   };
 
-  const handleDeleteSession = (sessionId) => {
-    // Get session data to show title in deletion message
-    const sessionData = localStorage.getItem(`space_session_${sessionId}`);
-    let displayName = `Session ${sessionId}`;
-    if (sessionData) {
-      const session = JSON.parse(sessionData);
-      displayName = session.title || `Session ${session.id}`;
-    }
-    
-    localStorage.removeItem(`space_session_${sessionId}`);
+  const handleDeleteSession = async (sessionId) => {
+    // VAULT: load session metadata via shim to surface a title, then delete.
+    const session = await vaultLoadSession(sessionId);
+    const displayName = (session && session.title) || `Session ${sessionId}`;
+    await vaultDeleteSession(sessionId);
     setMessages(prev => [...prev, {
       type: 'system',
       content: `Deleted "${displayName}"`
@@ -1902,16 +1885,15 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
   };
 
   // Export functions for GUI buttons
-  const handleExportSession = (options = {}) => {
+  // VAULT: now async — vault mode requires fetching the conversation file.
+  const handleExportSession = async (options = {}) => {
     try {
-      // Load from localStorage to get complete session data
-      const sessionData = localStorage.getItem(`space_session_${currentSessionId}`);
-      if (!sessionData) {
+      // VAULT: load the current session via the bootstrap shim.
+      const session = await vaultLoadSession(currentSessionId);
+      if (!session) {
         throw new Error('Session not found');
       }
-      
-      const session = JSON.parse(sessionData);
-      
+
       // Validate session has messages
       if (!session.messages || !Array.isArray(session.messages)) {
         throw new Error('Session has no messages to export');
@@ -2029,8 +2011,23 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
       const sessionPromises = titleMatches.map(async (m) => {
         const title = m[1];
         const session = sessionSelections.get(title);
+        // VAULT: a vault file selection takes precedence over a session match
+        // when the @-token matches a known vault file. Vault files are inlined
+        // verbatim (not summarized) so the user gets the full content.
+        const file = vaultFileSelections.get(title);
+        if (file) {
+          console.log(`📄 Inlining vault file "${title}" from ${file.path}`);
+          const fetched = await (await import('../vault/bootstrap')).readVaultFile(file.path);
+          const body = (fetched && (fetched.body || fetched.raw)) || '';
+          return {
+            title,
+            sessionId: null,
+            summary: body, // reuse the existing summary slot — same downstream handling
+            timestamp: file.mtime,
+          };
+        }
         console.log(`📄 Looking for session "${title}":`, session ? 'FOUND' : 'NOT FOUND');
-        
+
         if (session) {
           const summary = await summarizeSession(session.id, { openaiClient });
           if (summary) {
@@ -2178,9 +2175,14 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
   }, [messages, isLoading]);
 
   // Load sessions for autocomplete
+  // VAULT: loadSessions is now async; consume via .then to avoid making the
+  // effect callback itself async (which is a React anti-pattern).
   useEffect(() => {
-    const loadedSessions = loadSessions();
-    setSessions(loadedSessions);
+    let cancelled = false;
+    loadSessions().then((loadedSessions) => {
+      if (!cancelled) setSessions(loadedSessions);
+    });
+    return () => { cancelled = true; };
   }, [currentSessionId]); // Reload when session changes
 
   useEffect(() => {
@@ -2228,14 +2230,20 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
     setSessionSelections(prev => new Map(prev.set(title, session)));
   };
 
+  // VAULT: handle vault file selection from autocomplete. Stash the file
+  // descriptor; the actual content fetch happens at send time so we don't
+  // load potentially-large files into memory speculatively.
+  const handleVaultFileSelect = (file, name) => {
+    setVaultFileSelections(prev => new Map(prev.set(name, file)));
+  };
+
   // Auto-generate summary for previous session when starting a new one
   const generateSummaryForPreviousSession = async (prevSessionId) => {
     if (!openaiClient || prevSessionId === currentSessionId) return;
-    
-    const sessionData = localStorage.getItem(`space_session_${prevSessionId}`);
-    if (!sessionData) return;
-    
-    const session = JSON.parse(sessionData);
+
+    // VAULT: load via the bootstrap shim.
+    const session = await vaultLoadSession(prevSessionId);
+    if (!session) return;
     const messageCount = session.messages.filter(m => m.type === 'user' || m.type === 'assistant').length;
     
     // Only generate summary for sessions with meaningful content that don't already have one
@@ -2373,17 +2381,16 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
     return `${type}-${typeCount}`;
   };
 
+  // VAULT: redundant immediate-save effects, kept to preserve original
+  // behavior. The main debounced effects above also persist; this catches
+  // any timing edge case where the debounced one might miss a final write.
   useEffect(() => {
-    if (advisors.length > 0) {
-      localStorage.setItem('space_advisors', JSON.stringify(advisors));
-    } else {
-      localStorage.removeItem('space_advisors');
-    }
+    vaultPersistAdvisors(advisors);
   }, [advisors]);
 
   useEffect(() => {
     if (advisorGroups.length > 0) {
-      localStorage.setItem('space_advisor_groups', JSON.stringify(advisorGroups));
+      vaultPersistAdvisorGroups(advisorGroups);
     }
   }, [advisorGroups]);
 
@@ -2640,11 +2647,18 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
   //   }, 100);
   // };
 
-  // Auto-save to database when using auth system, localStorage as fallback
+  // Auto-save to database when using auth system, vault/localStorage as fallback
+  // VAULT: this effect runs on every messages-state change, which means every
+  // streaming token. We debounce by 1 second so we don't hammer the sidecar
+  // (or localStorage) with hundreds of writes per response. The cleanup
+  // function clears any pending write when the effect re-fires.
   useEffect(() => {
     // Only save sessions that have actual user/assistant messages (not just system messages)
     const nonSystemMessages = messages.filter(msg => msg.type !== 'system');
-    if (nonSystemMessages.length > 0) {
+    if (nonSystemMessages.length === 0) return undefined;
+
+    const debounceMs = 1000;
+    const timeoutId = setTimeout(() => {
       const saveSession = async () => {
         if (useDatabaseStorage && currentConversationId) {
           // Database storage: Save individual messages as they come
@@ -2716,9 +2730,8 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
         }
         
         async function saveLegacySession() {
-          // Get existing session to preserve timestamp and other data
-          const existingSession = localStorage.getItem(`space_session_${currentSessionId}`);
-          const existingData = existingSession ? JSON.parse(existingSession) : null;
+          // VAULT: load existing session via shim to preserve timestamp/title.
+          const existingData = await vaultLoadSession(currentSessionId);
 
           // Only update timestamp if we're adding new messages (not just loading)
           // Compare message count to determine if this is a new message or just a reload
@@ -2769,12 +2782,17 @@ Respond with JSON: {"suggestions": ["Advisor Name 1", "Advisor Name 2", "Advisor
             }
           }
 
-          localStorage.setItem(`space_session_${currentSessionId}`, JSON.stringify(sessionData));
+          // VAULT: persist via the bootstrap shim. Vault mode writes a
+          // markdown file under conversations/{id}/conversation.md and stashes
+          // the rich session metadata in frontmatter for lossless round-trip.
+          await vaultPersistSession(sessionData);
         }
       };
 
       saveSession();
-    }
+    }, debounceMs);
+
+    return () => clearTimeout(timeoutId);
   }, [messages, advisorSuggestions, voteHistory, currentSessionId, currentConversationId, useDatabaseStorage, storage, openaiClient]);
 
   // Trigger analysis when messages change and we have a Claude response (debounced for performance)
@@ -2936,12 +2954,12 @@ ${selectedText}
         // Load from database using handleLoadSession
         handleLoadSession(sessionId);
       } else {
-        // Load from localStorage
-        const sessionKey = `space_session_${sessionId}`;
-        const sessionData = localStorage.getItem(sessionKey);
-        
-        if (sessionData) {
-          const session = JSON.parse(sessionData);
+        // VAULT: load via the bootstrap shim. Wrapped in an IIFE so the
+        // useEffect callback itself stays sync (React anti-pattern otherwise).
+        (async () => {
+        const session = await vaultLoadSession(sessionId);
+
+        if (session) {
           
           // Process messages to restore advisor_json format if needed
           const processedMessages = session.messages.map((msg, idx) => {
@@ -3019,6 +3037,7 @@ ${selectedText}
             }
           }, 100);
         }
+        })(); // VAULT: end of IIFE wrapping the async session load
       }
     }
   }, []);
@@ -3097,30 +3116,14 @@ ${selectedText}
   };
 
 
-  const exportAllSessions = () => {
+  // VAULT: now async — vault mode fetches every conversation file.
+  const exportAllSessions = async () => {
     try {
-      const sessions = [];
-      
-      // Iterate through localStorage to find all session keys
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key?.startsWith('space_session_')) {
-          try {
-            const sessionData = localStorage.getItem(key);
-            const session = JSON.parse(sessionData);
-            
-            // Validate session has required fields
-            if (session && session.messages && Array.isArray(session.messages)) {
-              sessions.push(session);
-            } else {
-              console.warn(`Skipping invalid session: ${key}`);
-            }
-          } catch (parseError) {
-            console.error(`Failed to parse session ${key}:`, parseError);
-          }
-        }
-      }
-      
+      const allSessions = await vaultGetAllSessions();
+      const sessions = allSessions.filter(
+        (s) => s && s.messages && Array.isArray(s.messages),
+      );
+
       // Check if we found any valid sessions
       if (sessions.length === 0) {
         throw new Error('No valid sessions found to export');
@@ -3597,6 +3600,7 @@ ${selectedText}
                           isLoading={isLoading}
                           sessions={sessions}
                           onSessionSelect={handleSessionSelect}
+                          onVaultFileSelect={handleVaultFileSelect}
                         />
                       )}
                       </div>
@@ -3779,12 +3783,12 @@ ${selectedText}
         onExportAll={handleExportAll}
         currentSessionId={currentSessionId}
         sessionTitle={(() => {
-          const sessionData = localStorage.getItem(`space_session_${currentSessionId}`);
-          if (sessionData) {
-            const session = JSON.parse(sessionData);
-            return session.title;
-          }
-          return null;
+          // VAULT: read from the cached session index. Both vault mode (cache
+          // populated by prewarm) and legacy mode (synchronous localStorage
+          // scan) work synchronously here.
+          const idx = vaultGetInitialSessionIndex();
+          const entry = idx.find((s) => s.id === currentSessionId);
+          return (entry && entry.title) || null;
         })()}
       />
 

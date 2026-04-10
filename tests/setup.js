@@ -1,6 +1,16 @@
 // Test setup for infinite loop bug detection
 import '@testing-library/jest-dom';
 
+// VAULT: bail out of jsdom-specific setup when the test file declares
+// @jest-environment node. The vault contract and smoke tests don't need
+// (and can't have) window/localStorage/etc.
+if (typeof window === 'undefined') {
+  // Running in node env — nothing else in this file applies.
+  // Use a globalThis flag so the rest of the file can short-circuit.
+  globalThis.__SKIP_JSDOM_SETUP__ = true;
+}
+if (!globalThis.__SKIP_JSDOM_SETUP__) {
+
 // Mock ResizeObserver
 global.ResizeObserver = jest.fn().mockImplementation(() => ({
   observe: jest.fn(),
@@ -67,3 +77,5 @@ console.warn = (...args) => {
 beforeEach(() => {
   jest.clearAllTimers();
 });
+
+} // VAULT: end !globalThis.__SKIP_JSDOM_SETUP__ guard

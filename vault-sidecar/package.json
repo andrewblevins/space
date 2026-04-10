@@ -1,0 +1,17 @@
+{
+  "name": "space-vault-sidecar",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Local filesystem sidecar for SPACE Terminal. Reads and writes advisors and conversations as markdown files. Localhost-only.",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "fast-glob": "^3.3.2",
+    "gray-matter": "^4.0.3"
+  }
+}

@@ -14,8 +14,13 @@ export default {
   ],
   testMatch: [
     '<rootDir>/tests/**/*.test.js',
-    '<rootDir>/tests/**/*.test.jsx'
+    '<rootDir>/tests/**/*.test.jsx',
+    '<rootDir>/src/**/__tests__/*.test.js', // VAULT: vault module tests
+    '<rootDir>/src/**/__tests__/*.test.jsx' // VAULT: vault module tests
   ],
+  // VAULT: ignore conductor worktrees which pollute the haste map
+  testPathIgnorePatterns: ['/node_modules/', '/.conductor/'],
+  modulePathIgnorePatterns: ['/.conductor/'],
   collectCoverageFrom: [
     'src/**/*.{js,jsx,ts,tsx}',
     '!src/**/*.test.{js,jsx}',

@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+// VAULT: read sessions through the bootstrap shim — vault or localStorage.
+import { getAllSessionsFromStorage as vaultGetAllSessions } from "../../vault/bootstrap";
 
 // Shared color theme configurations
 const colorThemes = {
@@ -39,47 +41,35 @@ export function RecentChats({
   const [recentSessions, setRecentSessions] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
 
-  // Load sessions from localStorage
-  const loadLocalStorageSessions = () => {
-    const sessionList = [];
-    const seenIds = new Set();
-
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith("space_session_")) {
-        try {
-          const sessionData = localStorage.getItem(key);
-          if (sessionData) {
-            const session = JSON.parse(sessionData);
-            if (session && session.id && !seenIds.has(session.id)) {
-              seenIds.add(session.id);
-              sessionList.push(session);
-            }
-          }
-        } catch (error) {
-          console.warn(`Failed to parse session data: ${key}`, error);
-        }
+  // VAULT: load sessions via the bootstrap shim. Vault mode fetches each
+  // conversation file; legacy mode scans localStorage. Returns full objects.
+  const loadLocalStorageSessions = async () => {
+    const sessionList = await vaultGetAllSessions();
+    const seen = new Set();
+    const deduped = [];
+    for (const session of sessionList) {
+      if (session && session.id != null && !seen.has(session.id)) {
+        seen.add(session.id);
+        deduped.push(session);
       }
     }
-
-    return sessionList
+    return deduped
       .filter((session) => {
-        const nonSystemMessages = session.messages?.filter(
-          (m) => m.type !== "system"
+        const nonSystemMessages = (session.messages || []).filter(
+          (m) => m.type !== "system",
         );
-        return nonSystemMessages && nonSystemMessages.length > 0;
+        return nonSystemMessages.length > 0;
       })
       .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
       .map((session) => ({
         ...session,
-        messageCount: session.messages?.filter((m) => m.type !== "system")
-          .length || 0,
+        messageCount: (session.messages || []).filter((m) => m.type !== "system").length,
       }));
   };
 
   // Load all sessions
   const loadAllSessions = async () => {
-    const localStorageSessions = loadLocalStorageSessions();
+    const localStorageSessions = await loadLocalStorageSessions();
     let allSessions = [...localStorageSessions];
 
     // If using database storage, fetch and merge database conversations
