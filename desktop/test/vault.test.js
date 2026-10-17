@@ -118,3 +118,18 @@ test('setAdvisorModel adds a model line when missing', () => {
   assert.equal(vault.readAdvisor(v, 'x').model, 'meta/muse-spark-1.3');
   assert.equal(vault.readAdvisor(v, 'x').prompt, 'Body');
 });
+
+test('conversation round-trip keeps per-reply cost', () => {
+  const convo = {
+    id: 'c',
+    title: 'Costs',
+    created: '2026-10-17T00:00:00.000Z',
+    rounds: [{ user: 'hi', responses: [
+      { advisorId: 'a', model: 'm', name: 'A', text: 'yo', cost: 0.0012345 },
+      { advisorId: 'b', model: 'm', name: 'B', text: '', error: 'Stopped.' },
+    ] }],
+  };
+  const back = vault.parseConversation("c", vault.serializeConversation(convo));
+  assert.equal(back.rounds[0].responses[0].cost, 0.0012345);
+  assert.equal(back.rounds[0].responses[1].cost, undefined);
+});

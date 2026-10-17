@@ -10,6 +10,14 @@ npm run dev        # hot-reloading UI while you work on it
 npm test
 ```
 
+To open it like any other app (Dock, Spotlight, a hotkey), install a launcher:
+
+```bash
+scripts/install-launcher.sh   # creates ~/Applications/SPACE.app
+```
+
+It runs SPACE from this checkout, rebuilding the UI on each launch so code changes show up. Opening it while it's already running brings the existing window forward. Re-run the script after upgrading Electron. Logs: `~/Library/Logs/SPACE.log`.
+
 All models go through OpenRouter, so one key reaches Claude, GPT, Gemini and the rest. The key is found in this order:
 
 1. `OPENROUTER_API_KEY` in the environment
@@ -58,6 +66,12 @@ Edit files in any editor while the app is open; the panel updates live.
 ### conversation.md
 
 Plain markdown with an invisible `<!-- space:... -->` marker before each turn, so it reads cleanly in Obsidian and parses back exactly.
+
+Each advisor marker records what that reply cost, as OpenRouter billed it (`cost="0.0015"`, in USD).
+
+## Spending
+
+Each reply shows its cost next to the advisor's name. The sidebar shows the open conversation's total (summed from those markers), plus this month's spend, all-time spend and remaining credit for the OpenRouter key, fetched from OpenRouter after every message. The key figures include anything else using the same key, such as the web app.
 
 ## Code
 

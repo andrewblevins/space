@@ -18,6 +18,7 @@ contextBridge.exposeInMainWorld('space', {
   updateSettings: (patch) => ipcRenderer.invoke('settings:update', patch),
   chooseVault: () => ipcRenderer.invoke('settings:chooseVault'),
   send: (args) => ipcRenderer.invoke('chat:send', args),
+  keyUsage: () => ipcRenderer.invoke('usage:key'),
   stop: (requestId) => ipcRenderer.invoke('chat:stop', requestId),
   onVaultChanged: on('vault:changed'),
   onStart: on('chat:start'),

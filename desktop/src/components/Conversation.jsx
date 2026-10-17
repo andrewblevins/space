@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import Markdown from 'react-markdown';
 import Bust from './Bust.jsx';
-import { hueFor } from './advisorStyle.js';
+import { hueFor, money } from './advisorStyle.js';
 
 export default function Conversation({ convo, advisors }) {
   const end = useRef(null);
@@ -33,6 +33,7 @@ export default function Conversation({ convo, advisors }) {
                   <header>
                     <Bust advisor={advisor} size="tiny" />
                     <span className="voice-name">{r.name}</span>
+                    {r.cost != null && <span className="voice-cost">{money(r.cost)}</span>}
                   </header>
                   <div className="voice-text">
                     {r.text ? <Markdown>{r.text}</Markdown> : r.pending ? <span className="breath" /> : null}

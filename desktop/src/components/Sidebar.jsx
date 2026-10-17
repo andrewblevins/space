@@ -1,9 +1,10 @@
 import React from 'react';
+import { money } from './advisorStyle.js';
 
 const fmt = (iso) =>
   iso ? new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '';
 
-export default function Sidebar({ open, onToggle, conversations, currentId, busy, onNew, onOpen, onReveal, onSettings }) {
+export default function Sidebar({ open, onToggle, conversations, currentId, busy, onNew, onOpen, onReveal, onSettings, convoCost, keyUsage }) {
   return (
     <aside className={`sidebar ${open ? '' : 'closed'}`}>
       <button className="sidebar-toggle" onClick={onToggle} title={open ? 'Hide' : 'Show conversations'}>
@@ -28,6 +29,29 @@ export default function Sidebar({ open, onToggle, conversations, currentId, busy
               </button>
             ))}
           </nav>
+          <div className="spend">
+            {convoCost != null && (
+              <div>
+                <span>This conversation</span>
+                <span>{money(convoCost)}</span>
+              </div>
+            )}
+            {keyUsage && (
+              <>
+                <div>
+                  <span>This month</span>
+                  <span>{money(keyUsage.month)}</span>
+                </div>
+                <div title="Everything this OpenRouter key has spent, in any app">
+                  <span>Key total</span>
+                  <span>
+                    {money(keyUsage.spent)}
+                    {keyUsage.remaining != null && <em> · {money(keyUsage.remaining)} left</em>}
+                  </span>
+                </div>
+              </>
+            )}
+          </div>
           <footer className="sidebar-foot">
             <button className="link" onClick={onReveal}>
               Show in Finder

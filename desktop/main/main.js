@@ -4,7 +4,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { app, BrowserWindow, dialog, ipcMain, net, protocol, shell } from 'electron';
 import * as vault from './vault.js';
 import * as settings from './settings.js';
-import { buildMessages, buildSystemPrompt, streamAdvisor } from './providers.js';
+import { buildMessages, buildSystemPrompt, keyUsage, streamAdvisor } from './providers.js';
 import { DEFAULT_MODEL, MODEL_OPTIONS } from './models.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -84,6 +84,16 @@ function captureAndQuit(out, js) {
   });
 }
 
+// One window only: launching again (the Dock, a shortcut) brings the open one forward.
+// Screenshot runs are exempt so they can run beside a real session.
+if (!process.env.SPACE_CAPTURE && !app.requestSingleInstanceLock()) app.quit();
+app.on('second-instance', () => {
+  if (!win) return;
+  if (win.isMinimized()) win.restore();
+  win.show();
+  win.focus();
+});
+
 app.whenReady().then(() => {
   vault.ensureVault(vaultPath(), SEED_DIR);
 
@@ -132,7 +142,7 @@ app.whenReady().then(() => {
           if (!advisor) throw new Error(`Advisor "${id}" no longer exists on disk.`);
           const model = advisor.model || DEFAULT_MODEL;
           send('chat:start', { advisorId: id, model, name: advisor.name });
-          await streamAdvisor({
+          const { cost } = await streamAdvisor({
             key,
             model,
             system: buildSystemPrompt(advisor, vault.readAdvisorSources(vaultPath(), advisor)),
@@ -140,7 +150,7 @@ app.whenReady().then(() => {
             signal: controller.signal,
             onDelta: (text) => send('chat:delta', { advisorId: id, text }),
           });
-          send('chat:done', { advisorId: id });
+          send('chat:done', { advisorId: id, cost });
         } catch (err) {
           const aborted = controller.signal.aborted;
           send('chat:done', { advisorId: id, error: aborted ? 'Stopped.' : err.message || String(err) });
@@ -149,6 +159,7 @@ app.whenReady().then(() => {
     );
     inflight.delete(requestId);
   });
+  ipcMain.handle('usage:key', () => keyUsage(settings.getKey()).catch(() => null));
   ipcMain.handle('chat:stop', (_e, requestId) => inflight.get(requestId)?.abort());
 
   createWindow();

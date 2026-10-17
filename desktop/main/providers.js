@@ -40,6 +40,15 @@ export function buildMessages(rounds, advisorId, userText) {
   return messages;
 }
 
+// What this key has spent and has left, straight from OpenRouter.
+export async function keyUsage(key) {
+  if (!key) return null;
+  const res = await fetch('https://openrouter.ai/api/v1/key', { headers: { Authorization: `Bearer ${key}` } });
+  if (!res.ok) return null;
+  const { data } = await res.json();
+  return { spent: data.usage, limit: data.limit, remaining: data.limit_remaining, month: data.usage_monthly };
+}
+
 export async function streamAdvisor({ key, model, system, messages, onDelta, signal }) {
   if (!key) throw new Error('No OpenRouter API key. Add one in Settings.');
   const reasoning = MODEL_OPTIONS.find((m) => m.id === model)?.reasoning;
@@ -48,6 +57,7 @@ export async function streamAdvisor({ key, model, system, messages, onDelta, sig
     baseURL: 'https://openrouter.ai/api/v1',
     defaultHeaders: { 'X-Title': 'SPACE' },
   });
+  let cost = null;
   try {
     const stream = await client.chat.completions.create(
       {
@@ -55,6 +65,7 @@ export async function streamAdvisor({ key, model, system, messages, onDelta, sig
         stream: true,
         messages: [{ role: 'system', content: system }, ...messages],
         ...(reasoning ? { reasoning } : {}),
+        usage: { include: true },
       },
       { signal },
     );
@@ -63,7 +74,10 @@ export async function streamAdvisor({ key, model, system, messages, onDelta, sig
       if (chunk.error) throw new Error(chunk.error.message || 'The model provider failed mid-response.');
       const text = chunk.choices?.[0]?.delta?.content;
       if (text) onDelta(text);
+      // The final chunk carries what OpenRouter actually billed, in USD.
+      if (typeof chunk.usage?.cost === 'number') cost = chunk.usage.cost;
     }
+    return { cost };
   } catch (err) {
     throw new Error(describeError(err, model));
   }

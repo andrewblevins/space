@@ -13,4 +13,7 @@ export function initials(name) {
   return (words[0]?.[0] || '?').toUpperCase() + (words[1]?.[0] || '').toUpperCase();
 }
 
+// Dollars, with enough precision that a fraction-of-a-cent reply doesn't read as $0.00.
+export const money = (n) => (n == null ? '' : `$${n.toFixed(n < 0.01 ? 4 : n < 1 ? 3 : 2)}`);
+
 export const portraitUrl = (rel) => `vault://${rel.split('/').map(encodeURIComponent).join('/')}`;

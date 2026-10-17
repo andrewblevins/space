@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1c1916"/><stop offset="1" stop-color="#0b0a09"/></linearGradient>
+    <linearGradient id="stone" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f1ece4"/><stop offset="0.55" stop-color="#d9d2c6"/><stop offset="1" stop-color="#b4ab9d"/></linearGradient>
+    <filter id="veins" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.004 0.011" numOctaves="4" seed="4"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.35  0 0 0 0 0.32  0 0 0 0 0.30  1 0 0 0 0"/>
+      <feComponentTransfer><feFuncA type="table" tableValues="0 0 0 0 0 0.55 0 0.25 0 0 0 0"/></feComponentTransfer>
+    </filter>
+    <clipPath id="arch"><path d="M332 812 V420 a180 180 0 0 1 360 0 V812 Z"/></clipPath>
+  </defs>
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#bg)"/>
+  <g clip-path="url(#arch)">
+    <rect x="300" y="200" width="420" height="640" fill="url(#stone)"/>
+    <rect x="-100" y="-100" width="1224" height="1224" filter="url(#veins)" transform="rotate(-24 512 512)"/>
+  </g>
+  <text x="512" y="660" text-anchor="middle" font-family="Iowan Old Style, Palatino, serif" font-size="230" fill="#8f877b" opacity="0.85">S</text>
+</svg>

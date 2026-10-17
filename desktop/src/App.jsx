@@ -29,6 +29,8 @@ export default function App() {
   const [requestId, setRequestId] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [keyUsage, setKeyUsage] = useState(null);
+  const refreshKeyUsage = () => window.space.keyUsage().then(setKeyUsage);
   // Source of truth for the open conversation; `convo` state mirrors it for rendering.
   const convoRef = useRef(null);
   const showConvo = (c) => {
@@ -41,6 +43,7 @@ export default function App() {
       setSnap(s);
       if (!s.hasKey) setShowSettings(true);
     });
+    refreshKeyUsage();
     return window.space.onVaultChanged(setSnap);
   }, []);
 
@@ -67,8 +70,13 @@ export default function App() {
     const offs = [
       window.space.onStart(({ advisorId, model, name }) => patch(advisorId, (r) => ({ ...r, model, name }))),
       window.space.onDelta(({ advisorId, text }) => patch(advisorId, (r) => ({ ...r, text: r.text + text }))),
-      window.space.onDone(({ advisorId, error }) =>
-        patch(advisorId, (r) => ({ ...r, pending: false, ...(error ? { error } : {}) })),
+      window.space.onDone(({ advisorId, error, cost }) =>
+        patch(advisorId, (r) => ({
+          ...r,
+          pending: false,
+          ...(typeof cost === 'number' ? { cost } : {}),
+          ...(error ? { error } : {}),
+        })),
       ),
     ];
     return () => offs.forEach((off) => off());
@@ -124,6 +132,7 @@ export default function App() {
         const done = convoRef.current;
         await window.space.saveConversation({ ...done, rounds: clean(done.rounds) });
         setSnap(await window.space.snapshot());
+        refreshKeyUsage();
       }
     },
     [requestId, activeAdvisors],
@@ -149,6 +158,8 @@ export default function App() {
         onOpen={openConversation}
         onReveal={() => window.space.reveal(convo ? `conversations/${convo.id}/conversation.md` : '')}
         onSettings={() => setShowSettings(true)}
+        convoCost={convo ? convo.rounds.flatMap((r) => r.responses).reduce((n, r) => n + (r.cost || 0), 0) : null}
+        keyUsage={keyUsage}
       />
       <main className={`stage ${convo ? 'in-conversation' : 'at-rest'}`}>
         <Panel
@@ -181,7 +192,10 @@ export default function App() {
         <Settings
           snap={snap}
           onClose={() => setShowSettings(false)}
-          onSave={async (patch) => setSnap(await window.space.updateSettings(patch))}
+          onSave={async (patch) => {
+            setSnap(await window.space.updateSettings(patch));
+            refreshKeyUsage();
+          }}
         />
       )}
     </div>

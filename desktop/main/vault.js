@@ -154,7 +154,8 @@ export function serializeConversation(convo) {
   for (const round of convo.rounds) {
     parts.push('<!-- space:user -->', '## You', '', round.user.trim(), '');
     for (const r of round.responses) {
-      const extra = r.error ? ` error="${esc(r.error)}"` : '';
+      const extra =
+        (typeof r.cost === 'number' ? ` cost="${r.cost}"` : '') + (r.error ? ` error="${esc(r.error)}"` : '');
       parts.push(
         `<!-- space:advisor id="${esc(r.advisorId)}" model="${esc(r.model)}"${extra} -->`,
         `## ${r.name}`,
@@ -186,6 +187,7 @@ export function parseConversation(id, raw) {
         model: a.model,
         name: heading ? heading[1].trim() : a.id,
         text: body,
+        ...(a.cost ? { cost: Number(a.cost) } : {}),
         ...(a.error ? { error: a.error } : {}),
       });
     }
