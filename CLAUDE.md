@@ -10,6 +10,10 @@ When you make changes that affect the architecture — new files, renamed/delete
 
 SPACE Terminal is an open-source React-based interface for exploring complex questions through multi-perspective AI conversations. Users converse with multiple distinct AI perspectives simultaneously, with tools for generating, modifying, and swapping perspectives on the fly. Built with React 18, Vite, TailwindCSS, and Cloudflare Pages Functions.
 
+## Desktop App (`desktop/`)
+
+A separate, self-contained Electron + React rewrite lives in `desktop/` with its own `package.json`. It shares no code with the web app above. Advisors and conversations are markdown files in a user-chosen vault folder (default `~/space-vault`); every model call goes through OpenRouter. See `desktop/README.md` for running it, the vault format, and a code map. Tests: `cd desktop && npm test`.
+
 ## Development Commands
 
 ### Core Development
