@@ -360,6 +360,7 @@ const Terminal = ({ theme, toggleTheme }) => {
 
       // Store full context in input field
       setInput(fullContext);
+      journalContextRef.current = fullContext;
 
       // Reset context flow and hide onboarding, show suggestions modal immediately
       setContextFlow({
@@ -483,12 +484,14 @@ const Terminal = ({ theme, toggleTheme }) => {
       setJournalSuggestions([]);
       setJournalStreamingStatus({ isStreaming: true, count: 0, total: 8 });
 
-      // Get the first user message (journal entry)
-      const journalMessage = messages.find(m => m.type === 'user');
-      if (journalMessage) {
+      // Use the journal context from onboarding; fall back to the first user message
+      const journalContext = journalContextRef.current || messages.find(m => m.type === 'user')?.content;
+      if (!journalContext) {
+        setJournalStreamingStatus({ isStreaming: false, count: 0, total: 8 });
+      } else {
         // Pass previous names to avoid duplicates
         const suggestions = await generateAdvisorSuggestionsStream(
-          journalMessage.content,
+          journalContext,
           advisors,
           previousSuggestionNames,
           (partialSuggestions) => {
@@ -779,6 +782,7 @@ const Terminal = ({ theme, toggleTheme }) => {
   const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false);
   const [customPerspectives, setCustomPerspectives] = useState([]);
   const [previousSuggestionNames, setPreviousSuggestionNames] = useState([]);
+  const journalContextRef = useRef('');
   const [journalStreamingStatus, setJournalStreamingStatus] = useState({ isStreaming: false, count: 0, total: 8 });
 
   // Context question flow state

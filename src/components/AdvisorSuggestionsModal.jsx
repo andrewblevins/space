@@ -20,24 +20,18 @@ const AdvisorSuggestionsModal = ({ suggestions, existingAdvisors, onAddSelected,
     }
   }, [customPerspectives]);
 
-  // Stagger entrance animation for new cards
+  // Fade in any card that isn't visible yet. Keyed on IDs rather than count,
+  // because streamed perspectives can be re-created with new IDs as they fill in.
   useEffect(() => {
-    if (suggestions.length > prevCountRef.current) {
-      const newCards = suggestions.slice(prevCountRef.current);
-      if (newCards.length === 1) {
-        // Single new card (streaming) — show immediately
-        setVisibleIds(prev => new Set([...prev, newCards[0].id]));
-      } else {
-        // Batch of new cards — stagger entrance
-        newCards.forEach((advisor, idx) => {
-          setTimeout(() => {
-            setVisibleIds(prev => new Set([...prev, advisor.id]));
-          }, idx * 80);
-        });
-      }
-    }
+    const missing = suggestions.filter(s => !visibleIds.has(s.id));
+    if (missing.length === 0) return;
+    missing.forEach((advisor, idx) => {
+      setTimeout(() => {
+        setVisibleIds(prev => new Set([...prev, advisor.id]));
+      }, missing.length > 1 ? idx * 80 : 0);
+    });
     prevCountRef.current = suggestions.length;
-  }, [suggestions.length]);
+  }, [suggestions]);
 
   // Reset visible IDs when modal opens fresh
   useEffect(() => {

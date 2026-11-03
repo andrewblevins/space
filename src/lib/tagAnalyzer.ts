@@ -39,13 +39,15 @@ export default class TagAnalyzer {
         return;
       }
       
-      const openaiKey = await getDecrypted('space_openai_key');
-      if (!openaiKey) {
-        throw new Error('OpenAI API key not found in secure storage');
+      // BYOK mode: route through OpenRouter with the user's OpenRouter key
+      const openrouterKey = await getDecrypted('space_openrouter_key');
+      if (!openrouterKey) {
+        throw new Error('OpenRouter API key not found in secure storage');
       }
 
       this.openai = new OpenAI({
-        apiKey: openaiKey,
+        apiKey: openrouterKey,
+        baseURL: 'https://openrouter.ai/api/v1',
         dangerouslyAllowBrowser: true
       });
       
@@ -140,7 +142,7 @@ export default class TagAnalyzer {
         
         const inputTokens = Math.ceil((TAGGING_PROMPT.length + content.length) / 4); // Estimate input tokens
         const response = await this.openai.chat.completions.create({
-          model: "gpt-4o-mini",
+          model: "openai/gpt-4o-mini",
           messages: [{
             role: "system",
             content: TAGGING_PROMPT
