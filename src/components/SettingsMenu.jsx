@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import UsageDisplay from './UsageDisplay';
 import UsageIndicator from './UsageIndicator';
-import PrivacyPolicy from './PrivacyPolicy';
+import PrivacyPolicy from './DataPolicy';
 
 const SettingsMenu = ({
   isOpen,
@@ -143,8 +143,8 @@ const SettingsMenu = ({
     setParagraphSpacing(defaultParagraphSpacing);
     localStorage.setItem('space_paragraph_spacing', defaultParagraphSpacing.toString());
 
-    setOpenrouterModel('anthropic/claude-sonnet-4.6');
-    localStorage.setItem('space_openrouter_model', 'anthropic/claude-sonnet-4.6');
+    setOpenrouterModel('anthropic/claude-sonnet-5.5');
+    localStorage.setItem('space_openrouter_model', 'anthropic/claude-sonnet-5.5');
   };
 
   const tabs = [
@@ -204,25 +204,25 @@ const SettingsMenu = ({
                 <p className="text-gray-400 text-sm mb-4">Choose which AI model powers your conversations</p>
                 <div className="space-y-2">
                   <button
-                    onClick={() => handleModelChange('anthropic/claude-sonnet-4.6')}
+                    onClick={() => handleModelChange('anthropic/claude-sonnet-5.5')}
                     className={`w-full text-left p-3 rounded border transition-colors ${
-                      openrouterModel === 'anthropic/claude-sonnet-4.6'
+                      openrouterModel === 'anthropic/claude-sonnet-5.5'
                         ? 'border-term-500 bg-term-500/10 dark:bg-term-500/10'
                         : 'border-stone-300 dark:border-stone-600 hover:border-term-500/50'
                     }`}
                   >
-                    <div className="text-gray-800 dark:text-term-100 font-medium">Claude Sonnet 4.6</div>
+                    <div className="text-gray-800 dark:text-term-100 font-medium">Claude Sonnet 5.5</div>
                     <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Fast, capable, cost-effective (default)</div>
                   </button>
                   <button
-                    onClick={() => handleModelChange('anthropic/claude-opus-4.6')}
+                    onClick={() => handleModelChange('anthropic/claude-opus-5.5')}
                     className={`w-full text-left p-3 rounded border transition-colors ${
-                      openrouterModel === 'anthropic/claude-opus-4.6'
+                      openrouterModel === 'anthropic/claude-opus-5.5'
                         ? 'border-term-500 bg-term-500/10 dark:bg-term-500/10'
                         : 'border-stone-300 dark:border-stone-600 hover:border-term-500/50'
                     }`}
                   >
-                    <div className="text-gray-800 dark:text-term-100 font-medium">Claude Opus 4.6</div>
+                    <div className="text-gray-800 dark:text-term-100 font-medium">Claude Opus 5.5</div>
                     <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Highest quality, higher cost</div>
                   </button>
                 </div>

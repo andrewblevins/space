@@ -19,7 +19,7 @@ import { useUsageTracking } from './useUsageTracking';
  * @param {boolean} params.reasoningMode
  * @returns {{ callParallelAdvisors: (userMessage: string, activeAdvisors: Array<object>) => Promise<void> }}
  */
-export function useParallelAdvisors({ messages, setMessages, maxTokens, contextLimit, memory, debugMode, reasoningMode, model = 'anthropic/claude-sonnet-4.6' }) {
+export function useParallelAdvisors({ messages, setMessages, maxTokens, contextLimit, memory, debugMode, reasoningMode, model = 'anthropic/claude-sonnet-5.5' }) {
   const useAuthSystem = import.meta.env.VITE_USE_AUTH === 'true';
   const authData = useAuthSystem ? useAuth() : { session: null };
   const { session } = authData;

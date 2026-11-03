@@ -103,13 +103,13 @@ export function useClaude({ messages, setMessages, maxTokens, contextLimit, memo
     // Auth mode uses our backend proxy (Anthropic format)
     // Legacy mode uses OpenRouter API (OpenAI-compatible format)
     const requestBody = useAuthSystem ? {
-      model: 'claude-sonnet-4.5',
+      model: 'claude-sonnet-5.5',
       messages: contextMessages,
       system: systemPromptText,
       max_tokens: maxTokens,
       stream: true,
     } : {
-      model: 'anthropic/claude-sonnet-4.5', // OpenRouter model name
+      model: 'anthropic/claude-sonnet-5.5', // OpenRouter model name
       messages: [
         { role: 'system', content: systemPromptText },
         ...contextMessages

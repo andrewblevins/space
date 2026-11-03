@@ -1,20 +1,35 @@
 # SPACE Terminal
 
-[SPACE Terminal](https://spaceterminal.xyz) is a free, open-source interface for exploring complex questions through multi-perspective AI conversations.
+SPACE Terminal is a free, open-source interface for exploring complex questions through multi-perspective AI conversations.
 
 SPACE stands for Simple Perspective-Augmenting Chat Environment (or, Simulated People Aspecting Convincingly Enough).
 
 <img src="screenshots/terminal-screenshot.png" alt="SPACE Terminal Interface" width="800"/>
 
-## Quick Start
+## Quick Start (run it on your own computer)
 
-**SPACE uses your own API key.** You'll need an [OpenRouter](https://openrouter.ai) account.
+The hosted site is offline, so SPACE runs locally in your browser. You need:
 
-1. Visit [spaceterminal.xyz](https://spaceterminal.xyz)
-2. Get an API key from [openrouter.ai/keys](https://openrouter.ai/keys)
-3. Paste your key and start exploring
+- **Node.js 18+**: download the LTS installer from [nodejs.org](https://nodejs.org)
+- **An OpenRouter API key**: sign up at [openrouter.ai](https://openrouter.ai), add a few dollars of credit, then create a key at [openrouter.ai/keys](https://openrouter.ai/keys)
 
-Your conversations are stored locally in your browser—we don't store your data on our servers.
+Then, in a terminal:
+
+```bash
+git clone -b friend-release https://github.com/andrewblevins/space.git
+cd space
+npm install
+npm start
+```
+
+Your browser opens at `http://localhost:3000`. Click **Explore** and paste your OpenRouter key. It is stored encrypted in your browser and is sent only to OpenRouter.
+
+To use it again later: open a terminal, `cd space`, run `npm start`. Stop it with `Ctrl+C`.
+
+**Good to know**
+- **Cost:** you pay OpenRouter directly, per message. The default model is Claude Sonnet 5.5; Claude Opus 5.5 is available in Settings and costs about twice as much. Each message is sent to every perspective, so 4 perspectives cost roughly 4× a single chat.
+- **Your data:** conversations and perspectives are saved in your browser's local storage, on this computer only. Clearing site data for `localhost:3000`, or switching browsers, starts you fresh. Use **Export Conversation** in the menu to save one you care about.
+- **Blank page?** Some ad or privacy blockers interfere with local dev servers. Disable the blocker for `localhost` and reload.
 
 ## What SPACE Does
 

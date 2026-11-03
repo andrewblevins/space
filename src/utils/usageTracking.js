@@ -14,8 +14,8 @@ const PRICING = {
     output: 0.60 / 1_000_000   // $0.60 per million tokens
   },
   openrouter: {
-    input: 2.00 / 1_000_000,   // $2 per million tokens (average)
-    output: 6.00 / 1_000_000   // $6 per million tokens (average)
+    input: 2.00 / 1_000_000,   // $2 per million tokens (Claude Sonnet 5.5)
+    output: 10.00 / 1_000_000  // $10 per million tokens (Claude Sonnet 5.5)
   }
 };
 

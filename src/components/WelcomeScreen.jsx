@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import InfoModal from './InfoModal';
-import PrivacyPolicy from './PrivacyPolicy';
+import PrivacyPolicy from './DataPolicy';
 import { useAuthSafe } from '../contexts/AuthContext';
 
 const WelcomeScreen = ({ onGetStarted }) => {
@@ -109,7 +109,7 @@ const WelcomeScreen = ({ onGetStarted }) => {
             >
               Privacy Policy
             </button>
-            . We use cookies and analytics to improve your experience.
+            . Everything stays in this browser; messages go only to OpenRouter.
           </p>
         </div>
       </main>

@@ -183,7 +183,7 @@ export const generatePerspectives = async (context, excludeNames = [], contextTy
     method: 'POST',
     headers,
     body: JSON.stringify({
-      model: 'anthropic/claude-sonnet-4.5',
+      model: 'anthropic/claude-sonnet-5.5',
       messages: [{
         role: 'system',
         content: 'You are a helpful assistant that responds only in valid JSON format.'
@@ -232,7 +232,7 @@ export const generatePerspectivesStream = async (
     method: 'POST',
     headers,
     body: JSON.stringify({
-      model: 'anthropic/claude-sonnet-4.5',
+      model: 'anthropic/claude-sonnet-5.5',
       messages: [{
         role: 'system',
         content: 'You are a helpful assistant that responds only in valid JSON format.'

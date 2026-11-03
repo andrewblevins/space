@@ -799,13 +799,13 @@ const Terminal = ({ theme, toggleTheme }) => {
   }); // Spacing between paragraphs
 
   // AI Model Settings - Always use OpenRouter
-  const ALLOWED_MODELS = ['anthropic/claude-sonnet-4.6', 'anthropic/claude-opus-4.6'];
+  const ALLOWED_MODELS = ['anthropic/claude-sonnet-5.5', 'anthropic/claude-opus-5.5'];
   const [openrouterModel, setOpenrouterModel] = useState(() => {
     const saved = localStorage.getItem('space_openrouter_model');
     if (saved && ALLOWED_MODELS.includes(saved)) {
       return saved;
     }
-    return 'anthropic/claude-sonnet-4.6';
+    return 'anthropic/claude-sonnet-5.5';
   });
 
   // Check for API keys after modal controller is initialized
@@ -1251,7 +1251,7 @@ Generate ONLY the user's message describing their situation, nothing else. Inclu
         method: 'POST',
         headers,
         body: JSON.stringify({
-          model: 'anthropic/claude-sonnet-4.5',
+          model: 'anthropic/claude-sonnet-5.5',
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: "Generate an interesting, thought-provoking question or scenario that would make for a great conversation starter. Something that would benefit from multiple perspectives and deep thinking." }
@@ -1380,7 +1380,7 @@ Generate ONLY the user's next message, nothing else. Make it feel authentic and 
         method: 'POST',
         headers,
         body: JSON.stringify({
-          model: 'anthropic/claude-sonnet-4.5',
+          model: 'anthropic/claude-sonnet-5.5',
           messages: [
             { role: 'system', content: systemPrompt },
             ...contextMessages,
